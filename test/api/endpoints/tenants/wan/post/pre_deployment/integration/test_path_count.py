@@ -30,7 +30,7 @@ def test_every_site_still_holds_the_paths_its_tenant_asked_for() -> None:
 
 
 def test_every_path_in_the_synthesis_answers_a_sites_own_requirement() -> None:
-    assert {use.reason for use in _MESH} == {LINK_FOR_TARGET}
+    assert {drawn_path.reason for drawn_path in _MESH} == {LINK_FOR_TARGET}
 
 
 def test_no_path_in_the_synthesis_could_be_taken_back_out() -> None:

@@ -24,16 +24,16 @@ def test_the_pair_is_drawn_with_the_paths_the_tenant_asked_for() -> None:
 
 
 def test_the_paths_drawn_are_the_shortest_of_the_ones_open_to_it() -> None:
-    assert sorted(use.path[1] for use in _MESH) == ["north", "south"]
+    assert sorted(drawn_path.path[1] for drawn_path in _MESH) == ["north", "south"]
 
 
 def test_the_two_paths_share_no_city_but_the_two_sites() -> None:
-    transit = [city for use in _MESH for city in use.path[1:-1]]
+    transit = [city for drawn_path in _MESH for city in drawn_path.path[1:-1]]
     assert sorted(transit) == sorted(set(transit))
 
 
 def test_both_paths_are_ones_the_two_sites_reached_for_themselves() -> None:
-    assert [use.reason for use in _MESH] == [LINK_FOR_TARGET, LINK_FOR_TARGET]
+    assert [drawn_path.reason for drawn_path in _MESH] == [LINK_FOR_TARGET, LINK_FOR_TARGET]
 
 
 def test_each_site_is_credited_with_the_paths_it_holds() -> None:

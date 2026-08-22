@@ -111,7 +111,7 @@ def meshed_backbone_synthesis(
         transit_ids=(),
         access_paths=[],
         fiber_segment_keys={key for path in paths for key in path_link_keys(path)},
-        path_uses=[
+        drawn_paths=[
             SynthesisPath("backbone_mesh", path[0], path[-1], path, 1.0) for path in paths
         ],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
@@ -131,7 +131,7 @@ def split_backbone_synthesis() -> Synthesis:
         fiber_segment_keys={
             link_key(left, right) for left, right in SPLIT_BACKBONE_SEGMENTS
         },
-        path_uses=[],
+        drawn_paths=[],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
 
@@ -217,7 +217,11 @@ def run_synthesis(
 
 
 def mesh_paths(artifacts: SynthesisArtifacts) -> list[SynthesisPath]:
-    return [use for use in artifacts.synthesis.path_uses if use.purpose == "backbone_mesh"]
+    return [
+        drawn_path
+        for drawn_path in artifacts.synthesis.drawn_paths
+        if drawn_path.purpose == "backbone_mesh"
+    ]
 
 
 def synthesis_over_segments(

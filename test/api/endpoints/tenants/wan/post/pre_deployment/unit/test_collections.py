@@ -67,7 +67,7 @@ def test_backbone_links_are_all_backbone_mesh_uses() -> None:
 
 
 def test_backbone_links_omit_other_path_uses() -> None:
-    assert gc.backbone_links({"path_uses": [{"purpose": "access"}]}) == []
+    assert gc.backbone_links({"drawn_paths": [{"purpose": "access"}]}) == []
 
 
 def test_backbone_links_name_both_endpoints() -> None:

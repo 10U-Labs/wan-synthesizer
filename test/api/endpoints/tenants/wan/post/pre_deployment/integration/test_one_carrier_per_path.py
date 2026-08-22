@@ -23,23 +23,23 @@ _MESH = fixtures.mesh_paths(ARTIFACTS)
 
 
 def _paths_at(site: str) -> list[SynthesisPath]:
-    return [use for use in _MESH if site in (use.source, use.target)]
+    return [drawn_path for drawn_path in _MESH if site in (drawn_path.source, drawn_path.target)]
 
 
 def _carriers_at(site: str) -> set[str]:
-    return {use.carrier for use in _paths_at(site)}
+    return {drawn_path.carrier for drawn_path in _paths_at(site)}
 
 
 def test_every_drawn_path_is_one_carriers_to_offer() -> None:
-    assert all(carriers_along(use.path, ARTIFACTS.fiber_segments) for use in _MESH)
+    assert all(carriers_along(drawn_path.path, ARTIFACTS.fiber_segments) for drawn_path in _MESH)
 
 
 def test_every_drawn_path_names_the_carrier_it_is_ordered_from() -> None:
-    assert all(use.carrier in ("lumen", "zayo") for use in _MESH)
+    assert all(drawn_path.carrier in ("lumen", "zayo") for drawn_path in _MESH)
 
 
 def test_the_short_way_that_changes_hands_is_not_drawn() -> None:
-    assert not [use for use in _MESH if _SHORTCUT_CITY in use.path]
+    assert not [drawn_path for drawn_path in _MESH if _SHORTCUT_CITY in drawn_path.path]
 
 
 def test_a_sites_ways_out_may_be_ordered_from_different_carriers() -> None:

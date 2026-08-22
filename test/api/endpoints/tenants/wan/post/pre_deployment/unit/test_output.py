@@ -27,7 +27,7 @@ def _synthesis_with_homed_demand(source: str) -> Synthesis:
         transit_ids=(),
         access_paths=[AccessPath(source, "b", 1.0)],
         fiber_segment_keys=set(),
-        path_uses=[],
+        drawn_paths=[],
         metrics=SynthesisMetrics(0.0, 0.0, 0.0),
     )
 

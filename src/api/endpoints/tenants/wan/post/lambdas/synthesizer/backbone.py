@@ -58,8 +58,8 @@ class _DrawnFiber:
 
 def _fiber_of(paths: list[SynthesisPath]) -> tuple[set[str], set[tuple[str, str]]]:
     segments: set[tuple[str, str]] = set()
-    for use in paths:
-        segments |= path_link_keys(use.path)
+    for drawn_path in paths:
+        segments |= path_link_keys(drawn_path.path)
     return {city for segment in segments for city in segment}, segments
 
 
@@ -139,7 +139,7 @@ def _ways_out_of(site: str, drawn: _DrawnFiber) -> list[tuple[str, ...]]:
 
 def _laid(drawn: _DrawnFiber, pinned: list[SynthesisPath]) -> list[SynthesisPath]:
     laid: dict[tuple[str, ...], SynthesisPath] = {
-        min(use.path, use.path[::-1]): use for use in pinned
+        min(drawn_path.path, drawn_path.path[::-1]): drawn_path for drawn_path in pinned
     }
     for site in sorted(drawn.backbone_ids):
         for path in _ways_out_of(site, drawn):
@@ -235,10 +235,12 @@ def _needed(
     kept = list(paths)
     held = {site: min(target, diverse_path_count(kept, site)) for site in backbone_ids}
     intact = _no_single_point_of_failure(kept, backbone_ids)
-    for spare in sorted(paths, key=lambda use: (-use.distance_miles, use.path)):
+    for spare in sorted(
+        paths, key=lambda drawn_path: (-drawn_path.distance_miles, drawn_path.path)
+    ):
         if spare.reason == LINK_FOR_PIN:
             continue
-        left = [use for use in kept if use is not spare]
+        left = [drawn_path for drawn_path in kept if drawn_path is not spare]
         if any(
             min(target, diverse_path_count(left, site)) < held[site] for site in backbone_ids
         ):
@@ -266,10 +268,10 @@ def _selected_fiber(
         _pinned_path(pair, by_carrier, fiber_segments)
         for pair in sorted(constraints.forced_pairs)
     )
-    pinned = [use for use in drawn if use is not None]
+    pinned = [drawn_path for drawn_path in drawn if drawn_path is not None]
     segments = set(selection.segments)
-    for use in pinned:
-        segments |= path_link_keys(use.path)
+    for drawn_path in pinned:
+        segments |= path_link_keys(drawn_path.path)
     return frozenset(segments), selection.lower_bound_miles, pinned
 
 
