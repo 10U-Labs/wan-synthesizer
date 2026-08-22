@@ -119,9 +119,9 @@ def _proved_over(
 ) -> list[tuple[str, ...]]:
     constraints = drawn.constraints
     peers = tuple(
-        node
-        for node in drawn.backbone_ids
-        if node == site or link_key(site, node) not in constraints.removed_pairs
+        peer
+        for peer in drawn.backbone_ids
+        if peer == site or link_key(site, peer) not in constraints.removed_pairs
     )
     proof = PathProofInputs(
         peers, build_adjacency(fiber),
@@ -162,16 +162,16 @@ def _pairs_across(
     city: str, paths: list[SynthesisPath], drawn: _DrawnFiber
 ) -> list[tuple[str, str]]:
     cities, segments = _fiber_of(paths)
-    places = cities | set(drawn.backbone_ids)
+    sites = cities | set(drawn.backbone_ids)
     apart = {
-        place: index
-        for index, piece in enumerate(connected_components(places - {city}, segments))
-        for place in piece
+        site: index
+        for index, piece in enumerate(connected_components(sites - {city}, segments))
+        for site in piece
     }
     sides: dict[int, list[str]] = {}
     for site in sorted(set(drawn.backbone_ids) - {city}):
         sides.setdefault(apart[site], []).append(site)
-    split = sorted({apart[near] for near in undirected_adjacency(places, segments)[city]})
+    split = sorted({apart[near] for near in undirected_adjacency(sites, segments)[city]})
     pairs = [
         (near, far)
         for left, right in combinations(split, 2)

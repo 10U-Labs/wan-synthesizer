@@ -34,7 +34,7 @@ def _yes(value: Any) -> bool:
     return str(value or "").strip().lower() == "yes"
 
 
-def _place(row: dict[str, Any], site_id: str, name: str, kind: str) -> Site:
+def _site(row: dict[str, Any], site_id: str, name: str, kind: str) -> Site:
     return Site(
         id=site_id,
         name=name,
@@ -47,26 +47,26 @@ def _place(row: dict[str, Any], site_id: str, name: str, kind: str) -> Site:
     )
 
 
-def _load_places(rows: list[dict[str, Any]], prefix: str, kind: str, named: bool) -> list[Site]:
+def _load_sites(rows: list[dict[str, Any]], prefix: str, kind: str, named: bool) -> list[Site]:
     used: set[str] = set()
-    places: list[Site] = []
+    sites: list[Site] = []
     for row in rows:
         name = row["name"] if named else _city(row)
         site_id = _unique(f"{prefix}-{_slug(name)}", used)
-        places.append(_place(row, site_id, name, kind))
-    return places
+        sites.append(_site(row, site_id, name, kind))
+    return sites
 
 
 def load_regions(rows: list[dict[str, Any]]) -> list[Site]:
-    return _load_places(rows, "provider", PROVIDER_KIND, named=True)
+    return _load_sites(rows, "provider", PROVIDER_KIND, named=True)
 
 
 def load_sites(rows: list[dict[str, Any]]) -> list[Site]:
-    return _load_places(rows, "site", SITE_KIND, named=True)
+    return _load_sites(rows, "site", SITE_KIND, named=True)
 
 
 def load_off_net(rows: list[dict[str, Any]]) -> list[Site]:
-    return _load_places(rows, "offnet", OFF_NET_KIND, named=False)
+    return _load_sites(rows, "offnet", OFF_NET_KIND, named=False)
 
 
 def load_merged_carriers(
@@ -80,7 +80,7 @@ def load_merged_carriers(
         if city in by_city:
             continue
         name = _city(row)
-        site = _place(row, _unique(_slug(name), used), name, CARRIER_KIND)
+        site = _site(row, _unique(_slug(name), used), name, CARRIER_KIND)
         pops.append(site)
         by_city[city] = site
     links: dict[tuple[str, str], FiberSegment] = {}

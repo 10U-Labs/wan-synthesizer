@@ -95,8 +95,8 @@ def backbone_physically_biconnectable(
     backbone_ids: tuple[str, ...], inputs: SynthesisInputs
 ) -> bool:
     common: frozenset[int] | None = None
-    for node in backbone_ids:
-        blocks = inputs.carrier_blocks.get(node, frozenset())
+    for site in backbone_ids:
+        blocks = inputs.carrier_blocks.get(site, frozenset())
         common = blocks if common is None else common & blocks
     return common is not None and bool(common)
 
@@ -108,10 +108,10 @@ def forced_backbone_resilience_error(
         return None
     blocks_by_id = inputs.carrier_blocks
     pop_by_id = {pop.id: pop for pop in inputs.carrier_pops}
-    names = ", ".join(sorted(pop_by_id[node].name for node in required))
+    names = ", ".join(sorted(pop_by_id[site].name for site in required))
     common = blocks_by_id.get(next(iter(required)), frozenset())
-    for node in required:
-        common &= blocks_by_id.get(node, frozenset())
+    for site in required:
+        common &= blocks_by_id.get(site, frozenset())
     if not common:
         return (
             "Forced backbone nodes share no common biconnected block of the carrier fiber "
@@ -120,8 +120,8 @@ def forced_backbone_resilience_error(
     best = max(
         sum(
             1
-            for node in inputs.eligible_backbone_ids
-            if block in blocks_by_id.get(node, frozenset())
+            for site in inputs.eligible_backbone_ids
+            if block in blocks_by_id.get(site, frozenset())
         )
         for block in common
     )

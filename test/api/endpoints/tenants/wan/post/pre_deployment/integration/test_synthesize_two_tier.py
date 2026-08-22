@@ -45,13 +45,13 @@ def _homes_of(artifacts: SynthesisArtifacts, access_id: str) -> set[str]:
     }
 
 
-def _peers_of(artifacts: SynthesisArtifacts, node: str) -> set[str]:
+def _peers_of(artifacts: SynthesisArtifacts, site: str) -> set[str]:
     return {
         end
         for pair in backbone_mesh_pairs(artifacts.synthesis)
-        if node in pair
+        if site in pair
         for end in pair
-        if end != node
+        if end != site
     }
 
 
@@ -158,7 +158,7 @@ def test_the_chorded_ring_names_the_spur_whose_target_it_lowered() -> None:
 
 def test_a_chorded_node_ends_above_the_number_because_a_peer_asked() -> None:
     assert max(
-        diverse_path_count(CHORDED.synthesis.path_uses, node) for node in _CHORDED_BACKBONE
+        diverse_path_count(CHORDED.synthesis.path_uses, site) for site in _CHORDED_BACKBONE
     ) > 3
 
 
@@ -180,9 +180,9 @@ def test_no_chorded_node_finishes_below_what_its_own_fiber_allows() -> None:
     ceilings = CHORDED.validation["backbone_diverse_paths_ceiling_limited"]
     capped = {str(entry["id"]): int(str(entry["ceiling"])) for entry in ceilings}
     assert [
-        node
-        for node in _CHORDED_BACKBONE
-        if diverse_path_count(CHORDED.synthesis.path_uses, node) < min(3, capped.get(node, 3))
+        site
+        for site in _CHORDED_BACKBONE
+        if diverse_path_count(CHORDED.synthesis.path_uses, site) < min(3, capped.get(site, 3))
     ] == []
 
 
@@ -207,7 +207,7 @@ def _forced_off_net_artifacts() -> SynthesisArtifacts:
 
 def test_forced_off_net_site_is_seated_in_the_backbone() -> None:
     synthesis = _forced_off_net_artifacts().synthesis
-    assert any(node.startswith("offnet_") for node in synthesis.backbone_ids)
+    assert any(site_id.startswith("offnet_") for site_id in synthesis.backbone_ids)
 
 
 def test_off_net_synthesis_validates_connected() -> None:

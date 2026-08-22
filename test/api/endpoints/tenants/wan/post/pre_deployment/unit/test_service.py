@@ -35,4 +35,4 @@ def test_run_synthesis_seats_a_forced_off_net_site_as_backbone() -> None:
         ),
         off_net_sites=[site],
     ).synthesis
-    assert any(node.startswith("offnet_") for node in synthesis.backbone_ids)
+    assert any(site_id.startswith("offnet_") for site_id in synthesis.backbone_ids)

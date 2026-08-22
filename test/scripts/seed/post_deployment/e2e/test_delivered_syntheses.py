@@ -59,7 +59,7 @@ def _paths_clear_of_a_capped_seat(synthesis: dict[str, Any]) -> list[dict[str, A
 
 
 def _published_cities(synthesis: dict[str, Any]) -> set[str]:
-    return {node["name"] for node in synthesis["backbone"]}
+    return {site["name"] for site in synthesis["backbone"]}
 
 
 def test_every_tenant_the_roster_declares_has_a_published_network(
