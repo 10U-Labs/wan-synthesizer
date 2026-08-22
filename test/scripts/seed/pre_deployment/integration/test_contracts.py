@@ -255,10 +255,9 @@ def _ceiling_bounds(
             city_id = by_name.get(city)
             if city_id is None or _path_endpoints(city_id, pinned) < 1:
                 continue
-            ground = PathProofInputs(
+            bound = independent_path_ceiling(city_id, PathProofInputs(
                 pinned, adjacency, asked, backbone["node_count"]["max"]
-            )
-            bound = independent_path_ceiling(city_id, ground)
+            ))
             bounds.append((tenant, city, bound, asked))
     return bounds
 

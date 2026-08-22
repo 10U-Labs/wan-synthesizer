@@ -78,8 +78,9 @@ def test_a_site_with_one_peer_is_still_held_to_one_path_when_one_is_asked() -> N
 
 
 def test_a_site_seated_below_the_seats_its_config_allows_takes_one_path_to_a_peer() -> None:
-    ground = PathProofInputs(_ONE_PEER, _TWIN_PATHS, paths_wanted=2, seat_cap=6)
-    assert independent_path_ceiling("s", ground) == 1
+    assert independent_path_ceiling(
+        "s", PathProofInputs(_ONE_PEER, _TWIN_PATHS, paths_wanted=2, seat_cap=6)
+    ) == 1
 
 
 _THREE_WAYS = build_adjacency(physical({
