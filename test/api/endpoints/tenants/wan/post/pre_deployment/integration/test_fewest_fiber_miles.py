@@ -6,7 +6,7 @@ import fixtures
 from synthesizer import linear_program
 from synthesizer.graphs import adjacency_by_carrier
 from synthesizer.model import SynthesisArtifacts
-from synthesizer.survivable import FiberInputs, choose_fiber
+from synthesizer.survivable import FiberInputs, select_fiber
 
 _SITES = ("w", "x", "y", "z")
 _ASKED_FOR = 2
@@ -112,16 +112,16 @@ SELLABLE_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
 )
 
 
-def _fiber_the_choice_selected() -> frozenset[tuple[str, str]]:
-    return choose_fiber(FiberInputs(
+def _fiber_the_selection_holds() -> frozenset[tuple[str, str]]:
+    return select_fiber(FiberInputs(
         fixtures.SELLABLE_WAYS_SITES, fixtures.SELLABLE_WAYS_LINKS,
         _ASKED_FOR, len(fixtures.SELLABLE_WAYS_SITES),
         adjacency_by_carrier(fixtures.SELLABLE_WAYS_LINKS),
     )).segments
 
 
-def test_the_delivered_synthesis_orders_only_fiber_the_choice_selected_for_it() -> None:
-    assert set(SELLABLE_ARTIFACTS.synthesis.fiber_segment_keys) <= _fiber_the_choice_selected()
+def test_the_delivered_synthesis_orders_only_fiber_selected_for_it() -> None:
+    assert set(SELLABLE_ARTIFACTS.synthesis.fiber_segment_keys) <= _fiber_the_selection_holds()
 
 
 SHORT_AND_LONG_ARTIFACTS = fixtures.synthesis_over_segments(

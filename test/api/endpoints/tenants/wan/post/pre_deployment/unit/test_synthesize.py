@@ -23,7 +23,7 @@ from synthesizer.model import (
     RoleOverrides,
     Tuning,
 )
-from synthesizer.survivable import FiberChoice, FiberInputs, choose_fiber
+from synthesizer.survivable import FiberInputs, FiberSelection, select_fiber
 from synthesizer.synthesize import (
     backbone_combination_count,
     backbone_combinations,
@@ -350,7 +350,7 @@ def _far_demand_inputs_plan(exempt: bool = False) -> tuple[SynthesisInputs, _Sea
     return inputs, plan
 
 
-def _fiber_choices(monkeypatch: pytest.MonkeyPatch, target_miles: int) -> int:
+def _fiber_selections(monkeypatch: pytest.MonkeyPatch, target_miles: int) -> int:
     inputs, plan = _far_demand_inputs_plan()
     params = SynthesisParams(
         min_backbone_count=2,
@@ -358,25 +358,25 @@ def _fiber_choices(monkeypatch: pytest.MonkeyPatch, target_miles: int) -> int:
     )
     counted: list[tuple[str, ...]] = []
 
-    def counting(fiber_inputs: FiberInputs) -> FiberChoice:
+    def counting(fiber_inputs: FiberInputs) -> FiberSelection:
         counted.append(fiber_inputs.backbone_ids)
-        return choose_fiber(fiber_inputs)
+        return select_fiber(fiber_inputs)
 
-    monkeypatch.setattr("synthesizer.backbone.choose_fiber", counting)
+    monkeypatch.setattr("synthesizer.backbone.select_fiber", counting)
     search_best_synthesis(inputs, params, plan)
     return len(counted)
 
 
-def test_a_search_that_grows_past_the_floor_still_chooses_its_fiber_once(
+def test_a_search_that_grows_past_the_floor_still_selects_its_fiber_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    assert _fiber_choices(monkeypatch, 300) == 1
+    assert _fiber_selections(monkeypatch, 300) == 1
 
 
-def test_a_search_that_seats_nothing_past_the_floor_chooses_its_fiber_once(
+def test_a_search_that_seats_nothing_past_the_floor_selects_its_fiber_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    assert _fiber_choices(monkeypatch, 100_000) == 1
+    assert _fiber_selections(monkeypatch, 100_000) == 1
 
 
 def test_search_holds_at_the_floor_under_a_permissive_target() -> None:

@@ -10,7 +10,7 @@ from synthesizer.backbone import (
     backbone_mesh,
     path_geometry_miles,
 )
-from synthesizer.survivable import FiberInputs, choose_fiber
+from synthesizer.survivable import FiberInputs, select_fiber
 from synthesizer.synthesize import all_pairs_shortest
 from synthesizer.graphs import (
     adjacency_by_carrier,
@@ -46,7 +46,7 @@ def _selected(
     sites: tuple[str, ...],
     constraints: BackboneConstraints,
 ) -> frozenset[tuple[str, str]]:
-    return choose_fiber(FiberInputs(
+    return select_fiber(FiberInputs(
         sites, links, constraints.number_of_diverse_paths,
         constraints.seat_cap, adjacency_by_carrier(links),
     )).segments
@@ -233,7 +233,7 @@ def test_a_pruned_pair_leaves_the_rest_of_the_backbone_drawn() -> None:
     assert link_key("y", "z") in _pairs(_PRUNED)
 
 
-def test_a_pinned_pair_is_joined_however_the_fiber_was_chosen() -> None:
+def test_a_pinned_pair_is_joined_however_the_fiber_was_selected() -> None:
     assert link_key("w", "y") in _pairs(_PINNED_CHORD)
 
 

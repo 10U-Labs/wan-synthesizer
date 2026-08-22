@@ -12,7 +12,7 @@ from synthesizer.ceiling import (
 from synthesizer.flow_cuts import Separation, SeparationQuestion, weakest_separation
 from synthesizer.graphs import build_adjacency, reachable_over
 from synthesizer.input_graph import FiberSegment
-from synthesizer.linear_program import GrowingSegmentProgram, SegmentChoice, SegmentRow
+from synthesizer.linear_program import GrowingSegmentProgram, SegmentRow, SegmentSelection
 
 _HELD_OUTRIGHT = 0.5
 
@@ -33,7 +33,7 @@ class FiberInputs:
 
 
 @dataclass(frozen=True)
-class FiberChoice:
+class FiberSelection:
     segments: frozenset[tuple[str, str]]
     lower_bound_miles: float
 
@@ -301,9 +301,9 @@ def _held(
 
 
 def _shares(
-    choice: SegmentChoice, order: list[tuple[str, str]]
+    selection: SegmentSelection, order: list[tuple[str, str]]
 ) -> dict[tuple[str, str], float]:
-    return dict(zip(order, choice.held))
+    return dict(zip(order, selection.held))
 
 
 def _write(search: _Search, rows: list[SegmentRow]) -> bool:
@@ -317,7 +317,7 @@ def _write(search: _Search, rows: list[SegmentRow]) -> bool:
     return bool(fresh)
 
 
-def _solve_search(search: _Search, fix: bool) -> SegmentChoice:
+def _solve_search(search: _Search, fix: bool) -> SegmentSelection:
     if fix:
         search.program.hold_whole(
             frozenset(search.column[segment] for segment in search.selected)
@@ -327,17 +327,17 @@ def _solve_search(search: _Search, fix: bool) -> SegmentChoice:
     return search.program.solve()
 
 
-def _tighten(search: _Search, requirements: list[_Requirement]) -> SegmentChoice:
-    choice = _solve_search(search, fix=True)
-    shortfalls = _shortfalls(requirements, _shares(choice, search.order))
+def _tighten(search: _Search, requirements: list[_Requirement]) -> SegmentSelection:
+    selection = _solve_search(search, fix=True)
+    shortfalls = _shortfalls(requirements, _shares(selection, search.order))
     while shortfalls and _write(search, _rows(shortfalls, search.column)):
-        choice = _solve_search(search, fix=True)
-        shortfalls = _shortfalls(requirements, _shares(choice, search.order))
-    return choice
+        selection = _solve_search(search, fix=True)
+        shortfalls = _shortfalls(requirements, _shares(selection, search.order))
+    return selection
 
 
-def _round_up(search: _Search, choice: SegmentChoice) -> frozenset[tuple[str, str]]:
-    shares = _shares(choice, search.order)
+def _round_up(search: _Search, selection: SegmentSelection) -> frozenset[tuple[str, str]]:
+    shares = _shares(selection, search.order)
     left = [
         (share, segment) for segment, share in shares.items() if segment not in search.selected
     ]
@@ -347,12 +347,12 @@ def _round_up(search: _Search, choice: SegmentChoice) -> frozenset[tuple[str, st
     return fresh or frozenset({max(left)[1]})
 
 
-def choose_fiber(inputs: FiberInputs) -> FiberChoice:
+def select_fiber(inputs: FiberInputs) -> FiberSelection:
     fiber = {
         segment: link.distance_miles for segment, link in inputs.fiber_segments.items()
     }
     if not fiber:
-        return FiberChoice(frozenset(), 0.0)
+        return FiberSelection(frozenset(), 0.0)
     requirements = _requirements(inputs, fiber)
     order = sorted(fiber)
     search = _Search(
@@ -368,4 +368,4 @@ def choose_fiber(inputs: FiberInputs) -> FiberChoice:
             break
         _write(search, _rows(shortfalls, search.column))
         search.selected |= _round_up(search, _tighten(search, requirements))
-    return FiberChoice(search.selected, _solve_search(search, fix=False).miles)
+    return FiberSelection(search.selected, _solve_search(search, fix=False).miles)

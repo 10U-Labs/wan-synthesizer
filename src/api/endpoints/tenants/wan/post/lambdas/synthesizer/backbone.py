@@ -18,7 +18,7 @@ from synthesizer.graphs import (
     undirected_adjacency,
 )
 from synthesizer.model import LINK_FOR_PIN, LINK_FOR_TARGET, SynthesisPath
-from synthesizer.survivable import FiberInputs, choose_fiber
+from synthesizer.survivable import FiberInputs, select_fiber
 from synthesizer.validation import diverse_path_count
 
 
@@ -257,7 +257,7 @@ def _selected_fiber(
     constraints: BackboneConstraints,
     by_carrier: dict[str, dict[str, list[tuple[str, float]]]],
 ) -> tuple[frozenset[tuple[str, str]], float, list[SynthesisPath]]:
-    choice = choose_fiber(FiberInputs(
+    selection = select_fiber(FiberInputs(
         backbone_ids, fiber_segments,
         constraints.number_of_diverse_paths, constraints.seat_cap,
         by_carrier,
@@ -267,10 +267,10 @@ def _selected_fiber(
         for pair in sorted(constraints.forced_pairs)
     )
     pinned = [use for use in drawn if use is not None]
-    segments = set(choice.segments)
+    segments = set(selection.segments)
     for use in pinned:
         segments |= path_link_keys(use.path)
-    return frozenset(segments), choice.lower_bound_miles, pinned
+    return frozenset(segments), selection.lower_bound_miles, pinned
 
 
 def backbone_mesh(
