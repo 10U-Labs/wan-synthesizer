@@ -4,7 +4,7 @@ import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from synthesizer.ceiling import PathProofInputs, independent_path_ceiling
+from synthesizer.ceiling import PathProofInputs, diverse_path_ceilings
 from synthesizer.input_graph import Site, haversine_miles
 from synthesizer.model import SynthesisInputs
 from synthesizer.graphs import reconstruct_path
@@ -60,9 +60,9 @@ def diverse_path_bounds(
     candidate_ids: set[str],
     adjacency: dict[str, list[tuple[str, float]]],
 ) -> DiversePathBounds:
-    sites = tuple(sorted(candidate_ids))
-    ground = PathProofInputs(sites, adjacency)
-    per_site = {site: independent_path_ceiling(site, ground) for site in sites}
+    per_site = diverse_path_ceilings(
+        PathProofInputs(tuple(sorted(candidate_ids)), adjacency)
+    )
     return DiversePathBounds(per_site, max((*per_site.values(), 1)))
 
 
