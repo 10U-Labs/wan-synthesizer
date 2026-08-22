@@ -26,7 +26,7 @@ class SegmentProgram:
 
 
 @dataclass(frozen=True)
-class SegmentChoice:
+class SegmentSelection:
     miles: float
     held: tuple[float, ...]
 
@@ -66,19 +66,19 @@ def _quiet_solver(program: SegmentProgram) -> Any:
     return solver
 
 
-def _answer(solver: Any) -> SegmentChoice:
+def _answer(solver: Any) -> SegmentSelection:
     if solver.getModelStatus() != highspy.HighsModelStatus.kOptimal:
         raise ValueError(
             "No fiber holding meets every requirement asked of it; the requirements were "
             "not capped against the fiber that is actually there"
         )
-    return SegmentChoice(
+    return SegmentSelection(
         float(solver.getObjectiveValue()),
         tuple(float(held) for held in solver.getSolution().col_value),
     )
 
 
-def solve(program: SegmentProgram) -> SegmentChoice:
+def solve(program: SegmentProgram) -> SegmentSelection:
     solver = _quiet_solver(program)
     solver.run()
     return _answer(solver)
@@ -113,7 +113,7 @@ class GrowingSegmentProgram:
             self._solver.changeColBounds(column, 0.0, _WHOLE)
         self._whole.clear()
 
-    def solve(self) -> SegmentChoice:
+    def solve(self) -> SegmentSelection:
         self._solver.setOptionValue(
             "time_limit", self._solver.getRunTime() + _SECONDS_A_PASS_MAY_RUN
         )

@@ -18,8 +18,8 @@ _SHORT = 1
 def _answer(
     rows: tuple[SegmentRow, ...], selected: frozenset[int] = frozenset()
 ) -> tuple[float, ...]:
-    choice = solve(SegmentProgram(_TWO_COLUMNS, selected, rows))
-    return (choice.miles, *choice.held)
+    selection = solve(SegmentProgram(_TWO_COLUMNS, selected, rows))
+    return (selection.miles, *selection.held)
 
 
 def test_a_program_that_asks_for_nothing_holds_nothing_and_runs_no_miles() -> None:
