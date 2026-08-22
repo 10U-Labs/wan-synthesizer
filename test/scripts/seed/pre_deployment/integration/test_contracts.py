@@ -285,22 +285,22 @@ def test_every_pinned_city_can_carry_the_diversity_its_tenant_asks_for() -> None
 def _demand(config: dict[str, Any]) -> list[Site]:
     inputs = config["inputs"]
     providers = inputs.get("providers")
-    places = load_sites(_mapping_rows(inputs.get("locations", {})))
-    places += load_regions(_rows(REPO_ROOT / providers)) if providers else []
-    return [place for place in places if not place.exempt_from_distance_constraint]
+    sites = load_sites(_mapping_rows(inputs.get("locations", {})))
+    sites += load_regions(_rows(REPO_ROOT / providers)) if providers else []
+    return [site for site in sites if not site.exempt_from_distance_constraint]
 
 
 def _seats_for_coverage(config: dict[str, Any], carriers: list[Site]) -> int:
     target = config["backbone"]["coverage_target_miles"]
-    places = _demand(config)
+    sites = _demand(config)
     reach = {
         carrier.name: {
-            place.id for place in places if haversine_miles(place, carrier) <= target
+            site.id for site in sites if haversine_miles(site, carrier) <= target
         }
         for carrier in carriers
     }
     pinned = _pinned_cities(config["backbone"])
-    unserved = {place.id for place in places}
+    unserved = {site.id for site in sites}
     for city in pinned:
         unserved -= reach.get(city, set())
     seats = len(pinned)

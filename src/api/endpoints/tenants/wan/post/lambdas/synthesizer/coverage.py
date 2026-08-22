@@ -24,9 +24,10 @@ def demand_hauls(
     access_sites: list[Site],
     pop_by_id: dict[str, Site],
 ) -> list[float]:
-    nodes = [pop_by_id[backbone_id] for backbone_id in backbone_ids]
+    backbone_sites = [pop_by_id[backbone_id] for backbone_id in backbone_ids]
     return [
-        min(haversine_miles(access, node) for node in nodes) for access in access_sites
+        min(haversine_miles(access, site) for site in backbone_sites)
+        for access in access_sites
     ]
 
 

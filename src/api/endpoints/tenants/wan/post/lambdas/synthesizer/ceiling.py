@@ -24,17 +24,17 @@ def _add_capacity(residual: _Residual, costs: _Costs, arc: _NewArc) -> None:
 
 
 def _unit_site_network(
-    node: str,
+    site: str,
     backbone_ids: tuple[str, ...],
     adjacency: dict[str, list[tuple[str, float]]],
     per_peer: int = 1,
 ) -> tuple[_Residual, _Costs, list[_Arc]]:
-    peers = {peer for peer in backbone_ids if peer != node and peer in adjacency}
+    peers = {peer for peer in backbone_ids if peer != site and peer in adjacency}
     termini_only = per_peer > 1
     new_arcs: list[_NewArc] = [
         (("in", city), ("out", city), 0.0, 1)
         for city in adjacency
-        if city != node and not (termini_only and city in peers)
+        if city != site and not (termini_only and city in peers)
     ]
     new_arcs += [
         (("out", city), ("in", neighbor), weight, 1)
@@ -85,8 +85,8 @@ def _augmenting_path(
     source: _Node,
 ) -> list[_Node] | None:
     distance, reached = _cheapest_runs(residual, costs, potential, source)
-    for site, run in distance.items():
-        potential[site] += run
+    for end, run in distance.items():
+        potential[end] += run
     if _SINK not in reached:
         return None
     path = [_SINK]
@@ -136,14 +136,14 @@ def _path_miles(
 
 
 def _proved_paths(
-    node: str,
+    site: str,
     backbone_ids: tuple[str, ...],
     adjacency: dict[str, list[tuple[str, float]]],
     per_peer: int = 1,
 ) -> list[tuple[str, ...]]:
-    residual, costs, arcs = _unit_site_network(node, backbone_ids, adjacency, per_peer)
-    source: _Node = ("out", node)
-    potential: dict[_Node, float] = {site: 0.0 for site in (source, *residual)}
+    residual, costs, arcs = _unit_site_network(site, backbone_ids, adjacency, per_peer)
+    source: _Node = ("out", site)
+    potential: dict[_Node, float] = {end: 0.0 for end in (source, *residual)}
     while True:
         path = _augmenting_path(residual, costs, potential, source)
         if path is None:
@@ -171,12 +171,12 @@ def paths_per_peer(seat_cap: int | None, seats: int, paths_wanted: int) -> int:
 
 
 def _no_city_twice(
-    node: str,
+    site: str,
     found: list[tuple[str, ...]],
     inputs: PathProofInputs,
     per_peer: int,
 ) -> list[tuple[str, ...]]:
-    peers = {peer for peer in inputs.backbone_ids if peer != node}
+    peers = {peer for peer in inputs.backbone_ids if peer != site}
     termini_only = per_peer > 1
     spent: set[str] = set()
     ends: dict[str, int] = {}
@@ -202,19 +202,19 @@ def _no_city_twice(
     return kept
 
 
-def independent_paths(node: str, inputs: PathProofInputs) -> list[tuple[str, ...]]:
-    return [path for _carrier, path in _ways_out_and_their_carriers(node, inputs)]
+def independent_paths(site: str, inputs: PathProofInputs) -> list[tuple[str, ...]]:
+    return [path for _carrier, path in _ways_out_and_their_carriers(site, inputs)]
 
 
-def _peers_over_land(node: str, inputs: PathProofInputs) -> frozenset[str]:
-    joined = reachable_over(inputs.terrestrial).get(node, frozenset())
-    return joined & frozenset(peer for peer in inputs.backbone_ids if peer != node)
+def _peers_over_land(site: str, inputs: PathProofInputs) -> frozenset[str]:
+    joined = reachable_over(inputs.terrestrial).get(site, frozenset())
+    return joined & frozenset(peer for peer in inputs.backbone_ids if peer != site)
 
 
 def _over_land(
-    node: str, inputs: PathProofInputs, adjacency: dict[str, list[tuple[str, float]]]
+    site: str, inputs: PathProofInputs, adjacency: dict[str, list[tuple[str, float]]]
 ) -> dict[str, list[tuple[str, float]]]:
-    if not _peers_over_land(node, inputs):
+    if not _peers_over_land(site, inputs):
         return adjacency
     on_land = {
         city: {neighbor for neighbor, _weight in neighbors}
@@ -232,23 +232,23 @@ def _over_land(
 
 
 def _paths_over_each_carrier(
-    node: str, inputs: PathProofInputs, per_peer: int
+    site: str, inputs: PathProofInputs, per_peer: int
 ) -> dict[str, list[tuple[str, ...]]]:
     if not inputs.fiber_by_carrier:
         return {
             "": _proved_paths(
-                node,
+                site,
                 inputs.backbone_ids,
-                _over_land(node, inputs, inputs.adjacency),
+                _over_land(site, inputs, inputs.adjacency),
                 per_peer,
             )
         }
     return {
         carrier: _proved_paths(
-            node, inputs.backbone_ids, _over_land(node, inputs, adjacency), per_peer
+            site, inputs.backbone_ids, _over_land(site, inputs, adjacency), per_peer
         )
         for carrier, adjacency in sorted(inputs.fiber_by_carrier.items())
-        if node in adjacency
+        if site in adjacency
     }
 
 
@@ -259,7 +259,7 @@ def _per_peer(inputs: PathProofInputs) -> int:
 
 
 def _kept_with_their_carriers(
-    node: str,
+    site: str,
     inputs: PathProofInputs,
     by_carrier: dict[str, list[tuple[str, ...]]],
     per_peer: int,
@@ -273,37 +273,37 @@ def _kept_with_their_carriers(
     found = [path for _carrier, paths in sorted(by_carrier.items()) for path in paths]
     return [
         (seller[path], path)
-        for path in _no_city_twice(node, found, inputs, per_peer)
+        for path in _no_city_twice(site, found, inputs, per_peer)
     ]
 
 
 def _ways_out_and_their_carriers(
-    node: str, inputs: PathProofInputs
+    site: str, inputs: PathProofInputs
 ) -> list[tuple[str, tuple[str, ...]]]:
     per_peer = _per_peer(inputs)
     return _kept_with_their_carriers(
-        node, inputs, _paths_over_each_carrier(node, inputs, per_peer), per_peer
+        site, inputs, _paths_over_each_carrier(site, inputs, per_peer), per_peer
     )
 
 
 def ways_out_by_carrier_and_peer(
-    node: str, inputs: PathProofInputs
+    site: str, inputs: PathProofInputs
 ) -> dict[tuple[str, str], int]:
     per_peer = _per_peer(inputs)
-    by_carrier = _paths_over_each_carrier(node, inputs, per_peer)
+    by_carrier = _paths_over_each_carrier(site, inputs, per_peer)
     counted: dict[tuple[str, str], int] = {}
-    for carrier, path in _kept_with_their_carriers(node, inputs, by_carrier, per_peer):
+    for carrier, path in _kept_with_their_carriers(site, inputs, by_carrier, per_peer):
         counted[(carrier, path[-1])] = counted.get((carrier, path[-1]), 0) + 1
     return counted
 
 
-def independent_path_ceiling(node: str, inputs: PathProofInputs) -> int:
-    return len(independent_paths(node, inputs))
+def independent_path_ceiling(site: str, inputs: PathProofInputs) -> int:
+    return len(independent_paths(site, inputs))
 
 
 def diverse_path_ceilings(inputs: PathProofInputs) -> dict[str, int]:
     return {
-        node: independent_path_ceiling(node, inputs)
-        for node in inputs.backbone_ids
-        if node in inputs.adjacency
+        site: independent_path_ceiling(site, inputs)
+        for site in inputs.backbone_ids
+        if site in inputs.adjacency
     }

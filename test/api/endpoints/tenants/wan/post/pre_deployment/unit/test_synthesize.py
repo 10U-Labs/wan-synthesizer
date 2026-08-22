@@ -338,7 +338,7 @@ def _far_demand_inputs_plan(exempt: bool = False) -> tuple[SynthesisInputs, _Sea
     ]
     if exempt:
         access_nodes = [
-            replace(node, exempt_from_distance_constraint=True) for node in access_nodes
+            replace(site, exempt_from_distance_constraint=True) for site in access_nodes
         ]
     inputs = synthesis_inputs_from_links(
         ids, links, {"cc1", "cc2", "cw", "ce"}, access_nodes, coords

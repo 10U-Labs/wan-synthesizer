@@ -117,37 +117,37 @@ def _lowlink_dfs(
         counter += 1
         stack: list[tuple[str, Iterator[tuple[str, float]]]] = [(root, iter(adjacency[root]))]
         while stack:
-            node, neighbors = stack[-1]
+            site, neighbors = stack[-1]
             descended = False
             for neighbor, _weight in neighbors:
-                if neighbor == parent[node]:
+                if neighbor == parent[site]:
                     continue
                 if neighbor in disc:
-                    if disc[neighbor] < disc[node]:
-                        low[node] = min(low[node], disc[neighbor])
-                        on_link(node, neighbor)
+                    if disc[neighbor] < disc[site]:
+                        low[site] = min(low[site], disc[neighbor])
+                        on_link(site, neighbor)
                     continue
                 disc[neighbor] = low[neighbor] = counter
-                parent[neighbor] = node
+                parent[neighbor] = site
                 counter += 1
-                on_link(node, neighbor)
+                on_link(site, neighbor)
                 stack.append((neighbor, iter(adjacency[neighbor])))
                 descended = True
                 break
             if descended:
                 continue
             stack.pop()
-            up = parent[node]
+            up = parent[site]
             if up is not None:
-                low[up] = min(low[up], low[node])
-                on_finish(node, up, low[node], disc[up])
+                low[up] = min(low[up], low[site])
+                on_finish(site, up, low[site], disc[up])
 
 def bridge_links(adjacency: dict[str, list[tuple[str, float]]]) -> set[tuple[str, str]]:
     found: set[tuple[str, str]] = set()
 
-    def record(node: str, up: str, low_node: int, disc_up: int) -> None:
-        if low_node > disc_up:
-            found.add(link_key(up, node))
+    def record(site: str, up: str, low_site: int, disc_up: int) -> None:
+        if low_site > disc_up:
+            found.add(link_key(up, site))
 
     _lowlink_dfs(adjacency, lambda _u, _v: None, record)
     return found
@@ -155,10 +155,10 @@ def bridge_links(adjacency: dict[str, list[tuple[str, float]]]) -> set[tuple[str
 def bridgeless_components(adjacency: dict[str, list[tuple[str, float]]]) -> dict[str, int]:
     cut = bridge_links(adjacency)
     surviving = {
-        link_key(node, neighbor)
-        for node, neighbors in adjacency.items()
+        link_key(site, neighbor)
+        for site, neighbors in adjacency.items()
         for neighbor, _weight in neighbors
-        if link_key(node, neighbor) not in cut
+        if link_key(site, neighbor) not in cut
     }
     components = connected_components(set(adjacency), surviving)
     return {
@@ -184,17 +184,17 @@ def biconnected_block_membership(
     link_stack: list[tuple[str, str]] = []
     blocks: list[set[str]] = []
 
-    def push(node: str, neighbor: str) -> None:
-        link_stack.append(link_key(node, neighbor))
+    def push(site: str, neighbor: str) -> None:
+        link_stack.append(link_key(site, neighbor))
 
-    def close(node: str, up: str, low_node: int, disc_up: int) -> None:
-        if low_node >= disc_up:
-            _record_block(link_stack, link_key(up, node), blocks)
+    def close(site: str, up: str, low_site: int, disc_up: int) -> None:
+        if low_site >= disc_up:
+            _record_block(link_stack, link_key(up, site), blocks)
 
     _lowlink_dfs(adjacency, push, close)
     return {
-        node: frozenset(index for index, block in enumerate(blocks) if node in block)
-        for node in adjacency
+        site: frozenset(index for index, block in enumerate(blocks) if site in block)
+        for site in adjacency
     }
 
 def survives_any_one_link_loss(site_ids: set[str], links: set[tuple[str, str]]) -> bool:

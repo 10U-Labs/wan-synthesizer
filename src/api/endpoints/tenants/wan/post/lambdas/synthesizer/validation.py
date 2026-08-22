@@ -20,11 +20,11 @@ from synthesizer.graphs import (
 )
 
 
-def node_mesh_target(node: str, targets: MeshRequirements) -> int:
+def node_mesh_target(site: str, targets: MeshRequirements) -> int:
     ceilings = targets.ceilings
-    if ceilings is None or node not in ceilings:
+    if ceilings is None or site not in ceilings:
         return targets.number_of_diverse_paths
-    return min(targets.number_of_diverse_paths, ceilings[node])
+    return min(targets.number_of_diverse_paths, ceilings[site])
 
 
 def backbone_mesh_deficient(
@@ -98,25 +98,25 @@ def backbone_mesh_survives_any_one_link_loss(synthesis: Synthesis) -> bool:
 def backbone_mesh_survives_any_one_site_loss(synthesis: Synthesis) -> bool:
     return _backbone_mesh_survives(synthesis, survives_any_one_site_loss)
 
-def failure_cities_per_path(path_uses: list[SynthesisPath], node: str) -> list[frozenset[str]]:
-    return [cities for _peer, cities in paths_out_of(path_uses, node)]
+def failure_cities_per_path(path_uses: list[SynthesisPath], site: str) -> list[frozenset[str]]:
+    return [cities for _peer, cities in paths_out_of(path_uses, site)]
 
 
 def paths_out_of(
-    path_uses: list[SynthesisPath], node: str
+    path_uses: list[SynthesisPath], site: str
 ) -> list[tuple[str, frozenset[str]]]:
     return [
         (
-            use.target if use.source == node else use.source,
-            frozenset(use.path) - {node},
+            use.target if use.source == site else use.source,
+            frozenset(use.path) - {site},
         )
         for use in path_uses
-        if use.purpose == "backbone_mesh" and node in (use.source, use.target)
+        if use.purpose == "backbone_mesh" and site in (use.source, use.target)
     ]
 
 
-def mesh_link_failure_cities(synthesis: Synthesis, node: str) -> list[frozenset[str]]:
-    return failure_cities_per_path(synthesis.path_uses, node)
+def mesh_link_failure_cities(synthesis: Synthesis, site: str) -> list[frozenset[str]]:
+    return failure_cities_per_path(synthesis.path_uses, site)
 
 
 def _all_disjoint(links: tuple[tuple[str, frozenset[str]], ...]) -> bool:
@@ -129,8 +129,8 @@ def _all_disjoint(links: tuple[tuple[str, frozenset[str]], ...]) -> bool:
     return True
 
 
-def diverse_path_count(path_uses: list[SynthesisPath], node: str) -> int:
-    links = paths_out_of(path_uses, node)
+def diverse_path_count(path_uses: list[SynthesisPath], site: str) -> int:
+    links = paths_out_of(path_uses, site)
     for size in range(len(links), 0, -1):
         if any(_all_disjoint(combo) for combo in combinations(links, size)):
             return size
@@ -149,7 +149,7 @@ def backbone_mesh_independence_deficient(
             "independent_degree": degree,
         }
         for backbone_id, degree in sorted(
-            (node, diverse_path_count(synthesis.path_uses, node)) for node in synthesis.backbone_ids
+            (site, diverse_path_count(synthesis.path_uses, site)) for site in synthesis.backbone_ids
         )
         if degree < node_mesh_target(backbone_id, targets)
         and backbone_id not in targets.degree_exempt
@@ -164,9 +164,9 @@ def _ceilings_where(
     if ceilings is None:
         return []
     return [
-        (node, ceilings[node])
-        for node in sorted(backbone_ids)
-        if node in ceilings and keep(ceilings[node])
+        (site, ceilings[site])
+        for site in sorted(backbone_ids)
+        if site in ceilings and keep(ceilings[site])
     ]
 
 
@@ -177,8 +177,8 @@ def _ceiling_rows(
     keep: Callable[[int], bool],
 ) -> list[dict[str, object]]:
     return [
-        {"id": node, "name": sites_by_id[node].name, "ceiling": ceiling}
-        for node, ceiling in _ceilings_where(backbone_ids, ceilings, keep)
+        {"id": site, "name": sites_by_id[site].name, "ceiling": ceiling}
+        for site, ceiling in _ceilings_where(backbone_ids, ceilings, keep)
     ]
 
 
@@ -206,22 +206,22 @@ def ceiling_limited_nodes(
     )
 
 
-def node_mesh_links(synthesis: Synthesis, node: str) -> list[SynthesisPath]:
+def node_mesh_links(synthesis: Synthesis, site: str) -> list[SynthesisPath]:
     return [
         use
         for use in synthesis.path_uses
-        if use.purpose == "backbone_mesh" and node in (use.source, use.target)
+        if use.purpose == "backbone_mesh" and site in (use.source, use.target)
     ]
 
 
-def unrequested_mesh_links(synthesis: Synthesis, node: str) -> list[dict[str, object]]:
+def unrequested_mesh_links(synthesis: Synthesis, site: str) -> list[dict[str, object]]:
     unrequested: list[dict[str, object]] = [
         {
-            "peer": use.target if use.source == node else use.source,
+            "peer": use.target if use.source == site else use.source,
             "reason": "peer_target" if use.reason == LINK_FOR_TARGET else use.reason,
         }
-        for use in node_mesh_links(synthesis, node)
-        if not (use.reason == LINK_FOR_TARGET and node in use.requested_by)
+        for use in node_mesh_links(synthesis, site)
+        if not (use.reason == LINK_FOR_TARGET and site in use.requested_by)
     ]
     return sorted(unrequested, key=lambda item: (str(item["peer"]), str(item["reason"])))
 
@@ -233,17 +233,17 @@ def above_target_nodes(
 ) -> list[dict[str, object]]:
     asked_for = targets.number_of_diverse_paths
     rows: list[dict[str, object]] = []
-    for node in sorted(synthesis.backbone_ids):
-        links = node_mesh_links(synthesis, node)
+    for site in sorted(synthesis.backbone_ids):
+        links = node_mesh_links(synthesis, site)
         if len(links) <= asked_for:
             continue
         rows.append({
-            "id": node,
-            "name": sites_by_id[node].name,
+            "id": site,
+            "name": sites_by_id[site].name,
             "target": asked_for,
             "link_count": len(links),
-            "diverse_path_count": diverse_path_count(synthesis.path_uses, node),
-            "unrequested_links": unrequested_mesh_links(synthesis, node),
+            "diverse_path_count": diverse_path_count(synthesis.path_uses, site),
+            "unrequested_links": unrequested_mesh_links(synthesis, site),
         })
     return rows
 

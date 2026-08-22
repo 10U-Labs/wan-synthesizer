@@ -57,17 +57,17 @@ def settled(status: dict[str, Any]) -> bool:
     return status.get("status") not in UNFINISHED
 
 
-def site_from_node(node: dict[str, Any]) -> Site:
-    latitude, longitude = node["coords"]
-    return Site(node["id"], node["name"], node["kind"], (latitude, longitude))
+def site_from_row(row: dict[str, Any]) -> Site:
+    latitude, longitude = row["coords"]
+    return Site(row["id"], row["name"], row["kind"], (latitude, longitude))
 
 
 def worst_haul(synthesis: dict[str, Any]) -> float:
-    nodes = [site_from_node(node) for node in synthesis["backbone"]]
+    backbone_sites = [site_from_row(row) for row in synthesis["backbone"]]
     hauls: list[float] = [
-        min(haversine_miles(site_from_node(site), node) for node in nodes)
-        for site in synthesis["demand"]
-        if not site["exempt_from_distance_constraint"]
+        min(haversine_miles(site_from_row(row), site) for site in backbone_sites)
+        for row in synthesis["demand"]
+        if not row["exempt_from_distance_constraint"]
     ]
     return round(max(hauls, default=0.0), 1)
 
@@ -111,7 +111,7 @@ def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
     for link in synthesis["links"]:
         pair = tuple(sorted((link["source_id"], link["target_id"])))
         drawn.setdefault(pair, []).append(link)
-    names = {node["id"]: node["name"] for node in synthesis["backbone"]}
+    names = {row["id"]: row["name"] for row in synthesis["backbone"]}
     asked = synthesis["number_of_diverse_paths"]
     overbuilt: list[tuple[str, int]] = []
     for pair, paths in sorted(drawn.items()):
@@ -180,7 +180,7 @@ def _cities_the_paths_cross(links: list[dict[str, Any]]) -> dict[str, set[str]]:
 
 
 def removable_paths(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
-    names = {node["id"]: node["name"] for node in synthesis["backbone"]}
+    names = {row["id"]: row["name"] for row in synthesis["backbone"]}
     sites = list(names)
     asked = synthesis["number_of_diverse_paths"]
     pinned = {
@@ -220,9 +220,9 @@ def _published_fiber(synthesis: dict[str, Any]) -> dict[str, dict[str, float]]:
 
 def backbone_groups(synthesis: dict[str, Any]) -> list[list[str]]:
     fiber = _published_fiber(synthesis)
-    joined: dict[str, set[str]] = {node["id"]: set() for node in synthesis["backbone"]}
+    joined: dict[str, set[str]] = {row["id"]: set() for row in synthesis["backbone"]}
     joined |= {city: set(neighbors) for city, neighbors in fiber.items()}
-    unplaced = {node["id"] for node in synthesis["backbone"]}
+    unplaced = {row["id"] for row in synthesis["backbone"]}
     groups: list[list[str]] = []
     while unplaced:
         reached = _reached(joined, min(unplaced))
