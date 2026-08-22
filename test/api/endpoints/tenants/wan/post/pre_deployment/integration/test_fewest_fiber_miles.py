@@ -104,24 +104,24 @@ def test_a_site_whose_ways_out_are_split_between_carriers_is_floored_at_what_it_
     )
 
 
-SELLABLE_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
-    fixtures.SELLABLE_WAYS_SITES,
-    fixtures.SELLABLE_WAYS_SEGMENTS,
+OFFERED_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
+    fixtures.OFFERED_WAYS_SITES,
+    fixtures.OFFERED_WAYS_SEGMENTS,
     _ASKED_FOR,
-    fixtures.SELLABLE_WAYS_TRANSIT,
+    fixtures.OFFERED_WAYS_TRANSIT,
 )
 
 
 def _fiber_the_selection_holds() -> frozenset[tuple[str, str]]:
     return select_fiber(FiberInputs(
-        fixtures.SELLABLE_WAYS_SITES, fixtures.SELLABLE_WAYS_LINKS,
-        _ASKED_FOR, len(fixtures.SELLABLE_WAYS_SITES),
-        adjacency_by_carrier(fixtures.SELLABLE_WAYS_LINKS),
+        fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_LINKS,
+        _ASKED_FOR, len(fixtures.OFFERED_WAYS_SITES),
+        adjacency_by_carrier(fixtures.OFFERED_WAYS_LINKS),
     )).segments
 
 
 def test_the_delivered_synthesis_orders_only_fiber_selected_for_it() -> None:
-    assert set(SELLABLE_ARTIFACTS.synthesis.fiber_segment_keys) <= _fiber_the_selection_holds()
+    assert set(OFFERED_ARTIFACTS.synthesis.fiber_segment_keys) <= _fiber_the_selection_holds()
 
 
 SHORT_AND_LONG_ARTIFACTS = fixtures.synthesis_over_segments(

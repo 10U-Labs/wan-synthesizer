@@ -9,10 +9,10 @@ from test_published_syntheses import (
     FIBER,
     backbone_groups,
     cut_cities,
+    offered_ways_out,
     ordered_fiber_miles,
     overbuilt_pairs,
     removable_paths,
-    sellable_ways_out,
     worst_haul,
 )
 
@@ -305,17 +305,17 @@ def _overstated_ceilings(syntheses: list[dict[str, Any]]) -> dict[str, list[str]
             city = str(entry["name"])
             if city not in reached:
                 continue
-            sellable = sellable_ways_out(
+            offered = offered_ways_out(
                 held, city, frozenset(cities - {city}), per_peer
             )
-            if int(entry["ceiling"]) > sellable:
+            if int(entry["ceiling"]) > offered:
                 found.setdefault(synthesis["tenant"], []).append(
-                    f"{city} at {entry['ceiling']} against {sellable}"
+                    f"{city} at {entry['ceiling']} against {offered}"
                 )
     return found
 
 
-def test_no_published_networks_ceiling_is_higher_than_the_paths_its_carriers_can_sell(
+def test_no_published_networks_ceiling_is_higher_than_the_paths_its_carriers_can_offer(
         delivered_syntheses: list[dict[str, Any]]) -> None:
     assert not _overstated_ceilings(delivered_syntheses)
 

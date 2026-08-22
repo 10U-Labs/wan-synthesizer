@@ -148,7 +148,7 @@ _TWIN_SPLIT_SELECTION = _selected(_TWIN_SPLIT, ("a", "b"), seat_cap=2)
 _TWIN_SPLIT_ASKED_ONE = _selected(_TWIN_SPLIT, ("a", "b"), seat_cap=2, ways_out=1)
 
 
-def test_a_site_is_owed_only_the_ways_out_one_carrier_can_sell() -> None:
+def test_a_site_is_owed_only_the_ways_out_one_carrier_can_offer() -> None:
     assert _owed(_TWIN_SPLIT, ("a", "b"), "a", seat_cap=2) == 1
 
 
@@ -179,13 +179,13 @@ def test_the_segment_the_first_answer_missed_is_selected_once_it_is_written_down
     assert ("c", "d") in _TRIANGLES_SELECTION.segments
 
 
-_SELLABLE = frozenset({("a", "r"), ("b", "r")})
+_OFFERED = frozenset({("a", "r"), ("b", "r")})
 
 
-def test_the_fiber_selected_is_fiber_one_carrier_can_sell_a_whole_path_over() -> None:
+def test_the_fiber_selected_is_fiber_one_carrier_can_offer_a_whole_path_over() -> None:
     assert _selected(
-        fixtures.SELLABLE_WAYS_LINKS, fixtures.SELLABLE_WAYS_SITES, seat_cap=2
-    ).segments == _SELLABLE
+        fixtures.OFFERED_WAYS_LINKS, fixtures.OFFERED_WAYS_SITES, seat_cap=2
+    ).segments == _OFFERED
 
 
 _DISTANT_PEER_SITES = ("hil", "sea", "syd")

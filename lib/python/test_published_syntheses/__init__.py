@@ -285,14 +285,14 @@ def _walk_to_a_peer(
     return None
 
 
-def _sellable_over(
+def _offered_over(
     joined: dict[str, set[str]], city: str, peers: frozenset[str], per_peer: int
 ) -> int:
     left = _capacity(joined, city, peers, per_peer)
     source = _LEAVING + city
     if source not in left:
         return 0
-    sold = 0
+    offered = 0
     came = _walk_to_a_peer(left, source)
     while came is not None:
         head = _SINK
@@ -301,12 +301,12 @@ def _sellable_over(
             left[tail][head] -= 1
             left[head][tail] += 1
             head = tail
-        sold += 1
+        offered += 1
         came = _walk_to_a_peer(left, source)
-    return sold
+    return offered
 
 
-def sellable_ways_out(
+def offered_ways_out(
     fiber_by_carrier: dict[str, set[frozenset[str]]],
     city: str,
     peers: frozenset[str],
@@ -314,7 +314,7 @@ def sellable_ways_out(
 ) -> int:
     return min(
         sum(
-            _sellable_over(_joined_by(pairs), city, peers, per_peer)
+            _offered_over(_joined_by(pairs), city, peers, per_peer)
             for pairs in fiber_by_carrier.values()
         ),
         len(peers) * per_peer,
