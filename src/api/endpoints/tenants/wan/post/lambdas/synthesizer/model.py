@@ -42,7 +42,7 @@ class Synthesis:
     transit_ids: tuple[str, ...]
     access_paths: list[AccessPath]
     fiber_segment_keys: set[tuple[str, str]]
-    path_uses: list[SynthesisPath]
+    drawn_paths: list[SynthesisPath]
     metrics: SynthesisMetrics
 
 @dataclass(frozen=True)

@@ -71,16 +71,16 @@ def _express() -> SynthesisArtifacts:
 def _cities_crossed(artifacts: SynthesisArtifacts) -> set[str]:
     return {
         city
-        for use in artifacts.synthesis.path_uses
-        if use.purpose == "backbone_mesh"
-        for city in use.path
+        for drawn_path in artifacts.synthesis.drawn_paths
+        if drawn_path.purpose == "backbone_mesh"
+        for city in drawn_path.path
     }
 
 
 def _mesh_miles(artifacts: SynthesisArtifacts) -> float:
     return sum(
-        use.distance_miles for use in artifacts.synthesis.path_uses
-        if use.purpose == "backbone_mesh"
+        drawn_path.distance_miles for drawn_path in artifacts.synthesis.drawn_paths
+        if drawn_path.purpose == "backbone_mesh"
     )
 
 

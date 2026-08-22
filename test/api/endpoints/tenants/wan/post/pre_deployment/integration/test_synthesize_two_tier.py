@@ -158,7 +158,7 @@ def test_the_chorded_ring_names_the_spur_whose_target_it_lowered() -> None:
 
 def test_a_chorded_node_ends_above_the_number_because_a_peer_asked() -> None:
     assert max(
-        diverse_path_count(CHORDED.synthesis.path_uses, site) for site in _CHORDED_BACKBONE
+        diverse_path_count(CHORDED.synthesis.drawn_paths, site) for site in _CHORDED_BACKBONE
     ) > 3
 
 
@@ -182,7 +182,7 @@ def test_no_chorded_node_finishes_below_what_its_own_fiber_allows() -> None:
     assert [
         site
         for site in _CHORDED_BACKBONE
-        if diverse_path_count(CHORDED.synthesis.path_uses, site) < min(3, capped.get(site, 3))
+        if diverse_path_count(CHORDED.synthesis.drawn_paths, site) < min(3, capped.get(site, 3))
     ] == []
 
 

@@ -37,7 +37,7 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         "sites": [{"id": "P", "tier_role": "backbone"}],
         "access_paths": [],
         "fiber_segments": [],
-        "path_uses": [{"purpose": "backbone_mesh", "source_name": "P", "target_name": "Q"}],
+        "drawn_paths": [{"purpose": "backbone_mesh", "source_name": "P", "target_name": "Q"}],
     }
     monkeypatch.setattr(module, "load_merged_carriers", lambda *_a: (graph, {}))
     monkeypatch.setattr(module, "load_sites", lambda _p: [])

@@ -94,21 +94,21 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
             }
             for left, right in sorted_fiber_segments(synthesis)
         ],
-        "path_uses": [
+        "drawn_paths": [
             {
-                "purpose": path_use.purpose,
-                "source_id": path_use.source,
-                "source_name": sites_by_id[path_use.source].name,
-                "target_id": path_use.target,
-                "target_name": sites_by_id[path_use.target].name,
-                "distance_miles": round(path_use.distance_miles, 3),
-                "carrier": path_use.carrier,
-                "path": [sites_by_id[site_id].name for site_id in path_use.path],
-                "reason": path_use.reason,
+                "purpose": drawn_path.purpose,
+                "source_id": drawn_path.source,
+                "source_name": sites_by_id[drawn_path.source].name,
+                "target_id": drawn_path.target,
+                "target_name": sites_by_id[drawn_path.target].name,
+                "distance_miles": round(drawn_path.distance_miles, 3),
+                "carrier": drawn_path.carrier,
+                "path": [sites_by_id[site_id].name for site_id in drawn_path.path],
+                "reason": drawn_path.reason,
                 "requested_by": [
-                    sites_by_id[site_id].name for site_id in path_use.requested_by
+                    sites_by_id[site_id].name for site_id in drawn_path.requested_by
                 ],
             }
-            for path_use in synthesis.path_uses
+            for drawn_path in synthesis.drawn_paths
         ],
     }

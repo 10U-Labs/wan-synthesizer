@@ -29,7 +29,7 @@ def make_synthesis(
         transit_ids=transit_ids,
         access_paths=access_paths or [],
         fiber_segment_keys={link_key(a, b) for a, b in physical_pairs},
-        path_uses=[],
+        drawn_paths=[],
         metrics=SynthesisMetrics(0.0, 0.0, 0.0),
     )
 
@@ -99,29 +99,29 @@ def test_diverse_path_count_counts_every_city_disjoint_link(degree: int) -> None
     synthesis = meshed_synthesis(
         [("a", f"x{peer}", peer) for peer in peers], ("a", *peers)
     )
-    assert diverse_path_count(synthesis.path_uses, "a") == degree
+    assert diverse_path_count(synthesis.drawn_paths, "a") == degree
 
 
 def test_diverse_path_count_counts_links_sharing_a_transit_city_once() -> None:
-    assert diverse_path_count(_SHARED_EGRESS.path_uses, "a") == 1
+    assert diverse_path_count(_SHARED_EGRESS.drawn_paths, "a") == 1
 
 
 def test_diverse_path_count_counts_a_diverse_pair_as_two() -> None:
-    assert diverse_path_count(_DIVERSE_EGRESS.path_uses, "a") == 2
+    assert diverse_path_count(_DIVERSE_EGRESS.drawn_paths, "a") == 2
 
 
 def test_diverse_path_count_of_a_node_with_no_links_is_zero() -> None:
-    assert diverse_path_count(meshed_synthesis([], ("a",)).path_uses, "a") == 0
+    assert diverse_path_count(meshed_synthesis([], ("a",)).drawn_paths, "a") == 0
 
 
 def test_diverse_path_count_counts_two_paths_to_the_only_peer_as_two() -> None:
     synthesis = meshed_synthesis([("a", "x", "b"), ("a", "y", "b")], ("a", "b"))
-    assert diverse_path_count(synthesis.path_uses, "a") == 2
+    assert diverse_path_count(synthesis.drawn_paths, "a") == 2
 
 
 def test_diverse_path_count_counts_a_link_crossing_a_peer_with_that_peers_link_once() -> None:
     synthesis = meshed_synthesis([("a", "b"), ("a", "b", "c")], ("a", "b", "c"))
-    assert diverse_path_count(synthesis.path_uses, "a") == 1
+    assert diverse_path_count(synthesis.drawn_paths, "a") == 1
 
 
 _MESH_DEGREES = {"a": 1, "b": 2, "c": 2, "d": 2}

@@ -23,7 +23,7 @@ def test_the_delivered_synthesis_orders_the_four_hundred_miles_the_ring_costs() 
 
 
 def test_the_delivered_synthesis_draws_one_path_a_pair_round_the_ring() -> None:
-    assert sum(use.distance_miles for use in _MESH) == 400.0
+    assert sum(drawn_path.distance_miles for drawn_path in _MESH) == 400.0
 
 
 def test_the_delivered_synthesis_publishes_the_floor_it_is_judged_against() -> None:

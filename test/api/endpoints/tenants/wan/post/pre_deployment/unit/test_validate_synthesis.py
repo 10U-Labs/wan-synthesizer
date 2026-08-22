@@ -28,7 +28,7 @@ def build_synthesis(
         transit_ids=transit_ids,
         access_paths=access_paths,
         fiber_segment_keys={link_key(left, right) for left, right in physical_pairs},
-        path_uses=[],
+        drawn_paths=[],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
 
@@ -98,7 +98,7 @@ def _mesh_synthesis(backbone_ids: tuple[str, ...], pairs: list[tuple[str, str]])
         transit_ids=(),
         access_paths=[],
         fiber_segment_keys={link_key(left, right) for left, right in pairs},
-        path_uses=[
+        drawn_paths=[
             SynthesisPath("backbone_mesh", left, right, (left, right), 1.0) for left, right in pairs
         ],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
@@ -232,13 +232,13 @@ def test_bridged_backbone_is_not_survives_any_one_link_loss() -> None:
     assert report["backbone_mesh_survives_any_one_link_loss"] is False
 
 
-def _drawn_synthesis(backbone_ids: tuple[str, ...], path_uses: list[SynthesisPath]) -> Synthesis:
+def _drawn_synthesis(backbone_ids: tuple[str, ...], drawn_paths: list[SynthesisPath]) -> Synthesis:
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
         access_paths=[],
         fiber_segment_keys=set(),
-        path_uses=path_uses,
+        drawn_paths=drawn_paths,
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
 

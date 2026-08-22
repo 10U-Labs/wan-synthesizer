@@ -23,7 +23,7 @@ from synthesizer.search_plan import _SearchPlan
 @dataclass
 class _SynthesisDraft:
     access_paths: list[AccessPath]
-    path_uses: list[SynthesisPath]
+    drawn_paths: list[SynthesisPath]
     backbone_lower_bound_miles: float = 0.0
 
 
@@ -33,22 +33,22 @@ def finalize_synthesis(
     fiber_segments: dict[tuple[str, str], FiberSegment],
 ) -> Synthesis:
     fiber_segment_keys: set[tuple[str, str]] = set()
-    for path_use in draft.path_uses:
-        fiber_segment_keys.update(path_link_keys(path_use.path))
+    for drawn_path in draft.drawn_paths:
+        fiber_segment_keys.update(path_link_keys(drawn_path.path))
 
     access_miles = sum(link.distance_miles for link in draft.access_paths)
     physical_miles = sum(
         fiber_segments[key].distance_miles for key in fiber_segment_keys
     )
     score = access_miles + physical_miles
-    carrier_on_paths = {site_id for use in draft.path_uses for site_id in use.path}
+    carrier_on_paths = {site_id for drawn_path in draft.drawn_paths for site_id in drawn_path.path}
     transit_ids = tuple(sorted(carrier_on_paths - set(backbone_ids)))
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=transit_ids,
         access_paths=draft.access_paths,
         fiber_segment_keys=fiber_segment_keys,
-        path_uses=draft.path_uses,
+        drawn_paths=draft.drawn_paths,
         metrics=SynthesisMetrics(
             score, access_miles, physical_miles, draft.backbone_lower_bound_miles
         ),

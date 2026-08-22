@@ -70,16 +70,16 @@ def demand_without_backbone_redundancy(synthesis: Synthesis, homes: int) -> list
 
 def backbone_mesh_pairs(synthesis: Synthesis) -> set[tuple[str, str]]:
     return {
-        link_key(use.source, use.target)
-        for use in synthesis.path_uses
-        if use.purpose == "backbone_mesh"
+        link_key(drawn_path.source, drawn_path.target)
+        for drawn_path in synthesis.drawn_paths
+        if drawn_path.purpose == "backbone_mesh"
     }
 
 def backbone_mesh_fiber_segments(synthesis: Synthesis) -> set[tuple[str, str]]:
     segments: set[tuple[str, str]] = set()
-    for use in synthesis.path_uses:
-        if use.purpose == "backbone_mesh":
-            segments |= path_link_keys(use.path)
+    for drawn_path in synthesis.drawn_paths:
+        if drawn_path.purpose == "backbone_mesh":
+            segments |= path_link_keys(drawn_path.path)
     return segments
 
 def _backbone_mesh_survives(
@@ -98,25 +98,25 @@ def backbone_mesh_survives_any_one_link_loss(synthesis: Synthesis) -> bool:
 def backbone_mesh_survives_any_one_site_loss(synthesis: Synthesis) -> bool:
     return _backbone_mesh_survives(synthesis, survives_any_one_site_loss)
 
-def failure_cities_per_path(path_uses: list[SynthesisPath], site: str) -> list[frozenset[str]]:
-    return [cities for _peer, cities in paths_out_of(path_uses, site)]
+def failure_cities_per_path(drawn_paths: list[SynthesisPath], site: str) -> list[frozenset[str]]:
+    return [cities for _peer, cities in paths_out_of(drawn_paths, site)]
 
 
 def paths_out_of(
-    path_uses: list[SynthesisPath], site: str
+    drawn_paths: list[SynthesisPath], site: str
 ) -> list[tuple[str, frozenset[str]]]:
     return [
         (
-            use.target if use.source == site else use.source,
-            frozenset(use.path) - {site},
+            drawn_path.target if drawn_path.source == site else drawn_path.source,
+            frozenset(drawn_path.path) - {site},
         )
-        for use in path_uses
-        if use.purpose == "backbone_mesh" and site in (use.source, use.target)
+        for drawn_path in drawn_paths
+        if drawn_path.purpose == "backbone_mesh" and site in (drawn_path.source, drawn_path.target)
     ]
 
 
 def mesh_link_failure_cities(synthesis: Synthesis, site: str) -> list[frozenset[str]]:
-    return failure_cities_per_path(synthesis.path_uses, site)
+    return failure_cities_per_path(synthesis.drawn_paths, site)
 
 
 def _all_disjoint(links: tuple[tuple[str, frozenset[str]], ...]) -> bool:
@@ -129,8 +129,8 @@ def _all_disjoint(links: tuple[tuple[str, frozenset[str]], ...]) -> bool:
     return True
 
 
-def diverse_path_count(path_uses: list[SynthesisPath], site: str) -> int:
-    links = paths_out_of(path_uses, site)
+def diverse_path_count(drawn_paths: list[SynthesisPath], site: str) -> int:
+    links = paths_out_of(drawn_paths, site)
     for size in range(len(links), 0, -1):
         if any(_all_disjoint(combo) for combo in combinations(links, size)):
             return size
@@ -149,7 +149,8 @@ def backbone_mesh_independence_deficient(
             "independent_degree": degree,
         }
         for backbone_id, degree in sorted(
-            (site, diverse_path_count(synthesis.path_uses, site)) for site in synthesis.backbone_ids
+            (site, diverse_path_count(synthesis.drawn_paths, site))
+            for site in synthesis.backbone_ids
         )
         if degree < node_mesh_target(backbone_id, targets)
         and backbone_id not in targets.degree_exempt
@@ -208,20 +209,20 @@ def ceiling_limited_nodes(
 
 def node_mesh_links(synthesis: Synthesis, site: str) -> list[SynthesisPath]:
     return [
-        use
-        for use in synthesis.path_uses
-        if use.purpose == "backbone_mesh" and site in (use.source, use.target)
+        drawn_path
+        for drawn_path in synthesis.drawn_paths
+        if drawn_path.purpose == "backbone_mesh" and site in (drawn_path.source, drawn_path.target)
     ]
 
 
 def unrequested_mesh_links(synthesis: Synthesis, site: str) -> list[dict[str, object]]:
     unrequested: list[dict[str, object]] = [
         {
-            "peer": use.target if use.source == site else use.source,
-            "reason": "peer_target" if use.reason == LINK_FOR_TARGET else use.reason,
+            "peer": drawn_path.target if drawn_path.source == site else drawn_path.source,
+            "reason": "peer_target" if drawn_path.reason == LINK_FOR_TARGET else drawn_path.reason,
         }
-        for use in node_mesh_links(synthesis, site)
-        if not (use.reason == LINK_FOR_TARGET and site in use.requested_by)
+        for drawn_path in node_mesh_links(synthesis, site)
+        if not (drawn_path.reason == LINK_FOR_TARGET and site in drawn_path.requested_by)
     ]
     return sorted(unrequested, key=lambda item: (str(item["peer"]), str(item["reason"])))
 
@@ -242,7 +243,7 @@ def above_target_nodes(
             "name": sites_by_id[site].name,
             "target": asked_for,
             "link_count": len(links),
-            "diverse_path_count": diverse_path_count(synthesis.path_uses, site),
+            "diverse_path_count": diverse_path_count(synthesis.drawn_paths, site),
             "unrequested_links": unrequested_mesh_links(synthesis, site),
         })
     return rows

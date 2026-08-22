@@ -11,8 +11,8 @@ _MESH = fixtures.mesh_paths(ARTIFACTS)
 
 def _paths_per_pair() -> dict[tuple[str, str], int]:
     drawn: dict[tuple[str, str], int] = {}
-    for use in _MESH:
-        pair = link_key(use.source, use.target)
+    for drawn_path in _MESH:
+        pair = link_key(drawn_path.source, drawn_path.target)
         drawn[pair] = drawn.get(pair, 0) + 1
     return drawn
 
@@ -30,7 +30,7 @@ def test_the_synthesis_joins_each_site_to_the_two_peers_it_reaches() -> None:
 
 
 def test_the_synthesis_orders_the_fewest_fiber_miles_its_requirements_allow() -> None:
-    assert sum(use.distance_miles for use in _MESH) == 1600.0
+    assert sum(drawn_path.distance_miles for drawn_path in _MESH) == 1600.0
 
 
 def test_every_site_still_holds_the_paths_its_tenant_asked_for() -> None:

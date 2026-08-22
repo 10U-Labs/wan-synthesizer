@@ -102,7 +102,7 @@ def _synthesis_over_every_segment(
         transit_ids=(),
         access_paths=[],
         fiber_segment_keys=set(fiber_segments),
-        path_uses=[],
+        drawn_paths=[],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
 

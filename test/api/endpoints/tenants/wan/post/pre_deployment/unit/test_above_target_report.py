@@ -35,7 +35,7 @@ def _above_target(*extra: SynthesisPath) -> list[dict[str, object]]:
         transit_ids=(),
         access_paths=[],
         fiber_segment_keys=set(),
-        path_uses=[*_ASKED_FOR, *extra],
+        drawn_paths=[*_ASKED_FOR, *extra],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
     report = validate_synthesis(

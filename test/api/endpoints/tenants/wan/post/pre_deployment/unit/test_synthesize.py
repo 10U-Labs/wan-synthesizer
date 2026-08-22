@@ -183,7 +183,7 @@ def _synthesis(
         transit_ids=(),
         access_paths=[],
         fiber_segment_keys=fiber_segment_keys,
-        path_uses=[],
+        drawn_paths=[],
         metrics=SynthesisMetrics(0.0, 0.0, 0.0),
     )
 

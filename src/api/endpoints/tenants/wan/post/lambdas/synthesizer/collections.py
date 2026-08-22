@@ -28,7 +28,11 @@ def paths(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def backbone_links(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    return [use for use in payload["path_uses"] if use["purpose"] == "backbone_mesh"]
+    return [
+        drawn_path
+        for drawn_path in payload["drawn_paths"]
+        if drawn_path["purpose"] == "backbone_mesh"
+    ]
 
 
 def _tier(payload: dict[str, Any], tier_role: str) -> list[dict[str, Any]]:

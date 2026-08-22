@@ -57,23 +57,23 @@ def _asking(asked_for: int = 2) -> BackboneConstraints:
 
 
 def _pairs(mesh: BackboneMesh) -> set[tuple[str, str]]:
-    return {link_key(use.source, use.target) for use in mesh.paths}
+    return {link_key(drawn_path.source, drawn_path.target) for drawn_path in mesh.paths}
 
 
 def _mesh_miles(mesh: BackboneMesh) -> float:
-    return sum(use.distance_miles for use in mesh.paths)
+    return sum(drawn_path.distance_miles for drawn_path in mesh.paths)
 
 
 def _cut(mesh: BackboneMesh) -> set[str]:
-    segments = {key for use in mesh.paths for key in path_link_keys(use.path)}
+    segments = {key for drawn_path in mesh.paths for key in path_link_keys(drawn_path.path)}
     return articulation_points({city for pair in segments for city in pair}, segments)
 
 
 def _joining(mesh: BackboneMesh, left: str, right: str) -> SynthesisPath:
     return next(
-        use
-        for use in mesh.paths
-        if link_key(use.source, use.target) == link_key(left, right)
+        drawn_path
+        for drawn_path in mesh.paths
+        if link_key(drawn_path.source, drawn_path.target) == link_key(left, right)
     )
 
 
@@ -94,7 +94,9 @@ def test_the_square_is_drawn_with_one_path_a_pair_round_the_ring() -> None:
 
 def test_the_square_selects_neither_of_the_chords() -> None:
     assert _SQUARE_LINKS.keys() - {
-        link_key(*pair) for use in _SQUARE.paths for pair in zip(use.path, use.path[1:])
+        link_key(*pair)
+        for drawn_path in _SQUARE.paths
+        for pair in zip(drawn_path.path, drawn_path.path[1:])
     } == {link_key("w", "y"), link_key("x", "z")}
 
 
@@ -111,7 +113,7 @@ def test_the_square_runs_no_further_than_twice_the_floor() -> None:
 
 
 def test_every_path_the_square_draws_says_a_site_reached_for_it() -> None:
-    assert {use.reason for use in _SQUARE.paths} == {LINK_FOR_TARGET}
+    assert {drawn_path.reason for drawn_path in _SQUARE.paths} == {LINK_FOR_TARGET}
 
 
 def test_a_path_names_both_of_the_sites_that_reached_for_it() -> None:
@@ -133,12 +135,14 @@ _EGRESS = _drawn(_EGRESS_SITES, _EGRESS_LINKS, BackboneConstraints(
 
 
 def test_the_longer_way_round_a_shared_city_is_the_one_drawn() -> None:
-    assert ("hub", "n", "q") in {use.path for use in _EGRESS.paths}
+    assert ("hub", "n", "q") in {drawn_path.path for drawn_path in _EGRESS.paths}
 
 
 def test_the_shorter_way_round_that_shared_city_is_not_selected_at_all() -> None:
     assert link_key("m", "q") not in {
-        link_key(*pair) for use in _EGRESS.paths for pair in zip(use.path, use.path[1:])
+        link_key(*pair)
+        for drawn_path in _EGRESS.paths
+        for pair in zip(drawn_path.path, drawn_path.path[1:])
     }
 
 
@@ -178,23 +182,23 @@ def test_a_city_every_drawn_path_crosses_is_given_a_way_round_it() -> None:
 
 def test_the_path_drawn_round_that_city_is_one_company_can_offer() -> None:
     assert [
-        use.carrier
-        for use in _TWO_LOBES.paths
-        if link_key("b", "w") in path_link_keys(use.path)
+        drawn_path.carrier
+        for drawn_path in _TWO_LOBES.paths
+        if link_key("b", "w") in path_link_keys(drawn_path.path)
     ] == ["zayo"]
 
 
 def test_a_city_no_fiber_goes_round_still_leaves_every_seat_its_paths() -> None:
     assert {
-        end for use in _BOWTIE.paths for end in (use.source, use.target)
+        end for drawn_path in _BOWTIE.paths for end in (drawn_path.source, drawn_path.target)
     } == set(_LOBE_SITES)
 
 
 def test_a_tenant_that_asked_for_one_way_out_is_not_given_a_way_round_anything() -> None:
     assert [
-        use.path
-        for use in _ONE_WAY_OUT_LOBES.paths
-        if link_key("b", "w") in path_link_keys(use.path)
+        drawn_path.path
+        for drawn_path in _ONE_WAY_OUT_LOBES.paths
+        if link_key("b", "w") in path_link_keys(drawn_path.path)
     ] == []
 
 
@@ -205,7 +209,7 @@ _OFFERED_MESH = _drawn(
 
 
 def _run_over(mesh: BackboneMesh) -> set[tuple[str, str]]:
-    return {key for use in mesh.paths for key in path_link_keys(use.path)}
+    return {key for drawn_path in mesh.paths for key in path_link_keys(drawn_path.path)}
 
 
 def test_a_site_is_drawn_over_fiber_one_carrier_could_offer_it() -> None:
@@ -336,16 +340,16 @@ _PIN_WY = BackboneConstraints(
 
 def test_a_pin_no_carrier_can_join_draws_no_path() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _SPLIT_SQUARE, _PIN_WY)
-    assert not [use for use in mesh.paths if use.reason == LINK_FOR_PIN]
+    assert not [drawn_path for drawn_path in mesh.paths if drawn_path.reason == LINK_FOR_PIN]
 
 
 def test_a_pin_one_carrier_can_join_is_drawn_over_that_carriers_fiber() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _WHOLE_SQUARE, _PIN_WY)
-    assert [use.path for use in mesh.paths if use.reason == LINK_FOR_PIN] == [
+    assert [drawn_path.path for drawn_path in mesh.paths if drawn_path.reason == LINK_FOR_PIN] == [
         ("w", "x", "y"),
     ]
 
 
 def test_a_drawn_path_names_the_carrier_it_is_ordered_from() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _WHOLE_SQUARE, _PIN_WY)
-    assert all(use.carrier in ("lumen", "zayo") for use in mesh.paths)
+    assert all(drawn_path.carrier in ("lumen", "zayo") for drawn_path in mesh.paths)
