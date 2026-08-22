@@ -30,7 +30,7 @@ def _carriers_at(site: str) -> set[str]:
     return {use.carrier for use in _paths_at(site)}
 
 
-def test_every_drawn_path_is_one_carriers_to_sell() -> None:
+def test_every_drawn_path_is_one_carriers_to_offer() -> None:
     assert all(carriers_along(use.path, ARTIFACTS.fiber_segments) for use in _MESH)
 
 

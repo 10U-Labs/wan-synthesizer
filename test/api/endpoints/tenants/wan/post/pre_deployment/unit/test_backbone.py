@@ -176,7 +176,7 @@ def test_a_city_every_drawn_path_crosses_is_given_a_way_round_it() -> None:
     assert _cut(_TWO_LOBES) == set()
 
 
-def test_the_path_drawn_round_that_city_is_one_company_can_sell() -> None:
+def test_the_path_drawn_round_that_city_is_one_company_can_offer() -> None:
     assert [
         use.carrier
         for use in _TWO_LOBES.paths
@@ -198,9 +198,9 @@ def test_a_tenant_that_asked_for_one_way_out_is_not_given_a_way_round_anything()
     ] == []
 
 
-_SELLABLE_TERMS = BackboneConstraints(number_of_diverse_paths=2, seat_cap=2)
-_SELLABLE_MESH = _drawn(
-    fixtures.SELLABLE_WAYS_SITES, fixtures.SELLABLE_WAYS_LINKS, _SELLABLE_TERMS
+_OFFERED_TERMS = BackboneConstraints(number_of_diverse_paths=2, seat_cap=2)
+_OFFERED_MESH = _drawn(
+    fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_LINKS, _OFFERED_TERMS
 )
 
 
@@ -208,9 +208,9 @@ def _run_over(mesh: BackboneMesh) -> set[tuple[str, str]]:
     return {key for use in mesh.paths for key in path_link_keys(use.path)}
 
 
-def test_a_site_is_drawn_over_fiber_one_carrier_could_sell_it() -> None:
-    assert _run_over(_SELLABLE_MESH) <= _selected(
-        fixtures.SELLABLE_WAYS_LINKS, fixtures.SELLABLE_WAYS_SITES, _SELLABLE_TERMS
+def test_a_site_is_drawn_over_fiber_one_carrier_could_offer_it() -> None:
+    assert _run_over(_OFFERED_MESH) <= _selected(
+        fixtures.OFFERED_WAYS_LINKS, fixtures.OFFERED_WAYS_SITES, _OFFERED_TERMS
     )
 
 

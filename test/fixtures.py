@@ -648,9 +648,9 @@ MANY_PASS_TRANSIT = ("a", "b", "e", "f", "g", "h", "i")
 MANY_PASS_MILES = 159.0
 
 
-SELLABLE_WAYS_SITES = ("a", "b")
-SELLABLE_WAYS_TRANSIT = ("p", "q", "r")
-SELLABLE_WAYS_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
+OFFERED_WAYS_SITES = ("a", "b")
+OFFERED_WAYS_TRANSIT = ("p", "q", "r")
+OFFERED_WAYS_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
     ("a", "p"): (1.0, ("zayo",)),
     ("b", "p"): (1.0, ("lumen",)),
     ("a", "q"): (1.0, ("zayo",)),
@@ -658,7 +658,7 @@ SELLABLE_WAYS_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
     ("a", "r"): (2.5, ("lumen",)),
     ("b", "r"): (2.5, ("lumen",)),
 }
-SELLABLE_WAYS_LINKS = carrier_fiber_segments(SELLABLE_WAYS_SEGMENTS)
+OFFERED_WAYS_LINKS = carrier_fiber_segments(OFFERED_WAYS_SEGMENTS)
 
 SHORT_AND_LONG_SITES = ("s", "t", "u")
 SHORT_AND_LONG_TRANSIT = ("far", "near")

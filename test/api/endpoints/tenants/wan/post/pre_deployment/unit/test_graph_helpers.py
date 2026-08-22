@@ -240,7 +240,7 @@ def test_adjacency_by_carrier_splits_fiber_naming_nobody_into_nothing() -> None:
     assert adjacency_by_carrier({link_key("c", "d"): FiberSegment("c", "d", 1.0)}) == {}
 
 
-def test_carriers_along_names_who_can_sell_a_whole_path() -> None:
+def test_carriers_along_names_who_can_offer_a_whole_path() -> None:
     assert carriers_along(("a", "b"), _OWNED_FIBER) == frozenset({"lumen"})
 
 

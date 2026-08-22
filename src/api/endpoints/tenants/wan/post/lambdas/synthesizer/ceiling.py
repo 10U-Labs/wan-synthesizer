@@ -264,15 +264,15 @@ def _kept_with_their_carriers(
     by_carrier: dict[str, list[tuple[str, ...]]],
     per_peer: int,
 ) -> list[tuple[str, tuple[str, ...]]]:
-    seller: dict[tuple[str, ...], str] = {}
+    offered_by: dict[tuple[str, ...], str] = {}
     for carrier, paths in sorted(by_carrier.items()):
         for path in paths:
-            seller.setdefault(path, carrier)
+            offered_by.setdefault(path, carrier)
     if not inputs.fiber_by_carrier:
         return [("", path) for path in by_carrier[""]]
     found = [path for _carrier, paths in sorted(by_carrier.items()) for path in paths]
     return [
-        (seller[path], path)
+        (offered_by[path], path)
         for path in _no_city_twice(site, found, inputs, per_peer)
     ]
 
