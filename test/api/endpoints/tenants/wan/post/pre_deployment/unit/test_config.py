@@ -44,11 +44,6 @@ def test_default_max_backbone_count_is_none() -> None:
     assert default_config().params.max_backbone_count is None
 
 
-def test_default_site_files() -> None:
-    lumen = ("Lumen", Path("data/pops/lumen.csv"))
-    assert lumen in default_config().input_files.site_files
-
-
 def test_default_regional_links() -> None:
     assert default_config().input_files.regional_link_paths == (
         Path("data/fiber_segments/terrestrial/dcn.csv"),
@@ -295,36 +290,10 @@ def test_a_dial_left_in_the_tuning_section_is_not_read() -> None:
     assert _config({"tuning": {"compass_octants": 6}}).params.tuning.compass_sector_count == 8
 
 
-def test_reads_sites_mapping() -> None:
-    sites = {"Lumen": "lumen.csv", "F-35": "f_35.csv"}
-    assert _config({"inputs": {"sites": sites}}).input_files.site_files == (
-        ("F-35", Path("f_35.csv")),
-        ("Lumen", Path("lumen.csv")),
-    )
-
-
-def test_reads_sites_list_of_paths() -> None:
-    sites = {"Providers": ["region_a.csv", "region_b.csv"]}
-    assert _config({"inputs": {"sites": sites}}).input_files.site_files == (
-        ("Providers", Path("region_a.csv")),
-        ("Providers", Path("region_b.csv")),
-    )
-
-
 def test_reads_carrier_fiber_segments_path() -> None:
     assert _config(
         {"inputs": {"carrier_fiber_segments": "fiber.csv"}}
     ).input_files.link_path == Path("fiber.csv")
-
-
-def test_rejects_non_string_path_in_list() -> None:
-    with pytest.raises(ValueError):
-        _config({"inputs": {"sites": {"Providers": ["region_a.csv", 3]}}})
-
-
-def test_rejects_non_mapping_sites() -> None:
-    with pytest.raises(ValueError):
-        _config({"inputs": {"sites": "single.csv"}})
 
 
 def test_rejects_non_list_regional_links() -> None:

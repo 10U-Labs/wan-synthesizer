@@ -14,13 +14,6 @@ from synthesizer.model import (
     Tuning,
 )
 
-DEFAULT_SITES = {
-    "DCN": "data/pops/dcn.csv",
-    "F-35": "data/tenants/f_35.csv",
-    "Lumen": "data/pops/lumen.csv",
-    "Providers": "data/providers/providers.csv",
-    "VisionNet": "data/pops/vision_net.csv",
-}
 DEFAULT_CARRIER_FIBER_SEGMENTS = "data/fiber_segments/terrestrial/lumen.csv"
 DEFAULT_REGIONAL_LINKS = [
     "data/fiber_segments/terrestrial/dcn.csv",
@@ -90,29 +83,10 @@ def _operator_links(synthesis: dict[str, Any]) -> OperatorLinks:
     )
 
 
-def _site_paths(tenant: object, value: object) -> list[tuple[str, Path]]:
-    items = value if isinstance(value, list) else [value]
-    pairs: list[tuple[str, Path]] = []
-    for path in items:
-        if not isinstance(tenant, str) or not isinstance(path, str):
-            raise ValueError("config key 'sites' must map tenant to a path or list of paths")
-        pairs.append((tenant, Path(path)))
-    return pairs
-
-
-def _site_files(inputs: dict[str, Any]) -> tuple[tuple[str, Path], ...]:
-    value = inputs.get("sites", DEFAULT_SITES)
-    if not isinstance(value, dict):
-        raise ValueError("config key 'sites' must be a mapping of tenant to path")
-    pairs = [pair for tenant, paths in value.items() for pair in _site_paths(tenant, paths)]
-    return tuple(sorted(pairs))
-
-
 def _input_files(inputs: dict[str, Any]) -> InputFiles:
     regional_links = _str_list(inputs, "regional_links", DEFAULT_REGIONAL_LINKS)
     off_net = inputs.get("off_net")
     return InputFiles(
-        site_files=_site_files(inputs),
         link_path=Path(str(inputs.get("carrier_fiber_segments", DEFAULT_CARRIER_FIBER_SEGMENTS))),
         regional_link_paths=tuple(Path(item) for item in regional_links),
         off_net_path=Path(str(off_net)) if off_net is not None else None,
