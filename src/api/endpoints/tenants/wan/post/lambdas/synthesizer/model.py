@@ -138,7 +138,6 @@ class ValidationReport(TypedDict):
 
 @dataclass(frozen=True)
 class InputFiles:
-    site_files: tuple[tuple[str, Path], ...]
     link_path: Path
     regional_link_paths: tuple[Path, ...] = ()
     off_net_path: Path | None = None
