@@ -21,9 +21,9 @@ def test_the_miles_ordered_are_the_carrier_fiber_the_network_runs_over() -> None
     assert ordered_fiber_miles({"paths": _ORDERED}) == 360.75
 
 
-def test_a_network_whose_links_are_all_homings_ordered_no_fiber() -> None:
+def test_a_network_whose_paths_are_all_homings_ordered_no_fiber() -> None:
     assert ordered_fiber_miles({"paths": _ORDERED[2:]}) == 0
 
 
-def test_a_network_carrying_no_links_ordered_no_fiber() -> None:
+def test_a_network_carrying_no_paths_ordered_no_fiber() -> None:
     assert ordered_fiber_miles({"paths": []}) == 0

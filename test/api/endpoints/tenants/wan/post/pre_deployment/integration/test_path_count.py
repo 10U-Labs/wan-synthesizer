@@ -5,7 +5,7 @@ from typing import cast
 
 import fixtures
 from synthesizer.backbone import _needed
-from synthesizer.model import LINK_FOR_TARGET
+from synthesizer.model import PATH_FOR_TARGET
 from synthesizer.validation import backbone_mesh_pairs
 
 _SITES = tuple(f"S{index}" for index in range(6))
@@ -30,7 +30,7 @@ def test_every_site_still_holds_the_paths_its_tenant_asked_for() -> None:
 
 
 def test_every_path_in_the_synthesis_answers_a_sites_own_requirement() -> None:
-    assert {drawn_path.reason for drawn_path in _MESH} == {LINK_FOR_TARGET}
+    assert {drawn_path.reason for drawn_path in _MESH} == {PATH_FOR_TARGET}
 
 
 def test_no_path_in_the_synthesis_could_be_taken_back_out() -> None:
@@ -45,7 +45,7 @@ def test_no_site_is_reported_above_the_number_with_nothing_to_blame() -> None:
 def test_every_path_past_the_number_names_the_peer_that_reached_for_it() -> None:
     above = ARTIFACTS.validation["backbone_diverse_paths_above_target"]
     assert {
-        str(link["reason"])
+        str(unrequested["reason"])
         for entry in above
-        for link in cast(list[dict[str, object]], entry["unrequested_links"])
+        for unrequested in cast(list[dict[str, object]], entry["unrequested_links"])
     } <= {"peer_target"}

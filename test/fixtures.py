@@ -4,7 +4,7 @@ import dataclasses
 from pathlib import Path
 
 from synthesizer.codec import OFF_NET_KIND, PROVIDER_KIND, SITE_KIND
-from synthesizer.input_graph import FiberSegment, Site, SiteInfo, link_key
+from synthesizer.input_graph import FiberSegment, Site, SiteInfo, segment_key
 from synthesizer.model import (
     KIND_ROADM,
     Synthesis,
@@ -12,8 +12,8 @@ from synthesizer.model import (
     SynthesisInputs,
     SynthesisMetrics,
     SynthesisParams,
-    ForcedLinks,
-    OperatorLinks,
+    ForcedPaths,
+    OperatorPaths,
     SynthesisPath,
     RoleExclusions,
     SourceFiles,
@@ -22,7 +22,7 @@ from synthesizer.model import (
 from synthesizer.graphs import (
     biconnected_block_membership,
     build_adjacency,
-    path_link_keys,
+    path_segment_keys,
 )
 from synthesizer.search_plan import _SearchPlan
 from synthesizer.synthesize import all_pairs_shortest, synthesize_two_tier
@@ -39,7 +39,7 @@ RING_COORDS = {
     "P5": (39.5, -99.0),
 }
 SPUR_COORDS = {"P6": (37.0, -100.0)}
-RING_LINK_PAIRS = [
+RING_SEGMENT_PAIRS = [
     ("P0", "P1"),
     ("P1", "P2"),
     ("P2", "P3"),
@@ -91,11 +91,11 @@ def ring_sites() -> list[Site]:
 
 
 def ring_fiber_segments(distance: float = 100.0) -> dict[tuple[str, str], FiberSegment]:
-    links: dict[tuple[str, str], FiberSegment] = {}
-    for left, right in RING_LINK_PAIRS:
-        key = link_key(left, right)
-        links[key] = FiberSegment(source=key[0], target=key[1], distance_miles=distance)
-    return links
+    fiber: dict[tuple[str, str], FiberSegment] = {}
+    for left, right in RING_SEGMENT_PAIRS:
+        key = segment_key(left, right)
+        fiber[key] = FiberSegment(source=key[0], target=key[1], distance_miles=distance)
+    return fiber
 
 
 SHARED_TRANSIT_BACKBONE = ("a", "b", "c")
@@ -110,7 +110,7 @@ def meshed_backbone_synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
         access_paths=[],
-        fiber_segment_keys={key for path in paths for key in path_link_keys(path)},
+        fiber_segment_keys={key for path in paths for key in path_segment_keys(path)},
         drawn_paths=[
             SynthesisPath("backbone_mesh", path[0], path[-1], path, 1.0) for path in paths
         ],
@@ -129,7 +129,7 @@ def split_backbone_synthesis() -> Synthesis:
         transit_ids=(),
         access_paths=[],
         fiber_segment_keys={
-            link_key(left, right) for left, right in SPLIT_BACKBONE_SEGMENTS
+            segment_key(left, right) for left, right in SPLIT_BACKBONE_SEGMENTS
         },
         drawn_paths=[],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
@@ -151,34 +151,34 @@ def carrier_pops_by_id(site_ids: str) -> dict[str, Site]:
 def fiber_segments_from(
     pairs: dict[tuple[str, str], float],
 ) -> dict[tuple[str, str], FiberSegment]:
-    links: dict[tuple[str, str], FiberSegment] = {}
+    fiber: dict[tuple[str, str], FiberSegment] = {}
     for (left, right), dist in pairs.items():
-        key = link_key(left, right)
-        links[key] = FiberSegment(source=key[0], target=key[1], distance_miles=dist)
-    return links
+        key = segment_key(left, right)
+        fiber[key] = FiberSegment(source=key[0], target=key[1], distance_miles=dist)
+    return fiber
 
 
 def fiber_segments_under_water(
     pairs: dict[tuple[str, str], float], under_water: set[tuple[str, str]]
 ) -> dict[tuple[str, str], FiberSegment]:
-    keys = {link_key(left, right) for left, right in under_water}
+    keys = {segment_key(left, right) for left, right in under_water}
     return {
-        key: dataclasses.replace(link, submarine=key in keys)
-        for key, link in fiber_segments_from(pairs).items()
+        key: dataclasses.replace(segment, submarine=key in keys)
+        for key, segment in fiber_segments_from(pairs).items()
     }
 
 
 def carrier_fiber_segments(
     pairs: dict[tuple[str, str], tuple[float, tuple[str, ...]]],
 ) -> dict[tuple[str, str], FiberSegment]:
-    links: dict[tuple[str, str], FiberSegment] = {}
+    fiber: dict[tuple[str, str], FiberSegment] = {}
     for (left, right), (dist, carriers) in pairs.items():
-        key = link_key(left, right)
-        links[key] = FiberSegment(
+        key = segment_key(left, right)
+        fiber[key] = FiberSegment(
             source=key[0], target=key[1], distance_miles=dist,
             carriers=frozenset(carriers),
         )
-    return links
+    return fiber
 
 
 def ring_params() -> SynthesisParams:
@@ -274,28 +274,28 @@ def synthesis_over_fiber(
 
 
 def ring_artifacts() -> SynthesisArtifacts:
-    sites, links = _ring_inputs()
-    synthesis = synthesize_two_tier(sites, links, ring_params())
-    return SynthesisArtifacts(sites, links, synthesis, validate_synthesis(sites, synthesis))
+    sites, fiber = _ring_inputs()
+    synthesis = synthesize_two_tier(sites, fiber, ring_params())
+    return SynthesisArtifacts(sites, fiber, synthesis, validate_synthesis(sites, synthesis))
 
 
 def ring_inputs_with_roadm(roadm_id: str) -> RingInputs:
-    sites, links = _ring_inputs()
+    sites, fiber = _ring_inputs()
     sites = [
         dataclasses.replace(site, kind=KIND_ROADM) if site.id == roadm_id else site
         for site in sites
     ]
-    return sites, links
+    return sites, fiber
 
 
 def _forced_artifacts(
     params: SynthesisParams,
     inputs: RingInputs | None = None,
-    links: OperatorLinks = OperatorLinks(),
+    paths: OperatorPaths = OperatorPaths(),
 ) -> SynthesisArtifacts:
     sites, fiber_segments = inputs if inputs is not None else _ring_inputs()
     sites, fiber_segments, overrides = apply_role_overrides(
-        sites, fiber_segments, params, links
+        sites, fiber_segments, params, paths
     )
     synthesis = synthesize_two_tier(sites, fiber_segments, params, overrides)
     sites, fiber_segments, synthesis, validation = finalize(
@@ -331,14 +331,14 @@ def prohibited_backbone_artifacts(name: str) -> SynthesisArtifacts:
 
 
 def ring_inputs_with_demand(access_id: str, at_pop: str) -> RingInputs:
-    sites, links = _ring_inputs()
-    return [*sites, access_site(access_id, *RING_COORDS[at_pop])], links
+    sites, fiber = _ring_inputs()
+    return [*sites, access_site(access_id, *RING_COORDS[at_pop])], fiber
 
 
-def forced_link_artifacts(
-    params: SynthesisParams, links: OperatorLinks, inputs: RingInputs | None = None
+def forced_path_artifacts(
+    params: SynthesisParams, paths: OperatorPaths, inputs: RingInputs | None = None
 ) -> SynthesisArtifacts:
-    return _forced_artifacts(params, inputs, links)
+    return _forced_artifacts(params, inputs, paths)
 
 
 _HUB_CORNERS = ("hub_b0", "hub_b1", "hub_b2", "hub_b3")
@@ -365,37 +365,37 @@ def convergence_hub_artifacts(
     max_backbone_count: int | None = None,
     promote_convergences: bool = True,
 ) -> SynthesisArtifacts:
-    sites, links = convergence_hub_inputs()
+    sites, fiber = convergence_hub_inputs()
     params = SynthesisParams(
         min_backbone_count=2,
         max_backbone_count=max_backbone_count,
         forced_backbone_names=_HUB_CORNERS,
         promote_high_degree_convergences=promote_convergences,
     )
-    sites, links, overrides = apply_role_overrides(sites, links, params)
-    synthesis = synthesize_two_tier(sites, links, params, overrides)
-    return SynthesisArtifacts(sites, links, synthesis, validate_synthesis(sites, synthesis))
+    sites, fiber, overrides = apply_role_overrides(sites, fiber, params)
+    synthesis = synthesize_two_tier(sites, fiber, params, overrides)
+    return SynthesisArtifacts(sites, fiber, synthesis, validate_synthesis(sites, synthesis))
 
 
 def sample_sources() -> SourceFiles:
-    return SourceFiles((Path("sites/lumen.csv"),), Path("links.csv"))
+    return SourceFiles((Path("sites/lumen.csv"),), Path("fiber_segments.csv"))
 
 
-def synthesis_inputs_from_links(
-    link_ids: list[str],
-    links: dict[tuple[str, str], FiberSegment],
+def synthesis_inputs_from_fiber(
+    site_ids: list[str],
+    fiber_segments: dict[tuple[str, str], FiberSegment],
     eligible: set[str],
     access_sites: list[Site] | None = None,
     coords: dict[str, tuple[float, float]] | None = None,
 ) -> SynthesisInputs:
     places = coords or {}
-    pops = [carrier_pop(site_id, *places.get(site_id, (0.0, 0.0))) for site_id in link_ids]
-    adjacency = build_adjacency(links)
+    pops = [carrier_pop(site_id, *places.get(site_id, (0.0, 0.0))) for site_id in site_ids]
+    adjacency = build_adjacency(fiber_segments)
     distances, predecessors = all_pairs_shortest(pops, adjacency)
     return SynthesisInputs(
         access_sites=access_sites if access_sites is not None else [],
         carrier_pops=pops,
-        fiber_segments=links,
+        fiber_segments=fiber_segments,
         eligible_backbone_ids=eligible,
         adjacency=adjacency,
         all_distances=distances,
@@ -407,22 +407,22 @@ def synthesis_inputs_from_links(
 def search_plan(
     candidates: list[str],
     strength: dict[str, float] | None = None,
-    access_backbone_links: int = 2,
-    forced_links: ForcedLinks | None = None,
+    access_homing_degree: int = 2,
+    forced_paths: ForcedPaths | None = None,
 ) -> _SearchPlan:
     strength_by_id = strength if strength is not None else {name: 1.0 for name in candidates}
     return _SearchPlan(
         candidates,
         strength_by_id,
-        tuning=Tuning(access_backbone_links=access_backbone_links),
-        forced_links=forced_links or ForcedLinks(),
+        tuning=Tuning(access_homing_degree=access_homing_degree),
+        forced_paths=forced_paths or ForcedPaths(),
     )
 
 
 TRIANGLE = fiber_segments_from({("a", "b"): 1.0, ("b", "c"): 1.0, ("a", "c"): 1.0})
 
 
-FUNNEL_LINKS = fiber_segments_from({
+FUNNEL_FIBER = fiber_segments_from({
     ("funnel", "east_a"): 40.0,
     ("funnel", "east_b"): 45.0,
     ("funnel", "east_c"): 50.0,
@@ -480,7 +480,7 @@ def funnel_transit_names() -> tuple[str, ...]:
     return tuple(sorted(set(FUNNEL_COORDS) - FUNNEL_ELIGIBLE))
 
 
-CROSSING_LINKS = fiber_segments_from({
+CROSSING_FIBER = fiber_segments_from({
     ("sea", "pdx"): 10.0,
     ("pdx", "hil"): 10.0,
     ("pdx", "eug"): 10.0,
@@ -488,7 +488,7 @@ CROSSING_LINKS = fiber_segments_from({
     ("tok", "hil"): 1000.0,
     ("tok", "eug"): 1000.0,
 })
-CROSSING_SUBMARINE_LINKS = fiber_segments_under_water(
+CROSSING_SUBMARINE_FIBER = fiber_segments_under_water(
     {
         ("sea", "pdx"): 10.0,
         ("pdx", "hil"): 10.0,
@@ -523,7 +523,7 @@ SHARED_HUB_SEGMENTS = {
     ("b", "h1"): 100.0, ("b", "h2"): 800.0, ("b", "h3"): 200.0,
     ("c", "h1"): 100.0, ("c", "h2"): 200.0, ("c", "h3"): 300.0,
 }
-SHARED_HUB_PEER_LINKS = fiber_segments_from({
+SHARED_HUB_PEER_FIBER = fiber_segments_from({
     **SHARED_HUB_SEGMENTS,
     ("b", "d1"): 100.0, ("d1", "d"): 300.0,
     ("c", "d2"): 100.0, ("d2", "d"): 300.0,
@@ -546,7 +546,7 @@ def shared_hub_peer_transit_names() -> tuple[str, ...]:
 def shared_hub_peer_artifacts(asked_for: int = 2) -> SynthesisArtifacts:
     return run_synthesis(
         shared_hub_peer_sites(),
-        SHARED_HUB_PEER_LINKS,
+        SHARED_HUB_PEER_FIBER,
         SynthesisParams(
             min_backbone_count=len(SHARED_HUB_PEER_SITES),
             max_backbone_count=len(SHARED_HUB_PEER_SITES),
@@ -560,7 +560,7 @@ def shared_hub_peer_artifacts(asked_for: int = 2) -> SynthesisArtifacts:
     )
 
 
-DISTANT_PEER_LINKS = fiber_segments_from({
+DISTANT_PEER_FIBER = fiber_segments_from({
     ("sea", "pdx"): 10.0,
     ("pdx", "hil"): 10.0,
     ("sea", "tok"): 1000.0,
@@ -590,7 +590,7 @@ def distant_peer_transit_names() -> tuple[str, ...]:
     return tuple(sorted(set(DISTANT_PEER_COORDS) - DISTANT_PEER_ELIGIBLE))
 
 
-EXPRESS_LINKS = fiber_segments_from({
+EXPRESS_FIBER = fiber_segments_from({
     ("sea", "pdx"): 1.0,
     ("pdx", "hil"): 1.0,
     ("hil", "alb"): 1.0,
@@ -622,12 +622,12 @@ def express_transit_names() -> tuple[str, ...]:
 
 
 def funnel_inputs() -> SynthesisInputs:
-    return synthesis_inputs_from_links(
-        FUNNEL_IDS, FUNNEL_LINKS, set(FUNNEL_ELIGIBLE), coords=FUNNEL_COORDS
+    return synthesis_inputs_from_fiber(
+        FUNNEL_IDS, FUNNEL_FIBER, set(FUNNEL_ELIGIBLE), coords=FUNNEL_COORDS
     )
 
 
-TWO_POCKET_LINKS = fiber_segments_from(
+TWO_POCKET_FIBER = fiber_segments_from(
     {
         ("a", "b"): 1.0, ("b", "c"): 1.0, ("a", "c"): 1.0, ("c", "d"): 1.0,
         ("d", "e"): 1.0, ("e", "f"): 1.0, ("d", "f"): 1.0,
@@ -662,7 +662,7 @@ OFFERED_WAYS_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
     ("a", "r"): (2.5, ("lumen",)),
     ("b", "r"): (2.5, ("lumen",)),
 }
-OFFERED_WAYS_LINKS = carrier_fiber_segments(OFFERED_WAYS_SEGMENTS)
+OFFERED_WAYS_FIBER = carrier_fiber_segments(OFFERED_WAYS_SEGMENTS)
 
 SHORT_AND_LONG_SITES = ("s", "t", "u")
 SHORT_AND_LONG_TRANSIT = ("far", "near")
@@ -672,17 +672,17 @@ SHORT_AND_LONG_SEGMENTS = {
     ("s", "near"): 100.0, ("near", "u"): 100.0,
     ("s", "far"): 1000.0, ("far", "u"): 1000.0,
 }
-SHORT_AND_LONG_LINKS = fiber_segments_from(SHORT_AND_LONG_SEGMENTS)
+SHORT_AND_LONG_FIBER = fiber_segments_from(SHORT_AND_LONG_SEGMENTS)
 ONLY_LONG_SEGMENTS = {
     ("s", "t"): 10.0,
     ("t", "u"): 10.0,
     ("s", "far"): 1000.0, ("far", "u"): 1000.0,
 }
-ONLY_LONG_LINKS = fiber_segments_from(ONLY_LONG_SEGMENTS)
+ONLY_LONG_FIBER = fiber_segments_from(ONLY_LONG_SEGMENTS)
 THE_LONG_WAY = frozenset({("far", "s"), ("far", "u")})
 
 NEAR_AND_FAR_SITES = ("a", "b", "far")
-NEAR_AND_FAR_LINKS = fiber_segments_from({
+NEAR_AND_FAR_FIBER = fiber_segments_from({
     ("a", "b"): 1.0,
     ("a", "q"): 2.0, ("b", "q"): 2.0,
     ("a", "far"): 100.0, ("b", "far"): 100.0,

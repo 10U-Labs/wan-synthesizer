@@ -75,13 +75,13 @@ def validate_pop_graph(
     adjacency: dict[str, list[tuple[str, float]]],
 ) -> None:
     pop_ids = {pop.id for pop in carrier_pops}
-    physical_site_ids = {site_id for link in fiber_segments for site_id in link}
+    physical_site_ids = {site_id for key in fiber_segments for site_id in key}
     if not pop_ids.issuperset(physical_site_ids):
-        raise ValueError("Physical link graph references unknown Carrier PoP IDs")
+        raise ValueError("The fiber segments reference unknown Carrier PoP IDs")
     missing_pops = sorted(pop_ids - set(adjacency))
     if missing_pops:
         names = ", ".join(site.name for site in carrier_pops if site.id in missing_pops)
-        raise ValueError(f"Carrier PoPs missing from physical link graph: {names}")
+        raise ValueError(f"Carrier PoPs with no fiber segment: {names}")
 
 
 def backbone_set_strength(backbone_ids: tuple[str, ...], plan: _SearchPlan) -> float:
@@ -135,7 +135,7 @@ def best_backbone_at_size(
         access_paths = evaluate_backbone(backbone_set, inputs, plan)
         if access_paths is None:
             continue
-        access_miles = sum(link.distance_miles for link in access_paths)
+        access_miles = sum(path.distance_miles for path in access_paths)
         key = (-strength, round(access_miles, 6))
         if best_key is None or key < best_key:
             best_set, best_key, best_strength = backbone_set, key, strength
@@ -235,15 +235,15 @@ def build_search_plan(
         key=lambda pop_id: (-strength_by_id[pop_id], pop_id),
     )
     required = (overrides.forced_backbone_ids & eligible_ids) | promoted_backbone_ids
-    forced_links = replace(
-        overrides.forced_links,
+    forced_paths = replace(
+        overrides.forced_paths,
         required_backbone=frozenset(required),
     )
     return _SearchPlan(
         backbone_candidates,
         strength_by_id,
         tuning=params.tuning,
-        forced_links=forced_links,
+        forced_paths=forced_paths,
         seat_cap=params.max_backbone_count,
     )
 

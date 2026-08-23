@@ -12,7 +12,7 @@ _SITES = [
     fixtures.access_site("east_site", 0.0, 7.5),
     fixtures.access_site("west_site", 0.0, -7.49),
 ]
-_LINKS = fixtures.fiber_segments_from({
+_FIBER = fixtures.fiber_segments_from({
     ("hub_a", "hub_b"): 1.0,
     ("cape", "hub_a"): 1.0, ("cape", "hub_b"): 1.0,
     ("plains", "hub_a"): 1.0, ("plains", "hub_b"): 1.0,
@@ -27,7 +27,7 @@ _PARAMS = SynthesisParams(
         backbone_coverage_target_miles=_TARGET_MILES,
     ),
 )
-ARTIFACTS = fixtures.run_synthesis(_SITES, _LINKS, _PARAMS)
+ARTIFACTS = fixtures.run_synthesis(_SITES, _FIBER, _PARAMS)
 
 
 def test_the_synthesis_seats_a_hub_for_each_of_the_two_far_sites() -> None:

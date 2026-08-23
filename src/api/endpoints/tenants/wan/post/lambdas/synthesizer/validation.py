@@ -3,9 +3,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from itertools import combinations
 
-from synthesizer.input_graph import Site, link_key
+from synthesizer.input_graph import Site, segment_key
 from synthesizer.model import (
-    LINK_FOR_TARGET,
+    PATH_FOR_TARGET,
     Synthesis,
     SynthesisPath,
     MeshRequirements,
@@ -14,9 +14,9 @@ from synthesizer.model import (
 from synthesizer.graphs import (
     articulation_points,
     connected_components,
-    survives_any_one_link_loss,
+    survives_any_one_segment_loss,
     survives_any_one_site_loss,
-    path_link_keys,
+    path_segment_keys,
 )
 
 
@@ -43,22 +43,25 @@ def backbone_mesh_deficient(
     ]
 
 
-def synthesis_link_keys(synthesis: Synthesis) -> set[tuple[str, str]]:
-    links = set(synthesis.fiber_segment_keys)
-    links.update(link_key(link.source, link.target) for link in synthesis.access_paths)
-    return links
+def synthesis_site_pairs(synthesis: Synthesis) -> set[tuple[str, str]]:
+    pairs = set(synthesis.fiber_segment_keys)
+    pairs.update(
+        segment_key(access_path.source, access_path.target)
+        for access_path in synthesis.access_paths
+    )
+    return pairs
 
 def included_site_ids(synthesis: Synthesis) -> set[str]:
     ids = set(synthesis.backbone_ids) | set(synthesis.transit_ids)
-    ids.update(site_id for link in synthesis.fiber_segment_keys for site_id in link)
-    ids.update(link.source for link in synthesis.access_paths)
-    ids.update(link.target for link in synthesis.access_paths)
+    ids.update(site_id for key in synthesis.fiber_segment_keys for site_id in key)
+    ids.update(access_path.source for access_path in synthesis.access_paths)
+    ids.update(access_path.target for access_path in synthesis.access_paths)
     return ids
 
 def demand_backbone_homes(synthesis: Synthesis) -> dict[str, set[str]]:
     homes: dict[str, set[str]] = {}
-    for link in synthesis.access_paths:
-        homes.setdefault(link.source, set()).add(link.target)
+    for access_path in synthesis.access_paths:
+        homes.setdefault(access_path.source, set()).add(access_path.target)
     return homes
 
 def demand_without_backbone_redundancy(synthesis: Synthesis, homes: int) -> list[str]:
@@ -70,7 +73,7 @@ def demand_without_backbone_redundancy(synthesis: Synthesis, homes: int) -> list
 
 def backbone_mesh_pairs(synthesis: Synthesis) -> set[tuple[str, str]]:
     return {
-        link_key(drawn_path.source, drawn_path.target)
+        segment_key(drawn_path.source, drawn_path.target)
         for drawn_path in synthesis.drawn_paths
         if drawn_path.purpose == "backbone_mesh"
     }
@@ -79,7 +82,7 @@ def backbone_mesh_fiber_segments(synthesis: Synthesis) -> set[tuple[str, str]]:
     segments: set[tuple[str, str]] = set()
     for drawn_path in synthesis.drawn_paths:
         if drawn_path.purpose == "backbone_mesh":
-            segments |= path_link_keys(drawn_path.path)
+            segments |= path_segment_keys(drawn_path.path)
     return segments
 
 def _backbone_mesh_survives(
@@ -93,7 +96,7 @@ def _backbone_mesh_survives(
     return is_resilient(sites, segments)
 
 def backbone_mesh_survives_any_one_link_loss(synthesis: Synthesis) -> bool:
-    return _backbone_mesh_survives(synthesis, survives_any_one_link_loss)
+    return _backbone_mesh_survives(synthesis, survives_any_one_segment_loss)
 
 def backbone_mesh_survives_any_one_site_loss(synthesis: Synthesis) -> bool:
     return _backbone_mesh_survives(synthesis, survives_any_one_site_loss)
@@ -115,12 +118,12 @@ def paths_out_of(
     ]
 
 
-def mesh_link_failure_cities(synthesis: Synthesis, site: str) -> list[frozenset[str]]:
+def mesh_path_failure_cities(synthesis: Synthesis, site: str) -> list[frozenset[str]]:
     return failure_cities_per_path(synthesis.drawn_paths, site)
 
 
-def _all_disjoint(links: tuple[tuple[str, frozenset[str]], ...]) -> bool:
-    for (near_peer, near), (far_peer, far) in combinations(links, 2):
+def _all_disjoint(paths: tuple[tuple[str, frozenset[str]], ...]) -> bool:
+    for (near_peer, near), (far_peer, far) in combinations(paths, 2):
         shared = near & far
         if near_peer == far_peer:
             shared -= {near_peer}
@@ -130,9 +133,9 @@ def _all_disjoint(links: tuple[tuple[str, frozenset[str]], ...]) -> bool:
 
 
 def diverse_path_count(drawn_paths: list[SynthesisPath], site: str) -> int:
-    links = paths_out_of(drawn_paths, site)
-    for size in range(len(links), 0, -1):
-        if any(_all_disjoint(combo) for combo in combinations(links, size)):
+    paths = paths_out_of(drawn_paths, site)
+    for size in range(len(paths), 0, -1):
+        if any(_all_disjoint(combo) for combo in combinations(paths, size)):
             return size
     return 0
 
@@ -207,7 +210,7 @@ def ceiling_limited_nodes(
     )
 
 
-def node_mesh_links(synthesis: Synthesis, site: str) -> list[SynthesisPath]:
+def mesh_paths_out_of(synthesis: Synthesis, site: str) -> list[SynthesisPath]:
     return [
         drawn_path
         for drawn_path in synthesis.drawn_paths
@@ -215,14 +218,14 @@ def node_mesh_links(synthesis: Synthesis, site: str) -> list[SynthesisPath]:
     ]
 
 
-def unrequested_mesh_links(synthesis: Synthesis, site: str) -> list[dict[str, object]]:
+def unrequested_mesh_paths(synthesis: Synthesis, site: str) -> list[dict[str, object]]:
     unrequested: list[dict[str, object]] = [
         {
             "peer": drawn_path.target if drawn_path.source == site else drawn_path.source,
-            "reason": "peer_target" if drawn_path.reason == LINK_FOR_TARGET else drawn_path.reason,
+            "reason": "peer_target" if drawn_path.reason == PATH_FOR_TARGET else drawn_path.reason,
         }
-        for drawn_path in node_mesh_links(synthesis, site)
-        if not (drawn_path.reason == LINK_FOR_TARGET and site in drawn_path.requested_by)
+        for drawn_path in mesh_paths_out_of(synthesis, site)
+        if not (drawn_path.reason == PATH_FOR_TARGET and site in drawn_path.requested_by)
     ]
     return sorted(unrequested, key=lambda item: (str(item["peer"]), str(item["reason"])))
 
@@ -235,25 +238,25 @@ def above_target_nodes(
     asked_for = targets.number_of_diverse_paths
     rows: list[dict[str, object]] = []
     for site in sorted(synthesis.backbone_ids):
-        links = node_mesh_links(synthesis, site)
-        if len(links) <= asked_for:
+        paths = mesh_paths_out_of(synthesis, site)
+        if len(paths) <= asked_for:
             continue
         rows.append({
             "id": site,
             "name": sites_by_id[site].name,
             "target": asked_for,
-            "link_count": len(links),
+            "link_count": len(paths),
             "diverse_path_count": diverse_path_count(synthesis.drawn_paths, site),
-            "unrequested_links": unrequested_mesh_links(synthesis, site),
+            "unrequested_links": unrequested_mesh_paths(synthesis, site),
         })
     return rows
 
 
 def neighbor_degrees(
-    ids: set[str], links: set[tuple[str, str]]
+    ids: set[str], site_pairs: set[tuple[str, str]]
 ) -> dict[str, int]:
     neighbors: dict[str, set[str]] = {site_id: set() for site_id in ids}
-    for left, right in links:
+    for left, right in site_pairs:
         if left in ids and right in ids:
             neighbors[left].add(right)
             neighbors[right].add(left)
@@ -265,23 +268,23 @@ def backbone_names_by_group(sites: list[Site], synthesis: Synthesis) -> list[lis
     return [
         [names[site_id] for site_id in group if site_id in seated]
         for group in connected_components(
-            included_site_ids(synthesis), synthesis_link_keys(synthesis)
+            included_site_ids(synthesis), synthesis_site_pairs(synthesis)
         )
     ]
 
 def validate_synthesis(
     sites: list[Site],
     synthesis: Synthesis,
-    access_backbone_links: int = 2,
+    access_homing_degree: int = 2,
     targets: MeshRequirements = MeshRequirements(),
 ) -> ValidationReport:
     sites_by_id = {site.id: site for site in sites}
     ids = included_site_ids(synthesis)
-    links = synthesis_link_keys(synthesis)
-    components = connected_components(ids, links)
-    degrees = neighbor_degrees(ids, links)
-    articulations = articulation_points(ids, links) if len(components) == 1 else set()
-    missing_redundancy = demand_without_backbone_redundancy(synthesis, access_backbone_links)
+    pairs = synthesis_site_pairs(synthesis)
+    components = connected_components(ids, pairs)
+    degrees = neighbor_degrees(ids, pairs)
+    articulations = articulation_points(ids, pairs) if len(components) == 1 else set()
+    missing_redundancy = demand_without_backbone_redundancy(synthesis, access_homing_degree)
     backbone_degrees = neighbor_degrees(set(synthesis.backbone_ids), backbone_mesh_pairs(synthesis))
     mesh_deficient = backbone_mesh_deficient(
         synthesis.backbone_ids, backbone_degrees, sites_by_id, targets

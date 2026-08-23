@@ -5,13 +5,13 @@ from dataclasses import dataclass
 from synthesizer.input_graph import (
     FiberSegment,
     Site,
-    link_key,
+    segment_key,
     haversine_miles,
 )
 from synthesizer.model import KIND_POP
 
-LOCAL_FIBER_LINKS = 3
-LOCAL_FIBER_MIN_LINKS = 2
+LOCAL_FIBER_HOMING_DEGREE = 3
+LOCAL_FIBER_MIN_HOMING_DEGREE = 2
 LOCAL_FIBER_RADIUS_MILES = 300.0
 
 
@@ -22,7 +22,7 @@ class LocalFiberTwinSettings:
 
 
 def nearest_carrier_pops(
-    site: Site, carrier_pops: list[Site], links: int, max_radius: float | None
+    site: Site, carrier_pops: list[Site], homing_degree: int, max_radius: float | None
 ) -> list[Site]:
     ranked = sorted(
         ((haversine_miles(site, pop), pop) for pop in carrier_pops),
@@ -30,7 +30,7 @@ def nearest_carrier_pops(
     )
     return [
         pop
-        for distance, pop in ranked[:links]
+        for distance, pop in ranked[:homing_degree]
         if max_radius is None or distance <= max_radius
     ]
 
@@ -51,9 +51,9 @@ def build_local_fiber_twin(
     settings: LocalFiberTwinSettings,
 ) -> tuple[Site, dict[tuple[str, str], FiberSegment]] | None:
     neighbors = nearest_carrier_pops(
-        site, carrier_pops, LOCAL_FIBER_LINKS, settings.max_radius
+        site, carrier_pops, LOCAL_FIBER_HOMING_DEGREE, settings.max_radius
     )
-    if len(neighbors) < LOCAL_FIBER_MIN_LINKS:
+    if len(neighbors) < LOCAL_FIBER_MIN_HOMING_DEGREE:
         return None
     twin = Site(
         id=twin_id,
@@ -62,13 +62,13 @@ def build_local_fiber_twin(
         coords=site.coords,
         info=site.info,
     )
-    links: dict[tuple[str, str], FiberSegment] = {}
+    fiber_segments: dict[tuple[str, str], FiberSegment] = {}
     for pop in neighbors:
-        key = link_key(twin.id, pop.id)
-        links[key] = FiberSegment(
+        key = segment_key(twin.id, pop.id)
+        fiber_segments[key] = FiberSegment(
             source=key[0],
             target=key[1],
             distance_miles=haversine_miles(twin, pop),
             note=settings.note,
         )
-    return twin, links
+    return twin, fiber_segments

@@ -5,7 +5,7 @@ from typing import Any
 
 import fixtures
 from synthesizer import collections as published
-from synthesizer.model import OperatorLinks, Tuning
+from synthesizer.model import OperatorPaths, Tuning
 from synthesizer.output import synthesis_payload
 
 _SEATED_RING = replace(
@@ -15,8 +15,8 @@ _SEATED_RING = replace(
 )
 _PAYLOAD = synthesis_payload(
     fixtures.sample_sources(),
-    fixtures.forced_link_artifacts(
-        _SEATED_RING, OperatorLinks(), fixtures.ring_inputs_with_demand("S1", "P0")
+    fixtures.forced_path_artifacts(
+        _SEATED_RING, OperatorPaths(), fixtures.ring_inputs_with_demand("S1", "P0")
     ),
 )
 

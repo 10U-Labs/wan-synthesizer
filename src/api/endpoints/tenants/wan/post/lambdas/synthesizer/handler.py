@@ -107,11 +107,13 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     params = config.params
     graph = carrier_pops + locations + regions
     logger.info(
-        "Dual-homing %d sites over %d merged carrier links", len(graph), len(fiber_segments)
+        "Dual-homing %d sites over %d merged carrier fiber segments",
+        len(graph),
+        len(fiber_segments),
     )
     graph, fiber_segments = dual_home(graph, fiber_segments, params, off_net)
     graph, fiber_segments, overrides = apply_role_overrides(
-        graph, fiber_segments, params, config.links
+        graph, fiber_segments, params, config.operator_paths
     )
     logger.info("Synthesizing two-tier synthesis (this is the long step)")
     synthesis = synthesize_two_tier(graph, fiber_segments, params, overrides)

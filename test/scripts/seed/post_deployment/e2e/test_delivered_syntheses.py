@@ -21,7 +21,7 @@ _ROUNDED_TO = 0.001
 
 
 def _rounding_slack(synthesis: dict[str, Any]) -> float:
-    segments = sum(1 for link in synthesis["paths"] if link["link_kind"] == FIBER)
+    segments = sum(1 for entry in synthesis["paths"] if entry["link_kind"] == FIBER)
     return (segments + 1) * _ROUNDED_TO / 2
 
 
@@ -52,9 +52,9 @@ def _paths_clear_of_a_capped_seat(synthesis: dict[str, Any]) -> list[dict[str, A
         if entry["ceiling"] < 2
     }
     return [
-        link
-        for link in synthesis["links"]
-        if link["source_id"] not in capped and link["target_id"] not in capped
+        path
+        for path in synthesis["links"]
+        if path["source_id"] not in capped and path["target_id"] not in capped
     ]
 
 
@@ -142,7 +142,7 @@ def test_no_published_status_carries_a_backup_path_multiple(
     ] == []
 
 
-def test_no_published_network_leaves_a_site_short_of_the_links_it_was_asked_for(
+def test_no_published_network_leaves_a_site_short_of_the_paths_it_was_asked_for(
         delivered_syntheses: list[dict[str, Any]]) -> None:
     short = {
         synthesis["tenant"]: synthesis["status"]["diverse_paths"]["short"]
@@ -234,8 +234,8 @@ def _anybodys_fiber(held: dict[str, set[frozenset[str]]]) -> set[frozenset[str]]
     return everyone
 
 
-def _hops(link: dict[str, Any]) -> list[frozenset[str]]:
-    cities = link.get("path") or []
+def _hops(path: dict[str, Any]) -> list[frozenset[str]]:
+    cities = path.get("path") or []
     return [frozenset({left, right}) for left, right in zip(cities, cities[1:])]
 
 
@@ -244,11 +244,11 @@ def _paths_changing_hands(syntheses: list[dict[str, Any]]) -> dict[str, list[str
     anybody = _anybodys_fiber(held)
     found: dict[str, list[str]] = {}
     for synthesis in syntheses:
-        for link in synthesis["links"]:
-            mine = held.get(link.get("carrier", ""), set())
-            if any(hop in anybody and hop not in mine for hop in _hops(link)):
+        for path in synthesis["links"]:
+            mine = held.get(path.get("carrier", ""), set())
+            if any(hop in anybody and hop not in mine for hop in _hops(path)):
                 found.setdefault(synthesis["tenant"], []).append(
-                    f"{link['source_name']} to {link['target_name']}"
+                    f"{path['source_name']} to {path['target_name']}"
                 )
     return found
 
@@ -257,10 +257,10 @@ def _paths_naming_no_carrier(syntheses: list[dict[str, Any]]) -> dict[str, list[
     anybody = _anybodys_fiber(_fiber_by_carrier())
     found: dict[str, list[str]] = {}
     for synthesis in syntheses:
-        for link in synthesis["links"]:
-            if not link.get("carrier") and any(hop in anybody for hop in _hops(link)):
+        for path in synthesis["links"]:
+            if not path.get("carrier") and any(hop in anybody for hop in _hops(path)):
                 found.setdefault(synthesis["tenant"], []).append(
-                    f"{link['source_name']} to {link['target_name']}"
+                    f"{path['source_name']} to {path['target_name']}"
                 )
     return found
 
@@ -279,7 +279,7 @@ def _tenants_fiber(synthesis: dict[str, Any]) -> dict[str, set[frozenset[str]]]:
     held = _fiber_by_carrier()
     anybody = _anybodys_fiber(held)
     laid = {
-        hop for link in synthesis["links"] for hop in _hops(link) if hop not in anybody
+        hop for path in synthesis["links"] for hop in _hops(path) if hop not in anybody
     }
     return {carrier: pairs | laid for carrier, pairs in held.items()}
 
@@ -322,9 +322,9 @@ def test_no_published_networks_ceiling_is_higher_than_the_paths_its_carriers_can
 
 def _submarine_pairs(synthesis: dict[str, Any]) -> set[frozenset[str]]:
     return {
-        frozenset({link["source_name"], link["target_name"]})
-        for link in synthesis["paths"]
-        if link["link_kind"] == FIBER and link["submarine"]
+        frozenset({entry["source_name"], entry["target_name"]})
+        for entry in synthesis["paths"]
+        if entry["link_kind"] == FIBER and entry["submarine"]
     }
 
 
@@ -336,9 +336,9 @@ def _runs_under_water(path: list[str], under_water: set[frozenset[str]]) -> bool
 
 def _paths_each_site_holds(synthesis: dict[str, Any]) -> dict[str, list[list[str]]]:
     held: dict[str, list[list[str]]] = {}
-    for link in synthesis["links"]:
-        for end in (link["path"][0], link["path"][-1]):
-            held.setdefault(end, []).append(link["path"])
+    for path in synthesis["links"]:
+        for end in (path["path"][0], path["path"][-1]):
+            held.setdefault(end, []).append(path["path"])
     return held
 
 

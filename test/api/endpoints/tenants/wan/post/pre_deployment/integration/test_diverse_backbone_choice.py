@@ -11,7 +11,7 @@ _TWO_SEATS = SynthesisParams(
     tuning=Tuning(backbone_number_of_diverse_paths=2),
 )
 ARTIFACTS = fixtures.run_synthesis(
-    fixtures.funnel_sites(), fixtures.FUNNEL_LINKS, _TWO_SEATS
+    fixtures.funnel_sites(), fixtures.FUNNEL_FIBER, _TWO_SEATS
 )
 
 

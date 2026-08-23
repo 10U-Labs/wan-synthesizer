@@ -7,18 +7,18 @@ import pytest
 import fixtures
 from fixtures import (
     TRIANGLE,
-    TWO_POCKET_LINKS,
+    TWO_POCKET_FIBER,
     TWO_POCKET_IDS,
-    synthesis_inputs_from_links,
+    synthesis_inputs_from_fiber,
     search_plan,
 )
-from synthesizer.input_graph import link_key
+from synthesizer.input_graph import segment_key
 from synthesizer.model import (
     Synthesis,
     SynthesisInputs,
     SynthesisMetrics,
     SynthesisParams,
-    ForcedLinks,
+    ForcedPaths,
     RoleExclusions,
     RoleOverrides,
     Tuning,
@@ -77,7 +77,7 @@ def test_unknown_pop_ids_are_rejected() -> None:
         )
 
 
-def test_pop_without_links_is_rejected() -> None:
+def test_pop_without_fiber_segments_is_rejected() -> None:
     with pytest.raises(ValueError):
         synthesize_two_tier(
             [pop("a"), pop("b"), pop("c")], physical({("a", "b"): 1.0}), SynthesisParams()
@@ -117,11 +117,11 @@ def test_backbone_grows_past_the_floor_to_seat_more_forced_nodes() -> None:
 
 
 def test_no_feasible_synthesis_is_rejected() -> None:
-    links = physical({("x1", "b1"): 1.0, ("b1", "y1"): 1.0, ("x2", "b2"): 1.0, ("b2", "y2"): 1.0})
+    fiber = physical({("x1", "b1"): 1.0, ("b1", "y1"): 1.0, ("x2", "b2"): 1.0, ("b2", "y2"): 1.0})
     sites = [pop(name) for name in ("x1", "b1", "y1", "x2", "b2", "y2")]
     with pytest.raises(ValueError):
         synthesize_two_tier(
-            sites, links,
+            sites, fiber,
             SynthesisParams(min_backbone_count=2),
         )
 
@@ -159,18 +159,18 @@ def test_capped_convergence_synthesis_fills_its_backbone_budget() -> None:
 
 
 def test_eligible_excludes_a_degree_one_spur() -> None:
-    links = physical({("a", "b"): 1.0, ("b", "c"): 1.0, ("c", "a"): 1.0, ("a", "spur"): 1.0})
+    fiber = physical({("a", "b"): 1.0, ("b", "c"): 1.0, ("c", "a"): 1.0, ("a", "spur"): 1.0})
     pops = [pop(name) for name in ("a", "b", "c", "spur")]
     eligible = compute_eligible_backbone_ids(
-        pops, build_adjacency(links)
+        pops, build_adjacency(fiber)
     )
     assert "spur" not in eligible
 
 
 def test_eligible_includes_a_degree_two_pop() -> None:
-    links = physical({("a", "b"): 1.0, ("b", "c"): 1.0, ("c", "a"): 1.0})
+    fiber = physical({("a", "b"): 1.0, ("b", "c"): 1.0, ("c", "a"): 1.0})
     pops = [pop(name) for name in ("a", "b", "c")]
-    eligible = compute_eligible_backbone_ids(pops, build_adjacency(links))
+    eligible = compute_eligible_backbone_ids(pops, build_adjacency(fiber))
     assert eligible == {"a", "b", "c"}
 
 
@@ -189,19 +189,19 @@ def _synthesis(
 
 
 def test_convergence_promotes_a_transit_hub() -> None:
-    keys = {link_key("hub", n) for n in ("b1", "b2", "x", "y")}
+    keys = {segment_key("hub", n) for n in ("b1", "b2", "x", "y")}
     synthesis = _synthesis(("b1", "b2"), keys)
     assert convergence_promotion_ids(synthesis) == {"hub"}
 
 
 def test_convergence_skips_a_two_line_crossing() -> None:
-    keys = {link_key("mid", "b1"), link_key("mid", "b2")}
+    keys = {segment_key("mid", "b1"), segment_key("mid", "b2")}
     synthesis = _synthesis(("b1", "b2"), keys)
     assert convergence_promotion_ids(synthesis) == set()
 
 
 def test_convergence_excludes_a_seated_backbone_node() -> None:
-    keys = {link_key("b1", n) for n in ("b2", "x", "y")}
+    keys = {segment_key("b1", n) for n in ("b2", "x", "y")}
     synthesis = _synthesis(("b1", "b2"), keys)
     assert convergence_promotion_ids(synthesis) == set()
 
@@ -215,7 +215,7 @@ def test_site_straightness_skips_zero_length_hops() -> None:
     assert site_straightness("a", by_id, {"b": "a"}) == 0.0
 
 
-MESH_LINKS = physical(
+MESH_FIBER = physical(
     {
         ("a", "b"): 1.0, ("a", "c"): 1.0, ("a", "d"): 1.0,
         ("b", "c"): 1.0, ("b", "d"): 1.0, ("c", "d"): 1.0,
@@ -226,8 +226,8 @@ MESH_COORDS = {"a": (0.0, 1.0), "b": (0.0, 2.0), "c": (0.0, 50.0), "d": (0.0, 51
 
 
 def _mesh_inputs() -> SynthesisInputs:
-    return synthesis_inputs_from_links(
-        ["a", "b", "c", "d"], MESH_LINKS, {"a", "b", "c", "d"},
+    return synthesis_inputs_from_fiber(
+        ["a", "b", "c", "d"], MESH_FIBER, {"a", "b", "c", "d"},
         [access("s", 0.0, 0.0)], MESH_COORDS,
     )
 
@@ -248,26 +248,26 @@ def test_best_backbone_at_size_selects_strongest_then_least_last_mile(
 
 
 def test_best_backbone_at_size_returns_none_when_nothing_feasible() -> None:
-    links = physical({("c1", "x"): 1.0, ("c2", "y"): 1.0})
-    inputs = synthesis_inputs_from_links(["c1", "c2", "x", "y"], links, {"c1", "c2"}, [access("s")])
+    fiber = physical({("c1", "x"): 1.0, ("c2", "y"): 1.0})
+    inputs = synthesis_inputs_from_fiber(["c1", "c2", "x", "y"], fiber, {"c1", "c2"}, [access("s")])
     assert best_backbone_at_size(inputs, search_plan(["c1", "c2"]), 2) is None
 
 
 def test_required_backbone_is_fixed_into_every_set() -> None:
-    forced = ForcedLinks(required_backbone=frozenset({"a"}))
-    plan = search_plan(["a", "b", "c"], forced_links=forced)
+    forced = ForcedPaths(required_backbone=frozenset({"a"}))
+    plan = search_plan(["a", "b", "c"], forced_paths=forced)
     assert backbone_combinations(plan, 2) == [("a", "b"), ("a", "c")]
 
 
 def test_backbone_combinations_empty_when_size_below_required() -> None:
-    forced = ForcedLinks(required_backbone=frozenset({"a", "b"}))
-    plan = search_plan(["a", "b"], forced_links=forced)
+    forced = ForcedPaths(required_backbone=frozenset({"a", "b"}))
+    plan = search_plan(["a", "b"], forced_paths=forced)
     assert backbone_combinations(plan, 1) == []
 
 
 def test_backbone_combination_count_zero_when_size_below_required() -> None:
-    forced = ForcedLinks(required_backbone=frozenset({"a", "b"}))
-    plan = search_plan(["a", "b"], forced_links=forced)
+    forced = ForcedPaths(required_backbone=frozenset({"a", "b"}))
+    plan = search_plan(["a", "b"], forced_paths=forced)
     assert backbone_combination_count(plan, 1) == 0
 
 
@@ -287,30 +287,30 @@ def test_total_memory_falls_back_to_physical_ram(monkeypatch: pytest.MonkeyPatch
 
 
 def test_search_refuses_a_space_too_large_for_memory() -> None:
-    inputs = synthesis_inputs_from_links([], {}, set(), [])
+    inputs = synthesis_inputs_from_fiber([], {}, set(), [])
     plan = search_plan([f"c{index}" for index in range(40)])
     with pytest.raises(ValueError):
         search_best_synthesis(inputs, SynthesisParams(min_backbone_count=20), plan)
 
 
 def test_search_raises_when_no_size_is_feasible() -> None:
-    links = physical({("c1", "x"): 1.0, ("c2", "y"): 1.0})
-    inputs = synthesis_inputs_from_links(["c1", "c2", "x", "y"], links, {"c1", "c2"}, [access("s")])
+    fiber = physical({("c1", "x"): 1.0, ("c2", "y"): 1.0})
+    inputs = synthesis_inputs_from_fiber(["c1", "c2", "x", "y"], fiber, {"c1", "c2"}, [access("s")])
     plan = search_plan(["c1", "c2"])
     with pytest.raises(ValueError):
         search_best_synthesis(inputs, SynthesisParams(min_backbone_count=2), plan)
 
 
 def test_build_search_plan_ranks_candidates_by_strength() -> None:
-    links = physical({("a", "b"): 1.0, ("b", "c"): 1.0, ("a", "c"): 1.0})
-    inputs = synthesis_inputs_from_links(["a", "b", "c"], links, {"a", "b", "c"})
+    fiber = physical({("a", "b"): 1.0, ("b", "c"): 1.0, ("a", "c"): 1.0})
+    inputs = synthesis_inputs_from_fiber(["a", "b", "c"], fiber, {"a", "b", "c"})
     plan = build_search_plan(inputs, {"a", "b", "c"}, RoleOverrides(), SynthesisParams())
     assert set(plan.backbone_candidates) == {"a", "b", "c"}
 
 
 def test_build_search_plan_fixes_promoted_nodes_into_required() -> None:
-    links = physical({("a", "b"): 1.0, ("b", "c"): 1.0, ("a", "c"): 1.0})
-    inputs = synthesis_inputs_from_links(["a", "b", "c"], links, {"a", "b", "c"})
+    fiber = physical({("a", "b"): 1.0, ("b", "c"): 1.0, ("a", "c"): 1.0})
+    inputs = synthesis_inputs_from_fiber(["a", "b", "c"], fiber, {"a", "b", "c"})
     overrides = RoleOverrides(forced_backbone_ids=frozenset({"a"}))
     plan = build_search_plan(
         inputs, {"a", "b", "c"}, overrides, SynthesisParams(), frozenset({"b"})
@@ -319,7 +319,7 @@ def test_build_search_plan_fixes_promoted_nodes_into_required() -> None:
 
 
 def _far_demand_inputs_plan(exempt: bool = False) -> tuple[SynthesisInputs, _SearchPlan]:
-    links = physical(
+    fiber = physical(
         {
             ("cc1", "cw"): 1.0, ("cc2", "cw"): 1.0, ("ce", "cc2"): 1.0, ("ce", "cc1"): 1.0,
             ("cc2", "cc1"): 1.0,
@@ -340,8 +340,8 @@ def _far_demand_inputs_plan(exempt: bool = False) -> tuple[SynthesisInputs, _Sea
         access_nodes = [
             replace(site, exempt_from_distance_constraint=True) for site in access_nodes
         ]
-    inputs = synthesis_inputs_from_links(
-        ids, links, {"cc1", "cc2", "cw", "ce"}, access_nodes, coords
+    inputs = synthesis_inputs_from_fiber(
+        ids, fiber, {"cc1", "cc2", "cw", "ce"}, access_nodes, coords
     )
     plan = search_plan(
         ["cc1", "cc2", "cw", "ce"],
@@ -427,7 +427,7 @@ def test_max_backbone_count_caps_coverage_growth() -> None:
 
 
 def test_search_holds_at_the_floor_when_the_only_candidate_is_infeasible() -> None:
-    links = physical(
+    fiber = physical(
         {
             ("c1", "c2"): 1.0, ("s", "c1"): 1.0, ("s", "c2"): 1.0, ("p", "q"): 1.0,
         }
@@ -435,8 +435,8 @@ def test_search_holds_at_the_floor_when_the_only_candidate_is_infeasible() -> No
     coords = {
         "c1": (40.0, -100.0), "c2": (40.0, -99.0), "p": (40.0, -81.0),
     }
-    inputs = synthesis_inputs_from_links(
-        ["c1", "c2", "p", "q"], links, {"c1", "c2", "p"}, [access("s", 40.0, -80.5)], coords
+    inputs = synthesis_inputs_from_fiber(
+        ["c1", "c2", "p", "q"], fiber, {"c1", "c2", "p"}, [access("s", 40.0, -80.5)], coords
     )
     plan = search_plan(["c1", "c2", "p"], strength={"c1": 3.0, "c2": 3.0, "p": 1.0})
     params = SynthesisParams(
@@ -452,14 +452,14 @@ def test_synthesize_rejects_forced_nodes_split_across_pockets() -> None:
         min_backbone_count=2,
         forced_backbone_names=("a", "d"),
     )
-    pinned, links, overrides = apply_role_overrides(sites, TWO_POCKET_LINKS, params)
+    pinned, fiber, overrides = apply_role_overrides(sites, TWO_POCKET_FIBER, params)
     with pytest.raises(ValueError):
-        synthesize_two_tier(pinned, links, params, overrides)
+        synthesize_two_tier(pinned, fiber, params, overrides)
 
 
 def test_apply_role_overrides_resolves_a_forced_backbone_pin() -> None:
     params = SynthesisParams(forced_backbone_names=("a",))
-    _sites, _links, overrides = apply_role_overrides(
+    _sites, _fiber, overrides = apply_role_overrides(
         [pop("a"), pop("b")], physical({("a", "b"): 1.0}), params
     )
     assert overrides.forced_backbone_ids == frozenset({"a"})

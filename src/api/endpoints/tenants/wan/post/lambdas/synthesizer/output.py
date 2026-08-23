@@ -6,7 +6,7 @@ from typing import Any
 
 from synthesizer.codec import PROVIDER_KIND
 from synthesizer.collections import site_role
-from synthesizer.input_graph import Site, link_key
+from synthesizer.input_graph import Site, segment_key
 from synthesizer.model import Synthesis, SynthesisArtifacts, SourceFiles, is_carrier_pop
 from synthesizer.validation import included_site_ids
 
@@ -34,7 +34,7 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
     sites_by_id = {site.id: site for site in sites}
     return {
         "sites_files": [str(path) for path in sources.site_files],
-        "fiber_segment_file": str(sources.link_path),
+        "fiber_segment_file": str(sources.fiber_segment_path),
         "objective": (
             "Two-tier WAN synthesis: demand sites (tenant sites and provider regions) home "
             "to a meshed backbone of selected Carrier PoPs over the physical Carrier "
@@ -71,14 +71,16 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
         ],
         "access_paths": [
             {
-                "source_id": link.source,
-                "source_name": sites_by_id[link.source].name,
-                "target_id": link.target,
-                "target_name": sites_by_id[link.target].name,
-                "link_kind": _demand_path_kind(sites_by_id[link.source]),
-                "distance_miles": round(link.distance_miles, 3),
+                "source_id": access_path.source,
+                "source_name": sites_by_id[access_path.source].name,
+                "target_id": access_path.target,
+                "target_name": sites_by_id[access_path.target].name,
+                "link_kind": _demand_path_kind(sites_by_id[access_path.source]),
+                "distance_miles": round(access_path.distance_miles, 3),
             }
-            for link in sorted(synthesis.access_paths, key=lambda item: (item.source, item.target))
+            for access_path in sorted(
+                synthesis.access_paths, key=lambda item: (item.source, item.target)
+            )
         ],
         "fiber_segments": [
             {
@@ -87,10 +89,10 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
                 "target_id": right,
                 "target_name": sites_by_id[right].name,
                 "link_kind": "carrier_physical",
-                "distance_miles": round(fiber_segments[link_key(left, right)].distance_miles, 3),
-                "source_page": fiber_segments[link_key(left, right)].source_page,
-                "note": fiber_segments[link_key(left, right)].note,
-                "submarine": fiber_segments[link_key(left, right)].submarine,
+                "distance_miles": round(fiber_segments[segment_key(left, right)].distance_miles, 3),
+                "source_page": fiber_segments[segment_key(left, right)].source_page,
+                "note": fiber_segments[segment_key(left, right)].note,
+                "submarine": fiber_segments[segment_key(left, right)].submarine,
             }
             for left, right in sorted_fiber_segments(synthesis)
         ],

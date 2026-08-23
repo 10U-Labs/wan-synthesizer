@@ -9,8 +9,8 @@ from synthesizer.input_graph import Site
 from synthesizer.strength import (
     backbone_strength,
     diverse_path_bounds,
-    link_bearing,
-    link_sectors,
+    segment_bearing,
+    segment_sectors,
 )
 
 _ORIGIN = "origin"
@@ -28,22 +28,22 @@ def _sectors(compass_sector_count: int, *bearings: float) -> set[int]:
     pop_by_id = {_ORIGIN: fixtures.carrier_pop(_ORIGIN)}
     pop_by_id.update({neighbor.id: neighbor for neighbor in neighbors})
     adjacency = {_ORIGIN: [(neighbor.id, 1.0) for neighbor in neighbors]}
-    return link_sectors(_ORIGIN, adjacency, pop_by_id, compass_sector_count)
+    return segment_sectors(_ORIGIN, adjacency, pop_by_id, compass_sector_count)
 
 
-def test_a_due_north_link_bears_zero() -> None:
-    assert round(link_bearing(fixtures.carrier_pop(_ORIGIN), _at_bearing(0.0))) == 0
+def test_a_due_north_fiber_segment_bears_zero() -> None:
+    assert round(segment_bearing(fixtures.carrier_pop(_ORIGIN), _at_bearing(0.0))) == 0
 
 
 def test_eight_sectors_keep_the_octant_boundaries() -> None:
     assert _sectors(8, 0.0, 45.0, 90.0) == {0, 1, 2}
 
 
-def test_eight_sectors_separate_links_forty_degrees_apart() -> None:
+def test_eight_sectors_separate_fiber_segments_forty_degrees_apart() -> None:
     assert len(_sectors(8, 0.0, 40.0)) == 2
 
 
-def test_four_sectors_merge_links_forty_degrees_apart() -> None:
+def test_four_sectors_merge_fiber_segments_forty_degrees_apart() -> None:
     assert len(_sectors(4, 0.0, 40.0)) == 1
 
 

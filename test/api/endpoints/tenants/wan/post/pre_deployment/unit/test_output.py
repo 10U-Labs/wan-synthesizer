@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import fixtures
-from synthesizer.input_graph import FiberSegment, Site, link_key
+from synthesizer.input_graph import FiberSegment, Site, segment_key
 from synthesizer.model import (
     AccessPath,
     Synthesis,
@@ -35,9 +35,9 @@ def _synthesis_with_homed_demand(source: str) -> Synthesis:
 def _payload_for(source_site: Site) -> dict[str, Any]:
     synthesis = _synthesis_with_homed_demand(source_site.id)
     sites = [source_site, fixtures.carrier_pop("b")]
-    links = {link_key("b", "x"): FiberSegment("b", "x", 1.0)}
-    artifacts = SynthesisArtifacts(sites, links, synthesis, ARTIFACTS.validation)
-    return synthesis_payload(SourceFiles((), SOURCES.link_path), artifacts)
+    fiber = {segment_key("b", "x"): FiberSegment("b", "x", 1.0)}
+    artifacts = SynthesisArtifacts(sites, fiber, synthesis, ARTIFACTS.validation)
+    return synthesis_payload(SourceFiles((), SOURCES.fiber_segment_path), artifacts)
 
 
 def test_synthesis_payload_includes_sites() -> None:
@@ -67,16 +67,16 @@ def test_synthesis_payload_summary_publishes_the_floor_under_the_fiber_it_ordere
 
 
 def test_sorted_fiber_segments_is_sorted() -> None:
-    links = sorted_fiber_segments(ARTIFACTS.synthesis)
-    assert links == sorted(links)
+    keys = sorted_fiber_segments(ARTIFACTS.synthesis)
+    assert keys == sorted(keys)
 
 
-def test_tenant_demand_link_is_labelled_tenant_to_backbone() -> None:
+def test_tenant_access_path_is_labelled_tenant_to_backbone() -> None:
     payload = _payload_for(fixtures.access_site("s"))
     assert payload["access_paths"][0]["link_kind"] == "tenant_to_backbone"
 
 
-def test_provider_demand_link_is_labelled_provider_to_backbone() -> None:
+def test_provider_access_path_is_labelled_provider_to_backbone() -> None:
     payload = _payload_for(fixtures.provider_site("r"))
     assert payload["access_paths"][0]["link_kind"] == "provider_to_backbone"
 

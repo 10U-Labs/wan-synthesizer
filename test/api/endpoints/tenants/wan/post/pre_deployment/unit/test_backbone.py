@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import fixtures
-from synthesizer.input_graph import FiberSegment, link_key
-from synthesizer.model import LINK_FOR_PIN, LINK_FOR_TARGET, SynthesisPath
+from synthesizer.input_graph import FiberSegment, segment_key
+from synthesizer.model import PATH_FOR_PIN, PATH_FOR_TARGET, SynthesisPath
 from synthesizer.backbone import (
     BackboneConstraints,
     BackboneMesh,
@@ -16,7 +16,7 @@ from synthesizer.graphs import (
     adjacency_by_carrier,
     articulation_points,
     build_adjacency,
-    path_link_keys,
+    path_segment_keys,
 )
 
 pop = fixtures.carrier_pop
@@ -24,31 +24,31 @@ physical = fixtures.fiber_segments_from
 
 
 def _distances(
-    links: dict[tuple[str, str], FiberSegment],
+    fiber: dict[tuple[str, str], FiberSegment],
 ) -> dict[str, dict[str, float]]:
-    cities = sorted({city for pair in links for city in pair})
+    cities = sorted({city for pair in fiber for city in pair})
     distances, _predecessors = all_pairs_shortest(
-        [pop(city) for city in cities], build_adjacency(links)
+        [pop(city) for city in cities], build_adjacency(fiber)
     )
     return distances
 
 
 def _drawn(
     sites: tuple[str, ...],
-    links: dict[tuple[str, str], FiberSegment],
+    fiber: dict[tuple[str, str], FiberSegment],
     constraints: BackboneConstraints,
 ) -> BackboneMesh:
-    return backbone_mesh(sites, _distances(links), links, constraints)
+    return backbone_mesh(sites, _distances(fiber), fiber, constraints)
 
 
 def _selected(
-    links: dict[tuple[str, str], FiberSegment],
+    fiber: dict[tuple[str, str], FiberSegment],
     sites: tuple[str, ...],
     constraints: BackboneConstraints,
 ) -> frozenset[tuple[str, str]]:
     return select_fiber(FiberInputs(
-        sites, links, constraints.number_of_diverse_paths,
-        constraints.seat_cap, adjacency_by_carrier(links),
+        sites, fiber, constraints.number_of_diverse_paths,
+        constraints.seat_cap, adjacency_by_carrier(fiber),
     )).segments
 
 
@@ -57,7 +57,7 @@ def _asking(asked_for: int = 2) -> BackboneConstraints:
 
 
 def _pairs(mesh: BackboneMesh) -> set[tuple[str, str]]:
-    return {link_key(drawn_path.source, drawn_path.target) for drawn_path in mesh.paths}
+    return {segment_key(drawn_path.source, drawn_path.target) for drawn_path in mesh.paths}
 
 
 def _mesh_miles(mesh: BackboneMesh) -> float:
@@ -65,7 +65,7 @@ def _mesh_miles(mesh: BackboneMesh) -> float:
 
 
 def _cut(mesh: BackboneMesh) -> set[str]:
-    segments = {key for drawn_path in mesh.paths for key in path_link_keys(drawn_path.path)}
+    segments = {key for drawn_path in mesh.paths for key in path_segment_keys(drawn_path.path)}
     return articulation_points({city for pair in segments for city in pair}, segments)
 
 
@@ -73,31 +73,31 @@ def _joining(mesh: BackboneMesh, left: str, right: str) -> SynthesisPath:
     return next(
         drawn_path
         for drawn_path in mesh.paths
-        if link_key(drawn_path.source, drawn_path.target) == link_key(left, right)
+        if segment_key(drawn_path.source, drawn_path.target) == segment_key(left, right)
     )
 
 
 _SQUARE_SITES = ("w", "x", "y", "z")
-_SQUARE_LINKS = physical({
+_SQUARE_FIBER = physical({
     ("w", "x"): 100.0, ("x", "y"): 100.0, ("y", "z"): 100.0, ("z", "w"): 100.0,
     ("w", "y"): 250.0, ("x", "z"): 250.0,
 })
 _TWO_WAYS_OUT = BackboneConstraints(number_of_diverse_paths=2, seat_cap=4)
-_SQUARE = _drawn(_SQUARE_SITES, _SQUARE_LINKS, _TWO_WAYS_OUT)
+_SQUARE = _drawn(_SQUARE_SITES, _SQUARE_FIBER, _TWO_WAYS_OUT)
 
 
 def test_the_square_is_drawn_with_one_path_a_pair_round_the_ring() -> None:
     assert _pairs(_SQUARE) == {
-        link_key("w", "x"), link_key("x", "y"), link_key("y", "z"), link_key("z", "w"),
+        segment_key("w", "x"), segment_key("x", "y"), segment_key("y", "z"), segment_key("z", "w"),
     }
 
 
 def test_the_square_selects_neither_of_the_chords() -> None:
-    assert _SQUARE_LINKS.keys() - {
-        link_key(*pair)
+    assert _SQUARE_FIBER.keys() - {
+        segment_key(*pair)
         for drawn_path in _SQUARE.paths
         for pair in zip(drawn_path.path, drawn_path.path[1:])
-    } == {link_key("w", "y"), link_key("x", "z")}
+    } == {segment_key("w", "y"), segment_key("x", "z")}
 
 
 def test_the_square_runs_the_fewest_miles_its_fiber_allows() -> None:
@@ -113,7 +113,7 @@ def test_the_square_runs_no_further_than_twice_the_floor() -> None:
 
 
 def test_every_path_the_square_draws_says_a_site_reached_for_it() -> None:
-    assert {drawn_path.reason for drawn_path in _SQUARE.paths} == {LINK_FOR_TARGET}
+    assert {drawn_path.reason for drawn_path in _SQUARE.paths} == {PATH_FOR_TARGET}
 
 
 def test_a_path_names_both_of_the_sites_that_reached_for_it() -> None:
@@ -125,11 +125,11 @@ def test_no_path_the_square_holds_could_be_taken_back_out() -> None:
 
 
 _EGRESS_SITES = ("hub", "p", "q")
-_EGRESS_LINKS = physical({
+_EGRESS_FIBER = physical({
     ("hub", "m"): 10.0, ("m", "p"): 10.0, ("m", "q"): 10.0,
     ("hub", "n"): 11.0, ("n", "q"): 11.0, ("p", "q"): 10.0,
 })
-_EGRESS = _drawn(_EGRESS_SITES, _EGRESS_LINKS, BackboneConstraints(
+_EGRESS = _drawn(_EGRESS_SITES, _EGRESS_FIBER, BackboneConstraints(
     number_of_diverse_paths=2, seat_cap=3,
 ))
 
@@ -139,8 +139,8 @@ def test_the_longer_way_round_a_shared_city_is_the_one_drawn() -> None:
 
 
 def test_the_shorter_way_round_that_shared_city_is_not_selected_at_all() -> None:
-    assert link_key("m", "q") not in {
-        link_key(*pair)
+    assert segment_key("m", "q") not in {
+        segment_key(*pair)
         for drawn_path in _EGRESS.paths
         for pair in zip(drawn_path.path, drawn_path.path[1:])
     }
@@ -167,13 +167,13 @@ _LOBE_LOBES: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
     ("c", "mid"): (5.0, ("lumen",)),
     ("d", "mid"): (15.0, ("lumen",)),
 }
-_LOBE_LINKS = fixtures.carrier_fiber_segments({
+_LOBE_FIBER = fixtures.carrier_fiber_segments({
     **_LOBE_LOBES, ("b", "w"): (20.0, ("zayo",)), ("w", "c"): (20.0, ("zayo",)),
 })
-_TWO_LOBES = _drawn(_LOBE_SITES, _LOBE_LINKS, _asking())
-_BOWTIE_LINKS = fixtures.carrier_fiber_segments(_LOBE_LOBES)
-_BOWTIE = _drawn(_LOBE_SITES, _BOWTIE_LINKS, _asking())
-_ONE_WAY_OUT_LOBES = _drawn(_LOBE_SITES, _LOBE_LINKS, _asking(1))
+_TWO_LOBES = _drawn(_LOBE_SITES, _LOBE_FIBER, _asking())
+_BOWTIE_FIBER = fixtures.carrier_fiber_segments(_LOBE_LOBES)
+_BOWTIE = _drawn(_LOBE_SITES, _BOWTIE_FIBER, _asking())
+_ONE_WAY_OUT_LOBES = _drawn(_LOBE_SITES, _LOBE_FIBER, _asking(1))
 
 
 def test_a_city_every_drawn_path_crosses_is_given_a_way_round_it() -> None:
@@ -184,7 +184,7 @@ def test_the_path_drawn_round_that_city_is_one_company_can_offer() -> None:
     assert [
         drawn_path.carrier
         for drawn_path in _TWO_LOBES.paths
-        if link_key("b", "w") in path_link_keys(drawn_path.path)
+        if segment_key("b", "w") in path_segment_keys(drawn_path.path)
     ] == ["zayo"]
 
 
@@ -198,51 +198,51 @@ def test_a_tenant_that_asked_for_one_way_out_is_not_given_a_way_round_anything()
     assert [
         drawn_path.path
         for drawn_path in _ONE_WAY_OUT_LOBES.paths
-        if link_key("b", "w") in path_link_keys(drawn_path.path)
+        if segment_key("b", "w") in path_segment_keys(drawn_path.path)
     ] == []
 
 
 _OFFERED_TERMS = BackboneConstraints(number_of_diverse_paths=2, seat_cap=2)
 _OFFERED_MESH = _drawn(
-    fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_LINKS, _OFFERED_TERMS
+    fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_FIBER, _OFFERED_TERMS
 )
 
 
 def _run_over(mesh: BackboneMesh) -> set[tuple[str, str]]:
-    return {key for drawn_path in mesh.paths for key in path_link_keys(drawn_path.path)}
+    return {key for drawn_path in mesh.paths for key in path_segment_keys(drawn_path.path)}
 
 
 def test_a_site_is_drawn_over_fiber_one_carrier_could_offer_it() -> None:
     assert _run_over(_OFFERED_MESH) <= _selected(
-        fixtures.OFFERED_WAYS_LINKS, fixtures.OFFERED_WAYS_SITES, _OFFERED_TERMS
+        fixtures.OFFERED_WAYS_FIBER, fixtures.OFFERED_WAYS_SITES, _OFFERED_TERMS
     )
 
 
-_PRUNED = _drawn(_SQUARE_SITES, _SQUARE_LINKS, BackboneConstraints(
-    removed_pairs=frozenset({link_key("w", "x")}), number_of_diverse_paths=2, seat_cap=4,
+_PRUNED = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
+    removed_pairs=frozenset({segment_key("w", "x")}), number_of_diverse_paths=2, seat_cap=4,
 ))
-_PINNED_CHORD = _drawn(_SQUARE_SITES, _SQUARE_LINKS, BackboneConstraints(
-    number_of_diverse_paths=2, forced_pairs=frozenset({link_key("w", "y")}), seat_cap=4,
+_PINNED_CHORD = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
+    number_of_diverse_paths=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
 ))
-_PINNED_SEGMENT = _drawn(_SQUARE_SITES, _SQUARE_LINKS, BackboneConstraints(
-    number_of_diverse_paths=2, forced_pairs=frozenset({link_key("w", "x")}), seat_cap=4,
+_PINNED_SEGMENT = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
+    number_of_diverse_paths=2, forced_pairs=frozenset({segment_key("w", "x")}), seat_cap=4,
 ))
 
 
 def test_a_pruned_pair_is_never_joined_by_a_drawn_path() -> None:
-    assert link_key("w", "x") not in _pairs(_PRUNED)
+    assert segment_key("w", "x") not in _pairs(_PRUNED)
 
 
 def test_a_pruned_pair_leaves_the_rest_of_the_backbone_drawn() -> None:
-    assert link_key("y", "z") in _pairs(_PRUNED)
+    assert segment_key("y", "z") in _pairs(_PRUNED)
 
 
 def test_a_pinned_pair_is_joined_however_the_fiber_was_selected() -> None:
-    assert link_key("w", "y") in _pairs(_PINNED_CHORD)
+    assert segment_key("w", "y") in _pairs(_PINNED_CHORD)
 
 
 def test_a_pinned_path_says_the_operator_is_what_put_it_there() -> None:
-    assert _joining(_PINNED_CHORD, "w", "y").reason == LINK_FOR_PIN
+    assert _joining(_PINNED_CHORD, "w", "y").reason == PATH_FOR_PIN
 
 
 def test_a_pinned_path_is_never_taken_back_out_as_unneeded() -> None:
@@ -250,12 +250,12 @@ def test_a_pinned_path_is_never_taken_back_out_as_unneeded() -> None:
 
 
 def test_a_pin_over_fiber_the_synthesis_would_have_selected_anyway_is_still_a_pin() -> None:
-    assert _joining(_PINNED_SEGMENT, "w", "x").reason == LINK_FOR_PIN
+    assert _joining(_PINNED_SEGMENT, "w", "x").reason == PATH_FOR_PIN
 
 
 _ISLANDS = physical({("a", "b"): 1.0, ("c", "d"): 1.0})
 _ISLAND_PIN = _drawn(("a", "c"), _ISLANDS, BackboneConstraints(
-    forced_pairs=frozenset({link_key("a", "c")}),
+    forced_pairs=frozenset({segment_key("a", "c")}),
 ))
 
 
@@ -268,13 +268,13 @@ def test_a_backbone_the_fiber_never_joins_is_floored_at_nothing() -> None:
 
 
 def test_a_site_the_fiber_does_not_carry_costs_the_others_nothing() -> None:
-    links = physical({("a", "b"): 1.0})
-    mesh = _drawn(("a", "b", "zed"), links, BackboneConstraints(number_of_diverse_paths=1))
-    assert _pairs(mesh) == {link_key("a", "b")}
+    fiber = physical({("a", "b"): 1.0})
+    mesh = _drawn(("a", "b", "zed"), fiber, BackboneConstraints(number_of_diverse_paths=1))
+    assert _pairs(mesh) == {segment_key("a", "b")}
 
 
 def test_path_geometry_miles_adds_up_the_segments_a_path_crosses() -> None:
-    assert path_geometry_miles(("w", "x", "y"), _SQUARE_LINKS) == 200.0
+    assert path_geometry_miles(("w", "x", "y"), _SQUARE_FIBER) == 200.0
 
 
 def _use(source: str, target: str, path: tuple[str, ...], miles: float) -> SynthesisPath:
@@ -334,18 +334,18 @@ _WHOLE_SQUARE = fixtures.carrier_fiber_segments({
     ("z", "y"): (100.0, ("zayo",)),
 })
 _PIN_WY = BackboneConstraints(
-    number_of_diverse_paths=2, forced_pairs=frozenset({link_key("w", "y")}), seat_cap=4,
+    number_of_diverse_paths=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
 )
 
 
 def test_a_pin_no_carrier_can_join_draws_no_path() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _SPLIT_SQUARE, _PIN_WY)
-    assert not [drawn_path for drawn_path in mesh.paths if drawn_path.reason == LINK_FOR_PIN]
+    assert not [drawn_path for drawn_path in mesh.paths if drawn_path.reason == PATH_FOR_PIN]
 
 
 def test_a_pin_one_carrier_can_join_is_drawn_over_that_carriers_fiber() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _WHOLE_SQUARE, _PIN_WY)
-    assert [drawn_path.path for drawn_path in mesh.paths if drawn_path.reason == LINK_FOR_PIN] == [
+    assert [drawn_path.path for drawn_path in mesh.paths if drawn_path.reason == PATH_FOR_PIN] == [
         ("w", "x", "y"),
     ]
 

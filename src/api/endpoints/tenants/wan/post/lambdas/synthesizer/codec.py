@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from synthesizer.input_graph import FiberSegment, Site, SiteInfo, link_key, haversine_miles
+from synthesizer.input_graph import FiberSegment, Site, SiteInfo, segment_key, haversine_miles
 
 PROVIDER_KIND = "provider region"
 CARRIER_KIND = "PoP"
@@ -70,7 +70,7 @@ def load_off_net(rows: list[dict[str, Any]]) -> list[Site]:
 
 
 def load_merged_carriers(
-    site_rows: list[dict[str, Any]], link_rows: list[dict[str, Any]]
+    site_rows: list[dict[str, Any]], segment_rows: list[dict[str, Any]]
 ) -> tuple[list[Site], dict[tuple[str, str], FiberSegment]]:
     used: set[str] = set()
     pops: list[Site] = []
@@ -83,24 +83,24 @@ def load_merged_carriers(
         site = _site(row, _unique(_slug(name), used), name, CARRIER_KIND)
         pops.append(site)
         by_city[city] = site
-    links: dict[tuple[str, str], FiberSegment] = {}
+    fiber_segments: dict[tuple[str, str], FiberSegment] = {}
     owners_by_key: dict[tuple[str, str], set[str]] = {}
     connected: set[str] = set()
-    for row in link_rows:
+    for row in segment_rows:
         source = by_city.get((row["a_municipality"], row["a_state"]))
         target = by_city.get((row["z_municipality"], row["z_state"]))
         if source is None or target is None or source.id == target.id:
             continue
-        key = link_key(source.id, target.id)
+        key = segment_key(source.id, target.id)
         if row.get("carrier"):
             owners_by_key.setdefault(key, set()).add(str(row["carrier"]))
-        links[key] = FiberSegment(
+        fiber_segments[key] = FiberSegment(
             source=key[0], target=key[1], distance_miles=haversine_miles(source, target),
             carriers=frozenset(owners_by_key.get(key, ())),
             submarine=bool(row.get("submarine")) or (
-                key in links and links[key].submarine
+                key in fiber_segments and fiber_segments[key].submarine
             ),
         )
         connected.update(key)
     pops = [site for site in by_city.values() if site.id in connected]
-    return pops, links
+    return pops, fiber_segments

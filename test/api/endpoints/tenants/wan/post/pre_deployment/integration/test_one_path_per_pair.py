@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import fixtures
 from synthesizer.backbone import _needed
-from synthesizer.input_graph import link_key
+from synthesizer.input_graph import segment_key
 
 _ASKED_FOR = 2
 ARTIFACTS = fixtures.shared_hub_peer_artifacts()
@@ -12,7 +12,7 @@ _MESH = fixtures.mesh_paths(ARTIFACTS)
 def _paths_per_pair() -> dict[tuple[str, str], int]:
     drawn: dict[tuple[str, str], int] = {}
     for drawn_path in _MESH:
-        pair = link_key(drawn_path.source, drawn_path.target)
+        pair = segment_key(drawn_path.source, drawn_path.target)
         drawn[pair] = drawn.get(pair, 0) + 1
     return drawn
 

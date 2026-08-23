@@ -23,7 +23,7 @@ def test_fabricates_a_forced_twin() -> None:
     assert result.on_net_ids == frozenset({"fac_luke"})
 
 
-def test_fabrication_adds_backbone_links() -> None:
+def test_fabrication_adds_backbone_fiber_segments() -> None:
     result = _fabricate(
         fixtures.access_site("luke", 0.0, 0.5), forced=frozenset({"luke"})
     )

@@ -6,8 +6,8 @@ import pytest
 
 import fixtures
 from synthesizer.model import (
-    LINK_FOR_PIN,
-    LINK_FOR_TARGET,
+    PATH_FOR_PIN,
+    PATH_FOR_TARGET,
     Synthesis,
     SynthesisMetrics,
     MeshRequirements,
@@ -19,13 +19,13 @@ _SITES = ("a", "b", "c", "d")
 _TARGET = 2
 
 
-def _link(peer: str, reason: str, requested_by: tuple[str, ...] = ()) -> SynthesisPath:
+def _path(peer: str, reason: str, requested_by: tuple[str, ...] = ()) -> SynthesisPath:
     return SynthesisPath("backbone_mesh", "a", peer, ("a", peer), 1.0, reason, requested_by)
 
 
 _ASKED_FOR = [
-    _link("b", LINK_FOR_TARGET, ("a",)),
-    _link("c", LINK_FOR_TARGET, ("a",)),
+    _path("b", PATH_FOR_TARGET, ("a",)),
+    _path("c", PATH_FOR_TARGET, ("a",)),
 ]
 
 
@@ -53,28 +53,28 @@ def test_a_site_holding_exactly_what_it_asked_for_is_not_reported() -> None:
 @pytest.mark.parametrize(
     ("reason", "requested_by", "reported"),
     [
-        (LINK_FOR_PIN, (), "operator_pin"),
-        (LINK_FOR_TARGET, ("d",), "peer_target"),
+        (PATH_FOR_PIN, (), "operator_pin"),
+        (PATH_FOR_TARGET, ("d",), "peer_target"),
     ],
 )
-def test_a_link_past_the_target_names_the_requirement_that_put_it_there(
+def test_a_path_past_the_target_names_the_requirement_that_put_it_there(
     reason: str, requested_by: tuple[str, ...], reported: str
 ) -> None:
-    rows = _above_target(_link("d", reason, requested_by))
+    rows = _above_target(_path("d", reason, requested_by))
     assert rows[0]["unrequested_links"] == [{"peer": "d", "reason": reported}]
 
 
 def test_the_report_names_the_site_that_went_over() -> None:
-    rows = _above_target(_link("d", LINK_FOR_PIN))
+    rows = _above_target(_path("d", PATH_FOR_PIN))
     assert [row["id"] for row in rows] == ["a"]
 
 
 def test_the_report_shows_the_arithmetic_it_is_claiming() -> None:
-    rows = _above_target(_link("d", LINK_FOR_PIN))
+    rows = _above_target(_path("d", PATH_FOR_PIN))
     assert (rows[0]["target"], rows[0]["link_count"]) == (_TARGET, 3)
 
 
-def test_a_sites_own_links_are_not_reported_as_unrequested() -> None:
-    rows = _above_target(_link("d", LINK_FOR_PIN))
-    links = cast(list[dict[str, object]], rows[0]["unrequested_links"])
-    assert [item["peer"] for item in links] == ["d"]
+def test_a_sites_own_paths_are_not_reported_as_unrequested() -> None:
+    rows = _above_target(_path("d", PATH_FOR_PIN))
+    unrequested = cast(list[dict[str, object]], rows[0]["unrequested_links"])
+    assert [item["peer"] for item in unrequested] == ["d"]

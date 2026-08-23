@@ -5,7 +5,7 @@ from dataclasses import replace
 import pytest
 
 import fixtures
-from fixtures import synthesis_inputs_from_links, search_plan
+from fixtures import synthesis_inputs_from_fiber, search_plan
 from synthesizer.input_graph import FiberSegment, Site, haversine_miles
 from synthesizer.graphs import build_adjacency
 from synthesizer.model import SynthesisParams, Tuning
@@ -64,13 +64,13 @@ def test_an_all_exempt_synthesis_has_no_worst_haul() -> None:
 
 
 def test_coverage_candidate_hauls_drops_an_infeasible_addition() -> None:
-    links = physical(
+    fiber = physical(
         {
             ("c1", "c2"): 1.0, ("s", "c1"): 1.0, ("s", "c2"): 1.0, ("z", "y"): 1.0,
         }
     )
-    inputs = synthesis_inputs_from_links(
-        ["c1", "c2", "z", "y"], links, {"c1", "c2", "z"}, [access("s", 0.0, 0.05)]
+    inputs = synthesis_inputs_from_fiber(
+        ["c1", "c2", "z", "y"], fiber, {"c1", "c2", "z"}, [access("s", 0.0, 0.05)]
     )
     hauls = coverage_candidate_hauls(("c1", "c2"), ["z"], inputs, search_plan([]), {
         "c1": pop("c1", 0.0, 0.0), "c2": pop("c2", 0.0, 0.1), "z": pop("z", 0.0, 0.2)
@@ -78,7 +78,7 @@ def test_coverage_candidate_hauls_drops_an_infeasible_addition() -> None:
     assert not hauls
 
 
-_RANKING_LINKS = _wired_to_base(
+_RANKING_FIBER = _wired_to_base(
     ("east", "west", "oversea", "far", "near1", "near2", "near3", "oconus")
 )
 _RANKING_COORDS = {
@@ -96,8 +96,8 @@ _OCONUS_SITE = replace(access("oconus", 0.0, -40.0), exempt_from_distance_constr
 def _ranking_hauls(
     candidates: list[str], sites: list[Site]
 ) -> list[tuple[tuple[float, ...], str]]:
-    inputs = synthesis_inputs_from_links(
-        _RANKING_IDS, _RANKING_LINKS, set(_RANKING_IDS), sites, _RANKING_COORDS
+    inputs = synthesis_inputs_from_fiber(
+        _RANKING_IDS, _RANKING_FIBER, set(_RANKING_IDS), sites, _RANKING_COORDS
     )
     return coverage_candidate_hauls(
         ("b1", "b2"), candidates, inputs, search_plan(_RANKING_IDS),
@@ -148,13 +148,13 @@ _GROWTH_COORDS = {
     "cape": (0.0, 7.4), "plains": (0.0, -7.39), "twin": (0.0, 0.0),
 }
 _GROWTH_IDS = ["b1", "b2", "cape", "plains", "twin"]
-_GROWTH_LINKS = _wired_to_base(("cape", "plains", "twin", "east_site", "west_site"))
+_GROWTH_FIBER = _wired_to_base(("cape", "plains", "twin", "east_site", "west_site"))
 _GROWTH_SITES = [access("east_site", 0.0, 7.5), access("west_site", 0.0, -7.49)]
 
 
 def _grown(candidates: list[str], target_miles: int) -> tuple[str, ...]:
-    inputs = synthesis_inputs_from_links(
-        _GROWTH_IDS, _GROWTH_LINKS, set(_GROWTH_IDS), _GROWTH_SITES, _GROWTH_COORDS
+    inputs = synthesis_inputs_from_fiber(
+        _GROWTH_IDS, _GROWTH_FIBER, set(_GROWTH_IDS), _GROWTH_SITES, _GROWTH_COORDS
     )
     plan = search_plan(candidates)
     params = SynthesisParams(

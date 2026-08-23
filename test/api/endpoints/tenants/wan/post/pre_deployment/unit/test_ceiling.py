@@ -234,7 +234,7 @@ def _on_land(
     fiber: dict[tuple[str, str], FiberSegment]
 ) -> dict[str, list[tuple[str, float]]]:
     return build_adjacency({
-        segment: link for segment, link in fiber.items() if not link.submarine
+        key: segment for key, segment in fiber.items() if not segment.submarine
     })
 
 

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Set as AbstractSet
 
-from synthesizer.input_graph import FiberSegment, Site, link_key
+from synthesizer.input_graph import FiberSegment, Site, segment_key
 from synthesizer.model import (
     SynthesisParams,
-    ForcedLinks,
-    NamedLink,
-    OperatorLinks,
+    ForcedPaths,
+    NamedPath,
+    OperatorPaths,
     RoleOverrides,
     is_carrier_pop,
 )
@@ -69,15 +69,15 @@ def _forced_backbone_endpoint(
 
 
 def _backbone_backbone_pair(
-    path: NamedLink, name_to_id: dict[str, str], forced_backbone: set[str]
+    path: NamedPath, name_to_id: dict[str, str], forced_backbone: set[str]
 ) -> tuple[str, str]:
     left = _forced_backbone_endpoint(path.source, name_to_id, forced_backbone, "forced-path")
     right = _forced_backbone_endpoint(path.target, name_to_id, forced_backbone, "forced-path")
-    return link_key(left, right)
+    return segment_key(left, right)
 
 
 def _forced_home_pair(
-    home: NamedLink,
+    home: NamedPath,
     access_name_to_id: dict[str, str],
     name_to_id: dict[str, str],
     forced_backbone: set[str],
@@ -94,38 +94,38 @@ def _excluded_backbone_endpoint(name: str, name_to_id: dict[str, str]) -> str:
     return name_to_id[name]
 
 
-def _removed_backbone_pair(path: NamedLink, name_to_id: dict[str, str]) -> tuple[str, str]:
+def _removed_backbone_pair(path: NamedPath, name_to_id: dict[str, str]) -> tuple[str, str]:
     left = _excluded_backbone_endpoint(path.source, name_to_id)
     right = _excluded_backbone_endpoint(path.target, name_to_id)
-    return link_key(left, right)
+    return segment_key(left, right)
 
 
-def _removed_backbone_links(
-    paths: tuple[NamedLink, ...],
+def _removed_backbone_paths(
+    paths: tuple[NamedPath, ...],
     name_to_id: dict[str, str],
 ) -> frozenset[tuple[str, str]]:
     return frozenset(_removed_backbone_pair(path, name_to_id) for path in paths)
 
 
-def resolve_forced_links(
-    links: OperatorLinks,
+def resolve_forced_paths(
+    paths: OperatorPaths,
     sites: list[Site],
     forced_backbone: set[str],
-) -> ForcedLinks:
+) -> ForcedPaths:
     name_to_id = pop_id_by_name([site for site in sites if is_carrier_pop(site)])
     access_name_to_id = {
         site.name: site.id for site in sites if not is_carrier_pop(site)
     }
-    return ForcedLinks(
+    return ForcedPaths(
         backbone=frozenset(
             _backbone_backbone_pair(path, name_to_id, forced_backbone)
-            for path in links.backbone
+            for path in paths.backbone
         ),
         access=frozenset(
             _forced_home_pair(home, access_name_to_id, name_to_id, forced_backbone)
-            for home in links.access
+            for home in paths.access
         ),
-        removed_backbone=_removed_backbone_links(links.removed_backbone, name_to_id),
+        removed_backbone=_removed_backbone_paths(paths.removed_backbone, name_to_id),
     )
 
 
@@ -133,7 +133,7 @@ def apply_role_overrides(
     sites: list[Site],
     fiber_segments: dict[tuple[str, str], FiberSegment],
     params: SynthesisParams,
-    links: OperatorLinks = OperatorLinks(),
+    paths: OperatorPaths = OperatorPaths(),
 ) -> tuple[list[Site], dict[tuple[str, str], FiberSegment], RoleOverrides]:
     forced_backbone, prohibited_backbone, degree_exempt = _resolve_operator_pins(
         sites, params
@@ -142,6 +142,6 @@ def apply_role_overrides(
         forced_backbone_ids=frozenset(forced_backbone),
         prohibited_backbone_ids=frozenset(prohibited_backbone),
         degree_exempt_backbone_ids=frozenset(degree_exempt),
-        forced_links=resolve_forced_links(links, sites, forced_backbone),
+        forced_paths=resolve_forced_paths(paths, sites, forced_backbone),
     )
     return sites, fiber_segments, overrides

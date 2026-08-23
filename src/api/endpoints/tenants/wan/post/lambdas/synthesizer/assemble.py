@@ -15,7 +15,7 @@ from synthesizer.forced import (
     forced_backbone_pairs,
     removed_backbone_pairs,
 )
-from synthesizer.graphs import path_link_keys
+from synthesizer.graphs import path_segment_keys
 from synthesizer.backbone import BackboneConstraints, BackboneMesh, backbone_mesh
 from synthesizer.search_plan import _SearchPlan
 
@@ -34,9 +34,9 @@ def finalize_synthesis(
 ) -> Synthesis:
     fiber_segment_keys: set[tuple[str, str]] = set()
     for drawn_path in draft.drawn_paths:
-        fiber_segment_keys.update(path_link_keys(drawn_path.path))
+        fiber_segment_keys.update(path_segment_keys(drawn_path.path))
 
-    access_miles = sum(link.distance_miles for link in draft.access_paths)
+    access_miles = sum(path.distance_miles for path in draft.access_paths)
     physical_miles = sum(
         fiber_segments[key].distance_miles for key in fiber_segment_keys
     )
@@ -64,9 +64,9 @@ def assign_access(
     inputs: SynthesisInputs,
     plan: _SearchPlan,
 ) -> list[AccessPath] | None:
-    links = plan.tuning.access_backbone_links
+    homing_degree = plan.tuning.access_homing_degree
     backbone_set = set(backbone_ids)
-    if len(backbone_set) < links:
+    if len(backbone_set) < homing_degree:
         return None
     pop_by_id = {pop.id: pop for pop in inputs.carrier_pops}
     access_paths: list[AccessPath] = []
@@ -77,9 +77,9 @@ def assign_access(
                 (haversine_miles(access, pop_by_id[backbone_id]), backbone_id)
                 for backbone_id in backbone_set
             )
-        ][:links]
+        ][:homing_degree]
         completed = apply_forced_access_homes(
-            access, completed, plan.forced_links, pop_by_id, links
+            access, completed, plan.forced_paths, pop_by_id, homing_degree
         )
         access_paths.extend(
             AccessPath(
@@ -151,9 +151,9 @@ def synthesis_paths(
 ) -> BackboneMesh:
     backbone_set = set(backbone_ids)
     constraints = BackboneConstraints(
-        removed_backbone_pairs(backbone_set, plan.forced_links),
+        removed_backbone_pairs(backbone_set, plan.forced_paths),
         number_of_diverse_paths=plan.tuning.backbone_number_of_diverse_paths,
-        forced_pairs=forced_backbone_pairs(backbone_set, plan.forced_links),
+        forced_pairs=forced_backbone_pairs(backbone_set, plan.forced_paths),
         seat_cap=plan.seat_cap,
     )
     return backbone_mesh(backbone_ids, inputs.all_distances, fiber_segments, constraints)

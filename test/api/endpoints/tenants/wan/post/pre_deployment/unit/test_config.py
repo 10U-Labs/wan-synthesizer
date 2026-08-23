@@ -6,12 +6,12 @@ from typing import Any
 import pytest
 
 from synthesizer.config import AppConfig, app_config_from_parts, config_from_data
-from synthesizer.model import NamedLink, OperatorLinks
+from synthesizer.model import NamedPath, OperatorPaths
 
 
 _REQUIRED_TUNING = {
     "backbone_number_of_diverse_paths": 3,
-    "access_backbone_links": 2,
+    "access_homing_degree": 2,
     "backbone_coverage_target_miles": 600,
 }
 
@@ -44,8 +44,8 @@ def test_default_max_backbone_count_is_none() -> None:
     assert default_config().params.max_backbone_count is None
 
 
-def test_default_regional_links() -> None:
-    assert default_config().input_files.regional_link_paths == (
+def test_default_regional_fiber_segments() -> None:
+    assert default_config().input_files.regional_fiber_segment_paths == (
         Path("data/fiber_segments/terrestrial/dcn.csv"),
         Path("data/fiber_segments/terrestrial/vision_net.csv"),
     )
@@ -75,14 +75,14 @@ def test_reads_max_backbone_count() -> None:
     assert _config({"synthesis": {"max_backbone_count": 7}}).params.max_backbone_count == 7
 
 
-def test_default_access_backbone_links() -> None:
-    assert default_config().params.tuning.access_backbone_links == 2
+def test_default_access_homing_degree() -> None:
+    assert default_config().params.tuning.access_homing_degree == 2
 
 
-def test_reads_access_backbone_links() -> None:
+def test_reads_access_homing_degree() -> None:
     assert _config(
-        {"tuning": {"access_backbone_links": 3}}
-    ).params.tuning.access_backbone_links == 3
+        {"tuning": {"access_homing_degree": 3}}
+    ).params.tuning.access_homing_degree == 3
 
 
 def test_default_backbone_number_of_diverse_paths_is_three() -> None:
@@ -103,7 +103,7 @@ def test_the_old_mesh_degree_key_is_refused() -> None:
             },
             "tuning": {
                 "backbone_mesh_degree": 3,
-                "access_backbone_links": 2,
+                "access_homing_degree": 2,
                 "backbone_coverage_target_miles": 600,
             },
         })
@@ -131,13 +131,13 @@ def test_degree_exempt_backbone_must_be_a_list() -> None:
 
 
 def test_default_has_no_forced_paths() -> None:
-    assert len(default_config().links.backbone) == 0
+    assert len(default_config().operator_paths.backbone) == 0
 
 
 def test_reads_forced_paths() -> None:
     pinned = {"source": "Dallas, TX", "target": "Denver, CO"}
-    assert _config({"synthesis": {"forced_paths": [pinned]}}).links.backbone == (
-        NamedLink("Dallas, TX", "Denver, CO"),
+    assert _config({"synthesis": {"forced_paths": [pinned]}}).operator_paths.backbone == (
+        NamedPath("Dallas, TX", "Denver, CO"),
     )
 
 
@@ -158,19 +158,19 @@ def test_a_forced_path_requires_a_source_and_target() -> None:
 
 def test_a_forced_path_ignores_a_leftover_type() -> None:
     pinned = {"source": "A", "target": "B", "type": "access-backbone"}
-    assert _config({"synthesis": {"forced_paths": [pinned]}}).links.backbone == (
-        NamedLink("A", "B"),
+    assert _config({"synthesis": {"forced_paths": [pinned]}}).operator_paths.backbone == (
+        NamedPath("A", "B"),
     )
 
 
 def test_default_has_no_forced_homes() -> None:
-    assert len(default_config().links.access) == 0
+    assert len(default_config().operator_paths.access) == 0
 
 
 def test_reads_forced_homes() -> None:
     home = {"source": "Kirtland, NM", "target": "Denver, CO"}
-    assert _config({"synthesis": {"forced_homes": [home]}}).links.access == (
-        NamedLink("Kirtland, NM", "Denver, CO"),
+    assert _config({"synthesis": {"forced_homes": [home]}}).operator_paths.access == (
+        NamedPath("Kirtland, NM", "Denver, CO"),
     )
 
 
@@ -181,17 +181,17 @@ def test_forced_homes_must_be_a_list() -> None:
 
 def test_a_forced_home_is_not_read_as_a_mesh_pair() -> None:
     home = {"source": "Kirtland, NM", "target": "Denver, CO"}
-    assert len(_config({"synthesis": {"forced_homes": [home]}}).links.backbone) == 0
+    assert len(_config({"synthesis": {"forced_homes": [home]}}).operator_paths.backbone) == 0
 
 
 def test_default_has_no_excluded_paths() -> None:
-    assert len(default_config().links.removed_backbone) == 0
+    assert len(default_config().operator_paths.removed_backbone) == 0
 
 
 def test_reads_excluded_paths() -> None:
     synthesis = {"excluded_paths": [{"source": "Seattle, WA", "target": "Boise, ID"}]}
-    assert _config({"synthesis": synthesis}).links.removed_backbone == (
-        NamedLink("Seattle, WA", "Boise, ID"),
+    assert _config({"synthesis": synthesis}).operator_paths.removed_backbone == (
+        NamedPath("Seattle, WA", "Boise, ID"),
     )
 
 
@@ -293,12 +293,12 @@ def test_a_dial_left_in_the_tuning_section_is_not_read() -> None:
 def test_reads_carrier_fiber_segments_path() -> None:
     assert _config(
         {"inputs": {"carrier_fiber_segments": "fiber.csv"}}
-    ).input_files.link_path == Path("fiber.csv")
+    ).input_files.fiber_segment_path == Path("fiber.csv")
 
 
-def test_rejects_non_list_regional_links() -> None:
+def test_rejects_non_list_regional_fiber_segments() -> None:
     with pytest.raises(ValueError):
-        _config({"inputs": {"regional_links": "single.csv"}})
+        _config({"inputs": {"regional_fiber_segments": "single.csv"}})
 
 
 def test_missing_required_degree_is_rejected() -> None:
@@ -314,14 +314,14 @@ def test_missing_required_degree_is_rejected() -> None:
 def test_non_integer_degree_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data(
-            {"tuning": {"backbone_number_of_diverse_paths": "three", "access_backbone_links": 2}}
+            {"tuning": {"backbone_number_of_diverse_paths": "three", "access_homing_degree": 2}}
         )
 
 
 def test_boolean_degree_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data(
-            {"tuning": {"backbone_number_of_diverse_paths": True, "access_backbone_links": 2}}
+            {"tuning": {"backbone_number_of_diverse_paths": True, "access_homing_degree": 2}}
         )
 
 
@@ -329,7 +329,7 @@ def test_missing_coverage_target_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data(
             {
-                "tuning": {"backbone_number_of_diverse_paths": 3, "access_backbone_links": 2},
+                "tuning": {"backbone_number_of_diverse_paths": 3, "access_homing_degree": 2},
                 "synthesis": {
                     "promote_high_degree_convergences_to_backbone_nodes": True
                 },
@@ -347,7 +347,7 @@ def test_a_config_naming_no_backup_path_multiple_loads() -> None:
         {
             "tuning": {
                 "backbone_number_of_diverse_paths": 3,
-                "access_backbone_links": 2,
+                "access_homing_degree": 2,
                 "backbone_coverage_target_miles": 600,
             },
             "synthesis": {"promote_high_degree_convergences_to_backbone_nodes": True},
@@ -417,7 +417,7 @@ def test_app_config_from_parts_without_settings_is_unchanged() -> None:
 
 def test_app_config_from_parts_assembles_the_two_degrees() -> None:
     tuning = app_config_from_parts(_parts()).params.tuning
-    assert (tuning.backbone_number_of_diverse_paths, tuning.access_backbone_links) == (3, 2)
+    assert (tuning.backbone_number_of_diverse_paths, tuning.access_homing_degree) == (3, 2)
 
 
 def test_app_config_from_parts_reads_the_label() -> None:
@@ -509,7 +509,7 @@ def test_app_config_from_parts_requires_convergence_promotion() -> None:
         app_config_from_parts(parts)
 
 
-def test_app_config_from_parts_parses_the_written_links() -> None:
+def test_app_config_from_parts_parses_the_written_paths() -> None:
     parts = _parts(
         **{
             "forced-paths": [{"source": "A", "target": "B"}],
@@ -517,8 +517,8 @@ def test_app_config_from_parts_parses_the_written_links() -> None:
             "prohibited-paths": [{"source": "C", "target": "D"}],
         }
     )
-    assert app_config_from_parts(parts).links == OperatorLinks(
-        backbone=(NamedLink("A", "B"),),
-        access=(NamedLink("S", "B"),),
-        removed_backbone=(NamedLink("C", "D"),),
+    assert app_config_from_parts(parts).operator_paths == OperatorPaths(
+        backbone=(NamedPath("A", "B"),),
+        access=(NamedPath("S", "B"),),
+        removed_backbone=(NamedPath("C", "D"),),
     )

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from synthesizer.flow_cuts import Separation, SeparationQuestion, weakest_separation
-from synthesizer.input_graph import link_key
+from synthesizer.input_graph import segment_key
 
 _SITE = "a"
 _ONE_PEER = frozenset({"b"})
@@ -16,7 +16,7 @@ _ONLY_THE_CITY = Separation(frozenset({"x"}), frozenset())
 
 
 def _whole(*segments: tuple[str, str]) -> dict[tuple[str, str], float]:
-    return {link_key(left, right): 1.0 for left, right in segments}
+    return {segment_key(left, right): 1.0 for left, right in segments}
 
 
 def _asked(

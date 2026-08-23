@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 
 from synthesizer.local_fiber import (
-    LOCAL_FIBER_MIN_LINKS,
+    LOCAL_FIBER_MIN_HOMING_DEGREE,
     LocalFiberTwinSettings,
     build_local_fiber_twin,
     unique_twin_id,
@@ -15,7 +15,7 @@ from synthesizer.input_graph import FiberSegment, Site
 logger = logging.getLogger(__name__)
 
 ON_NET_ID_PREFIX = "fac_"
-ON_NET_LINK_NOTE = "synthetic on-net fabrication backbone link"
+ON_NET_SEGMENT_NOTE = "synthetic on-net fabrication backbone link"
 
 
 @dataclass(frozen=True)
@@ -37,7 +37,7 @@ def fabricate_missing_on_net_nodes(
     carrier_pops = [site for site in sites if is_carrier_pop(site)]
     used_ids = {site.id for site in sites}
     augmented_sites = list(sites)
-    augmented_links = dict(fiber_segments)
+    augmented_fiber_segments = dict(fiber_segments)
     on_net_ids: set[str] = set()
     seen_coords: set[tuple[float, float]] = set()
     for location in sorted(
@@ -54,18 +54,18 @@ def fabricate_missing_on_net_nodes(
         twin_id = unique_twin_id(f"{ON_NET_ID_PREFIX}{location.id}", used_ids)
         built = build_local_fiber_twin(
             location, twin_id, carrier_pops,
-            LocalFiberTwinSettings(note=ON_NET_LINK_NOTE, max_radius=None),
+            LocalFiberTwinSettings(note=ON_NET_SEGMENT_NOTE, max_radius=None),
         )
         if built is None:
             logger.info(
                 "Location %s has fewer than %d carrier PoPs to wire to; "
                 "leaving it demand-only",
                 location.id,
-                LOCAL_FIBER_MIN_LINKS,
+                LOCAL_FIBER_MIN_HOMING_DEGREE,
             )
             continue
         used_ids.add(twin_id)
         augmented_sites.append(built[0])
-        augmented_links.update(built[1])
+        augmented_fiber_segments.update(built[1])
         on_net_ids.add(twin_id)
-    return FabricatedOnNetNodes(augmented_sites, augmented_links, frozenset(on_net_ids))
+    return FabricatedOnNetNodes(augmented_sites, augmented_fiber_segments, frozenset(on_net_ids))
