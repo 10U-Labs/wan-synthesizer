@@ -32,7 +32,6 @@ session tool's local memory only what is true of one machine alone.
 - [say-shorter-not-cheaper](say-shorter-not-cheaper.md) — the repository records miles and no money at all, so a path is shorter, never cheaper
 - [the-code-is-the-only-explanation](the-code-is-the-only-explanation.md) — no docstrings and no comments anywhere the people here write; the reasoning goes in the commit message, the issue and these notes
 - [an-issue-states-one-solution](an-issue-states-one-solution.md) — a `Proposed Solution` names one change; a fork is asked about before the issue is filed, never published as an either
-- [where-a-filed-issue-goes](where-a-filed-issue-goes.md) — a filed issue gets a `blocked_by` edge before the work resumes; three cases decide which issue gets it, and there is no fourth
 - [a-finding-is-filed-not-mentioned](a-finding-is-filed-not-mentioned.md) — a defect noticed while doing something else is filed as an issue, never parked at the end of a reply as one more thing
 
 ## Tests
