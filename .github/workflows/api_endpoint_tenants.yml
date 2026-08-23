@@ -51,17 +51,6 @@ jobs:
           --linters pylint,mypy,yamllint
           --verbose
           ${{ github.workspace }}
-  assert-no-test-only-python-definition:
-    name: assert-no-test-only-python-definition
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert every definition is named outside the tests
-        uses: 10U-Labs/assert-python-definition-is-used@latest
-        with:
-          search-in: lib/python scripts src
-          trees: src/api/endpoints/tenants/lambdas
-          verbose: "true"
   assert-one-assert-per-pytest:
     name: assert-one-assert-per-pytest
     runs-on: ubuntu-latest
@@ -83,6 +72,17 @@ jobs:
           ${{ github.workspace }}/test/lib/python/test_s3_store_mock
           ${{ github.workspace }}/test/lib/python/test_terraform_config
           ${{ github.workspace }}/test/lib/python/test_terraform_drift
+  assert-python-definition-is-used:
+    name: assert-python-definition-is-used
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Assert every definition is named outside the tests
+        uses: 10U-Labs/assert-python-definition-is-used@latest
+        with:
+          search-in: lib/python scripts src
+          trees: src/api/endpoints/tenants/lambdas
+          verbose: "true"
   copy-paste-source:
     name: copy-paste-source
     runs-on: ubuntu-latest
@@ -271,6 +271,7 @@ jobs:
       - assert-no-inline-directives
       - assert-no-linter-config-files
       - assert-one-assert-per-pytest
+      - assert-python-definition-is-used
       - copy-paste-source
       - copy-paste-tests
       - lint-yaml
