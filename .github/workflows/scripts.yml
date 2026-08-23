@@ -43,18 +43,6 @@ jobs:
           --linters pylint,mypy,yamllint
           --verbose
           ${{ github.workspace }}
-  assert-no-test-only-python-definition:
-    name: assert-no-test-only-python-definition
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert every definition is named outside its own package's tests
-        uses: 10U-Labs/assert-python-definition-is-used@latest
-        with:
-          dont-search-in: test/lib/python/{package}
-          search-in: lib/python scripts test
-          trees: lib/python
-          verbose: "true"
   assert-no-unread-dataclass-field:
     name: assert-no-unread-dataclass-field
     runs-on: ubuntu-latest
@@ -64,17 +52,6 @@ jobs:
         run: >-
           PYTHONPATH=lib/python:scripts
           python3 -c 'import sys, assert_dataclass_field_is_read as check; sys.exit(check.main())'
-  assert-no-unused-python-definition:
-    name: assert-no-unused-python-definition
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert every definition is named somewhere else
-        uses: 10U-Labs/assert-python-definition-is-used@latest
-        with:
-          search-in: lib/python scripts test
-          trees: lib/python
-          verbose: "true"
   assert-one-assert-per-pytest:
     name: assert-one-assert-per-pytest
     runs-on: ubuntu-latest
@@ -88,6 +65,29 @@ jobs:
           --verbose
           ${{ github.workspace }}/test/lib/python
           ${{ github.workspace }}/test/scripts
+  assert-python-definition-is-used:
+    name: assert-python-definition-is-used
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Assert every definition is named somewhere else
+        uses: 10U-Labs/assert-python-definition-is-used@latest
+        with:
+          search-in: lib/python scripts test
+          trees: lib/python
+          verbose: "true"
+  assert-python-definition-is-used-outside-own-tests:
+    name: assert-python-definition-is-used-outside-own-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Assert every definition is named outside its own package's tests
+        uses: 10U-Labs/assert-python-definition-is-used@latest
+        with:
+          dont-search-in: test/lib/python/{package}
+          search-in: lib/python scripts test
+          trees: lib/python
+          verbose: "true"
   copy-paste-source:
     name: copy-paste-source
     runs-on: ubuntu-latest
