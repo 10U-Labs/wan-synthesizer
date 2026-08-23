@@ -8,16 +8,16 @@ from synthesizer.graphs import (
     adjacency_by_carrier,
     articulation_points,
     biconnected_block_membership,
-    bridge_links,
+    bridge_segments,
     bridges,
     connected_components,
     dijkstra,
     survives_any_one_site_loss,
-    path_link_keys,
+    path_segment_keys,
     reconstruct_path,
     bridgeless_components,
 )
-from synthesizer.input_graph import FiberSegment, Site, carriers_along, link_key, haversine_miles
+from synthesizer.input_graph import FiberSegment, Site, carriers_along, segment_key, haversine_miles
 
 
 def make_site(site_id: str, lat: float, lon: float) -> Site:
@@ -41,13 +41,13 @@ _BOWTIE = _adjacency(
 )
 
 
-def test_link_key_orders_pair() -> None:
-    assert link_key("b", "a") == ("a", "b")
+def test_segment_key_orders_pair() -> None:
+    assert segment_key("b", "a") == ("a", "b")
 
 
-def test_link_key_rejects_self_loop() -> None:
+def test_segment_key_rejects_self_loop() -> None:
     with pytest.raises(ValueError):
-        link_key("a", "a")
+        segment_key("a", "a")
 
 
 def test_haversine_zero_distance() -> None:
@@ -75,20 +75,20 @@ def test_reconstruct_path_along_chain() -> None:
 
 def test_connected_components_counts_islands() -> None:
     ids = {"a", "b", "c", "d"}
-    links = {("a", "b"), ("c", "d")}
-    assert len(connected_components(ids, links)) == 2
+    fiber_segment_keys = {("a", "b"), ("c", "d")}
+    assert len(connected_components(ids, fiber_segment_keys)) == 2
 
 
 def test_articulation_point_detected() -> None:
     ids = {"a", "b", "c"}
-    links = {("a", "b"), ("b", "c")}
-    assert articulation_points(ids, links) == {"b"}
+    fiber_segment_keys = {("a", "b"), ("b", "c")}
+    assert articulation_points(ids, fiber_segment_keys) == {"b"}
 
 
 def test_cycle_has_no_articulation_points() -> None:
     ids = {"a", "b", "c"}
-    links = {("a", "b"), ("b", "c"), ("a", "c")}
-    assert articulation_points(ids, links) == set()
+    fiber_segment_keys = {("a", "b"), ("b", "c"), ("a", "c")}
+    assert articulation_points(ids, fiber_segment_keys) == set()
 
 
 def test_unreachable_target_has_infinite_distance() -> None:
@@ -119,8 +119,8 @@ def test_reconstruct_path_broken_chain_returns_empty() -> None:
     assert not reconstruct_path("a", "c", {"c": "b"})
 
 
-def test_path_link_keys_for_a_three_site_path() -> None:
-    assert path_link_keys(("a", "b", "c")) == {link_key("a", "b"), link_key("b", "c")}
+def test_path_segment_keys_for_a_three_site_path() -> None:
+    assert path_segment_keys(("a", "b", "c")) == {segment_key("a", "b"), segment_key("b", "c")}
 
 
 def test_dfs_root_with_two_children_is_an_articulation_point() -> None:
@@ -132,10 +132,10 @@ def test_connected_components_ignores_external_endpoints() -> None:
     assert components == [["a", "b"]]
 
 
-def test_bridges_names_every_cut_link_in_a_chain() -> None:
+def test_bridges_names_every_cut_segment_in_a_chain() -> None:
     assert bridges({"a", "b", "c"}, {("a", "b"), ("b", "c")}) == {
-        link_key("a", "b"),
-        link_key("b", "c"),
+        segment_key("a", "b"),
+        segment_key("b", "c"),
     }
 
 
@@ -143,12 +143,12 @@ def test_cycle_has_no_bridges() -> None:
     assert bridges({"a", "b", "c"}, {("a", "b"), ("b", "c"), ("a", "c")}) == set()
 
 
-def test_bridge_links_finds_the_lone_cut_between_two_pockets() -> None:
-    assert bridge_links(_TWO_POCKETS) == {link_key("c", "d")}
+def test_bridge_segments_finds_the_lone_cut_between_two_pockets() -> None:
+    assert bridge_segments(_TWO_POCKETS) == {segment_key("c", "d")}
 
 
-def test_bridge_links_empty_for_a_cycle() -> None:
-    assert bridge_links(_adjacency([("a", "b"), ("b", "c"), ("a", "c")])) == set()
+def test_bridge_segments_empty_for_a_cycle() -> None:
+    assert bridge_segments(_adjacency([("a", "b"), ("b", "c"), ("a", "c")])) == set()
 
 
 def test_bridgeless_components_labels_a_cycle_as_one() -> None:
@@ -168,7 +168,7 @@ def test_bridgeless_components_labels_a_chain_as_singletons() -> None:
 
 def test_dijkstra_paths_around_a_blocked_segment() -> None:
     adjacency = _adjacency([("a", "b"), ("b", "c"), ("a", "c")])
-    distances, _predecessors = dijkstra(adjacency, "a", frozenset({link_key("a", "c")}))
+    distances, _predecessors = dijkstra(adjacency, "a", frozenset({segment_key("a", "c")}))
     assert distances["c"] == 2.0
 
 
@@ -214,10 +214,10 @@ def test_survives_any_one_site_loss_false_when_disconnected() -> None:
 
 
 _OWNED_FIBER = {
-    link_key("a", "b"): FiberSegment("a", "b", 1.0, carriers=frozenset({"lumen"})),
-    link_key("b", "c"): FiberSegment("b", "c", 1.0, carriers=frozenset({"zayo"})),
-    link_key("a", "c"): FiberSegment("a", "c", 5.0, carriers=frozenset({"lumen", "zayo"})),
-    link_key("c", "d"): FiberSegment("c", "d", 1.0),
+    segment_key("a", "b"): FiberSegment("a", "b", 1.0, carriers=frozenset({"lumen"})),
+    segment_key("b", "c"): FiberSegment("b", "c", 1.0, carriers=frozenset({"zayo"})),
+    segment_key("a", "c"): FiberSegment("a", "c", 5.0, carriers=frozenset({"lumen", "zayo"})),
+    segment_key("c", "d"): FiberSegment("c", "d", 1.0),
 }
 
 
@@ -237,7 +237,7 @@ def test_adjacency_by_carrier_names_every_carrier_with_fiber() -> None:
 
 
 def test_adjacency_by_carrier_splits_fiber_naming_nobody_into_nothing() -> None:
-    assert adjacency_by_carrier({link_key("c", "d"): FiberSegment("c", "d", 1.0)}) == {}
+    assert adjacency_by_carrier({segment_key("c", "d"): FiberSegment("c", "d", 1.0)}) == {}
 
 
 def test_carriers_along_names_who_can_offer_a_whole_path() -> None:

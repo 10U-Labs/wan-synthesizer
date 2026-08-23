@@ -73,15 +73,15 @@ def worst_haul(synthesis: dict[str, Any]) -> float:
 
 
 def _ways_out(
-    links: list[dict[str, Any]], site: str, names: dict[str, str]
+    paths: list[dict[str, Any]], site: str, names: dict[str, str]
 ) -> list[tuple[str, frozenset[str]]]:
     return [
         (
-            names[link["target_id"] if link["source_id"] == site else link["source_id"]],
-            frozenset(link["path"]) - {names[site]},
+            names[path["target_id"] if path["source_id"] == site else path["source_id"]],
+            frozenset(path["path"]) - {names[site]},
         )
-        for link in links
-        if site in (link["source_id"], link["target_id"])
+        for path in paths
+        if site in (path["source_id"], path["target_id"])
     ]
 
 
@@ -93,9 +93,9 @@ def _fail_apart(ways: tuple[tuple[str, frozenset[str]], ...]) -> bool:
 
 
 def independent_ways_out(
-    links: list[dict[str, Any]], site: str, names: dict[str, str]
+    paths: list[dict[str, Any]], site: str, names: dict[str, str]
 ) -> int:
-    ways = _ways_out(links, site, names)
+    ways = _ways_out(paths, site, names)
     return max(
         (
             size
@@ -108,9 +108,9 @@ def independent_ways_out(
 
 def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
     drawn: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for link in synthesis["links"]:
-        pair = tuple(sorted((link["source_id"], link["target_id"])))
-        drawn.setdefault(pair, []).append(link)
+    for drawn_path in synthesis["links"]:
+        pair = tuple(sorted((drawn_path["source_id"], drawn_path["target_id"])))
+        drawn.setdefault(pair, []).append(drawn_path)
     names = {row["id"]: row["name"] for row in synthesis["backbone"]}
     asked = synthesis["number_of_diverse_paths"]
     overbuilt: list[tuple[str, int]] = []
@@ -118,7 +118,7 @@ def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
         if len(paths) < 2:
             continue
         spare = max(paths, key=lambda path: path["distance_miles"])
-        kept = [link for link in synthesis["links"] if link is not spare]
+        kept = [path for path in synthesis["links"] if path is not spare]
         if not any(
             independent_ways_out(kept, end, names)
             < min(asked, independent_ways_out(synthesis["links"], end, names))
@@ -151,8 +151,8 @@ def _all_one_network(joined: dict[str, set[str]]) -> bool:
     return all(_reached(joined, start) == set(joined) for start in sorted(joined)[:1])
 
 
-def cut_cities(links: list[dict[str, Any]]) -> list[str]:
-    joined = _cities_the_paths_cross(links)
+def cut_cities(paths: list[dict[str, Any]]) -> list[str]:
+    joined = _cities_the_paths_cross(paths)
     if not _all_one_network(joined):
         return []
     return sorted(
@@ -165,17 +165,17 @@ def cut_cities(links: list[dict[str, Any]]) -> list[str]:
 
 
 def _sites_the_paths_join(
-    links: list[dict[str, Any]], sites: list[str]
+    paths: list[dict[str, Any]], sites: list[str]
 ) -> dict[str, set[str]]:
     alone: dict[str, set[str]] = {site: set() for site in sites}
-    return alone | _joined_to([(link["source_id"], link["target_id"]) for link in links])
+    return alone | _joined_to([(path["source_id"], path["target_id"]) for path in paths])
 
 
-def _cities_the_paths_cross(links: list[dict[str, Any]]) -> dict[str, set[str]]:
+def _cities_the_paths_cross(paths: list[dict[str, Any]]) -> dict[str, set[str]]:
     return _joined_to([
         (near, far)
-        for link in links
-        for near, far in zip(link["path"], link["path"][1:])
+        for path in paths
+        for near, far in zip(path["path"], path["path"][1:])
     ])
 
 
@@ -195,7 +195,7 @@ def removable_paths(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
     for spare in synthesis["links"]:
         if frozenset((names[spare["source_id"]], names[spare["target_id"]])) in pinned:
             continue
-        kept = [link for link in synthesis["links"] if link is not spare]
+        kept = [path for path in synthesis["links"] if path is not spare]
         if any(
             independent_ways_out(kept, site, names) < held_ways_out[site] for site in sites
         ):
@@ -210,11 +210,11 @@ def removable_paths(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
 
 def _published_fiber(synthesis: dict[str, Any]) -> dict[str, dict[str, float]]:
     fiber: dict[str, dict[str, float]] = {}
-    for link in synthesis["paths"]:
-        if link["link_kind"] != FIBER:
+    for entry in synthesis["paths"]:
+        if entry["link_kind"] != FIBER:
             continue
-        fiber.setdefault(link["source_id"], {})[link["target_id"]] = link["distance_miles"]
-        fiber.setdefault(link["target_id"], {})[link["source_id"]] = link["distance_miles"]
+        fiber.setdefault(entry["source_id"], {})[entry["target_id"]] = entry["distance_miles"]
+        fiber.setdefault(entry["target_id"], {})[entry["source_id"]] = entry["distance_miles"]
     return fiber
 
 
@@ -233,7 +233,7 @@ def backbone_groups(synthesis: dict[str, Any]) -> list[list[str]]:
 
 def ordered_fiber_miles(synthesis: dict[str, Any]) -> float:
     segments: list[float] = [
-        link["distance_miles"] for link in synthesis["paths"] if link["link_kind"] == FIBER
+        entry["distance_miles"] for entry in synthesis["paths"] if entry["link_kind"] == FIBER
     ]
     return sum(segments)
 

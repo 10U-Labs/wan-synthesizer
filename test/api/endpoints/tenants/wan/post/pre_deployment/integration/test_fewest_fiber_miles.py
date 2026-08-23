@@ -114,9 +114,9 @@ OFFERED_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
 
 def _fiber_the_selection_holds() -> frozenset[tuple[str, str]]:
     return select_fiber(FiberInputs(
-        fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_LINKS,
+        fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_FIBER,
         _ASKED_FOR, len(fixtures.OFFERED_WAYS_SITES),
-        adjacency_by_carrier(fixtures.OFFERED_WAYS_LINKS),
+        adjacency_by_carrier(fixtures.OFFERED_WAYS_FIBER),
     )).segments
 
 

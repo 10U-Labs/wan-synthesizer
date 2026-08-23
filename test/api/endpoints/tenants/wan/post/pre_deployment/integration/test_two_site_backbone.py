@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import fixtures
-from synthesizer.model import LINK_FOR_TARGET
+from synthesizer.model import PATH_FOR_TARGET
 
 _SITES = ("a", "b")
 _ASKED_FOR = 2
@@ -33,7 +33,7 @@ def test_the_two_paths_share_no_city_but_the_two_sites() -> None:
 
 
 def test_both_paths_are_ones_the_two_sites_reached_for_themselves() -> None:
-    assert [drawn_path.reason for drawn_path in _MESH] == [LINK_FOR_TARGET, LINK_FOR_TARGET]
+    assert [drawn_path.reason for drawn_path in _MESH] == [PATH_FOR_TARGET, PATH_FOR_TARGET]
 
 
 def test_each_site_is_credited_with_the_paths_it_holds() -> None:

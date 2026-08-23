@@ -44,7 +44,7 @@ def finalize(
 ]:
     adjacency = build_adjacency(fiber_segments)
     terrestrial = build_adjacency({
-        segment: link for segment, link in fiber_segments.items() if not link.submarine
+        key: segment for key, segment in fiber_segments.items() if not segment.submarine
     })
     targets = MeshRequirements(
         number_of_diverse_paths=params.tuning.backbone_number_of_diverse_paths,
@@ -59,7 +59,7 @@ def finalize(
         )),
     )
     validation = validate_synthesis(
-        sites, synthesis, params.tuning.access_backbone_links, targets
+        sites, synthesis, params.tuning.access_homing_degree, targets
     )
     if not validation["connected"]:
         groups = "; ".join(
@@ -77,6 +77,6 @@ def finalize(
             for entry in deficient
         )
         raise ValueError(
-            f"Too few independently failing backbone mesh links at: {shortfalls}"
+            f"Too few independently failing backbone mesh paths at: {shortfalls}"
         )
     return sites, fiber_segments, synthesis, validation

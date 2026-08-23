@@ -13,7 +13,7 @@ from repo_utils import REPO_ROOT
 from test_module_utils import load_module_from_path
 from test_s3_store_mock import fake_s3
 from synthesizer.input_graph import Site
-from synthesizer.model import SynthesisParams, OperatorLinks, RoleOverrides
+from synthesizer.model import SynthesisParams, OperatorPaths, RoleOverrides
 from synthesizer.stages import finalize
 
 _PATH = REPO_ROOT / "src/api/endpoints/tenants/wan/post/lambdas/synthesizer/handler.py"
@@ -31,7 +31,7 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     graph = [pop, site]
     config = SimpleNamespace(
         params=SynthesisParams(),
-        links=OperatorLinks(),
+        operator_paths=OperatorPaths(),
     )
     payload = {
         "sites": [{"id": "P", "tier_role": "backbone"}],

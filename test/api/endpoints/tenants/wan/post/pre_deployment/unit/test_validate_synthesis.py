@@ -10,7 +10,7 @@ from synthesizer.model import (
     SynthesisPath,
     ValidationReport,
 )
-from synthesizer.input_graph import Site, link_key
+from synthesizer.input_graph import Site, segment_key
 
 
 def make_pop(site_id: str) -> Site:
@@ -27,7 +27,7 @@ def build_synthesis(
         backbone_ids=backbone_ids,
         transit_ids=transit_ids,
         access_paths=access_paths,
-        fiber_segment_keys={link_key(left, right) for left, right in physical_pairs},
+        fiber_segment_keys={segment_key(left, right) for left, right in physical_pairs},
         drawn_paths=[],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
@@ -75,7 +75,7 @@ TRIPLE_HOMED_SITES = [make_pop(name) for name in ("s", "B1", "B2", "B3")]
 
 
 def test_homing_passes_at_the_configured_count() -> None:
-    report = validate_synthesis(TRIPLE_HOMED_SITES, TRIPLE_HOMED, access_backbone_links=3)
+    report = validate_synthesis(TRIPLE_HOMED_SITES, TRIPLE_HOMED, access_homing_degree=3)
     assert report["access_sites_with_required_backbone_links"] is True
 
 
@@ -97,7 +97,7 @@ def _mesh_synthesis(backbone_ids: tuple[str, ...], pairs: list[tuple[str, str]])
         backbone_ids=backbone_ids,
         transit_ids=(),
         access_paths=[],
-        fiber_segment_keys={link_key(left, right) for left, right in pairs},
+        fiber_segment_keys={segment_key(left, right) for left, right in pairs},
         drawn_paths=[
             SynthesisPath("backbone_mesh", left, right, (left, right), 1.0) for left, right in pairs
         ],

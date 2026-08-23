@@ -7,15 +7,15 @@ from typing import Any
 from synthesizer.model import (
     SynthesisParams,
     InputFiles,
-    NamedLink,
-    OperatorLinks,
+    NamedPath,
+    OperatorPaths,
     RoleExclusions,
     SearchMemoryBudget,
     Tuning,
 )
 
 DEFAULT_CARRIER_FIBER_SEGMENTS = "data/fiber_segments/terrestrial/lumen.csv"
-DEFAULT_REGIONAL_LINKS = [
+DEFAULT_REGIONAL_FIBER_SEGMENTS = [
     "data/fiber_segments/terrestrial/dcn.csv",
     "data/fiber_segments/terrestrial/vision_net.csv",
 ]
@@ -26,7 +26,7 @@ class AppConfig:
     input_files: InputFiles
     params: SynthesisParams
     label: str = ""
-    links: OperatorLinks = field(default_factory=OperatorLinks)
+    operator_paths: OperatorPaths = field(default_factory=OperatorPaths)
 
 
 def _mapping(data: dict[str, Any], key: str) -> dict[str, Any]:
@@ -61,34 +61,38 @@ def _required_int(data: dict[str, Any], key: str) -> int:
     return value
 
 
-def _named_link_list(synthesis: dict[str, Any], key: str) -> tuple[NamedLink, ...]:
+def _named_path_list(synthesis: dict[str, Any], key: str) -> tuple[NamedPath, ...]:
     value = synthesis.get(key, [])
     if not isinstance(value, list):
         raise ValueError(f"config key '{key}' must be a list")
-    written: list[NamedLink] = []
+    written: list[NamedPath] = []
     for item in value:
         if not isinstance(item, dict) or not all(
             isinstance(item.get(name), str) for name in ("source", "target")
         ):
             raise ValueError(f"each {key} entry must map source and target to strings")
-        written.append(NamedLink(item["source"], item["target"]))
+        written.append(NamedPath(item["source"], item["target"]))
     return tuple(written)
 
 
-def _operator_links(synthesis: dict[str, Any]) -> OperatorLinks:
-    return OperatorLinks(
-        backbone=_named_link_list(synthesis, "forced_paths"),
-        access=_named_link_list(synthesis, "forced_homes"),
-        removed_backbone=_named_link_list(synthesis, "excluded_paths"),
+def _operator_paths(synthesis: dict[str, Any]) -> OperatorPaths:
+    return OperatorPaths(
+        backbone=_named_path_list(synthesis, "forced_paths"),
+        access=_named_path_list(synthesis, "forced_homes"),
+        removed_backbone=_named_path_list(synthesis, "excluded_paths"),
     )
 
 
 def _input_files(inputs: dict[str, Any]) -> InputFiles:
-    regional_links = _str_list(inputs, "regional_links", DEFAULT_REGIONAL_LINKS)
+    regional_fiber_segments = _str_list(
+        inputs, "regional_fiber_segments", DEFAULT_REGIONAL_FIBER_SEGMENTS
+    )
     off_net = inputs.get("off_net")
     return InputFiles(
-        link_path=Path(str(inputs.get("carrier_fiber_segments", DEFAULT_CARRIER_FIBER_SEGMENTS))),
-        regional_link_paths=tuple(Path(item) for item in regional_links),
+        fiber_segment_path=Path(
+            str(inputs.get("carrier_fiber_segments", DEFAULT_CARRIER_FIBER_SEGMENTS))
+        ),
+        regional_fiber_segment_paths=tuple(Path(item) for item in regional_fiber_segments),
         off_net_path=Path(str(off_net)) if off_net is not None else None,
     )
 
@@ -136,7 +140,7 @@ def _tuning(tuning: dict[str, Any], settings: dict[str, Any]) -> Tuning:
         backbone_coverage_target_miles=_required_int(
             tuning, "backbone_coverage_target_miles"
         ),
-        access_backbone_links=_required_int(tuning, "access_backbone_links"),
+        access_homing_degree=_required_int(tuning, "access_homing_degree"),
         search_memory_budget=SearchMemoryBudget(
             memory_share=_memory_share(settings, base.search_memory_budget.memory_share),
             bytes_per_combination=settings.get(
@@ -171,7 +175,7 @@ def config_from_data(data: dict[str, Any]) -> AppConfig:
         input_files=_input_files(_mapping(data, "inputs")),
         params=_params(synthesis, _mapping(data, "tuning"), _mapping(data, "settings")),
         label=str(data.get("label", "")),
-        links=_operator_links(synthesis),
+        operator_paths=_operator_paths(synthesis),
     )
 
 
@@ -207,7 +211,7 @@ def app_config_from_parts(parts: dict[str, Any]) -> AppConfig:
     tuning = {
         **_mapping(parts, "knobs"),
         "backbone_number_of_diverse_paths": _degree(parts, "backbone-number-of-diverse-paths"),
-        "access_backbone_links": _degree(parts, "access-homing-degree"),
+        "access_homing_degree": _degree(parts, "access-homing-degree"),
     }
     label = parts.get("label", {})
     label_text = label.get("label", "") if isinstance(label, dict) else str(label)

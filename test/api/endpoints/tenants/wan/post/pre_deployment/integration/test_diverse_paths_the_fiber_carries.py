@@ -36,7 +36,7 @@ def _artifacts(
 def _crossing() -> SynthesisArtifacts:
     return _artifacts(
         fixtures.crossing_sites(),
-        fixtures.CROSSING_LINKS,
+        fixtures.CROSSING_FIBER,
         fixtures.crossing_transit_names(),
     )
 
@@ -45,7 +45,7 @@ def _crossing() -> SynthesisArtifacts:
 def _under_water() -> SynthesisArtifacts:
     return _artifacts(
         fixtures.crossing_sites(),
-        fixtures.CROSSING_SUBMARINE_LINKS,
+        fixtures.CROSSING_SUBMARINE_FIBER,
         fixtures.crossing_transit_names(),
     )
 
@@ -54,7 +54,7 @@ def _under_water() -> SynthesisArtifacts:
 def _distant_peer() -> SynthesisArtifacts:
     return _artifacts(
         fixtures.distant_peer_sites(),
-        fixtures.DISTANT_PEER_LINKS,
+        fixtures.DISTANT_PEER_FIBER,
         fixtures.distant_peer_transit_names(),
     )
 
@@ -63,7 +63,7 @@ def _distant_peer() -> SynthesisArtifacts:
 def _express() -> SynthesisArtifacts:
     return _artifacts(
         fixtures.express_sites(),
-        fixtures.EXPRESS_LINKS,
+        fixtures.EXPRESS_FIBER,
         fixtures.express_transit_names(),
     )
 
@@ -108,7 +108,7 @@ def test_no_site_is_credited_with_a_way_out_its_fiber_does_not_carry(
     assert crossing.validation["backbone_diverse_paths_ceiling_limited"] == []
 
 
-def test_no_site_is_asked_for_a_link_its_fiber_cannot_lay(
+def test_no_site_is_asked_for_a_path_its_fiber_cannot_lay(
     distant_peer: SynthesisArtifacts,
 ) -> None:
     assert distant_peer.validation["backbone_mesh_independence_deficient"] == []
@@ -120,7 +120,7 @@ def test_the_finished_synthesis_orders_the_fewest_fiber_miles_it_can_be_wired_wi
     assert _mesh_miles(express) == 6.0
 
 
-def test_the_ring_synthesis_holds_every_site_to_the_two_links_its_fiber_carries(
+def test_the_ring_synthesis_holds_every_site_to_the_two_paths_its_fiber_carries(
     express: SynthesisArtifacts,
 ) -> None:
     assert express.validation["backbone_mesh_independence_deficient"] == []

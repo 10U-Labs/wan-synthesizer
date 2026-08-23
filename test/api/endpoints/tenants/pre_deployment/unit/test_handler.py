@@ -98,15 +98,15 @@ def test_tenants_list_skips_non_label_objects(monkeypatch: pytest.MonkeyPatch) -
 
 def test_tenant_serves_the_backbone_links(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
-    links = [{"source_name": "Minot, ND", "target_name": "Kansas City, MO"}]
-    objects = {"tenants/f-35/wan.json": json.dumps({"backbone-links": links}).encode()}
+    paths = [{"source_name": "Minot, ND", "target_name": "Kansas City, MO"}]
+    objects = {"tenants/f-35/wan.json": json.dumps({"backbone-links": paths}).encode()}
     event = {
         "pathParameters": {"tenant": "f-35"},
         "path": "/x/tenants/f-35/backbone-links",
     }
     with patch("boto3.client", return_value=fake_s3(objects)):
         response = module.lambda_handler(event, None)
-    assert json.loads(response["body"]) == links
+    assert json.loads(response["body"]) == paths
 
 
 def test_tenant_accepts_a_well_formed_site_input(monkeypatch: pytest.MonkeyPatch) -> None:

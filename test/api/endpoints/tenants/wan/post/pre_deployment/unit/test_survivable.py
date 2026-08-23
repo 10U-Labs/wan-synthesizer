@@ -24,53 +24,53 @@ _SLACK = 1e-6
 
 
 def _asking(
-    links: dict[tuple[str, str], FiberSegment],
+    fiber: dict[tuple[str, str], FiberSegment],
     backbone_ids: tuple[str, ...],
     seat_cap: int | None = None,
     ways_out: int = _WAYS_OUT,
 ) -> FiberInputs:
     return FiberInputs(
-        backbone_ids, links, ways_out, seat_cap, adjacency_by_carrier(links),
+        backbone_ids, fiber, ways_out, seat_cap, adjacency_by_carrier(fiber),
     )
 
 
 def _selected(
-    links: dict[tuple[str, str], FiberSegment],
+    fiber: dict[tuple[str, str], FiberSegment],
     backbone_ids: tuple[str, ...],
     seat_cap: int | None = None,
     ways_out: int = _WAYS_OUT,
 ) -> FiberSelection:
-    return select_fiber(_asking(links, backbone_ids, seat_cap, ways_out))
+    return select_fiber(_asking(fiber, backbone_ids, seat_cap, ways_out))
 
 
 def _owed(
-    links: dict[tuple[str, str], FiberSegment],
+    fiber: dict[tuple[str, str], FiberSegment],
     backbone_ids: tuple[str, ...],
     site: str,
     seat_cap: int | None = None,
 ) -> int:
-    inputs = _asking(links, backbone_ids, seat_cap)
-    fiber = _whole(inputs)
+    inputs = _asking(fiber, backbone_ids, seat_cap)
+    miles_by_key = _whole(inputs)
     return sum(
-        row.required for row in _ways_out_rows(site, _writing(inputs, fiber)).together
+        row.required for row in _ways_out_rows(site, _writing(inputs, miles_by_key)).together
     )
 
 
 def _whole(inputs: FiberInputs) -> dict[tuple[str, str], float]:
     return {
-        segment: link.distance_miles for segment, link in inputs.fiber_segments.items()
+        key: segment.distance_miles for key, segment in inputs.fiber_segments.items()
     }
 
 
 def _selected_miles(
-    selection: FiberSelection, links: dict[tuple[str, str], FiberSegment]
+    selection: FiberSelection, fiber: dict[tuple[str, str], FiberSegment]
 ) -> float:
-    return sum(links[segment].distance_miles for segment in selection.segments)
+    return sum(fiber[key].distance_miles for key in selection.segments)
 
 
 _CROSSING_SITES = ("eug", "hil", "sea")
 _OVERLAND = frozenset({("eug", "pdx"), ("hil", "pdx"), ("pdx", "sea")})
-_UNDER_WATER_SELECTION = _selected(fixtures.CROSSING_SUBMARINE_LINKS, _CROSSING_SITES)
+_UNDER_WATER_SELECTION = _selected(fixtures.CROSSING_SUBMARINE_FIBER, _CROSSING_SITES)
 
 
 def test_no_submarine_fiber_is_selected_where_a_way_round_over_land_exists() -> None:
@@ -184,14 +184,14 @@ _OFFERED = frozenset({("a", "r"), ("b", "r")})
 
 def test_the_fiber_selected_is_fiber_one_carrier_can_offer_a_whole_path_over() -> None:
     assert _selected(
-        fixtures.OFFERED_WAYS_LINKS, fixtures.OFFERED_WAYS_SITES, seat_cap=2
+        fixtures.OFFERED_WAYS_FIBER, fixtures.OFFERED_WAYS_SITES, seat_cap=2
     ).segments == _OFFERED
 
 
 _DISTANT_PEER_SITES = ("hil", "sea", "syd")
 _DISTANT_PEER_SELECTION = select_fiber(FiberInputs(
-    _DISTANT_PEER_SITES, fixtures.DISTANT_PEER_LINKS, _WAYS_OUT, None,
-    adjacency_by_carrier(fixtures.DISTANT_PEER_LINKS),
+    _DISTANT_PEER_SITES, fixtures.DISTANT_PEER_FIBER, _WAYS_OUT, None,
+    adjacency_by_carrier(fixtures.DISTANT_PEER_FIBER),
 ))
 
 
@@ -199,7 +199,7 @@ def _distant_peer_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, in
     return diverse_path_ceilings(PathProofInputs(
         _DISTANT_PEER_SITES,
         build_adjacency({
-            segment: fixtures.DISTANT_PEER_LINKS[segment] for segment in segments
+            segment: fixtures.DISTANT_PEER_FIBER[segment] for segment in segments
         }),
         _WAYS_OUT,
     ))
@@ -207,7 +207,7 @@ def _distant_peer_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, in
 
 def test_the_fiber_selected_for_a_site_carries_every_way_out_its_fiber_carries() -> None:
     assert _distant_peer_ceilings(_DISTANT_PEER_SELECTION.segments) == _distant_peer_ceilings(
-        frozenset(fixtures.DISTANT_PEER_LINKS)
+        frozenset(fixtures.DISTANT_PEER_FIBER)
     ) == {"hil": 2, "sea": 2, "syd": 2}
 
 
@@ -244,15 +244,15 @@ _CASES: tuple[tuple[str, FiberSelection, dict[tuple[str, str], FiberSegment]], .
 def test_no_selection_is_floored_above_the_fiber_it_actually_holds() -> None:
     assert [
         name
-        for name, selection, links in _CASES
-        if selection.lower_bound_miles > _selected_miles(selection, links) + _SLACK
+        for name, selection, fiber in _CASES
+        if selection.lower_bound_miles > _selected_miles(selection, fiber) + _SLACK
     ] == []
 
 
 _SHORT_AND_LONG_SELECTION = _selected(
-    fixtures.SHORT_AND_LONG_LINKS, fixtures.SHORT_AND_LONG_SITES
+    fixtures.SHORT_AND_LONG_FIBER, fixtures.SHORT_AND_LONG_SITES
 )
-_ONLY_LONG_SELECTION = _selected(fixtures.ONLY_LONG_LINKS, fixtures.SHORT_AND_LONG_SITES)
+_ONLY_LONG_SELECTION = _selected(fixtures.ONLY_LONG_FIBER, fixtures.SHORT_AND_LONG_SITES)
 
 
 def test_the_shorter_of_two_ways_round_is_the_one_selected() -> None:

@@ -227,9 +227,9 @@ def _writing(
     inputs: FiberInputs, fiber: Mapping[tuple[str, str], float]
 ) -> _Writing:
     on_land = {
-        segment: link
-        for segment, link in inputs.fiber_segments.items()
-        if not link.submarine
+        key: segment
+        for key, segment in inputs.fiber_segments.items()
+        if not segment.submarine
     }
     terrestrial = build_adjacency(on_land)
     return _Writing(
@@ -349,7 +349,7 @@ def _round_up(search: _Search, selection: SegmentSelection) -> frozenset[tuple[s
 
 def select_fiber(inputs: FiberInputs) -> FiberSelection:
     fiber = {
-        segment: link.distance_miles for segment, link in inputs.fiber_segments.items()
+        key: segment.distance_miles for key, segment in inputs.fiber_segments.items()
     }
     if not fiber:
         return FiberSelection(frozenset(), 0.0)

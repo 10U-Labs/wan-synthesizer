@@ -5,7 +5,7 @@ import math
 from collections import deque
 from collections.abc import Callable, Iterator
 
-from synthesizer.input_graph import FiberSegment, link_key
+from synthesizer.input_graph import FiberSegment, segment_key
 
 
 def dijkstra(
@@ -22,7 +22,7 @@ def dijkstra(
         if distance > distances[site_id] + 1e-9:
             continue
         for neighbor, weight in adjacency.get(site_id, []):
-            if blocked and link_key(site_id, neighbor) in blocked:
+            if blocked and segment_key(site_id, neighbor) in blocked:
                 continue
             new_distance = distance + weight
             if new_distance + 1e-9 < distances.get(neighbor, math.inf):
@@ -46,21 +46,23 @@ def reconstruct_path(source: str, target: str, predecessors: dict[str, str]) -> 
     path.reverse()
     return tuple(path)
 
-def path_link_keys(path: tuple[str, ...]) -> set[tuple[str, str]]:
-    return {link_key(path[index], path[index + 1]) for index in range(len(path) - 1)}
+def path_segment_keys(path: tuple[str, ...]) -> set[tuple[str, str]]:
+    return {segment_key(path[index], path[index + 1]) for index in range(len(path) - 1)}
 
 def undirected_adjacency(
-    site_ids: set[str], links: set[tuple[str, str]]
+    site_ids: set[str], fiber_segment_keys: set[tuple[str, str]]
 ) -> dict[str, set[str]]:
     adjacency: dict[str, set[str]] = {site_id: set() for site_id in site_ids}
-    for left, right in links:
+    for left, right in fiber_segment_keys:
         if left in adjacency and right in adjacency:
             adjacency[left].add(right)
             adjacency[right].add(left)
     return adjacency
 
-def connected_components(site_ids: set[str], links: set[tuple[str, str]]) -> list[list[str]]:
-    adjacency = undirected_adjacency(site_ids, links)
+def connected_components(
+    site_ids: set[str], fiber_segment_keys: set[tuple[str, str]]
+) -> list[list[str]]:
+    adjacency = undirected_adjacency(site_ids, fiber_segment_keys)
     remaining = set(adjacency)
     components: list[list[str]] = []
     while remaining:
@@ -82,7 +84,7 @@ def reachable_over(
     adjacency: dict[str, list[tuple[str, float]]],
 ) -> dict[str, frozenset[str]]:
     segments = {
-        link_key(city, neighbor)
+        segment_key(city, neighbor)
         for city, neighbors in adjacency.items()
         for neighbor, _weight in neighbors
     }
@@ -92,17 +94,19 @@ def reachable_over(
         for city in group
     }
 
-def bridges(site_ids: set[str], links: set[tuple[str, str]]) -> set[tuple[str, str]]:
-    base = len(connected_components(site_ids, links))
+def bridges(
+    site_ids: set[str], fiber_segment_keys: set[tuple[str, str]]
+) -> set[tuple[str, str]]:
+    base = len(connected_components(site_ids, fiber_segment_keys))
     return {
-        link
-        for link in links
-        if len(connected_components(site_ids, links - {link})) > base
+        key
+        for key in fiber_segment_keys
+        if len(connected_components(site_ids, fiber_segment_keys - {key})) > base
     }
 
 def _lowlink_dfs(
     adjacency: dict[str, list[tuple[str, float]]],
-    on_link: Callable[[str, str], None],
+    on_segment: Callable[[str, str], None],
     on_finish: Callable[[str, str, int, int], None],
 ) -> None:
     disc: dict[str, int] = {}
@@ -125,12 +129,12 @@ def _lowlink_dfs(
                 if neighbor in disc:
                     if disc[neighbor] < disc[site]:
                         low[site] = min(low[site], disc[neighbor])
-                        on_link(site, neighbor)
+                        on_segment(site, neighbor)
                     continue
                 disc[neighbor] = low[neighbor] = counter
                 parent[neighbor] = site
                 counter += 1
-                on_link(site, neighbor)
+                on_segment(site, neighbor)
                 stack.append((neighbor, iter(adjacency[neighbor])))
                 descended = True
                 break
@@ -142,23 +146,23 @@ def _lowlink_dfs(
                 low[up] = min(low[up], low[site])
                 on_finish(site, up, low[site], disc[up])
 
-def bridge_links(adjacency: dict[str, list[tuple[str, float]]]) -> set[tuple[str, str]]:
+def bridge_segments(adjacency: dict[str, list[tuple[str, float]]]) -> set[tuple[str, str]]:
     found: set[tuple[str, str]] = set()
 
     def record(site: str, up: str, low_site: int, disc_up: int) -> None:
         if low_site > disc_up:
-            found.add(link_key(up, site))
+            found.add(segment_key(up, site))
 
     _lowlink_dfs(adjacency, lambda _u, _v: None, record)
     return found
 
 def bridgeless_components(adjacency: dict[str, list[tuple[str, float]]]) -> dict[str, int]:
-    cut = bridge_links(adjacency)
+    cut = bridge_segments(adjacency)
     surviving = {
-        link_key(site, neighbor)
+        segment_key(site, neighbor)
         for site, neighbors in adjacency.items()
         for neighbor, _weight in neighbors
-        if link_key(site, neighbor) not in cut
+        if segment_key(site, neighbor) not in cut
     }
     components = connected_components(set(adjacency), surviving)
     return {
@@ -168,28 +172,28 @@ def bridgeless_components(adjacency: dict[str, list[tuple[str, float]]]) -> dict
     }
 
 def _record_block(
-    link_stack: list[tuple[str, str]],
+    segment_stack: list[tuple[str, str]],
     marker: tuple[str, str],
     blocks: list[set[str]],
 ) -> None:
-    block = [link_stack.pop()]
+    block = [segment_stack.pop()]
     while block[-1] != marker:
-        block.append(link_stack.pop())
+        block.append(segment_stack.pop())
     if len(block) >= 2:
         blocks.append({site for segment in block for site in segment})
 
 def biconnected_block_membership(
     adjacency: dict[str, list[tuple[str, float]]],
 ) -> dict[str, frozenset[int]]:
-    link_stack: list[tuple[str, str]] = []
+    segment_stack: list[tuple[str, str]] = []
     blocks: list[set[str]] = []
 
     def push(site: str, neighbor: str) -> None:
-        link_stack.append(link_key(site, neighbor))
+        segment_stack.append(segment_key(site, neighbor))
 
     def close(site: str, up: str, low_site: int, disc_up: int) -> None:
         if low_site >= disc_up:
-            _record_block(link_stack, link_key(up, site), blocks)
+            _record_block(segment_stack, segment_key(up, site), blocks)
 
     _lowlink_dfs(adjacency, push, close)
     return {
@@ -197,18 +201,24 @@ def biconnected_block_membership(
         for site in adjacency
     }
 
-def survives_any_one_link_loss(site_ids: set[str], links: set[tuple[str, str]]) -> bool:
-    if len(connected_components(site_ids, links)) != 1:
+def survives_any_one_segment_loss(
+    site_ids: set[str], fiber_segment_keys: set[tuple[str, str]]
+) -> bool:
+    if len(connected_components(site_ids, fiber_segment_keys)) != 1:
         return False
-    return not bridges(site_ids, links)
+    return not bridges(site_ids, fiber_segment_keys)
 
-def survives_any_one_site_loss(site_ids: set[str], links: set[tuple[str, str]]) -> bool:
-    if len(connected_components(site_ids, links)) != 1:
+def survives_any_one_site_loss(
+    site_ids: set[str], fiber_segment_keys: set[tuple[str, str]]
+) -> bool:
+    if len(connected_components(site_ids, fiber_segment_keys)) != 1:
         return False
-    return not articulation_points(site_ids, links)
+    return not articulation_points(site_ids, fiber_segment_keys)
 
-def articulation_points(site_ids: set[str], links: set[tuple[str, str]]) -> set[str]:
-    adjacency = undirected_adjacency(site_ids, links)
+def articulation_points(
+    site_ids: set[str], fiber_segment_keys: set[tuple[str, str]]
+) -> set[str]:
+    adjacency = undirected_adjacency(site_ids, fiber_segment_keys)
     visited: set[str] = set()
     discovery: dict[str, int] = {}
     low: dict[str, int] = {}
@@ -246,26 +256,28 @@ def articulation_points(site_ids: set[str], links: set[tuple[str, str]]) -> set[
 
 
 def build_adjacency(
-    links: dict[tuple[str, str], FiberSegment],
+    fiber_segments: dict[tuple[str, str], FiberSegment],
 ) -> dict[str, list[tuple[str, float]]]:
     adjacency: dict[str, list[tuple[str, float]]] = {}
-    for (left, right), link in links.items():
-        adjacency.setdefault(left, []).append((right, link.distance_miles))
-        adjacency.setdefault(right, []).append((left, link.distance_miles))
+    for (left, right), segment in fiber_segments.items():
+        adjacency.setdefault(left, []).append((right, segment.distance_miles))
+        adjacency.setdefault(right, []).append((left, segment.distance_miles))
     for neighbors in adjacency.values():
         neighbors.sort()
     return adjacency
 
 
 def adjacency_by_carrier(
-    links: dict[tuple[str, str], FiberSegment],
+    fiber_segments: dict[tuple[str, str], FiberSegment],
 ) -> dict[str, dict[str, list[tuple[str, float]]]]:
-    carriers = sorted({carrier for link in links.values() for carrier in link.carriers})
+    carriers = sorted({
+        carrier for segment in fiber_segments.values() for carrier in segment.carriers
+    })
     return {
         carrier: build_adjacency({
-            key: link
-            for key, link in links.items()
-            if not link.carriers or carrier in link.carriers
+            key: segment
+            for key, segment in fiber_segments.items()
+            if not segment.carriers or carrier in segment.carriers
         })
         for carrier in carriers
     }

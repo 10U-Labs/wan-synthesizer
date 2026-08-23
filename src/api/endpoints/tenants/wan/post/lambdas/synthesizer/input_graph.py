@@ -41,9 +41,9 @@ class FiberSegment:
     carriers: frozenset[str] = frozenset()
     submarine: bool = False
 
-def link_key(left: str, right: str) -> tuple[str, str]:
+def segment_key(left: str, right: str) -> tuple[str, str]:
     if left == right:
-        raise ValueError(f"Self-loop is not a valid Carrier link: {left}")
+        raise ValueError(f"Self-loop is not a valid Carrier fiber segment: {left}")
     return (left, right) if left < right else (right, left)
 
 def carriers_along(
@@ -51,7 +51,7 @@ def carriers_along(
 ) -> frozenset[str]:
     common: frozenset[str] | None = None
     for index in range(len(path) - 1):
-        owners = fiber_segments[link_key(path[index], path[index + 1])].carriers
+        owners = fiber_segments[segment_key(path[index], path[index + 1])].carriers
         if not owners:
             continue
         common = owners if common is None else common & owners

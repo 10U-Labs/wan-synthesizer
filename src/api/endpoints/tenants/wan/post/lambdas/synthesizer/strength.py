@@ -10,7 +10,7 @@ from synthesizer.model import SynthesisInputs
 from synthesizer.graphs import reconstruct_path
 
 
-def link_bearing(origin: Site, neighbor: Site) -> float:
+def segment_bearing(origin: Site, neighbor: Site) -> float:
     lat1, lat2 = math.radians(origin.lat), math.radians(neighbor.lat)
     delta_lon = math.radians(neighbor.lon - origin.lon)
     x = math.sin(delta_lon) * math.cos(lat2)
@@ -19,7 +19,7 @@ def link_bearing(origin: Site, neighbor: Site) -> float:
     )
     return (math.degrees(math.atan2(x, y)) + 360.0) % 360.0
 
-def link_sectors(
+def segment_sectors(
     pop_id: str,
     adjacency: dict[str, list[tuple[str, float]]],
     pop_by_id: dict[str, Site],
@@ -28,7 +28,7 @@ def link_sectors(
     width = 360.0 / compass_sector_count
     origin = pop_by_id[pop_id]
     return {
-        int(((link_bearing(origin, pop_by_id[neighbor]) + width / 2.0) % 360.0) // width)
+        int(((segment_bearing(origin, pop_by_id[neighbor]) + width / 2.0) % 360.0) // width)
         for neighbor, _weight in adjacency[pop_id]
     }
 
@@ -74,6 +74,6 @@ def backbone_strength(
     compass_sector_count: int,
 ) -> float:
     diverse = bounds.per_site.get(pop_id, 0)
-    spread = len(link_sectors(pop_id, inputs.adjacency, pop_by_id, compass_sector_count))
+    spread = len(segment_sectors(pop_id, inputs.adjacency, pop_by_id, compass_sector_count))
     straight = site_straightness(pop_id, pop_by_id, inputs.all_predecessors[pop_id])
     return diverse / bounds.largest + spread / compass_sector_count + straight

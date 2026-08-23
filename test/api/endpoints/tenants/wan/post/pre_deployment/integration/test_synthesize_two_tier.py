@@ -5,12 +5,12 @@ from typing import cast
 
 import fixtures
 from fixtures import run_synthesis
-from synthesizer.input_graph import link_key
+from synthesizer.input_graph import segment_key
 from synthesizer.model import (
     SynthesisArtifacts,
     SynthesisParams,
-    NamedLink,
-    OperatorLinks,
+    NamedPath,
+    OperatorPaths,
     Tuning,
 )
 from synthesizer.synthesize import convergence_promotion_ids
@@ -27,21 +27,21 @@ _MESHED_RING = SynthesisParams(
     forced_backbone_names=_RING_BACKBONE,
     tuning=Tuning(backbone_number_of_diverse_paths=2),
 )
-FORCED_BACKBONE_LINK = fixtures.forced_link_artifacts(
-    _MESHED_RING, OperatorLinks(backbone=(NamedLink("P0", "P3"),))
+FORCED_BACKBONE_PATH = fixtures.forced_path_artifacts(
+    _MESHED_RING, OperatorPaths(backbone=(NamedPath("P0", "P3"),))
 )
-UNFORCED_RING = fixtures.forced_link_artifacts(_MESHED_RING, OperatorLinks())
+UNFORCED_RING = fixtures.forced_path_artifacts(_MESHED_RING, OperatorPaths())
 
 _DEMAND_RING = fixtures.ring_inputs_with_demand("S1", "P0")
-FORCED_HOME = fixtures.forced_link_artifacts(
-    _MESHED_RING, OperatorLinks(access=(NamedLink("S1", "P3"),)), _DEMAND_RING
+FORCED_HOME = fixtures.forced_path_artifacts(
+    _MESHED_RING, OperatorPaths(access=(NamedPath("S1", "P3"),)), _DEMAND_RING
 )
-UNFORCED_HOME = fixtures.forced_link_artifacts(_MESHED_RING, OperatorLinks(), _DEMAND_RING)
+UNFORCED_HOME = fixtures.forced_path_artifacts(_MESHED_RING, OperatorPaths(), _DEMAND_RING)
 
 
 def _homes_of(artifacts: SynthesisArtifacts, access_id: str) -> set[str]:
     return {
-        link.target for link in artifacts.synthesis.access_paths if link.source == access_id
+        path.target for path in artifacts.synthesis.access_paths if path.source == access_id
     }
 
 
@@ -56,11 +56,11 @@ def _peers_of(artifacts: SynthesisArtifacts, site: str) -> set[str]:
 
 
 def test_the_opposite_pair_is_never_meshed_on_its_own() -> None:
-    assert link_key("P0", "P3") not in backbone_mesh_pairs(UNFORCED_RING.synthesis)
+    assert segment_key("P0", "P3") not in backbone_mesh_pairs(UNFORCED_RING.synthesis)
 
 
 def test_a_forced_backbone_path_appears_in_the_mesh() -> None:
-    assert link_key("P0", "P3") in backbone_mesh_pairs(FORCED_BACKBONE_LINK.synthesis)
+    assert segment_key("P0", "P3") in backbone_mesh_pairs(FORCED_BACKBONE_PATH.synthesis)
 
 
 def test_the_opposite_backbone_is_never_a_home_on_its_own() -> None:
@@ -103,12 +103,12 @@ def test_backbone_survives_any_single_city() -> None:
     assert ARTIFACTS.validation["backbone_mesh_survives_any_one_site_loss"] is True
 
 
-def test_every_meshed_ring_node_holds_its_links_independently() -> None:
+def test_every_meshed_ring_node_holds_its_paths_independently() -> None:
     assert UNFORCED_RING.validation["backbone_meets_independent_mesh_link_target"] is True
 
 
-_RING_AT_THREE = fixtures.forced_link_artifacts(
-    replace(_MESHED_RING, tuning=Tuning(backbone_number_of_diverse_paths=3)), OperatorLinks()
+_RING_AT_THREE = fixtures.forced_path_artifacts(
+    replace(_MESHED_RING, tuning=Tuning(backbone_number_of_diverse_paths=3)), OperatorPaths()
 )
 
 
@@ -167,12 +167,12 @@ def test_the_chorded_ring_names_the_nodes_holding_more_than_was_asked() -> None:
     assert above != []
 
 
-def test_every_link_past_the_number_is_attributed_to_a_peer() -> None:
+def test_every_path_past_the_number_is_attributed_to_a_peer() -> None:
     above = CHORDED.validation["backbone_diverse_paths_above_target"]
     assert {
-        str(link["reason"])
+        str(unrequested["reason"])
         for entry in above
-        for link in cast(list[dict[str, object]], entry["unrequested_links"])
+        for unrequested in cast(list[dict[str, object]], entry["unrequested_links"])
     } == {"peer_target"}
 
 

@@ -28,7 +28,7 @@ _CONFIG: dict[str, Any] = {
 _NODE = {"id": "ash", "name": "Ashburn, VA", "kind": "PoP", "coords": [39.0, -77.5]}
 _SITE = {"id": "s1", "name": "Site", "kind": "Tenant site", "coords": [38.9, -77.0]}
 _REGION = {"id": "r1", "name": "us-east-1", "kind": "provider region", "coords": [39.0, -78.0]}
-_LINK = {"source_id": "ash", "target_id": "nyc", "distance_miles": 240.0, "path": ["ash", "nyc"]}
+_PATH = {"source_id": "ash", "target_id": "nyc", "distance_miles": 240.0, "path": ["ash", "nyc"]}
 _SEGMENT = {
     "source_id": "ash", "target_id": "nyc", "distance_miles": 240.0,
     "link_kind": "carrier_physical",
@@ -56,7 +56,7 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
     monkeypatch.setattr(urllib.request, "urlopen", _answering({
         "tenants/daf/wan": _SUCCEEDED,
         "tenants/daf/backbone-nodes": [_NODE],
-        "tenants/daf/backbone-links": [_LINK],
+        "tenants/daf/backbone-links": [_PATH],
         "tenants/daf/tenant-nodes": [_SITE],
         "tenants/daf/provider-nodes": [_REGION],
         "tenants/daf/paths": [_SEGMENT],
@@ -72,7 +72,7 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
         "lower_bound_miles": 1250.0,
         "backbone": [_NODE],
         "demand": [_SITE, _REGION],
-        "links": [_LINK],
+        "links": [_PATH],
         "paths": [_SEGMENT],
     }
 

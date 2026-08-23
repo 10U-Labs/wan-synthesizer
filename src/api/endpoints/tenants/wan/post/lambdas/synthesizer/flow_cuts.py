@@ -5,7 +5,7 @@ from collections import deque
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from synthesizer.input_graph import link_key
+from synthesizer.input_graph import segment_key
 
 _Half = tuple[str, str]
 _Residual = dict[_Half, dict[_Half, float]]
@@ -88,7 +88,7 @@ def _read_separation(question: SeparationQuestion, reached: dict[_Half, _Half]) 
     )
     near = {city for side, city in reached if side == "out"}
     crossing = frozenset(
-        link_key(left, right)
+        segment_key(left, right)
         for left, right in question.held
         if (left in near) != (right in near) and left not in lost and right not in lost
     )

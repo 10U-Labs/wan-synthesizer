@@ -5,19 +5,19 @@ from dataclasses import dataclass, replace
 from itertools import combinations
 
 from synthesizer.ceiling import PathProofInputs, independent_paths
-from synthesizer.input_graph import FiberSegment, carriers_along, link_key
+from synthesizer.input_graph import FiberSegment, carriers_along, segment_key
 from synthesizer.graphs import (
     adjacency_by_carrier,
     articulation_points,
     build_adjacency,
     connected_components,
     dijkstra,
-    path_link_keys,
+    path_segment_keys,
     reachable_over,
     reconstruct_path,
     undirected_adjacency,
 )
-from synthesizer.model import LINK_FOR_PIN, LINK_FOR_TARGET, SynthesisPath
+from synthesizer.model import PATH_FOR_PIN, PATH_FOR_TARGET, SynthesisPath
 from synthesizer.survivable import FiberInputs, select_fiber
 from synthesizer.validation import diverse_path_count
 
@@ -27,7 +27,7 @@ def path_geometry_miles(
     fiber_segments: dict[tuple[str, str], FiberSegment],
 ) -> float:
     return sum(
-        fiber_segments[link_key(path[index], path[index + 1])].distance_miles
+        fiber_segments[segment_key(path[index], path[index + 1])].distance_miles
         for index in range(len(path) - 1)
     )
 
@@ -59,7 +59,7 @@ class _DrawnFiber:
 def _fiber_of(paths: list[SynthesisPath]) -> tuple[set[str], set[tuple[str, str]]]:
     segments: set[tuple[str, str]] = set()
     for drawn_path in paths:
-        segments |= path_link_keys(drawn_path.path)
+        segments |= path_segment_keys(drawn_path.path)
     return {city for segment in segments for city in segment}, segments
 
 
@@ -99,7 +99,7 @@ def _pinned_path(
     path = min(drawn, key=lambda one: (path_geometry_miles(one, fiber_segments), one))
     return SynthesisPath(
         "backbone_mesh", near, far, path,
-        path_geometry_miles(path, fiber_segments), LINK_FOR_PIN,
+        path_geometry_miles(path, fiber_segments), PATH_FOR_PIN,
         carrier=_carrier_of(path, fiber_segments),
     )
 
@@ -121,7 +121,7 @@ def _proved_over(
     peers = tuple(
         peer
         for peer in drawn.backbone_ids
-        if peer == site or link_key(site, peer) not in constraints.removed_pairs
+        if peer == site or segment_key(site, peer) not in constraints.removed_pairs
     )
     proof = PathProofInputs(
         peers, build_adjacency(fiber),
@@ -148,10 +148,10 @@ def _laid(drawn: _DrawnFiber, pinned: list[SynthesisPath]) -> list[SynthesisPath
             if held is None:
                 laid[key] = SynthesisPath(
                     "backbone_mesh", path[0], path[-1], path,
-                    path_geometry_miles(path, drawn.whole), LINK_FOR_TARGET, (site,),
+                    path_geometry_miles(path, drawn.whole), PATH_FOR_TARGET, (site,),
                     _carrier_of(path, drawn.whole),
                 )
-            elif held.reason == LINK_FOR_TARGET and site not in held.requested_by:
+            elif held.reason == PATH_FOR_TARGET and site not in held.requested_by:
                 laid[key] = replace(
                     held, requested_by=tuple(sorted((*held.requested_by, site)))
                 )
@@ -187,14 +187,14 @@ def _pairs_across(
 def _on_land(
     fiber: dict[tuple[str, str], FiberSegment]
 ) -> dict[tuple[str, str], FiberSegment]:
-    return {segment: link for segment, link in fiber.items() if not link.submarine}
+    return {key: segment for key, segment in fiber.items() if not segment.submarine}
 
 
 def _path_around(
     city: str, paths: list[SynthesisPath], drawn: _DrawnFiber
 ) -> SynthesisPath | None:
     fiber = {
-        segment: link for segment, link in drawn.whole.items() if city not in segment
+        key: segment for key, segment in drawn.whole.items() if city not in key
     }
     by_carrier = adjacency_by_carrier(fiber)
     land = _on_land(fiber)
@@ -209,7 +209,7 @@ def _path_around(
         )
         if found is None:
             continue
-        return replace(found, reason=LINK_FOR_TARGET)
+        return replace(found, reason=PATH_FOR_TARGET)
     return None
 
 
@@ -238,7 +238,7 @@ def _needed(
     for spare in sorted(
         paths, key=lambda drawn_path: (-drawn_path.distance_miles, drawn_path.path)
     ):
-        if spare.reason == LINK_FOR_PIN:
+        if spare.reason == PATH_FOR_PIN:
             continue
         left = [drawn_path for drawn_path in kept if drawn_path is not spare]
         if any(
@@ -271,7 +271,7 @@ def _selected_fiber(
     pinned = [drawn_path for drawn_path in drawn if drawn_path is not None]
     segments = set(selection.segments)
     for drawn_path in pinned:
-        segments |= path_link_keys(drawn_path.path)
+        segments |= path_segment_keys(drawn_path.path)
     return frozenset(segments), selection.lower_bound_miles, pinned
 
 

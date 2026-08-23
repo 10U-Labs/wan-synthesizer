@@ -14,8 +14,8 @@ class AccessPath:
     target: str
     distance_miles: float
 
-LINK_FOR_TARGET = "site_target"
-LINK_FOR_PIN = "operator_pin"
+PATH_FOR_TARGET = "site_target"
+PATH_FOR_PIN = "operator_pin"
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class SynthesisPath:
     target: str
     path: tuple[str, ...]
     distance_miles: float
-    reason: str = LINK_FOR_TARGET
+    reason: str = PATH_FOR_TARGET
     requested_by: tuple[str, ...] = ()
     carrier: str = ""
 
@@ -56,11 +56,11 @@ class Tuning:
     compass_sector_count: int = 8
     backbone_number_of_diverse_paths: int = 3
     backbone_coverage_target_miles: int = 600
-    access_backbone_links: int = 2
+    access_homing_degree: int = 2
     search_memory_budget: SearchMemoryBudget = field(default_factory=SearchMemoryBudget)
 
 @dataclass(frozen=True)
-class NamedLink:
+class NamedPath:
     source: str
     target: str
 
@@ -79,13 +79,13 @@ class SynthesisParams:
     tuning: Tuning = field(default_factory=Tuning)
 
 @dataclass(frozen=True)
-class OperatorLinks:
-    backbone: tuple[NamedLink, ...] = ()
-    access: tuple[NamedLink, ...] = ()
-    removed_backbone: tuple[NamedLink, ...] = ()
+class OperatorPaths:
+    backbone: tuple[NamedPath, ...] = ()
+    access: tuple[NamedPath, ...] = ()
+    removed_backbone: tuple[NamedPath, ...] = ()
 
 @dataclass(frozen=True)
-class ForcedLinks:
+class ForcedPaths:
     backbone: frozenset[tuple[str, str]] = frozenset()
     access: frozenset[tuple[str, str]] = frozenset()
     removed_backbone: frozenset[tuple[str, str]] = frozenset()
@@ -96,7 +96,7 @@ class RoleOverrides:
     forced_backbone_ids: frozenset[str] = frozenset()
     prohibited_backbone_ids: frozenset[str] = frozenset()
     degree_exempt_backbone_ids: frozenset[str] = frozenset()
-    forced_links: ForcedLinks = field(default_factory=ForcedLinks)
+    forced_paths: ForcedPaths = field(default_factory=ForcedPaths)
 
 @dataclass(frozen=True)
 class SynthesisInputs:
@@ -138,14 +138,14 @@ class ValidationReport(TypedDict):
 
 @dataclass(frozen=True)
 class InputFiles:
-    link_path: Path
-    regional_link_paths: tuple[Path, ...] = ()
+    fiber_segment_path: Path
+    regional_fiber_segment_paths: tuple[Path, ...] = ()
     off_net_path: Path | None = None
 
 @dataclass(frozen=True)
 class SourceFiles:
     site_files: tuple[Path, ...]
-    link_path: Path
+    fiber_segment_path: Path
 
 @dataclass(frozen=True)
 class SynthesisArtifacts:

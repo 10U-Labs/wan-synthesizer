@@ -223,8 +223,8 @@ def _merged_carriers() -> tuple[list[Site], dict[tuple[str, str], FiberSegment]]
 
 
 def _cities_and_adjacency() -> tuple[dict[str, str], dict[str, list[tuple[str, float]]]]:
-    sites, links = _merged_carriers()
-    return {site.name: site.id for site in sites}, build_adjacency(links)
+    sites, fiber = _merged_carriers()
+    return {site.name: site.id for site in sites}, build_adjacency(fiber)
 
 
 def _pinned_cities(backbone: dict[str, Any]) -> list[str]:

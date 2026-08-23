@@ -24,7 +24,7 @@ def test_seated_twin_id_carries_the_off_net_prefix() -> None:
     assert next(iter(result.seat_ids)).startswith("offnet_")
 
 
-def test_realize_adds_local_fiber_links() -> None:
+def test_realize_adds_local_fiber_segments() -> None:
     result = _realize(fixtures.off_net_site("dulles", 0.0, 0.5), forced=frozenset({"dulles"}))
     assert len(result.fiber_segments) == 3
 
