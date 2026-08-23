@@ -49,6 +49,17 @@ jobs:
           --linters pylint,mypy,yamllint
           --verbose
           ${{ github.workspace }}
+  assert-no-test-only-python-definition:
+    name: assert-no-test-only-python-definition
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Assert every definition is named outside the tests
+        uses: 10U-Labs/assert-python-definition-is-used@latest
+        with:
+          search-in: lib/python scripts src
+          trees: src/api/endpoints/carriers/merge/lambdas
+          verbose: "true"
   assert-one-assert-per-pytest:
     name: assert-one-assert-per-pytest
     runs-on: ubuntu-latest
