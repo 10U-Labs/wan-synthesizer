@@ -69,7 +69,7 @@ function styleFor(site) {
 }
 
 const TIER_PREFIX = {
-  backbone: "BACKBONE",
+  backbone: "BACKBONE NODE",
 };
 
 function cityName(site) {
