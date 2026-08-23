@@ -186,6 +186,7 @@ jobs:
       && needs.assert-no-comments.result == 'success'
       && needs.assert-no-inline-directives.result == 'success'
       && needs.assert-no-linter-config-files.result == 'success'
+      && needs.assert-no-test-only-python-definition.result == 'success'
       && needs.assert-one-assert-per-pytest.result == 'success'
       && needs.copy-paste-source.result == 'success'
       && needs.copy-paste-tests.result == 'success'
@@ -195,12 +196,14 @@ jobs:
       && needs.pylint-source.result == 'success'
       && needs.pylint-tests.result == 'success'
       && needs.test-repo-libraries.result == 'success'
-      && needs.unit-tests.result == 'success' }}
+      && needs.unit-tests.result == 'success'
+      && needs.yamllint.result == 'success' }}
     name: seeding
     needs:
       - assert-no-comments
       - assert-no-inline-directives
       - assert-no-linter-config-files
+      - assert-no-test-only-python-definition
       - assert-one-assert-per-pytest
       - copy-paste-source
       - copy-paste-tests
@@ -211,6 +214,7 @@ jobs:
       - pylint-tests
       - test-repo-libraries
       - unit-tests
+      - yamllint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
