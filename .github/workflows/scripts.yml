@@ -48,19 +48,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Assert every definition and dataclass field is read outside its own tests
+      - name: Assert every definition is named outside its own package's tests
+        uses: 10U-Labs/assert-python-definition-is-used@latest
+        with:
+          dont-search-in: test/lib/python/{package}
+          search-in: lib/python scripts test
+          trees: lib/python
+          verbose: "true"
+  assert-no-unread-dataclass-field:
+    name: assert-no-unread-dataclass-field
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Assert every dataclass field the repository declares is read
         run: >-
           PYTHONPATH=lib/python:scripts
-          python3 -c 'import sys, assert_python_definition_is_used as check; sys.exit(check.main(["--outside-own-tests"]))'
+          python3 -c 'import sys, assert_dataclass_field_is_read as check; sys.exit(check.main())'
   assert-no-unused-python-definition:
     name: assert-no-unused-python-definition
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Assert every definition is used and every dataclass field is read
-        run: >-
-          PYTHONPATH=lib/python:scripts
-          python3 -c 'import sys, assert_python_definition_is_used as check; sys.exit(check.main([]))'
+      - name: Assert every definition is named somewhere else
+        uses: 10U-Labs/assert-python-definition-is-used@latest
+        with:
+          search-in: lib/python scripts test
+          trees: lib/python
+          verbose: "true"
   assert-one-assert-per-pytest:
     name: assert-one-assert-per-pytest
     runs-on: ubuntu-latest
@@ -148,6 +162,24 @@ jobs:
           test/scripts/ test/lib/python/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
+  test-assert-dataclass-field-is-read:
+    name: test-assert-dataclass-field-is-read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install pytest pytest-cov
+      - name: Run unit tests with a 100% coverage gate
+        run: >-
+          PYTHONPATH=.:lib/python:scripts
+          python3 -m pytest
+          test/scripts/assert_dataclass_field_is_read/pre_deployment/unit/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
+          --cov=assert_dataclass_field_is_read
+          --cov-branch
+          --cov-report=term-missing
+          --cov-fail-under=100
   test-assert-no-comments:
     name: test-assert-no-comments
     runs-on: ubuntu-latest
@@ -163,24 +195,6 @@ jobs:
           --import-mode=importlib --confcutdir=test
           --verbose --pythonwarnings=error
           --cov=assert_no_comments
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-  test-assert-python-definition-is-used:
-    name: test-assert-python-definition-is-used
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install pytest pytest-cov
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts
-          python3 -m pytest
-          test/scripts/assert_python_definition_is_used/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=assert_python_definition_is_used
           --cov-branch
           --cov-report=term-missing
           --cov-fail-under=100
