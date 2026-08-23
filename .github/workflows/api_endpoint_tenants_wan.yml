@@ -9,11 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pyyaml
+        run: pip install assert-no-comments
       - name: Assert nothing this repository publishes carries a comment
         run: >-
-          PYTHONPATH=lib/python:scripts
-          python3 -c 'import sys, assert_no_comments; sys.exit(assert_no_comments.main())'
+          assert-no-comments
+          --annotate
+          --exclude 'src/www/spa/vendor/*'
+          --verbose
+          .github/workflows
+          etc
+          lib
+          scripts
+          src
+          test
   assert-no-inline-directives:
     name: assert-no-inline-directives
     runs-on: ubuntu-latest
