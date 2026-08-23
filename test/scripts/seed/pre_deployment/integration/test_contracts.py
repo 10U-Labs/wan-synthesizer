@@ -30,6 +30,15 @@ def _declared_templates() -> set[str]:
     return {path[len(prefix):] for path in spec["paths"] if path.startswith(prefix)}
 
 
+def _gates_on_seeding() -> set[str]:
+    jobs = _seed_workflow()["jobs"]
+    downstream = {
+        name for name, job in jobs.items()
+        if "seeding" in _needed_by(job)
+    }
+    return set(jobs) - downstream - {"seeding"}
+
+
 def _linted_configs() -> set[str]:
     workflow = (REPO_ROOT / ".github/workflows/seed.yml").read_text(encoding="utf-8")
     return set(re.findall(r"etc/(\w+\.yml)", workflow))
@@ -44,6 +53,16 @@ def _seed(recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> list[st
     monkeypatch.setattr(sys, "argv", ["seed", _API])
     seed.main()
     return recorder.paths(_API)
+
+
+def _needed_by(job: dict[str, Any]) -> list[str]:
+    needed = job.get("needs", [])
+    return [needed] if isinstance(needed, str) else needed
+
+
+def _seed_workflow() -> dict[str, Any]:
+    return cast("dict[str, Any]", yaml.safe_load(
+        (REPO_ROOT / ".github/workflows/seed.yml").read_text(encoding="utf-8")))
 
 
 def _written_by_tenant(recorder: UrlopenRecorder, resource: str) -> dict[str, Any]:
@@ -85,6 +104,16 @@ def test_no_tenant_declares_a_backbone_key_the_seed_does_not_read() -> None:
 def test_yamllint_names_every_tenant_config() -> None:
     declared = {path.name for path in seed.ETC.glob("*.yml")}
     assert _linted_configs() == declared
+
+
+def test_seeding_waits_for_every_check_the_workflow_runs() -> None:
+    assert set(_needed_by(_seed_workflow()["jobs"]["seeding"])) == _gates_on_seeding()
+
+
+def test_seeding_demands_a_success_from_every_check_it_waits_for() -> None:
+    condition = _seed_workflow()["jobs"]["seeding"]["if"]
+    demanded = set(re.findall(r"needs\.([\w-]+)\.result == 'success'", condition))
+    assert demanded == _gates_on_seeding()
 
 
 def _tenant_configs() -> dict[str, dict[str, Any]]:
