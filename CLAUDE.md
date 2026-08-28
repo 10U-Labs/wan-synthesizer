@@ -5,7 +5,6 @@
 - [Overview](#overview)
 - [Conventions](#conventions)
   - [CI workflows](#ci-workflows)
-    - [Every check is its own job](#every-check-is-its-own-job)
     - [Seeding races the routing deploy](#seeding-races-the-routing-deploy)
     - [Seeding tests every push](#seeding-tests-every-push)
     - [Shared modules are tested first](#shared-modules-are-tested-first)
@@ -14,15 +13,12 @@
     - [A rejected push is fixed forward](#a-rejected-push-is-fixed-forward)
     - [Commit straight to main](#commit-straight-to-main)
   - [Issues](#issues)
-    - [A blocked_by edge says one thing](#a-blocked_by-edge-says-one-thing)
     - [A finding is filed, not mentioned](#a-finding-is-filed-not-mentioned)
     - [An issue has six sections in a fixed order](#an-issue-has-six-sections-in-a-fixed-order)
     - [An issue states one solution](#an-issue-states-one-solution)
     - [Which issues owe the four test sections](#which-issues-owe-the-four-test-sections)
-  - [Markdown](#markdown)
   - [Tests](#tests)
     - [Read the test tenets first](#read-the-test-tenets-first)
-    - [Tenets are generic](#tenets-are-generic)
     - [The test tree splits on deployment phase](#the-test-tree-splits-on-deployment-phase)
     - [Write the test first](#write-the-test-first)
   - [Third-party code](#third-party-code)
@@ -31,7 +27,6 @@
     - [Find a run by the full hash](#find-a-run-by-the-full-hash)
   - [Writing](#writing)
     - [Code names say what the thing is](#code-names-say-what-the-thing-is)
-    - [Lead with what it is for](#lead-with-what-it-is-for)
     - [Say peers and circuits](#say-peers-and-circuits)
     - [Say shorter, not cheaper](#say-shorter-not-cheaper)
     - [The code is the only explanation](#the-code-is-the-only-explanation)
@@ -47,15 +42,9 @@ These are the standing conventions for working in this repository. Each section 
 ### CI workflows
 
 Longer:
-[every-check-is-its-own-job](.claude/memories/every-check-is-its-own-job.md),
 [shared-modules-are-tested-first](.claude/memories/shared-modules-are-tested-first.md),
 [where-a-test-runs-follows-what-starts-it](.claude/memories/where-a-test-runs-follows-what-starts-it.md),
-[seed-races-routing-deploy](.claude/memories/seed-races-routing-deploy.md),
 [seed-tests-every-push](.claude/memories/seed-tests-every-push.md).
-
-#### Every check is its own job
-
-Every static-analysis check is a job of its own, so one push reports every finding it has instead of the first one. In every `api_*.yml` workflow the eleven checks are `lint-yaml`, `assert-no-inline-directives`, `assert-no-linter-config-files`, `assert-one-assert-per-pytest`, `pylint-source`, `mypy-source`, `copy-paste-source`, `pylint-tests`, `mypy-tests`, `copy-paste-tests` and `validate-stack`. `seed.yml` has eleven of its own: no `validate-stack`, since it deploys no OpenTofu, and no `lint-yaml`, its own `yamllint` job linting `.github/workflows/seed.yml` along with the seven tenant configs in `etc/`. They all start when the workflow does, they install only the tools they run, and they sit in alphabetical order in the file because `yamllint` runs with `key-ordering: enable`. `test-repo-libraries` starts with them rather than behind them. `reconciliation` — `seeding` in `seed.yml` — needs every gate in the workflow, because it runs `tofu apply` against live AWS and an apply cannot be taken back. A green tier beside a red check is unestablished rather than a pass.
 
 #### Seeding races the routing deploy
 
@@ -63,7 +52,7 @@ Adding a new per-tenant store resource can fail the first `seed` run on the new 
 
 #### Seeding tests every push
 
-Every push that starts `seed.yml` runs every tier, so no run reports success without testing the code that seeds. `unit-tests` and `integration-tests` carry `needs: test-repo-libraries` and no `if` at all, and `seeding` names all fifteen gates in one flat `and` beside `github.ref == 'refs/heads/main'` — every job in the workflow but itself and the `e2e-tests` that follows it. `test_seeding_waits_for_every_check_the_workflow_runs` and `test_seeding_demands_a_success_from_every_check_it_waits_for` in `test/scripts/seed/pre_deployment/integration/test_contracts.py` fail when a job is missing from either place. A skip cascades transitively to every descendant and an ordinary expression `if` does not break it, so a job under one that can skip needs its own status-check function, normally `if: ${{ !cancelled() && needs.<parent>.result == 'success' }}` — which is what `e2e-tests` carries against a `seeding` that skips off `main`.
+Every push that starts `seed.yml` runs every tier, so no run reports success without testing the code that seeds. `reconciliation` and `seeding` wait on every check in their workflow, because they run `tofu apply` and PUT to live AWS and neither can be taken back, so a new check is wired into their `needs:` and their `if:` when it is added. `unit-tests` and `integration-tests` carry `needs: test-repo-libraries` and no `if` at all, and `seeding` names all fifteen gates in one flat `and` beside `github.ref == 'refs/heads/main'` — every job in the workflow but itself and the `e2e-tests` that follows it. `test_seeding_waits_for_every_check_the_workflow_runs` and `test_seeding_demands_a_success_from_every_check_it_waits_for` in `test/scripts/seed/pre_deployment/integration/test_contracts.py` fail when a job is missing from either place. A skip cascades transitively to every descendant and an ordinary expression `if` does not break it, so a job under one that can skip needs its own status-check function, normally `if: ${{ !cancelled() && needs.<parent>.result == 'success' }}` — which is what `e2e-tests` carries against a `seeding` that skips off `main`.
 
 #### Shared modules are tested first
 
@@ -74,10 +63,6 @@ Shared machinery is tested in every workflow that imports it, and before the tes
 A test runs in the workflow the change it guards arrives on. Tests about how an API behaves and how its deployment is shaped belong in that endpoint's own workflow. Whether a WAN was actually rebuilt from a change to `etc/` belongs in `seed.yml`, because a push touching `etc/` alone starts `seed.yml` and nothing else, and its `seeding` job is what delivers the change and POSTs the builds. Which directory a test sits in is the separate question of what it checks, and the two agreeing is the ordinary case; where they do not, the workflow must list the file and its whole conftest chain in its `paths`.
 
 ### Commits
-
-Longer:
-[commit-straight-to-main](.claude/memories/commit-straight-to-main.md),
-[a-rejected-push-is-fixed-forward](.claude/memories/a-rejected-push-is-fixed-forward.md).
 
 #### A rejected push is fixed forward
 
@@ -93,10 +78,6 @@ Longer:
 [how-issues-are-written](.claude/memories/how-issues-are-written.md),
 [a-finding-is-filed-not-mentioned](.claude/memories/a-finding-is-filed-not-mentioned.md),
 [an-issue-states-one-solution](.claude/memories/an-issue-states-one-solution.md).
-
-#### A blocked_by edge says one thing
-
-A `blocked_by` edge says one thing and only that thing: this issue cannot be finished until that one is. Add one when that is true of a pair and leave it off when it is not. Most issues are blocked by nothing and carry no edge, which is the ordinary case rather than an omission. The edges are not a running order and nothing reads them as one; which issue to pick up next is a judgement made from the open issues themselves. Add a real edge with `gh api repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by -F issue_id=<id>`, where `<id>` is the numeric id from `gh api repos/{owner}/{repo}/issues/{n} --jq .id` and not the GraphQL node id, sent with `-F` and not `-f`.
 
 #### A finding is filed, not mentioned
 
@@ -114,27 +95,11 @@ An issue is definitive. Its `Proposed Solution` names one change — this functi
 
 The four test sections belong to the program and to nothing else. The program is what a test tier can run: `src/`, `lib/python/`, `scripts/`, and the OpenTofu under `lib/`. An issue about the configs in `etc/`, the PoPs and fiber segments in `data/`, the workflow files in `.github/workflows/` or the documentation has two sections, "Problem" and "Proposed Solution", and owes no tests — a test over a file no tier runs only reads a value back and asserts what it just read. `test/` falls on both sides: the machinery a tier runs on is program code and gets six, conftest fixtures included, because it can make a whole layer report the wrong answer and a unit tier can usually reach it; the assertions themselves get two, since asking why the unit tests did not catch a defective unit test answers itself. What the defect is in decides this, not what the fix touches.
 
-### Markdown
-
-Longer:
-[markdown-is-not-hard-wrapped](.claude/memories/markdown-is-not-hard-wrapped.md).
-
-Markdown is not hard-wrapped. There is no column limit on `.md` files here, and none on the bodies of GitHub issues and pull requests: write each paragraph as one line and let the reader wrap it. `markdownlint` runs with MD013 disabled and the YAML linters with `line-length: disable`, so no width is enforced anywhere. Most of the markdown already on disk was written wrapped before the restriction was lifted, so match this rule rather than the file next to you.
-
 ### Tests
-
-Longer: [tdd-workflow](.claude/memories/tdd-workflow.md),
-[read-test-tenets-first](.claude/memories/read-test-tenets-first.md),
-[tenets-are-generic](.claude/memories/tenets-are-generic.md),
-[the-test-tree-splits-on-deployment-phase](.claude/memories/the-test-tree-splits-on-deployment-phase.md).
 
 #### Read the test tenets first
 
-Read `docs/tenets/tests/` before implementing. Unit tests alone are not sufficient: add coverage at every tier the change touches, one assert per pytest.
-
-#### Tenets are generic
-
-Those docs are tenets, not a description of the suite. They name no language, tool, directory or resource, because the repository already states all of that and a second copy drifts. When a tenet and the repository disagree, the repository is what changes. Editing a tenet to match the code is backwards.
+Read `docs/tenets/tests/` before implementing. Unit tests alone are not sufficient: add coverage at every tier the change touches, one assert per pytest. Those docs are tenets: they name no language, tool or directory, and when a tenet and the repository disagree, the repository is what changes.
 
 #### The test tree splits on deployment phase
 
@@ -153,23 +118,18 @@ A package the synthesizer needs while it runs ships to AWS as a Lambda layer and
 
 ### Verification
 
-Longer:
-[verification-in-ci-only](.claude/memories/verification-in-ci-only.md),
-[find-a-run-by-the-full-hash](.claude/memories/find-a-run-by-the-full-hash.md).
-
 #### CI is the source of truth
 
 CI is the source of truth. Do not run tests, linters or builds locally to verify a change — write the code and the tests, commit, push to `main`, and read the run with `gh run list` / `gh run watch` / `gh run view --log-failed`. Local runs cost tokens; CI is free and checks every gate at once. A push can trigger several path-filtered workflows. The change is done when each workflow that fired is green, not when the first one is.
 
 #### Find a run by the full hash
 
-Find the run by the full forty-character hash, from `git rev-parse HEAD`. `gh run list --commit` silently returns an empty list for the short hash `git log --oneline` prints, which is indistinguishable from a run that has not started, so anything that polls should instead list recent runs and match `headSha` by prefix locally.
+Find the run by the full forty-character hash, from `git rev-parse HEAD`. `gh run list --commit` silently returns an empty list for the short hash `git log --oneline` prints, which is indistinguishable from a run that has not started, so anything that polls should instead run `gh run list --limit 10 --json workflowName,status,conclusion,headSha` and match `headSha` by prefix locally.
 
 ### Writing
 
 Longer:
 [write-the-exact-name](.claude/memories/write-the-exact-name.md),
-[lead-with-what-it-is-for](.claude/memories/lead-with-what-it-is-for.md),
 [say-peers-and-circuits](.claude/memories/say-peers-and-circuits.md),
 [code-names-say-what-the-thing-is](.claude/memories/code-names-say-what-the-thing-is.md),
 [say-shorter-not-cheaper](.claude/memories/say-shorter-not-cheaper.md),
@@ -178,10 +138,6 @@ Longer:
 #### Code names say what the thing is
 
 A class, function, variable or field is named so that a reader meeting it for the first time can say what it holds or does, in ordinary words, without opening its definition. Name the thing the thing is, and avoid the filler nouns that attach to anything and so distinguish nothing: substrate, ground, context, handle, use, spec, info, data, manager, helper, wrapper. The list covers every name a reader meets, variables and parameters and fields as much as classes. Where the thing being named is a bundle of arguments rather than anything on the network, no name is the right answer, so a value built on one line and read on the next is deleted and built inside the call instead. Prefer the network engineer's word to the computer scientist's. Abbreviations only where the abbreviation is the ordinary form — `PoP`, `WAN` and `id` are, `cfg`, `res`, `idx` are not. This holds for new code as it is written and for old code as it is touched.
-
-#### Lead with what it is for
-
-Every paragraph opens with a plain sentence saying what the thing is and what it does, in words that need no file open, and the identifiers come after it — a name before that sentence is a demand, because the reader cannot yet tell why they are being told about it. Say what a defect costs in ordinary words near the top rather than in the seventh paragraph. Then cut: a detail stays where it changes what somebody would do and moves later or goes where it does not. Order for the reader, who has not opened the files and will not open them while reading, rather than for yourself, who knew the shape before writing a word. Explaining why a thing exists at all takes a shape of its own: say what the program is doing at that moment in one sentence, then what that step requires as a short list of facts, then the thing about those facts that forces the design, which is usually that some change and some do not. No analogies — say the PoPs, the fiber segments, the tenant's configuration and the miles. Short sentences, one fact each. Cutting a correct detail is not vagueness; replacing it with a coined noun is.
 
 #### Say peers and circuits
 
