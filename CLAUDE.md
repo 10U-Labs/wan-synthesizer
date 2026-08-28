@@ -9,6 +9,7 @@
     - [Seeding tests every push](#seeding-tests-every-push)
     - [Shared modules are tested first](#shared-modules-are-tested-first)
     - [Where a test runs follows what starts it](#where-a-test-runs-follows-what-starts-it)
+  - [Comments](#comments)
   - [Commits](#commits)
     - [A rejected push is fixed forward](#a-rejected-push-is-fixed-forward)
     - [Commit straight to main](#commit-straight-to-main)
@@ -25,12 +26,6 @@
   - [Verification](#verification)
     - [CI is the source of truth](#ci-is-the-source-of-truth)
     - [Find a run by the full hash](#find-a-run-by-the-full-hash)
-  - [Writing](#writing)
-    - [Code names say what the thing is](#code-names-say-what-the-thing-is)
-    - [Say peers and circuits](#say-peers-and-circuits)
-    - [Say shorter, not cheaper](#say-shorter-not-cheaper)
-    - [The code is the only explanation](#the-code-is-the-only-explanation)
-    - [Write the exact name](#write-the-exact-name)
 - [Notes](#notes)
 
 ## Overview
@@ -62,6 +57,13 @@ Shared machinery is tested in every workflow that imports it, and before the tes
 
 A test runs in the workflow the change it guards arrives on. Tests about how an API behaves and how its deployment is shaped belong in that endpoint's own workflow. Whether a WAN was actually rebuilt from a change to `etc/` belongs in `seed.yml`, because a push touching `etc/` alone starts `seed.yml` and nothing else, and its `seeding` job is what delivers the change and POSTs the builds. Which directory a test sits in is the separate question of what it checks, and the two agreeing is the ordinary case; where they do not, the workflow must list the file and its whole conftest chain in its `paths`.
 
+### Comments
+
+Longer:
+[the-code-is-the-only-explanation](.claude/memories/the-code-is-the-only-explanation.md).
+
+There are no docstrings and no comments anywhere the people here write: not in `src/`, `lib/python/`, `scripts/` or `test/`, not in the `.tf` files or those under `.github/workflows/`, not in `src/www/spa/app.js`, and the `assert-no-comments` job fails the run when one appears. `src/www/spa/vendor/leaflet.js` keeps its comments, like the pinned wheels that ship as `aws_lambda_layer_version.solver`, because nobody here can answer for somebody else's code. Where two mechanisms answer the same question and only one of them is reachable, the unreachable one is deleted rather than documented.
+
 ### Commits
 
 #### A rejected push is fixed forward
@@ -85,7 +87,7 @@ A defect noticed while doing something else is filed, not mentioned. Do not end 
 
 #### An issue has six sections in a fixed order
 
-An issue about the program has six sections in a fixed order: "Problem", "Why Unit Tests Did Not Catch It", "Why Integration Tests Did Not Catch It", "Why E2E Tests Did Not Catch It", "Which Unit, Integration, or E2E regression tests would prevent this from happening again?", "Proposed Solution". Every such issue has all six; where a tier does not exist for the part of the program in question, saying so is the finding, not a reason to drop the section. The regression section names the tests to write, each with its tier and its assertion, and is separate from the solution so that a fix cannot ship with the coverage folded into its last paragraph. Write plain, ordinary English prose and use telecommunications vocabulary for the subject matter. Tables where a table genuinely reads better, bullets only when enumerating things, never to break up an argument. Back claims with numbers computed from the repository's own data, and say how they were computed. Each section opens with a plain sentence saying what the thing is and what it is for before any identifier appears; "Problem" says what the code is there to do before it says what is wrong with it, and says what the defect costs within its first few lines.
+An issue about the program has six sections in a fixed order: "Problem", "Why Unit Tests Did Not Catch It", "Why Integration Tests Did Not Catch It", "Why E2E Tests Did Not Catch It", "Which Unit, Integration, or E2E regression tests would prevent this from happening again?", "Proposed Solution". Every such issue has all six; where a tier does not exist for the part of the program in question, saying so is the finding, not a reason to drop the section. The regression section names the tests to write, each with its tier and its assertion, and is separate from the solution so that a fix cannot ship with the coverage folded into its last paragraph.
 
 #### An issue states one solution
 
@@ -125,35 +127,6 @@ CI is the source of truth. Do not run tests, linters or builds locally to verify
 #### Find a run by the full hash
 
 Find the run by the full forty-character hash, from `git rev-parse HEAD`. `gh run list --commit` silently returns an empty list for the short hash `git log --oneline` prints, which is indistinguishable from a run that has not started, so anything that polls should instead run `gh run list --limit 10 --json workflowName,status,conclusion,headSha` and match `headSha` by prefix locally.
-
-### Writing
-
-Longer:
-[write-the-exact-name](.claude/memories/write-the-exact-name.md),
-[say-peers-and-circuits](.claude/memories/say-peers-and-circuits.md),
-[code-names-say-what-the-thing-is](.claude/memories/code-names-say-what-the-thing-is.md),
-[say-shorter-not-cheaper](.claude/memories/say-shorter-not-cheaper.md),
-[the-code-is-the-only-explanation](.claude/memories/the-code-is-the-only-explanation.md).
-
-#### Code names say what the thing is
-
-A class, function, variable or field is named so that a reader meeting it for the first time can say what it holds or does, in ordinary words, without opening its definition. Name the thing the thing is, and avoid the filler nouns that attach to anything and so distinguish nothing: substrate, ground, context, handle, use, spec, info, data, manager, helper, wrapper. The list covers every name a reader meets, variables and parameters and fields as much as classes. Where the thing being named is a bundle of arguments rather than anything on the network, no name is the right answer, so a value built on one line and read on the next is deleted and built inside the call instead. Prefer the network engineer's word to the computer scientist's. Abbreviations only where the abbreviation is the ordinary form — `PoP`, `WAN` and `id` are, `cfg`, `res`, `idx` are not. This holds for new code as it is written and for old code as it is touched.
-
-#### Say peers and circuits
-
-Say peers and circuits. A peer is another backbone node this one has a circuit to; a circuit is one way from one site to another, crossing whatever cities the fiber makes it cross, and it is also the thing an operator orders and pays for every month. Those two words answer almost every question about a backbone, and each of them has one word only: not path, not route, not cable, not span, and not link. A synonym splits one thing into two. One length of fiber between two adjacent points is a fiber segment (`FiberSegment`); a city that every circuit out of a site crosses is a single point of failure, said in full rather than called a chokepoint. Say the word for the thing: a fiber segment, a circuit, an access circuit for a tenant site or provider region homing into its backbone node, and a forced or removed circuit for what an operator instructs; how many backbone nodes an access node homes into is a homing degree. Names a caller already sees keep their word until somebody deliberately changes the API: the published `backbone-links` collection, the `link_kind` field of each entry of the published `paths` collection, the four `ValidationReport` keys that spell link, and the `number_of_diverse_paths` key every tenant's `etc/*.yml` sets. Carrier PoPs, tenant sites, provider regions and off-net sites are all sites, and there are two kinds — a backbone node is seated in the backbone tier, an access node is a tenant site or provider region homing into it — and the sentence says which kind whenever it turns on the difference. Write "node" only as "backbone node" or "access node", never on its own. An identifier spelled with a banned word is wrong and gets renamed; until it is, write it exactly as it is spelled. What the synthesizer hands back is a synthesis, never a design: a solver computes it, and nobody sits down and draws it. Peers and diverse circuits are two different things and conflating them hides defects — `number_of_diverse_paths` is a requirement over the whole synthesis that `synthesizer.survivable.select_fiber` selects fiber to meet, a site's peers are what falls out of the circuits `synthesizer.backbone._ways_out_of` reads off that fiber, how many circuits one pair is drawn with is `synthesizer.ceiling.paths_per_peer`, and a site's diverse circuits are the circuits out of it no single city's loss takes two of.
-
-#### Say shorter, not cheaper
-
-Nothing here records money — no price, no tariff, no monthly charge, no currency in `src/`, `lib/`, `etc/` or `data/` — and every number the synthesizer compares or publishes is a distance in miles. "The cheapest circuit" claims a comparison of prices that never happened, and sends the reader looking for where the prices are configured. Say shorter, or the fewest fiber miles. That an operator pays for every circuit they hold is a fact about operators and is worth saying, because it is why an unneeded circuit is a defect; comparing two circuits by price is not, and a saving is stated in miles with the figure. `synthesizer.ceiling` is the exception that stays: its minimum-cost maximum flow measures cost in miles. Do not say "buy" either: the program **selects** fiber segments, so say selected, and say which decision is meant wherever a sentence could also mean the selected backbone nodes. Do not say a carrier "sells" fiber either: carriers offer fiber segments. What an operator does keeps its own words: they order a circuit from one carrier and pay for it every month.
-
-#### The code is the only explanation
-
-There are no docstrings and no comments anywhere the people here write: not in `src/`, `lib/python/`, `scripts/` or `test/`, not in the `.tf` files or those under `.github/workflows/`, not in `src/www/spa/app.js`, and the `assert-no-comments` job fails the run when one appears. A name, a signature and the shape of a function are the whole of what a reader gets, so when they are not enough to say what a thing holds or does, the thing is named or shaped wrong rather than under-explained. Prose beside code is never checked, so it stops being true and nothing says when. The reasoning still gets written down, in the commit message, the issue and these notes, each of which is dated and attached to a change instead of sitting beside a line claiming to describe it forever. `src/www/spa/vendor/leaflet.js` keeps its comments, like the pinned wheels that ship as `aws_lambda_layer_version.solver`, because nobody here can answer for somebody else's code. Where two mechanisms answer the same question and only one of them is reachable, the unreachable one is deleted rather than documented.
-
-#### Write the exact name
-
-Name things by their names, everywhere — chat replies as much as issues, pull requests and commit messages. A name is something the reader can open: a path, a function, class, constant or field with the file it lives in, an S3 object key, a workflow file, a config key, an endpoint with its method. Coined collective nouns are the failure to avoid: "the layer", "the machinery", "the pipeline", "the store" read as repository vocabulary the reader is meant to recognise, so they go looking and find nothing. Say the directory, the module, the bucket, the object key instead. Simple English and precision are separate requirements and both are owed: short sentences and no computer-science jargon where a plain word will do, and the exact identifier rather than a description of it. Verify a name before writing it — a wrong name costs more than a vague one, because it sends the reader somewhere real and wrong. A line number is not a name and does not belong in prose, because the next commit moves it and nothing says when: it goes only in a `::error file=,line=::` annotation, which is generated against the commit being checked and read minutes later against that same commit.
 
 ## Notes
 

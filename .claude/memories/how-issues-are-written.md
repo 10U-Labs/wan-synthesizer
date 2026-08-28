@@ -4,7 +4,6 @@
 
 - [Overview](#overview)
 - [Conventions](#conventions)
-  - [How the prose is written](#how-the-prose-is-written)
   - [The regression section names the tests to write](#the-regression-section-names-the-tests-to-write)
   - [Which issues owe the four test sections](#which-issues-owe-the-four-test-sections)
 
@@ -22,10 +21,6 @@ An issue about the program has six sections, in this order, and every issue abou
 An issue about anything else has two sections, **Problem** and **Proposed Solution**, and owes no tests at all. The closing section is "Proposed Solution" and not "Solution": whoever picks the issue up is free to do something else, and the name says so before they have read a word of it.
 
 ## Conventions
-
-### How the prose is written
-
-Simple, plain, ordinary English. Short sentences, one fact each, no hedging, and no jargon from computer science where a plain word will do; assume a network engineer is reading, not a graph theorist. Use telecommunications vocabulary for the subject matter, taking the words for the parts of a backbone from [say-peers-and-circuits](say-peers-and-circuits.md) rather than choosing a synonym here. Each section opens with a plain sentence saying what the thing is and what it is for, and the identifiers follow it; Problem says what the code is there to do before it says what is wrong with it, and says what the defect costs within its first few lines. A detail that changes nothing the reader would do is cut. Back a claim with a number computed from the repository's own data and say how it was computed. Tables where a table genuinely reads better, bullets only when enumerating things, never to break up an argument. No analogies.
 
 ### The regression section names the tests to write
 

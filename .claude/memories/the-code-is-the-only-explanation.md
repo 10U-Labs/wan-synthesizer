@@ -5,7 +5,6 @@
 - [Overview](#overview)
 - [Conventions](#conventions)
   - [Prose beside code is never checked](#prose-beside-code-is-never-checked)
-  - [The reasoning goes where it is dated and attached to a change](#the-reasoning-goes-where-it-is-dated-and-attached-to-a-change)
   - [Vendored code keeps its comments](#vendored-code-keeps-its-comments)
   - [Write a new script without a main guard](#write-a-new-script-without-a-main-guard)
 
@@ -17,11 +16,7 @@ Nothing here explains the code except the code. There are no docstrings and no c
 
 ### Prose beside code is never checked
 
-So it stops being true and nothing says when. A test fails when the code it covers changes; a sentence above that code does not. The reader who believes it — usually a Claude session, which treats a comment as evidence — works from a program that no longer exists. The other cost is the sweep: one rename of five identifiers rewrote 327 uses, and 284 of the 352 `.py` lines its commit added were prose rather than code.
-
-### The reasoning goes where it is dated and attached to a change
-
-A commit message says why this commit does what it does. An issue says what is wrong and what to do about it. These notes say what holds across the repository. All three are read by somebody who knows which change they are about, and none sits next to a line of code claiming to describe it forever. Where two mechanisms answer the same question and only one is reachable, the unreachable one is deleted rather than documented, because a sentence saying which is dead stops being true the same way.
+So it stops being true and nothing says when. A test fails when the code it covers changes; a sentence above that code does not. The reader who believes it — usually a Claude session, which treats a comment as evidence — works from a program that no longer exists. Where two mechanisms answer the same question and only one is reachable, the unreachable one is deleted rather than documented, because a sentence saying which is dead stops being true the same way.
 
 ### Vendored code keeps its comments
 
