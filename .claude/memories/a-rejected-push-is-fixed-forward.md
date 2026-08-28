@@ -1,9 +1,30 @@
 # A rejected push is fixed forward
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Conventions](#conventions)
+  - [Read the whole failed log before pushing the fix](#read-the-whole-failed-log-before-pushing-the-fix)
+  - [The tension with solving an issue in one push](#the-tension-with-solving-an-issue-in-one-push)
+    - [How a job stopping at its first failure cost five pushes](#how-a-job-stopping-at-its-first-failure-cost-five-pushes)
+    - [Local linting was proposed and declined](#local-linting-was-proposed-and-declined)
+
+## Overview
+
 When a push fails CI, fix it in a follow-up commit. Do not amend and force-push. `main` is the only branch and it is already published by the time the run reports, so rewriting it discards the history of what was actually tried. The user was asked directly whether an amended force-push would be preferable and said no.
+
+## Conventions
+
+### Read the whole failed log before pushing the fix
+
+What is worth doing instead is reading the whole failed log rather than the first error, and sweeping the change for other instances of the same shape before pushing the fix. Several of #40's cycles were one finding that recurred in a second file. A fix that also clears every sibling instance turns two cycles into one without running anything locally.
+
+### The tension with solving an issue in one push
+
+#### How a job stopping at its first failure cost five pushes
 
 This put two standing rules in tension, and how the tension was resolved is worth stating plainly rather than rediscovering. Issues are meant to be solved in single pushes, and verification happens only in CI — see [verification-in-ci-only](verification-in-ci-only.md). A job stops at its first failing step, so while the eleven static-analysis checks were eleven steps of one job, a change carrying several independent findings surfaced exactly one per cycle: fix it, push, learn the next one. Issue #40 took five pushes for this reason, four of them rejected before any test ran — pylint `R0914`, a mypy dict-invariance error, pylint `C1803`, then three more mypy errors. The tests first executed on the fifth.
 
-Running the analysers locally would have collapsed that to one push, and it is the obvious suggestion to make. It has been made and declined: the answer is still no local runs, of anything, including linters. What was done instead is GitHub issue #56, which made each check a job of its own, so a push now reports every static-analysis finding it has in one run — see [every-check-is-its-own-job](every-check-is-its-own-job.md). A single cycle can still hide the next finding where one check's output depends on fixing another, and the tiers behind `test-repo-libraries` still wait on it. So when the two rules collide, CI-only is the one that holds and the extra commits are the accepted cost of it. Do not propose local linting as a way to honour the single-push rule, and do not quietly treat a static-analysis rejection as licence to rewrite the commit.
+#### Local linting was proposed and declined
 
-What is worth doing instead is reading the whole failed log rather than the first error, and sweeping the change for other instances of the same shape before pushing the fix. Several of #40's cycles were one finding that recurred in a second file. A fix that also clears every sibling instance turns two cycles into one without running anything locally.
+Running the analysers locally would have collapsed that to one push, and it is the obvious suggestion to make. It has been made and declined: the answer is still no local runs, of anything, including linters. What was done instead is GitHub issue #56, which made each check a job of its own, so a push now reports every static-analysis finding it has in one run — see [every-check-is-its-own-job](every-check-is-its-own-job.md). A single cycle can still hide the next finding where one check's output depends on fixing another, and the tiers behind `test-repo-libraries` still wait on it. So when the two rules collide, CI-only is the one that holds and the extra commits are the accepted cost of it. Do not propose local linting as a way to honour the single-push rule, and do not quietly treat a static-analysis rejection as licence to rewrite the commit.
