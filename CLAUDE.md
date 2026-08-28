@@ -6,7 +6,9 @@ section links the longer write-up behind it, one note per topic under
 [docs/claude/memories/README.md](docs/claude/memories/README.md) indexes
 them all.
 
-## Verification
+## Conventions
+
+### Verification
 
 CI is the source of truth. Do not run tests, linters or builds locally to
 verify a change — write the code and the tests, commit, push to `main`,
@@ -23,7 +25,7 @@ Longer:
 [verification-in-ci-only](docs/claude/memories/verification-in-ci-only.md),
 [find-a-run-by-the-full-hash](docs/claude/memories/find-a-run-by-the-full-hash.md).
 
-## Commits
+### Commits
 
 Work goes straight to `main` as direct commits. Do not create a feature
 branch, do not open a pull request, and do not structure advice around a
@@ -36,7 +38,7 @@ Longer:
 [commit-straight-to-main](docs/claude/memories/commit-straight-to-main.md),
 [a-rejected-push-is-fixed-forward](docs/claude/memories/a-rejected-push-is-fixed-forward.md).
 
-## Tests
+### Tests
 
 We do TDD: the test is written first, then the code that makes it pass.
 Test-first means authoring order — the red and green observations belong
@@ -57,7 +59,7 @@ Longer: [tdd-workflow](docs/claude/memories/tdd-workflow.md),
 [tenets-are-generic](docs/claude/memories/tenets-are-generic.md),
 [the-test-tree-splits-on-deployment-phase](docs/claude/memories/the-test-tree-splits-on-deployment-phase.md).
 
-## CI workflows
+### CI workflows
 
 Every static-analysis check is a job of its own, so one push reports every finding it has instead of the first one. In every `api_*.yml` workflow the eleven checks are `lint-yaml`, `assert-no-inline-directives`, `assert-no-linter-config-files`, `assert-one-assert-per-pytest`, `pylint-source`, `mypy-source`, `copy-paste-source`, `pylint-tests`, `mypy-tests`, `copy-paste-tests` and `validate-stack`; `seed.yml` has eleven of its own, all gated on nothing — it deploys no OpenTofu of its own, so there is no `validate-stack`, and its separate `yamllint` job lints `.github/workflows/seed.yml` along with the seven tenant configs in `etc/`, so there is no `lint-yaml` either. They all start when the workflow does, they install only the tools they run, and they sit in alphabetical order in the file because `yamllint` runs with `key-ordering: enable`. `test-repo-libraries` starts with them rather than behind them, and `reconciliation` — `seeding` in `seed.yml` — needs every gate in the workflow, because it runs `tofu apply` against live AWS and an apply cannot be taken back. A green tier beside a red check is unestablished rather than a pass, and gating the deploy on every check is what makes the run say so.
 
@@ -76,21 +78,21 @@ Longer:
 [seed-races-routing-deploy](docs/claude/memories/seed-races-routing-deploy.md),
 [seed-tests-every-push](docs/claude/memories/seed-tests-every-push.md).
 
-## Markdown
+### Markdown
 
 Markdown is not hard-wrapped. There is no column limit on `.md` files here, and none on the bodies of GitHub issues and pull requests: write each paragraph as one line and let the reader wrap it. `markdownlint` runs with MD013 disabled and the YAML linters with `line-length: disable`, so no width is enforced anywhere. Most of the markdown already on disk was written wrapped before the restriction was lifted, so match this rule rather than the file next to you.
 
 Longer:
 [markdown-is-not-hard-wrapped](docs/claude/memories/markdown-is-not-hard-wrapped.md).
 
-## Third-party code
+### Third-party code
 
 A package the synthesizer needs while it runs ships to AWS as a Lambda layer and is never unpacked into the code this repository publishes. The checks on a push exist to grade what the people here wrote, and a wheel unpacked under `src/` is graded too: `pylint-source`, `mypy-source` and `copy-paste-source` read the synthesizer's own directory, `data "archive_file" "synthesizer"` in `src/api/endpoints/tenants/wan/post/main.tf` zips the whole of that stack's `lambdas/` directory, and the findings that come back are answerable by nobody — not by anyone here, who cannot edit a wheel without unpinning it, and not by whoever wrote it, who never sees the run. `highspy` 1.15.1 and the `numpy` 2.3.5 it needs are pinned by version and by sha256, fetched and unpacked by the workflow before `tofu apply`, and shipped as `aws_lambda_layer_version.solver`, attached to both Lambdas in that stack. The next runtime dependency goes there the same way.
 
 Longer:
 [third-party-code-ships-as-a-layer](docs/claude/memories/third-party-code-ships-as-a-layer.md).
 
-## Writing
+### Writing
 
 Name things by their names, everywhere — chat replies as much as issues, pull requests and commit messages. A name is something the reader can open: a path, a function, class, constant or field with the file it lives in, an S3 object key, a workflow file, a config key, an endpoint with its method. Coined collective nouns are the failure to avoid: "the layer", "the machinery", "the pipeline", "the store" read as repository vocabulary the reader is meant to recognise, so they go looking and find nothing. Say the directory, the module, the bucket, the object key instead. Simple English and precision are separate requirements and both are owed: short sentences and no computer-science jargon where a plain word will do, and the exact identifier rather than a description of it. Verify a name before writing it — a wrong name costs more than a vague one, because it sends the reader somewhere real and wrong. A line number is not a name and does not belong in prose, because the next commit moves it and nothing says when: it goes only in a `::error file=,line=::` annotation, which the `assert-no-comments` job and `scripts/assert_dataclass_field_is_read.py` print against the commit being checked and a reader opens minutes later against that same commit. Write the name instead, which survives every edit that does not rename it, and which a reader can grep. GitHub issue #117 measured the cost on 2026-08-22: of the 32 `file.py:NNN` references in the bodies of open issues #113 and #114, not one still pointed where it had after `9a3d16c` deleted every docstring and comment, a commit that changed no behaviour at all. Five of them pointed at text no longer anywhere in the repository, and four had pointed at blank lines, which cannot be re-derived because a blank line matches 40 to 62 places in the same file.
 
@@ -112,7 +114,7 @@ Longer:
 [say-shorter-not-cheaper](docs/claude/memories/say-shorter-not-cheaper.md),
 [the-code-is-the-only-explanation](docs/claude/memories/the-code-is-the-only-explanation.md).
 
-## Issues
+### Issues
 
 An issue about the program has six sections in a fixed order: "Problem", "Why Unit Tests Did Not Catch It", "Why Integration Tests Did Not Catch It", "Why E2E Tests Did Not Catch It", "Which Unit, Integration, or E2E regression tests would prevent this from happening again?", "Proposed Solution". Every such issue has all six; where a tier does not exist for the part of the program in question, saying so is the finding, not a reason to drop the section. The regression section names the tests to write, each with its tier and its assertion, and is separate from the solution so that a fix cannot ship with the coverage folded into its last paragraph.
 
