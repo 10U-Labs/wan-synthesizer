@@ -230,10 +230,11 @@ def synthesis_over_segments(
     number_of_diverse_paths: int,
     transit_ids: tuple[str, ...] = (),
     min_backbone_count: int | None = None,
+    access_homing_degree: int = 2,
 ) -> SynthesisArtifacts:
     return synthesis_over_fiber(
         site_ids, fiber_segments_from(segments), number_of_diverse_paths,
-        transit_ids, min_backbone_count,
+        transit_ids, min_backbone_count, access_homing_degree,
     )
 
 
@@ -254,6 +255,7 @@ def synthesis_over_fiber(
     number_of_diverse_paths: int,
     transit_ids: tuple[str, ...] = (),
     min_backbone_count: int | None = None,
+    access_homing_degree: int = 2,
 ) -> SynthesisArtifacts:
     cities = site_ids + transit_ids
     fewest = len(site_ids) if min_backbone_count is None else min_backbone_count
@@ -268,7 +270,10 @@ def synthesis_over_fiber(
             max_backbone_count=len(site_ids),
             forced_backbone_names=site_ids,
             promote_high_degree_convergences=False,
-            tuning=Tuning(backbone_number_of_diverse_paths=number_of_diverse_paths),
+            tuning=Tuning(
+                backbone_number_of_diverse_paths=number_of_diverse_paths,
+                access_homing_degree=access_homing_degree,
+            ),
         ),
     )
 

@@ -255,9 +255,9 @@ def synthesize_two_tier(
     overrides: RoleOverrides | None = None,
 ) -> Synthesis:
     overrides = overrides if overrides is not None else RoleOverrides()
-    if params.min_backbone_count < 2:
+    if params.min_backbone_count < 1:
         raise ValueError(
-            "min_backbone_count (the minimum number of backbone nodes) must be at least 2"
+            "min_backbone_count (the minimum number of backbone nodes) must be at least 1"
         )
     if (
         params.max_backbone_count is not None
@@ -276,7 +276,7 @@ def synthesize_two_tier(
     )
     eligible_ids = eligible_ids | overrides.forced_backbone_ids
     backbone_eligible_ids = eligible_ids - overrides.prohibited_backbone_ids
-    if len(backbone_eligible_ids) < max(2, params.min_backbone_count):
+    if len(backbone_eligible_ids) < params.min_backbone_count:
         raise ValueError("Not enough eligible Carrier backbone PoPs (degree >= 2)")
 
     inputs = replace(graph, eligible_backbone_ids=backbone_eligible_ids)
@@ -287,7 +287,7 @@ def synthesize_two_tier(
             inputs, backbone_eligible_ids, overrides, params, promoted
         )
         forced_error = forced_backbone_resilience_error(
-            plan.required_backbone, inputs, max(2, params.min_backbone_count)
+            plan.required_backbone, inputs, params.min_backbone_count
         )
         if forced_error is not None:
             raise ValueError(forced_error)

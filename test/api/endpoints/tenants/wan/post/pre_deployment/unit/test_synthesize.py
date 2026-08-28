@@ -47,11 +47,27 @@ access = fixtures.access_site
 TRIANGLE_SITES = [pop("a"), pop("b"), pop("c"), access("s", 40.0, -99.0)]
 
 
-def test_min_backbone_count_below_two_is_rejected() -> None:
+_ONE_NODE = SynthesisParams(
+    min_backbone_count=1,
+    max_backbone_count=1,
+    promote_high_degree_convergences=False,
+    tuning=Tuning(backbone_number_of_diverse_paths=1, access_homing_degree=1),
+)
+
+
+def test_min_backbone_count_below_one_is_rejected() -> None:
     with pytest.raises(ValueError):
         synthesize_two_tier(
-            TRIANGLE_SITES, TRIANGLE, SynthesisParams(min_backbone_count=1)
+            TRIANGLE_SITES, TRIANGLE, SynthesisParams(min_backbone_count=0)
         )
+
+
+def test_a_tenant_asking_for_one_backbone_node_is_seated_the_one_it_forced() -> None:
+    synthesis = synthesize_two_tier(
+        TRIANGLE_SITES, TRIANGLE, _ONE_NODE,
+        RoleOverrides(forced_backbone_ids=frozenset({"a"})),
+    )
+    assert synthesis.backbone_ids == ("a",)
 
 
 def test_max_backbone_count_below_min_is_rejected() -> None:

@@ -10,8 +10,8 @@ backbone:
       - Stuttgart, Germany
     paths: []
   node_count:
-    max: 99
-    min: 2
+    max: 1
+    min: 1
   number_of_diverse_paths: 1
   prohibited:
     nodes: []
