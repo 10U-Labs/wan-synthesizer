@@ -1,19 +1,52 @@
 # A test runs in the workflow the change it guards arrives on
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Conventions](#conventions)
+  - [A test about a rebuilt WAN runs in seed.yml](#a-test-about-a-rebuilt-wan-runs-in-seedyml)
+  - [A test about an API behaviour or its deployment runs in that endpoint workflow](#a-test-about-an-api-behaviour-or-its-deployment-runs-in-that-endpoint-workflow)
+  - [A test over shared machinery runs in every workflow that imports it](#a-test-over-shared-machinery-runs-in-every-workflow-that-imports-it)
+  - [The consequence that is accepted](#the-consequence-that-is-accepted)
+  - [The directory and the workflow are separate questions](#the-directory-and-the-workflow-are-separate-questions)
+    - [The directory follows what the test checks](#the-directory-follows-what-the-test-checks)
+    - [Two questions can still land apart](#two-questions-can-still-land-apart)
+- [Notes](#notes)
+
+## Overview
+
 A test is worth nothing in a workflow the change it guards does not trigger. So the question "which workflow runs this test" is answered by asking what kind of push would break it, and putting the test where that push goes — not by which subsystem the test file happens to sit under.
 
 The two halves of this repository's post-deployment testing divide cleanly along that line.
 
-A test about how an API behaves, or about the shape of what was deployed, belongs in that endpoint's own workflow. `test_01_existence.py`, `test_02_configuration.py` and `test_03_wiring.py` under `test/api/endpoints/tenants/wan/post/post_deployment/integration/` ask whether the synthesizer Lambda exists, whether its runtime and memory match the declaration, and whether its role can reach the store. Each of those breaks when `src/api/endpoints/tenants/wan/post/**` changes, which is what `.github/workflows/api_endpoint_tenants_wan_post.yml` triggers on, and each runs there after `reconciliation` applies the stack.
+## Conventions
+
+### A test about a rebuilt WAN runs in seed.yml
 
 A test about whether a WAN was actually rebuilt from the operator's configuration belongs in `.github/workflows/seed.yml`. `test/scripts/seed/post_deployment/e2e/test_delivered_syntheses.py` measures each tenant's published network against the `backbone` block of its `etc/*.yml`. What breaks it is an edit to `etc/`, and a push touching `etc/` alone starts `seed.yml` and nothing else. `seed.yml` is also the workflow that delivers the edit: its `seeding` job runs `scripts/seed.py`, which PUTs the inputs and then POSTs one build per tenant. Deliver, rebuild and measure are three steps of one thing, and they run in one workflow in that order.
 
-Which directory the file sits in is a separate question, answered by what the test checks rather than by what runs it, and the two agreeing is the ordinary case. This file was the exception until GitHub issue #49, filed under the synthesizer because the synthesizer builds what it reads. What it checks is whether the five configs in `etc/` synthesize into the networks they ask for — GitHub issue #42 was closed by moving a target in `etc/minuteman.yml` with no code changed — so it now sits with `scripts/seed.py`, which delivers those configs, and `seed.yml` names nothing outside its own subsystem.
+### A test about an API behaviour or its deployment runs in that endpoint workflow
 
-The two questions can still land apart, and the repository has a live case: `test/lib/python/test_published_syntheses/**` sits with the module it covers and is run by every workflow that runs Python tests, none of which owns it. A workflow that runs a test file it does not own must list that file and its whole conftest chain in its `paths`, or a change to the test does not run the test. One `paths` entry, `test/lib/python/**`, and its comment is what that costs in each of them, because the entry covers the conftests too; `seed.yml` paid four entries and a comment until the delivered-synthesis tests moved.
+A test about how an API behaves, or about the shape of what was deployed, belongs in that endpoint's own workflow. `test_01_existence.py`, `test_02_configuration.py` and `test_03_wiring.py` under `test/api/endpoints/tenants/wan/post/post_deployment/integration/` ask whether the synthesizer Lambda exists, whether its runtime and memory match the declaration, and whether its role can reach the store. Each of those breaks when `src/api/endpoints/tenants/wan/post/**` changes, which is what `.github/workflows/api_endpoint_tenants_wan_post.yml` triggers on, and each runs there after `reconciliation` applies the stack.
+
+### A test over shared machinery runs in every workflow that imports it
 
 A test over shared machinery runs in every workflow whose own tests import it. The nine modules in `lib/python/` have no workflow of their own and no single consumer, so there is no one workflow the rule above picks out: `lib/python/test_fixtures` is imported by eight of the nine workflows that run Python tests, every one but `seed.yml`, and `repo_utils` by all nine. Each of those workflows runs all nine subtrees under `test/lib/python/`, in a `test-repo-libraries` job that comes before every job whose tests import them and gates each module with a `--cov=lib/python/<module>` of its own — see [shared-modules-are-tested-first](shared-modules-are-tested-first.md) for why every workflow runs every module rather than the ones it imports. The import that decides this is the transitive one: `test_handler_contracts` imports `test_module_utils` and `test_s3_store_mock`, and `test_fixtures.aws` and `test_terraform_drift` import `test_terraform_config`, which imports `repo_utils` — so a defect in `test_module_utils` breaks the six `api_endpoint_*.yml` workflows and `api_common_storage.yml` whether or not any of their test files names it. GitHub issue #52 is where the eight uncovered modules were given tests, and the user settled the placement with "whichever imports these libraries".
 
+### The consequence that is accepted
+
 One consequence of the split is accepted rather than overlooked. A synthesizer change deploys in `api_endpoint_tenants_wan_post.yml` but is not measured against a rebuild until the next push that touches something `seed.yml` triggers on; moving `reconciliation` into `seed.yml` was offered as the alternative and declined.
+
+### The directory and the workflow are separate questions
+
+#### The directory follows what the test checks
+
+Which directory the file sits in is a separate question, answered by what the test checks rather than by what runs it, and the two agreeing is the ordinary case. This file was the exception until GitHub issue #49, filed under the synthesizer because the synthesizer builds what it reads. What it checks is whether the five configs in `etc/` synthesize into the networks they ask for — GitHub issue #42 was closed by moving a target in `etc/minuteman.yml` with no code changed — so it now sits with `scripts/seed.py`, which delivers those configs, and `seed.yml` names nothing outside its own subsystem.
+
+#### Two questions can still land apart
+
+The two questions can still land apart, and the repository has a live case: `test/lib/python/test_published_syntheses/**` sits with the module it covers and is run by every workflow that runs Python tests, none of which owns it. A workflow that runs a test file it does not own must list that file and its whole conftest chain in its `paths`, or a change to the test does not run the test. One `paths` entry, `test/lib/python/**`, and its comment is what that costs in each of them, because the entry covers the conftests too; `seed.yml` paid four entries and a comment until the delivered-synthesis tests moved.
+
+## Notes
 
 See [an-issue-states-one-solution](an-issue-states-one-solution.md) for how the wrong half of this was chosen the first time.
