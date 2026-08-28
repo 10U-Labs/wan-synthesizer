@@ -23,7 +23,7 @@
 
 ### Issues
 
-- [how-issues-are-written](how-issues-are-written.md) — six fixed sections for the program, two for everything else
+- [how-issues-are-written](how-issues-are-written.md) — seven fixed sections for the program, two for everything else
 - [an-issue-states-one-solution](an-issue-states-one-solution.md) — a `Proposed Solution` names one change; a fork is asked about before the issue is filed
 - [a-finding-is-filed-not-mentioned](a-finding-is-filed-not-mentioned.md) — a defect noticed while doing something else is filed, never parked at the end of a reply
 
