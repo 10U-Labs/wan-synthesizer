@@ -4,54 +4,26 @@
 
 - [Overview](#overview)
 - [Conventions](#conventions)
-  - [A carrier offers fiber and does not sell it](#a-carrier-offers-fiber-and-does-not-sell-it)
   - [Cost inside synthesizer.ceiling stays](#cost-inside-synthesizerceiling-stays)
   - [Money is a fact about operators, never a number about a synthesis](#money-is-a-fact-about-operators-never-a-number-about-a-synthesis)
-  - [Old prose was swept, and new prose matches this rule](#old-prose-was-swept-and-new-prose-matches-this-rule)
-  - [Say selected, never bought](#say-selected-never-bought)
-  - [Selection names a second decision, so say which one](#selection-names-a-second-decision-so-say-which-one)
-  - [What an operator does keeps its own words](#what-an-operator-does-keeps-its-own-words)
-  - [Why the wrong word costs something](#why-the-wrong-word-costs-something)
-- [Notes](#notes)
+  - [Say selected, never bought or sold](#say-selected-never-bought-or-sold)
 
 ## Overview
 
-Nothing in this repository records money. There is no price, no tariff, no monthly charge and no currency in `src/`, `lib/`, `etc/` or `data/`. Every number the synthesizer computes, compares or publishes is a distance in miles: `FiberSegment.distance_miles` on each fiber segment, `path_geometry_miles` for a whole circuit, `target_miles` and `worst_haul_miles` in the coverage report, and `max_backup_path_multiple`, which is a ratio of one mileage to another. So say shorter, or say the fewest fiber miles. "The cheapest circuit" claims the synthesis compared two prices, and it did not.
+Nothing in this repository records money: no price, no tariff, no monthly charge and no currency in `src/`, `lib/`, `etc/` or `data/`. Every number the synthesizer computes, compares or publishes is a distance in miles. So say shorter, or the fewest fiber miles. "The cheapest circuit" claims the synthesis compared two prices, and it did not — and the wrong word sends a reader looking for where the prices are configured, which they will not find and cannot then tell apart from an oversight.
 
 ## Conventions
 
-### A carrier offers fiber and does not sell it
-
-A carrier does not sell fiber, because nothing in this program can be sold. A carrier is the company whose fiber a circuit runs over. `FiberSegment.carriers` in `synthesizer.input_graph` holds those names, and the whole of what the code does with them is ask whether one company has fiber the whole way along a circuit, because a circuit that changes hands halfway is not one an operator can order. Somebody who meets `sellable` expects a price or a contract behind it, goes looking for where either is configured, and finds neither. GitHub issue #122 took `sell` and `sellable` off 59 identifiers and test names in ten files on 2026-08-22: `seller` in `_kept_with_their_carriers` in `synthesizer.ceiling` is `offered_by`, `sellable_ways_out` and `_sellable_over` in `test_published_syntheses` are `offered_ways_out` and `_offered_over`, the `SELLABLE_WAYS_SITES`, `SELLABLE_WAYS_TRANSIT`, `SELLABLE_WAYS_SEGMENTS` and `SELLABLE_WAYS_LINKS` fixtures in `test/fixtures.py` are `OFFERED_WAYS_SITES`, `OFFERED_WAYS_TRANSIT`, `OFFERED_WAYS_SEGMENTS` and `OFFERED_WAYS_LINKS`, and `test_sellable_ways_out.py` is `test_offered_ways_out.py`.
-
 ### Cost inside synthesizer.ceiling stays
 
-One module uses "cost" exactly and should keep it. `synthesizer.ceiling` finds a site's independent circuits with a minimum-cost maximum flow, and a cost there is the miles on an arc of the residual network, which the code says for itself: `_add_capacity` in `ceiling.py` unpacks each new arc as `tail, head, miles, units`. Inside that module, cost, cheapest and refund are the algorithm's own words for mileage, and `_cheapest_runs` is a name a reader can open. Leave them. What must not happen is the word leaking out of the flow and into prose about a finished synthesis, where nobody has told the reader that cost means miles.
+Its minimum-cost maximum flow measures cost in miles, which the code says for itself: `_add_capacity` in `ceiling.py` unpacks each new arc as `tail, head, miles, units`. Inside that module, cost, cheapest and refund are the algorithm's own words for mileage. What must not happen is the word leaking out into prose about a finished synthesis, where nobody has told the reader that cost means miles.
 
 ### Money is a fact about operators, never a number about a synthesis
 
-Money is allowed as a fact about operators, never as a number about a synthesis. An operator pays for every circuit they hold, which is the whole reason an unneeded circuit is a defect worth an issue rather than a harmless extra — that is what GitHub issue #59 was about, and saying it is correct. What is not allowed is comparing two circuits by price, calling one option the expensive one, or claiming a change saves money. Say what it saves in miles and give the figure: trimming the duplicate circuits took AFGSC, a tenant `etc/afgsc.yml` declared until commit bc88b58 deleted it, from 18,454 to 14,923 miles, which is a measurement, where "it saves money" is a guess about a tariff nobody here has.
+An operator pays for every circuit they hold, which is why an unneeded circuit is a defect worth an issue rather than a harmless extra. What is not allowed is comparing two circuits by price, calling one option the expensive one, or claiming a change saves money. Say what it saves in miles and give the figure. An operator orders a circuit from one carrier end to end and pays for it every month, and a carrier offers one: the rule is about the program, which has no money in it, not about the people it serves.
 
-### Old prose was swept, and new prose matches this rule
+### Say selected, never bought or sold
 
-Prose written before this was settled said cheapest in six places in `backbone.py`, and GitHub issue #61 rewrote all six on 2026-08-17; `synthesizer.ceiling` is now the only module the word appears in. Issue #115 swept the rest on 2026-08-22, and the stragglers it turned up were the same failure under another word: "the cheaper of them", "the cheapest way to run few miles", "priced in" and "priced for a way out" in `test_survivable.py`, "prices its floor" in `test_offered_ways_out.py`, "a floor priced for a network" in `test_delivered_syntheses.py`, "the cheapest way from ``a`` to ``c``" in `test_one_carrier_per_path.py`, "``c`` is cheap through both" in `fixtures.py`, and lobes "joined cheaply and expensively" in `test_backbone.py` and `test_city_survivable_backbone.py`. Match this rule rather than the paragraph next to you, and leave old text alone unless the file is being changed for some other reason.
+"Cheapest" claims a comparison the program did not make; "buy" claims a transaction it has no notion of at all. The program **selects** fiber segments: `synthesizer.linear_program` answers in fractions, and each round of `synthesizer.survivable._round_up` selects outright every segment that answer holds at half or more. A carrier does not sell fiber either — it offers it, and the whole of what the code does with `FiberSegment.carriers` is ask whether one company has fiber the whole way along a circuit.
 
-### Say selected, never bought
-
-Do not say "buy" either, and it is the worse of the two words. "Cheapest" claims a comparison the program did not make; "buy" claims a transaction the program has no notion of at all, since nothing in `src/` could pay for anything. Say **selected**, because selecting fiber segments is what the program does: `synthesizer.linear_program` answers in fractions, and each round of `synthesizer.survivable._round_up` selects outright every segment that answer holds at half or more. GitHub issue #115 renamed five names and rewrote all 327 uses of buy, buys, buying and bought on 2026-08-22 — `synthesizer.survivable._Search.bought`, `synthesizer.backbone._DrawnFiber.bought` and `bought_by_carrier`, `synthesizer.backbone._bought_fiber` and `synthesizer.linear_program.SegmentProgram.bought` are `selected`, `selected`, `selected_by_carrier`, `_selected_fiber` and `selected`. The code that performs the act kept calling it choosing until GitHub issue #121 renamed it on 2026-08-22: `synthesizer.survivable.choose_fiber`, `synthesizer.survivable.FiberChoice` and `synthesizer.linear_program.SegmentChoice` are `select_fiber`, `FiberSelection` and `SegmentSelection`, and the 77 identifiers and test names spelled with choose, choice or chosen are spelled with select or selection. Two words for one act cost what a synonym always costs: a reader who greps for `select` reached `_round_up` and every test written since #115 and missed the function they were all downstream of.
-
-### Selection names a second decision, so say which one
-
-Selection names a second decision, so say which one. `backbone_nodes` in `collections.py` reads back the carrier PoPs a synthesis seats, and that is selecting sites rather than selecting fiber. The two are far enough apart in the code to keep straight — one runs in `synthesizer.coverage` and `synthesizer.synthesize`, the other in `synthesizer.survivable` — but a sentence that could mean either says which: the fiber selected, or the selected backbone nodes. Three other words were considered and lost to names already on disk: `taken`, because take appears 89 times in `src/` meaning something else, as in a loss that takes two of a site's circuits; `held`, because `synthesizer.linear_program.SegmentSelection.held` is how much of a segment the answer holds, from none to all, which is the thing selecting has to be told apart from; and `ordered`, because `synthesizer.survivable._Search.order` is the column order.
-
-### What an operator does keeps its own words
-
-What an operator does keeps its own words. An operator orders a circuit from one carrier end to end and pays for it every month, and a carrier offers one. The rule is about the program, which has no money in it, not about the people it serves, who have nothing else.
-
-### Why the wrong word costs something
-
-This matters beyond tidiness, because the wrong word sends a reader looking for a setting that does not exist. Somebody told the mesh picks the cheapest circuit will go looking for where the prices are configured, will not find it in `etc/*.yml`, and cannot then tell whether the prices are somewhere else, absent by oversight, or a thing the answer invented. A reader told it picks the shortest circuit knows what to look at: `distance_miles`, and the sort in whichever function was named.
-
-## Notes
-
-This was written on 2026-08-17, after an explanation of how circuits are drawn said "the cheapest fiber available" three times running and had to be corrected. The words for the parts of a backbone are in [say-peers-and-circuits](say-peers-and-circuits.md); naming the identifier a reader can open rather than describing it is [write-the-exact-name](write-the-exact-name.md).
+Selection names a second decision, so say which one: `backbone_nodes` in `collections.py` reads back the carrier PoPs a synthesis seats, which is selecting sites rather than fiber. Three substitutes are taken by names already on disk and cannot stand in: `taken`, because take means a loss taking two of a site's circuits; `held`, because `SegmentSelection.held` is how much of a segment the answer holds; and `ordered`, because `_Search.order` is the column order.

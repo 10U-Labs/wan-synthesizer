@@ -4,46 +4,29 @@
 
 - [Overview](#overview)
 - [Conventions](#conventions)
-  - [Delete the unreachable mechanism rather than document it](#delete-the-unreachable-mechanism-rather-than-document-it)
   - [Prose beside code is never checked](#prose-beside-code-is-never-checked)
   - [The reasoning goes where it is dated and attached to a change](#the-reasoning-goes-where-it-is-dated-and-attached-to-a-change)
   - [Vendored code keeps its comments](#vendored-code-keeps-its-comments)
-  - [What a rename has to sweep](#what-a-rename-has-to-sweep)
   - [Write a new script without a main guard](#write-a-new-script-without-a-main-guard)
-- [Notes](#notes)
 
 ## Overview
 
-Nothing here explains the code except the code. There are no docstrings and no comments in `src/`, `lib/python/`, `scripts/`, `test/`, the thirty-eight `.tf` files, the twelve files under `.github/workflows/` or `src/www/spa/app.js`, and the `assert-no-comments` job fails the run when one appears. So a name, a signature and the shape of a function are the whole of what a reader gets, and when that is not enough to say what something holds or does, the thing is named or shaped wrong rather than under-explained.
+Nothing here explains the code except the code. There are no docstrings and no comments in `src/`, `lib/python/`, `scripts/`, `test/`, the `.tf` files, the files under `.github/workflows/` or `src/www/spa/app.js`, and the `assert-no-comments` job fails the run when one appears. A name, a signature and the shape of a function are the whole of what a reader gets, and when that is not enough to say what something holds or does, the thing is named or shaped wrong rather than under-explained.
 
 ## Conventions
 
-### Delete the unreachable mechanism rather than document it
-
-Where two mechanisms answer the same question and only one of them is reachable, the unreachable one is deleted rather than documented, because a sentence saying that this one is the dead one is prose beside code and stops being true the same way. GitHub issue #137 deleted such a mechanism on 2026-08-22: `DEFAULT_SITES` in `synthesizer.config` mapped five names to CSV paths under `data/`, `_site_files` resolved it on every synthesis into `InputFiles.site_files`, and nothing but three assertions in `test/api/endpoints/tenants/wan/post/pre_deployment/unit/test_config.py` ever read the result, while every place a synthesis is actually computed over reaches `lambda_handler` in `synthesizer.handler` from `etc/` through `scripts/seed.py` and back out of `tenants/{tenant}/locations.json`.
-
 ### Prose beside code is never checked
 
-Prose beside code is never checked, so it stops being true and nothing says when. A test fails when the code it covers changes; a sentence above that code does not. The reader who believes it — usually a Claude session, which treats a comment as evidence — then works from a program that no longer exists. `test/lib/python/test_fixtures/pre_deployment/unit/test_aws_clients.py` opened with "Fifty-one test files reach the platform through these fixtures", a counted claim nothing recomputed, and commit `ca76000` deleted five of the eleven fixtures it listed without the sentence moving.
+So it stops being true and nothing says when. A test fails when the code it covers changes; a sentence above that code does not. The reader who believes it — usually a Claude session, which treats a comment as evidence — works from a program that no longer exists. The other cost is the sweep: one rename of five identifiers rewrote 327 uses, and 284 of the 352 `.py` lines its commit added were prose rather than code.
 
 ### The reasoning goes where it is dated and attached to a change
 
-The reasoning still gets written down; it goes where it is dated and attached to a change. A commit message says why this commit does what it does. An issue says what is wrong and what to do about it. These notes say what holds across the repository. All three are read by somebody who knows which change they are about, and none of them sits next to a line of code claiming to describe it forever.
+A commit message says why this commit does what it does. An issue says what is wrong and what to do about it. These notes say what holds across the repository. All three are read by somebody who knows which change they are about, and none sits next to a line of code claiming to describe it forever. Where two mechanisms answer the same question and only one is reachable, the unreachable one is deleted rather than documented, because a sentence saying which is dead stops being true the same way.
 
 ### Vendored code keeps its comments
 
-`src/www/spa/vendor/leaflet.js` keeps its comments, on the same ground as the `highspy` 1.15.1 and `numpy` 2.3.5 wheels that ship as `aws_lambda_layer_version.solver`: it is somebody else's code, nobody here can edit it without unpinning it, and a finding against it is answerable by nobody. `assert-no-comments` skips that directory, named in the job's `--exclude 'src/www/spa/vendor/*'`, and reads no `.md` file, where prose is the content rather than a gloss on it.
-
-### What a rename has to sweep
-
-The second cost of prose beside code is what a rename has to sweep. Issue #115 renamed five identifiers on 2026-08-22 and rewrote 327 uses; its commit `ac75cd0` added 352 lines to `.py` files, of which 284 were prose rather than code, over fifteen minutes and more than 68,000 tokens. Every settled word cost a pass over 9,494 lines of prose in the Python files alone.
+`src/www/spa/vendor/leaflet.js` keeps them, on the same ground as the wheels that ship as `aws_lambda_layer_version.solver`: it is somebody else's code, nobody here can edit it without unpinning it, and a finding against it is answerable by nobody. `assert-no-comments` skips that directory, named in the job's `--exclude 'src/www/spa/vendor/*'`, and reads no `.md` file, where prose is the content rather than a gloss on it.
 
 ### Write a new script without a main guard
 
-Two entry points changed to make this work rather than to make it tidy. `scripts/seed.py` and `scripts/assert_dataclass_field_is_read.py` ended with `if __name__ == "__main__":  # pragma: no cover`, and coverage.py offers no command-line flag for that exclusion, so deleting the pragma would have failed both `--cov-fail-under=100` gates on a guard body pytest never runs. The guard went instead: both files end at `main`, and `.github/workflows/seed.yml`, `.github/workflows/scripts.yml` and `test/scripts/seed/pre_deployment/integration/test_cli.py` name the entry point on the command line as `python3 -c 'import seed; seed.main()'`, which reads `sys.argv[1]` exactly as `python3 scripts/seed.py` and `python3 -m seed` did. Write a new script under `scripts/` without a guard.
-
-## Notes
-
-Issue #116 deleted all of it on 2026-08-22: 2,388 docstrings holding 8,777 lines, 717 whole-line and 19 trailing Python comments, 97 in the `.tf` files, 663 in the workflow files and 39 in `app.js`. `pylint` had required the docstrings and required nothing of them beyond existing, so `missing-module-docstring`, `missing-class-docstring` and `missing-function-docstring` are now disabled on every `pylint-source` and `pylint-tests` job, as command-line flags, because linter config files are forbidden here.
-
-This was written on 2026-08-22, when GitHub issue #116 deleted the prose. Naming a thing so that no explanation is wanted is [code-names-say-what-the-thing-is](code-names-say-what-the-thing-is.md); the rules for the prose that is still written — commit messages, issues and these notes — are [write-the-exact-name](write-the-exact-name.md) and [lead-with-what-it-is-for](lead-with-what-it-is-for.md); why `assert-no-comments` is a job of its own rather than a step is [every-check-is-its-own-job](every-check-is-its-own-job.md).
+`scripts/seed.py` and `scripts/assert_dataclass_field_is_read.py` end at `main`, with no `if __name__ == "__main__":` guard: coverage.py offers no command-line flag for excluding one, so a guard body pytest never runs would fail the `--cov-fail-under=100` gates. The workflows and `test/scripts/seed/pre_deployment/integration/test_cli.py` name the entry point as `python3 -c 'import seed; seed.main()'`, which reads `sys.argv[1]` exactly as `python3 scripts/seed.py` did.

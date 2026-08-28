@@ -9,7 +9,6 @@
   - [Name it after the sentence saying what it is](#name-it-after-the-sentence-saying-what-it-is)
   - [No analogies](#no-analogies)
   - [Say what it costs near the top](#say-what-it-costs-near-the-top)
-- [Notes](#notes)
 
 ## Overview
 
@@ -19,28 +18,20 @@ Every paragraph opens with a plain sentence saying what the thing is and what it
 
 ### Cut a correct detail that changes nothing
 
-Then cut. A detail earns its place by changing what somebody would do, and moves later or goes when it does not. A table of the eight `backbone` keys against the four places each one reaches is the right shape for that question and still lands as a wall when it arrives before the reader knows why eight keys matter. `_read_syntheses` in that same conftest, and the commit that added the second comparison, are worth writing where somebody is about to edit those lines and worth leaving out where somebody is trying to understand the defect. Cutting a correct detail is not vagueness. Replacing it with a coined noun is, and that is a separate failure with its own note.
+A detail earns its place by changing what somebody would do, and moves later or goes when it does not. A table of the eight `backbone` keys against the four places each reaches is the right shape for that question and still lands as a wall when it arrives before the reader knows why eight keys matter. Cutting a correct detail is not vagueness. Replacing it with a coined noun is.
 
 ### Explain why a thing exists by what changes and what does not
 
-Explain why a thing exists by naming what it needs and what stays fixed. This holds in an issue as much as in a chat reply. A reader asking why some value has to be there at all is not helped by what it is called, what type it has, or where it is passed. Say what the program is doing at that moment, in one sentence. Then say what that step requires, as a short list of facts in the reader's own vocabulary. Then say the thing about those facts that forces the design, which is usually that some of them change and some do not. The local in `diverse_path_bounds` in `synthesizer.strength` was explained this way on 2026-08-22, after four longer attempts that did not land: the program scores every candidate PoP to decide which to seat; part of that score is the largest number of diverse circuits that PoP could hold; computing that for one PoP requires the list of all candidate PoPs and which PoPs have fiber between them and how many miles; those two facts are identical for every candidate, and only the PoP being scored changes. Nothing in that says what the value is called, and a reader reaches the end able to say what it is for.
+A reader asking why some value has to be there at all is not helped by what it is called, what type it has, or where it is passed. Say what the program is doing at that moment, in one sentence. Then what that step requires, as a short list of facts in the reader's own vocabulary. Then the thing about those facts that forces the design, which is usually that some of them change and some do not. Nothing in that says what the value is called, and a reader reaches the end able to say what it is for.
 
 ### Name it after the sentence saying what it is
 
-A name written before that sentence is a demand rather than a service. Telling a reader that `settled`, in `lib/python/test_published_syntheses/__init__.py`, decides when a tenant's build has stopped moving tells them nothing until they know that anything waits, what it waits for, and why a wait is needed at all. Say that first: the tests can read `tenants/daf/wan.json` before the synthesizer Lambda has rewritten it, so `delivered_syntheses_fixture` in `test/scripts/seed/post_deployment/e2e/conftest.py` sleeps until the rewrite lands. Then name the function that decides when to stop sleeping. The names are owed either way; the order decides whether the reader can use them.
+Telling a reader that `settled`, in `lib/python/test_published_syntheses/__init__.py`, decides when a tenant's build has stopped moving tells them nothing until they know that anything waits, what it waits for, and why. Say that first: the tests can read `tenants/daf/wan.json` before the synthesizer Lambda has rewritten it, so `delivered_syntheses_fixture` sleeps until the rewrite lands. Then name the function that decides when to stop sleeping. The names are owed either way; the order decides whether the reader can use them.
 
 ### No analogies
 
-No analogies. A comparison to something outside the repository asks the reader to accept that two things are alike when they cannot check it, and it swaps the vocabulary they are trying to learn for vocabulary from somewhere else. The four attempts that failed on 2026-08-22 leaned on a grocery bag, a note-to-self, a sheet of standing conditions and an operator telephoning a carrier, and each drew a question about the comparison rather than about the code. Say the PoPs, the fiber segments, the tenant's configuration and the miles. Keep the sentences short and put one fact in each: a long sentence joining three facts hides which of the three is the one that matters.
+A comparison to something outside the repository asks the reader to accept that two things are alike when they cannot check it, and swaps the vocabulary they are trying to learn for vocabulary from somewhere else. Say the PoPs, the fiber segments, the tenant's configuration and the miles. Keep the sentences short and put one fact in each.
 
 ### Say what it costs near the top
 
-Say what it costs, in ordinary words, near the top. "The `api_endpoint_tenants_wan_post` workflow goes green and reports that the published networks match the configs, and that green cannot be told apart from a real one" is what a reader needs in order to care about the eight keys. It belongs in the first few lines, not the seventh paragraph.
-
-## Notes
-
-[write-the-exact-name](write-the-exact-name.md) pushes one way only. It was written on 2026-08-02 after two drafts of issue #47 were rejected for saying "the delivered-synthesis layer" and "the post-deployment fixture", and the correction it records is entirely about adding names. Nothing in it asks what to leave out, or what has to be said before the first identifier appears. Its model sentence, "One function is wrong: `settled`, in `lib/python/test_published_syntheses/__init__.py`", is the right way to name a function and the wrong way to open an issue, which is how issue #47 opens.
-
-This note was written later the same day, after the user asked for issue #47 in simple English. The reply that answered them said the same things in a different order — the race between the two workflows, then the function that gets the wait wrong, then the false pass and the false failure it produces, then why a ninth key would reopen it, then the digest — and left out the eight-row table, `_read_syntheses` and the commit hash. Nothing in it had been newly discovered. The issue is ordered for the writer, who already knew the shape before writing a word; the reply was ordered for the reader, who did not.
-
-The rules that sit on top of this are in [how-issues-are-written](how-issues-are-written.md) for the six sections, the telecom vocabulary and the numbers, and in [write-the-exact-name](write-the-exact-name.md) for which words the names themselves are written in.
+"The workflow goes green and reports that the published networks match the configs, and that green cannot be told apart from a real one" is what a reader needs in order to care about the eight keys. It belongs in the first few lines, not the seventh paragraph.

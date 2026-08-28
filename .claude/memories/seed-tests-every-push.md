@@ -6,42 +6,27 @@
 - [Conventions](#conventions)
   - [A skip cascades unless a status-check function breaks it](#a-skip-cascades-unless-a-status-check-function-breaks-it)
   - [The gates seeding names](#the-gates-seeding-names)
-  - [The price of running every tier on a data push](#the-price-of-running-every-tier-on-a-data-push)
-  - [Three jobs used to decide otherwise](#three-jobs-used-to-decide-otherwise)
-  - [What deleting them gained and what it cost](#what-deleting-them-gained-and-what-it-cost)
   - [YAML linting stands between a push and the live API](#yaml-linting-stands-between-a-push-and-the-live-api)
-- [Notes](#notes)
+  - [Nothing recomputes a decision from the diff](#nothing-recomputes-a-decision-from-the-diff)
 
 ## Overview
 
-`.github/workflows/seed.yml` publishes the git-authored inputs to the live API and rebuilds each tenant's WAN, so whatever runs before its `seeding` job is the whole of what stands between a push and a live deploy. Every push that starts the workflow now runs all of it: the eleven static-analysis checks, `yamllint` and `test-repo-libraries` gated on nothing, then `unit-tests` and `integration-tests`, then `seeding` and `e2e-tests` after it. There is no push that reaches the API having tested less than another one did.
+`.github/workflows/seed.yml` publishes the git-authored inputs to the live API and rebuilds each tenant's WAN, so whatever runs before its `seeding` job is the whole of what stands between a push and a live deploy. Every push that starts the workflow runs all of it, and there is no push that reaches the API having tested less than another one did. A run that tests less reports success without testing the code that seeds: two config commits that moved the tenant knobs under new root keys, after a separate commit had repointed every read in `scripts/seed.py`, left the suite red for four commits with no run saying so.
 
 ## Conventions
 
 ### A skip cascades unless a status-check function breaks it
 
-A skip still cascades transitively wherever one is possible, and an ordinary expression `if` does not break it. Only a status-check function does — `!cancelled()`, `always()`, `success()`, `failure()` — and each descendant needs its own, because breaking the cascade on the parent does not clear it for the child. One place in this workflow still turns on that: `seeding` skips when `github.ref` is not `refs/heads/main`, and `e2e-tests` reads `if: ${{ !cancelled() && needs.seeding.result == 'success' }}` so a skipped `seeding` skips it rather than running it against whatever was last deployed. Failure must block where a skip must pass, and the two want different guards: `!cancelled()` discards both signals, and an upstream failure launders into skips by the time it reaches a job further down, so `!failure()` cannot see it there. A positive `== 'success'` reading is what says a branch tail actually succeeded.
+A skip cascades transitively wherever one is possible, and an ordinary expression `if` does not break it. Only a status-check function does — `!cancelled()`, `always()`, `success()`, `failure()` — and each descendant needs its own, because breaking the cascade on the parent does not clear it for the child. `seeding` skips off `main`, and `e2e-tests` reads `if: ${{ !cancelled() && needs.seeding.result == 'success' }}` so a skipped `seeding` skips it rather than running it against whatever was last deployed. Failure must block where a skip must pass, and an upstream failure launders into skips further down, so `!failure()` cannot see it there. A positive `== 'success'` reading is what says a branch tail actually succeeded.
 
 ### The gates seeding names
 
-`unit-tests` and `integration-tests` carry `needs: test-repo-libraries` and no `if` at all, so a red `test-repo-libraries` skips them both under the default `needs:` semantics. `seeding` names all fifteen gates — the eleven checks, `yamllint`, `test-repo-libraries`, `unit-tests` and `integration-tests` — in one flat `and` of `== 'success'` readings, beside `github.ref == 'refs/heads/main'`.
-
-### The price of running every tier on a data push
-
-A `data/raw/`-only push still starts the workflow, through `data/**` in its `paths`, and now runs every tier and seeds. That is the price paid: a few minutes of runner time on a push that changes nothing any code reads. `gh run rerun` re-runs everything now, because nothing recomputes a decision from the diff, and `gh workflow run seed.yml --ref main` remains the way to start a run for a tip whose last commit touched nothing in `paths`.
-
-### Three jobs used to decide otherwise
-
-Three jobs used to decide otherwise, and GitHub issue #73 deleted them. `determining-testing` diffed `github.event.before`..`github.sha` under a `fetch-depth: 0` checkout and set a `testing-necessary` output, false when every changed path was under `data/raw/`. `concluding-testing-necessary` and `concluding-testing-unnecessary` were no-op jobs branching on that output, one running and the other skipping on every run. `unit-tests` and `integration-tests` hung off the first gate; `seeding` read the second as one arm of a two-arm `if`, the arm for the push that needed no testing at all.
-
-### What deleting them gained and what it cost
-
-What that gained was two skipped jobs on a push touching the carriers' published maps — the PDFs and images `data/pops/` and `data/fiber_segments/` were transcribed from by hand, which no code opens. What it cost was a run that reported success without testing the code that seeds. Issues #15 and #16 are the incident: they moved the tenant knobs under `backbone` and `access` root keys across five configs, one file per commit, after a single commit had repointed every read in `scripts/seed.py`. Nothing tested the combined state — the code commit's run was cancelled by the next push and each of the five config commits skipped every tier — so the suite was red for four commits and no run said so. Narrowing the exclusion from all of `data/` and `etc/` down to `data/raw/` shrank the set of pushes that could do this without changing the shape that let them.
+`unit-tests` and `integration-tests` carry `needs: test-repo-libraries` and no `if` at all, so a red `test-repo-libraries` skips them both. `seeding` names all fifteen gates in one flat `and` of `== 'success'` readings, beside `github.ref == 'refs/heads/main'`. `test_seeding_waits_for_every_check_the_workflow_runs` and `test_seeding_demands_a_success_from_every_check_it_waits_for` in `test/scripts/seed/pre_deployment/integration/test_contracts.py` fail when a job that is neither `seeding` nor downstream of it is missing from either place, so the next check added is wired in or the run says so.
 
 ### YAML linting stands between a push and the live API
 
-YAML linting stands between a push and the live API again, since 2026-08-23. The `yamllint` job is still gated on nothing, and it is the only job that reads `etc/daf.yml`, `etc/dow.yml`, `etc/f_35.yml`, `etc/minuteman.yml`, `etc/two_node.yml`, `etc/yurop1.yml` and `etc/yurop2.yml`, which are the inputs `scripts/seed.py` publishes, so a red one is likely to be about a file `seeding` is about to PUT. It now carries `- yamllint` in `seeding`'s `needs:` and `&& needs.yamllint.result == 'success'` in its `if`, alongside `assert-no-test-only-python-definition`, which had arrived in `ee30b8bc` gating nothing. `test_seeding_waits_for_every_check_the_workflow_runs` and `test_seeding_demands_a_success_from_every_check_it_waits_for` in `test/scripts/seed/pre_deployment/integration/test_contracts.py` read the workflow and fail when a job that is neither `seeding` nor downstream of it is missing from either place, so the next check added is wired in or the run says so. Two other yamllint jobs that used to sit in the chain are already gone: `determining-yamllint` with its two `concluding-yamllint-*` gates, and `lint-yaml`, which ran the same `yamllint --strict` over `.github/workflows/seed.yml` alone.
+The `yamllint` job is the only one that reads the seven tenant configs in `etc/`, which are the inputs `scripts/seed.py` publishes, so a red one is likely to be about a file `seeding` is about to PUT. It is named in `seeding`'s `needs:` and in its `if`.
 
-## Notes
+### Nothing recomputes a decision from the diff
 
-See also [verification-in-ci-only](verification-in-ci-only.md) for why the run is the only evidence there is, and [every-check-is-its-own-job](every-check-is-its-own-job.md) for why each check is a job of its own.
+So `gh run rerun` re-runs everything, and `gh workflow run seed.yml --ref main` is the way to start a run for a tip whose last commit touched nothing in `paths`.
