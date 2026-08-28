@@ -324,7 +324,7 @@ jobs:
             "{extends: default, rules: {$RULES}}" \
             .github/workflows/seed.yml etc/daf.yml etc/dow.yml \
             etc/f_35.yml etc/minuteman.yml etc/two_node.yml \
-            etc/yurop.yml
+            etc/yurop1.yml etc/yurop2.yml
 name: seed
 on:
   push:
