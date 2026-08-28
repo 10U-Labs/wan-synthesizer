@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from synthesizer.input_graph import FiberSegment, Site, haversine_miles
+from synthesizer.input_graph import FiberSegment, haversine_miles
 from synthesizer.model import (
     AccessPath,
     Synthesis,
