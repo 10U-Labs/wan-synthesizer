@@ -16,17 +16,11 @@ from synthesizer.assemble import (
     backbone_physically_biconnectable,
     build_synthesis_for_backbone,
     forced_backbone_resilience_error,
-    nearest_pop_id,
 )
 
 pop = fixtures.carrier_pop
 physical = fixtures.fiber_segments_from
 access = fixtures.access_site
-
-
-def test_nearest_pop_id_picks_the_closest() -> None:
-    pops = [pop("far", 0.0, 50.0), pop("near", 0.0, 1.0)]
-    assert nearest_pop_id(access("s", 0.0, 0.0), pops) == "near"
 
 
 def _dual_inputs(s_coord: tuple[float, float] = (0.0, 0.05)) -> SynthesisInputs:

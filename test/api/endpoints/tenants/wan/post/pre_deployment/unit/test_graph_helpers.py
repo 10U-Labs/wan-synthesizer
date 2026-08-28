@@ -8,14 +8,12 @@ from synthesizer.graphs import (
     adjacency_by_carrier,
     articulation_points,
     biconnected_block_membership,
-    bridge_segments,
     bridges,
     connected_components,
     dijkstra,
     survives_any_one_site_loss,
     path_segment_keys,
     reconstruct_path,
-    bridgeless_components,
 )
 from synthesizer.input_graph import FiberSegment, Site, carriers_along, segment_key, haversine_miles
 
@@ -141,29 +139,6 @@ def test_bridges_names_every_cut_segment_in_a_chain() -> None:
 
 def test_cycle_has_no_bridges() -> None:
     assert bridges({"a", "b", "c"}, {("a", "b"), ("b", "c"), ("a", "c")}) == set()
-
-
-def test_bridge_segments_finds_the_lone_cut_between_two_pockets() -> None:
-    assert bridge_segments(_TWO_POCKETS) == {segment_key("c", "d")}
-
-
-def test_bridge_segments_empty_for_a_cycle() -> None:
-    assert bridge_segments(_adjacency([("a", "b"), ("b", "c"), ("a", "c")])) == set()
-
-
-def test_bridgeless_components_labels_a_cycle_as_one() -> None:
-    labels = bridgeless_components(_adjacency([("a", "b"), ("b", "c"), ("a", "c")]))
-    assert len(set(labels.values())) == 1
-
-
-def test_bridgeless_components_splits_two_pockets_at_the_bridge() -> None:
-    labels = bridgeless_components(_TWO_POCKETS)
-    assert labels["a"] != labels["d"]
-
-
-def test_bridgeless_components_labels_a_chain_as_singletons() -> None:
-    labels = bridgeless_components(_adjacency([("a", "b"), ("b", "c")]))
-    assert len(set(labels.values())) == 3
 
 
 def test_dijkstra_paths_around_a_blocked_segment() -> None:

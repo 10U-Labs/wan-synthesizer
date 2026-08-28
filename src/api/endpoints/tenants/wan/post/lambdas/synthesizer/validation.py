@@ -101,10 +101,6 @@ def backbone_mesh_survives_any_one_link_loss(synthesis: Synthesis) -> bool:
 def backbone_mesh_survives_any_one_site_loss(synthesis: Synthesis) -> bool:
     return _backbone_mesh_survives(synthesis, survives_any_one_site_loss)
 
-def failure_cities_per_path(drawn_paths: list[SynthesisPath], site: str) -> list[frozenset[str]]:
-    return [cities for _peer, cities in paths_out_of(drawn_paths, site)]
-
-
 def paths_out_of(
     drawn_paths: list[SynthesisPath], site: str
 ) -> list[tuple[str, frozenset[str]]]:
@@ -116,10 +112,6 @@ def paths_out_of(
         for drawn_path in drawn_paths
         if drawn_path.purpose == "backbone_mesh" and site in (drawn_path.source, drawn_path.target)
     ]
-
-
-def mesh_path_failure_cities(synthesis: Synthesis, site: str) -> list[frozenset[str]]:
-    return failure_cities_per_path(synthesis.drawn_paths, site)
 
 
 def _all_disjoint(paths: tuple[tuple[str, frozenset[str]], ...]) -> bool:

@@ -55,10 +55,6 @@ def finalize_synthesis(
     )
 
 
-def nearest_pop_id(access: Site, carrier_pops: list[Site]) -> str:
-    return min(carrier_pops, key=lambda pop: haversine_miles(access, pop)).id
-
-
 def assign_access(
     backbone_ids: tuple[str, ...],
     inputs: SynthesisInputs,

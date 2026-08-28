@@ -146,31 +146,6 @@ def _lowlink_dfs(
                 low[up] = min(low[up], low[site])
                 on_finish(site, up, low[site], disc[up])
 
-def bridge_segments(adjacency: dict[str, list[tuple[str, float]]]) -> set[tuple[str, str]]:
-    found: set[tuple[str, str]] = set()
-
-    def record(site: str, up: str, low_site: int, disc_up: int) -> None:
-        if low_site > disc_up:
-            found.add(segment_key(up, site))
-
-    _lowlink_dfs(adjacency, lambda _u, _v: None, record)
-    return found
-
-def bridgeless_components(adjacency: dict[str, list[tuple[str, float]]]) -> dict[str, int]:
-    cut = bridge_segments(adjacency)
-    surviving = {
-        segment_key(site, neighbor)
-        for site, neighbors in adjacency.items()
-        for neighbor, _weight in neighbors
-        if segment_key(site, neighbor) not in cut
-    }
-    components = connected_components(set(adjacency), surviving)
-    return {
-        site_id: index
-        for index, component in enumerate(components)
-        for site_id in component
-    }
-
 def _record_block(
     segment_stack: list[tuple[str, str]],
     marker: tuple[str, str],

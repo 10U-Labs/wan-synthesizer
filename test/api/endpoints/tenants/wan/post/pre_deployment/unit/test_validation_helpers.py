@@ -12,7 +12,6 @@ from synthesizer.validation import (
     synthesis_site_pairs,
     included_site_ids,
     diverse_path_count,
-    mesh_path_failure_cities,
     neighbor_degrees,
 )
 
@@ -76,21 +75,6 @@ _DIVERSE_EGRESS = meshed_synthesis(
     fixtures.DIVERSE_TRANSIT_PATHS, fixtures.SHARED_TRANSIT_BACKBONE
 )
 _MESH_SITES = fixtures.carrier_pops_by_id("abcxy")
-
-
-def test_mesh_path_failure_cities_excludes_the_node_itself() -> None:
-    synthesis = meshed_synthesis([("a", "x", "b")], ("a", "b"))
-    assert mesh_path_failure_cities(synthesis, "a") == [frozenset({"x", "b"})]
-
-
-def test_mesh_path_failure_cities_ignores_paths_elsewhere() -> None:
-    synthesis = meshed_synthesis([("b", "x", "c")], ("a", "b", "c"))
-    assert mesh_path_failure_cities(synthesis, "a") == []
-
-
-def test_mesh_path_failure_cities_counts_the_peer_as_a_city() -> None:
-    synthesis = meshed_synthesis([("a", "b")], ("a", "b"))
-    assert mesh_path_failure_cities(synthesis, "a") == [frozenset({"b"})]
 
 
 @pytest.mark.parametrize("degree", [2, 3, 4])
