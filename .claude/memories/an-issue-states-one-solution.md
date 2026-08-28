@@ -24,4 +24,4 @@ Do not pick, however clearly the text leans toward one and even when it calls on
 
 ### Naming the alternative that lost
 
-Definitive does not mean silent about what was rejected. Naming the alternative and why it lost stops the same ground being covered again. The difference is whether the sentence has a verb the reader can act on.
+Definitive does not mean silent about what was rejected. Naming the alternative and why it lost stops the same ground being covered again.

@@ -7,7 +7,7 @@
   - [CI workflows](#ci-workflows)
   - [Issues](#issues)
   - [Third-party code](#third-party-code)
-  - [Writing](#writing)
+  - [Comments](#comments)
 
 ## Overview
 
@@ -31,10 +31,6 @@
 
 - [third-party-code-ships-as-a-layer](third-party-code-ships-as-a-layer.md) — a package the synthesizer needs at runtime ships as a Lambda layer, never unpacked under `src/`
 
-### Writing
+### Comments
 
-- [write-the-exact-name](write-the-exact-name.md) — name the file, function and key everywhere; never a coined collective noun
-- [say-peers-and-circuits](say-peers-and-circuits.md) — one word per thing: circuit, peer, fiber segment, single point of failure, backbone node, access node
-- [code-names-say-what-the-thing-is](code-names-say-what-the-thing-is.md) — a name says what the thing holds without opening it; no filler nouns
-- [say-shorter-not-cheaper](say-shorter-not-cheaper.md) — the repository records miles and no money, so a circuit is shorter, never cheaper
-- [the-code-is-the-only-explanation](the-code-is-the-only-explanation.md) — no docstrings and no comments; the reasoning goes in the commit message, the issue and these notes
+- [the-code-is-the-only-explanation](the-code-is-the-only-explanation.md) — no docstrings and no comments anywhere the people here write; `assert-no-comments` fails the run when one appears
