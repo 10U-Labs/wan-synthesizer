@@ -5,44 +5,28 @@
 - [Overview](#overview)
 - [Conventions](#conventions)
   - [A line number is not a name](#a-line-number-is-not-a-name)
-  - [A name is something the reader can open](#a-name-is-something-the-reader-can-open)
   - [Coined collective nouns are the common failure](#coined-collective-nouns-are-the-common-failure)
   - [Precision and simplicity are both required](#precision-and-simplicity-are-both-required)
   - [Verify a name, and prefer a table for several](#verify-a-name-and-prefer-a-table-for-several)
-- [Notes](#notes)
 
 ## Overview
 
-Every noun that has a name in the repository is written by that name. This holds everywhere — chat replies, issue and pull-request bodies, commit messages, and these notes — and it is not a rule about issues alone.
+Every noun that has a name in the repository is written by that name, everywhere — chat replies, issue and pull-request bodies, commit messages, and these notes. A name is a thing the reader can open: a path, a function, class, constant or field with the file it lives in, an S3 object key, a workflow file, a config key, an endpoint and its method. When a phrase cannot be pasted into a search box and land somewhere, it is not naming anything, and the reader has to reconstruct what was meant from context the writer had and they do not.
 
 ## Conventions
 
 ### A line number is not a name
 
-A line number is not a name, because the next commit moves it and nothing says when. It goes in one place only: a `::error file=,line=::` annotation, which the `assert-no-comments` job and `scripts/assert_dataclass_field_is_read.py` print against the commit being checked, and which a reader opens in `.github/workflows/` minutes later against that same commit. Those are generated fresh and never stored, so they cannot go stale. Prose outlives the commit it was written in, so prose gets the name. `_ways_out_of` in `backbone.py` and `backbone.py:220` tell the reader the same thing, except that a reader can grep the first and nobody can grep line 220, and the first keeps being true.
-
-### A name is something the reader can open
-
-A name is a thing the reader can open: a path, a function, class, constant or field with the file it lives in, an S3 object key, a workflow file, a config key, an endpoint and its method. `settled` in `lib/python/test_published_syntheses/__init__.py` is a name. "The delivered-synthesis layer" is not. When a phrase cannot be pasted into a search box and land somewhere, it is not naming anything, and the reader has to reconstruct what was meant from context that the writer had and they do not.
+The next commit moves it and nothing says when. It goes in one place only: a `::error file=,line=::` annotation, which is generated against the commit being checked and read minutes later against that same commit, so it cannot go stale. `_ways_out_of` in `backbone.py` and `backbone.py:220` tell the reader the same thing, except that a reader can grep the first and it keeps being true. One commit that deleted prose and changed no behaviour left not one of 32 stored line references pointing where it had, and four of them had pointed at blank lines, which cannot be re-derived at all.
 
 ### Coined collective nouns are the common failure
 
-Coined collective nouns are the common failure. "The layer", "the machinery", "the pipeline", "the store", "the far side" all read as though they refer to a known thing, which is what makes them worse than saying nothing: the reader assumes the term is repository vocabulary they are supposed to recognise, goes looking for it, and finds it nowhere. Say the directory, the module, the bucket, the object key. Where a group genuinely has no name, name its members once and then use a term defined in that sentence.
+"The layer", "the machinery", "the pipeline", "the store", "the far side" all read as though they refer to a known thing, which is what makes them worse than saying nothing: the reader assumes the term is repository vocabulary they are supposed to recognise, goes looking for it, and finds it nowhere. Say the directory, the module, the bucket, the object key. Where a group genuinely has no name, name its members once and then use a term defined in that sentence.
 
 ### Precision and simplicity are both required
 
-Precision is separate from simplicity and both are required. Simple English means short sentences and no computer-science jargon where a plain word will do; it does not license a vague noun. Precision means the exact identifier; it does not license a wall of qualifiers. "One function is wrong: `settled`, in `lib/python/test_published_syntheses/__init__.py`" is both. "The delivered-synthesis layer waits on two of the eight backbone knobs" is neither, because a reader who has not already read the code cannot tell what waits, what it waits on, or where either lives.
+Simple English means short sentences and no computer-science jargon where a plain word will do; it does not license a vague noun. Precision means the exact identifier; it does not license a wall of qualifiers. "One function is wrong: `settled`, in `lib/python/test_published_syntheses/__init__.py`" is both. "The delivered-synthesis layer waits on two of the eight backbone knobs" is neither. That model sentence is the right way to name a function and the wrong way to open an issue: a plain sentence saying what the thing is and what it is for comes before the first identifier.
 
 ### Verify a name, and prefer a table for several
 
 Prefer a table when several named things each have several properties, so the reader can look one up rather than hold eight of them in their head. Verify a name before writing it: workflow files are not named after the directories they test, a function moves between modules, and a wrong name costs more than a vague one because it sends the reader somewhere real and wrong.
-
-## Notes
-
-GitHub issue #117 measured what a stored line number costs, on 2026-08-22. Commit `9a3d16c` deleted every docstring and comment, which shifted almost every line in almost every Python file and changed no behaviour at all. Of the 32 `file.py:NNN` references in the bodies of open issues #113 and #114, not one still pointed where it had. 23 had simply moved. 5 pointed at text no longer anywhere in the repository — `survivable.py:459` and `ceiling.py:767` in #113, `validation.py:437` and both copies of `model.py:36` in #114. The remaining 4 had pointed at blank lines, and a blank line matches 40 to 62 places in the same file, so there was nothing to re-derive them from. All 32 were rewritten as names in the same commit that landed this rule. The line numbers in closed issues were left alone, because nobody acts on a reference in a finished issue.
-
-This note settles which words the names are written in and not where in the paragraph they go. A plain sentence saying what the thing is and what it is for comes before the first identifier, and a correct detail that changes nothing the reader would do is cut rather than kept — see [lead-with-what-it-is-for](lead-with-what-it-is-for.md). The model sentence above is the right way to name a function and the wrong way to open an issue, which is how issue #47 opens.
-
-This was written on 2026-08-02, after the first two rewrites of issue #47 were rejected for exactly this. The first said "the delivered-synthesis layer", a phrase appearing nowhere on disk. The second said "the post-deployment fixture", which narrowed the vagueness without removing it — several fixtures answered to that description, and the one that mattered is `delivered_syntheses_fixture` in `test/scripts/seed/post_deployment/e2e/conftest.py`. The third named the function, the file, the eight config keys, the S3 object keys and the two workflows, and that is the standard.
-
-The issue-specific rules that sit on top of this — the six sections, telecom vocabulary, numbers computed from the repository's own data — are in [how-issues-are-written](how-issues-are-written.md).
