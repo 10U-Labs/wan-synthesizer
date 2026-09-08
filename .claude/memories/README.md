@@ -11,7 +11,7 @@
 
 ## Overview
 
-`CLAUDE.md` at the repository root carries the standing conventions in short form and is read at the start of every session. A note exists here only where it carries something `CLAUDE.md` cannot: the reasoning behind a rule, or the detail needed occasionally rather than constantly. A rule whose whole statement fits in `CLAUDE.md` has no note. One note per topic, so a session can read the one rule it needs. A convention learned in a session belongs here — a paragraph in `CLAUDE.md` and a topic file in this directory, linked from both indexes. Keep in the session tool's local memory only what is true of one machine alone.
+`../CLAUDE.md` one directory up carries the standing conventions in short form and is read at the start of every session. A note exists here only where it carries something `CLAUDE.md` cannot: the reasoning behind a rule, or the detail needed occasionally rather than constantly. A rule whose whole statement fits in `CLAUDE.md` has no note. One note per topic, so a session can read the one rule it needs. A convention learned in a session belongs here — a paragraph in `CLAUDE.md` and a topic file in this directory, linked from both indexes. Keep in the session tool's local memory only what is true of one machine alone.
 
 ## Conventions
 

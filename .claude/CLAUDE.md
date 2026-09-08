@@ -31,16 +31,16 @@
 
 ## Overview
 
-These are the standing conventions for working in this repository. Each section links the longer write-up behind it, one note per topic under `.claude/memories/`; [.claude/memories/README.md](.claude/memories/README.md) indexes them all.
+These are the standing conventions for working in this repository. Each section links the longer write-up behind it, one note per topic under `.claude/memories/`; [.claude/memories/README.md](memories/README.md) indexes them all.
 
 ## Conventions
 
 ### CI workflows
 
 Longer:
-[shared-modules-are-tested-first](.claude/memories/shared-modules-are-tested-first.md),
-[where-a-test-runs-follows-what-starts-it](.claude/memories/where-a-test-runs-follows-what-starts-it.md),
-[seed-tests-every-push](.claude/memories/seed-tests-every-push.md).
+[shared-modules-are-tested-first](memories/shared-modules-are-tested-first.md),
+[where-a-test-runs-follows-what-starts-it](memories/where-a-test-runs-follows-what-starts-it.md),
+[seed-tests-every-push](memories/seed-tests-every-push.md).
 
 #### Seeding races the routing deploy
 
@@ -61,7 +61,7 @@ A test runs in the workflow the change it guards arrives on. Tests about how an 
 ### Comments
 
 Longer:
-[the-code-is-the-only-explanation](.claude/memories/the-code-is-the-only-explanation.md).
+[the-code-is-the-only-explanation](memories/the-code-is-the-only-explanation.md).
 
 There are no docstrings and no comments anywhere the people here write: not in `src/`, `lib/python/`, `scripts/` or `test/`, not in the `.tf` files or those under `.github/workflows/`, not in `src/www/spa/app.js`, and the `assert-no-comments` job fails the run when one appears. `src/www/spa/vendor/leaflet.js` keeps its comments, like the pinned wheels that ship as `aws_lambda_layer_version.solver`, because nobody here can answer for somebody else's code. Where two mechanisms answer the same question and only one of them is reachable, the unreachable one is deleted rather than documented.
 
@@ -78,9 +78,9 @@ Work goes straight to `main` as direct commits. Do not create a feature branch, 
 ### Issues
 
 Longer:
-[how-issues-are-written](.claude/memories/how-issues-are-written.md),
-[a-finding-is-filed-not-mentioned](.claude/memories/a-finding-is-filed-not-mentioned.md),
-[an-issue-states-one-solution](.claude/memories/an-issue-states-one-solution.md).
+[how-issues-are-written](memories/how-issues-are-written.md),
+[a-finding-is-filed-not-mentioned](memories/a-finding-is-filed-not-mentioned.md),
+[an-issue-states-one-solution](memories/an-issue-states-one-solution.md).
 
 #### A finding is filed, not mentioned
 
@@ -119,7 +119,7 @@ We do TDD: the test is written first, then the code that makes it pass. Test-fir
 ### Third-party code
 
 Longer:
-[third-party-code-ships-as-a-layer](.claude/memories/third-party-code-ships-as-a-layer.md).
+[third-party-code-ships-as-a-layer](memories/third-party-code-ships-as-a-layer.md).
 
 A package the synthesizer needs while it runs ships to AWS as a Lambda layer and is never unpacked into the code this repository publishes. The checks on a push exist to grade what the people here wrote, and a wheel unpacked under `src/` is graded too: `pylint-source`, `mypy-source` and `copy-paste-source` read the synthesizer's own directory, `data "archive_file" "synthesizer"` in `src/api/endpoints/tenants/wan/post/main.tf` zips the whole of that stack's `lambdas/` directory, and the findings that come back are answerable by nobody. `highspy` 1.15.1 and the `numpy` 2.3.5 it needs are pinned by version and by sha256, fetched and unpacked by the workflow before `tofu apply`, and shipped as `aws_lambda_layer_version.solver`, attached to both Lambdas in that stack. The next runtime dependency goes there the same way.
 

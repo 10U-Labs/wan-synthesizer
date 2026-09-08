@@ -14,3 +14,4 @@ outputs/
 .terraform.lock.hcl
 *.tfstate
 *.tfstate.*
+.claude/settings.local.json
