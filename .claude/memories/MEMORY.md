@@ -11,6 +11,7 @@
   - [Tests](#tests)
   - [Third-party code](#third-party-code)
   - [Verification](#verification)
+  - [Vocabulary](#vocabulary)
 
 ## Overview
 
@@ -53,3 +54,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 
 - [ci-is-the-source-of-truth](ci-is-the-source-of-truth.md) — nothing is verified locally; the change is done when every workflow that fired is green
 - [find-a-run-by-the-full-hash](find-a-run-by-the-full-hash.md) — `gh run list --commit` returns nothing for a short hash, so match `headSha` by prefix locally
+
+### Vocabulary
+
+- [a-circuit-is-what-a-tenant-orders](a-circuit-is-what-a-tenant-orders.md) — the unit a tenant orders is a circuit, its route is the carrier PoPs it runs through, and `path` survives only for files on disk and two graph walks
