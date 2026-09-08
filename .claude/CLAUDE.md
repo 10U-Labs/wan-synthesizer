@@ -31,7 +31,7 @@
 
 ## Overview
 
-These are the standing conventions for working in this repository. Each section links the longer write-up behind it, one note per topic under `.claude/memories/`; [.claude/memories/README.md](memories/README.md) indexes them all.
+These are the standing conventions for working in this repository. Each section links the longer write-up behind it, one note per topic under `.claude/memories/`; [.claude/memories/MEMORY.md](memories/MEMORY.md) indexes them all.
 
 ## Conventions
 
