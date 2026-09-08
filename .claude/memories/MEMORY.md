@@ -38,7 +38,6 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 ### Issues
 
 - [why-static-analysis-is-asked-separately](why-static-analysis-is-asked-separately.md) — a job refuses a shape everywhere at once where a tier catches one occurrence
-- [a-finding-is-filed-not-mentioned](a-finding-is-filed-not-mentioned.md) — a defect noticed while doing something else is filed, never parked at the end of a reply
 
 ### Tests
 
