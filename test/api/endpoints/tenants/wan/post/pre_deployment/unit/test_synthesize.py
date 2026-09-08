@@ -18,7 +18,7 @@ from synthesizer.model import (
     SynthesisInputs,
     SynthesisMetrics,
     SynthesisParams,
-    ForcedPaths,
+    ForcedCircuits,
     RoleExclusions,
     RoleOverrides,
     Tuning,
@@ -197,9 +197,9 @@ def _synthesis(
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
-        access_paths=[],
+        access_circuits=[],
         fiber_segment_keys=fiber_segment_keys,
-        drawn_paths=[],
+        drawn_circuits=[],
         metrics=SynthesisMetrics(0.0, 0.0, 0.0),
     )
 
@@ -270,20 +270,20 @@ def test_best_backbone_at_size_returns_none_when_nothing_feasible() -> None:
 
 
 def test_required_backbone_is_fixed_into_every_set() -> None:
-    forced = ForcedPaths(required_backbone=frozenset({"a"}))
-    plan = search_plan(["a", "b", "c"], forced_paths=forced)
+    forced = ForcedCircuits(required_backbone=frozenset({"a"}))
+    plan = search_plan(["a", "b", "c"], forced_circuits=forced)
     assert backbone_combinations(plan, 2) == [("a", "b"), ("a", "c")]
 
 
 def test_backbone_combinations_empty_when_size_below_required() -> None:
-    forced = ForcedPaths(required_backbone=frozenset({"a", "b"}))
-    plan = search_plan(["a", "b"], forced_paths=forced)
+    forced = ForcedCircuits(required_backbone=frozenset({"a", "b"}))
+    plan = search_plan(["a", "b"], forced_circuits=forced)
     assert backbone_combinations(plan, 1) == []
 
 
 def test_backbone_combination_count_zero_when_size_below_required() -> None:
-    forced = ForcedPaths(required_backbone=frozenset({"a", "b"}))
-    plan = search_plan(["a", "b"], forced_paths=forced)
+    forced = ForcedCircuits(required_backbone=frozenset({"a", "b"}))
+    plan = search_plan(["a", "b"], forced_circuits=forced)
     assert backbone_combination_count(plan, 1) == 0
 
 

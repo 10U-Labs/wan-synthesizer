@@ -12,9 +12,9 @@ from synthesizer.model import (
     SynthesisInputs,
     SynthesisMetrics,
     SynthesisParams,
-    ForcedPaths,
-    OperatorPaths,
-    SynthesisPath,
+    ForcedCircuits,
+    OperatorCircuits,
+    SynthesisCircuit,
     RoleExclusions,
     SourceFiles,
     Tuning,
@@ -22,7 +22,7 @@ from synthesizer.model import (
 from synthesizer.graphs import (
     biconnected_block_membership,
     build_adjacency,
-    path_segment_keys,
+    fiber_segments_along,
 )
 from synthesizer.search_plan import _SearchPlan
 from synthesizer.synthesize import all_pairs_shortest, synthesize_two_tier
@@ -99,20 +99,23 @@ def ring_fiber_segments(distance: float = 100.0) -> dict[tuple[str, str], FiberS
 
 
 SHARED_TRANSIT_BACKBONE = ("a", "b", "c")
-SHARED_TRANSIT_PATHS = [("a", "x", "b"), ("a", "x", "c"), ("b", "c")]
-DIVERSE_TRANSIT_PATHS = [("a", "x", "b"), ("a", "y", "c"), ("b", "c")]
+SHARED_TRANSIT_CIRCUITS = [("a", "x", "b"), ("a", "x", "c"), ("b", "c")]
+DIVERSE_TRANSIT_CIRCUITS = [("a", "x", "b"), ("a", "y", "c"), ("b", "c")]
 
 
 def meshed_backbone_synthesis(
-    paths: list[tuple[str, ...]], backbone_ids: tuple[str, ...]
+    circuits: list[tuple[str, ...]], backbone_ids: tuple[str, ...]
 ) -> Synthesis:
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
-        access_paths=[],
-        fiber_segment_keys={key for path in paths for key in path_segment_keys(path)},
-        drawn_paths=[
-            SynthesisPath("backbone_mesh", path[0], path[-1], path, 1.0) for path in paths
+        access_circuits=[],
+        fiber_segment_keys={
+            key for pop_ids in circuits for key in fiber_segments_along(pop_ids)
+        },
+        drawn_circuits=[
+            SynthesisCircuit("backbone_mesh", pop_ids[0], pop_ids[-1], pop_ids, 1.0)
+            for pop_ids in circuits
         ],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
@@ -127,11 +130,11 @@ def split_backbone_synthesis() -> Synthesis:
     return Synthesis(
         backbone_ids=SPLIT_BACKBONE,
         transit_ids=(),
-        access_paths=[],
+        access_circuits=[],
         fiber_segment_keys={
             segment_key(left, right) for left, right in SPLIT_BACKBONE_SEGMENTS
         },
-        drawn_paths=[],
+        drawn_circuits=[],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
 
@@ -216,11 +219,11 @@ def run_synthesis(
     return SynthesisArtifacts(sites, fiber_segments, synthesis, validation)
 
 
-def mesh_paths(artifacts: SynthesisArtifacts) -> list[SynthesisPath]:
+def mesh_circuits(artifacts: SynthesisArtifacts) -> list[SynthesisCircuit]:
     return [
-        drawn_path
-        for drawn_path in artifacts.synthesis.drawn_paths
-        if drawn_path.purpose == "backbone_mesh"
+        drawn_circuit
+        for drawn_circuit in artifacts.synthesis.drawn_circuits
+        if drawn_circuit.purpose == "backbone_mesh"
     ]
 
 
@@ -296,11 +299,11 @@ def ring_inputs_with_roadm(roadm_id: str) -> RingInputs:
 def _forced_artifacts(
     params: SynthesisParams,
     inputs: RingInputs | None = None,
-    paths: OperatorPaths = OperatorPaths(),
+    circuits: OperatorCircuits = OperatorCircuits(),
 ) -> SynthesisArtifacts:
     sites, fiber_segments = inputs if inputs is not None else _ring_inputs()
     sites, fiber_segments, overrides = apply_role_overrides(
-        sites, fiber_segments, params, paths
+        sites, fiber_segments, params, circuits
     )
     synthesis = synthesize_two_tier(sites, fiber_segments, params, overrides)
     sites, fiber_segments, synthesis, validation = finalize(
@@ -340,10 +343,10 @@ def ring_inputs_with_demand(access_id: str, at_pop: str) -> RingInputs:
     return [*sites, access_site(access_id, *RING_COORDS[at_pop])], fiber
 
 
-def forced_path_artifacts(
-    params: SynthesisParams, paths: OperatorPaths, inputs: RingInputs | None = None
+def forced_circuit_artifacts(
+    params: SynthesisParams, circuits: OperatorCircuits, inputs: RingInputs | None = None
 ) -> SynthesisArtifacts:
-    return _forced_artifacts(params, inputs, paths)
+    return _forced_artifacts(params, inputs, circuits)
 
 
 _HUB_CORNERS = ("hub_b0", "hub_b1", "hub_b2", "hub_b3")
@@ -413,14 +416,14 @@ def search_plan(
     candidates: list[str],
     strength: dict[str, float] | None = None,
     access_homing_degree: int = 2,
-    forced_paths: ForcedPaths | None = None,
+    forced_circuits: ForcedCircuits | None = None,
 ) -> _SearchPlan:
     strength_by_id = strength if strength is not None else {name: 1.0 for name in candidates}
     return _SearchPlan(
         candidates,
         strength_by_id,
         tuning=Tuning(access_homing_degree=access_homing_degree),
-        forced_paths=forced_paths or ForcedPaths(),
+        forced_circuits=forced_circuits or ForcedCircuits(),
     )
 
 

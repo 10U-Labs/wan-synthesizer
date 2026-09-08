@@ -71,16 +71,16 @@ def _express() -> SynthesisArtifacts:
 def _cities_crossed(artifacts: SynthesisArtifacts) -> set[str]:
     return {
         city
-        for drawn_path in artifacts.synthesis.drawn_paths
-        if drawn_path.purpose == "backbone_mesh"
-        for city in drawn_path.path
+        for drawn_circuit in artifacts.synthesis.drawn_circuits
+        if drawn_circuit.purpose == "backbone_mesh"
+        for city in drawn_circuit.pop_ids
     }
 
 
 def _mesh_miles(artifacts: SynthesisArtifacts) -> float:
     return sum(
-        drawn_path.distance_miles for drawn_path in artifacts.synthesis.drawn_paths
-        if drawn_path.purpose == "backbone_mesh"
+        drawn_circuit.distance_miles for drawn_circuit in artifacts.synthesis.drawn_circuits
+        if drawn_circuit.purpose == "backbone_mesh"
     )
 
 
@@ -108,7 +108,7 @@ def test_no_site_is_credited_with_a_way_out_its_fiber_does_not_carry(
     assert crossing.validation["backbone_diverse_paths_ceiling_limited"] == []
 
 
-def test_no_site_is_asked_for_a_path_its_fiber_cannot_lay(
+def test_no_site_is_asked_for_a_circuit_its_fiber_cannot_lay(
     distant_peer: SynthesisArtifacts,
 ) -> None:
     assert distant_peer.validation["backbone_mesh_independence_deficient"] == []
@@ -120,7 +120,7 @@ def test_the_finished_synthesis_orders_the_fewest_fiber_miles_it_can_be_wired_wi
     assert _mesh_miles(express) == 6.0
 
 
-def test_the_ring_synthesis_holds_every_site_to_the_two_paths_its_fiber_carries(
+def test_the_ring_synthesis_holds_every_site_to_the_two_circuits_its_fiber_carries(
     express: SynthesisArtifacts,
 ) -> None:
     assert express.validation["backbone_mesh_independence_deficient"] == []

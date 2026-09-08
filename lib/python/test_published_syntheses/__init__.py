@@ -73,15 +73,15 @@ def worst_haul(synthesis: dict[str, Any]) -> float:
 
 
 def _ways_out(
-    paths: list[dict[str, Any]], site: str, names: dict[str, str]
+    circuits: list[dict[str, Any]], site: str, names: dict[str, str]
 ) -> list[tuple[str, frozenset[str]]]:
     return [
         (
-            names[path["target_id"] if path["source_id"] == site else path["source_id"]],
-            frozenset(path["path"]) - {names[site]},
+            names[circuit["target_id"] if circuit["source_id"] == site else circuit["source_id"]],
+            frozenset(circuit["path"]) - {names[site]},
         )
-        for path in paths
-        if site in (path["source_id"], path["target_id"])
+        for circuit in circuits
+        if site in (circuit["source_id"], circuit["target_id"])
     ]
 
 
@@ -93,9 +93,9 @@ def _fail_apart(ways: tuple[tuple[str, frozenset[str]], ...]) -> bool:
 
 
 def independent_ways_out(
-    paths: list[dict[str, Any]], site: str, names: dict[str, str]
+    circuits: list[dict[str, Any]], site: str, names: dict[str, str]
 ) -> int:
-    ways = _ways_out(paths, site, names)
+    ways = _ways_out(circuits, site, names)
     return max(
         (
             size
@@ -108,23 +108,23 @@ def independent_ways_out(
 
 def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
     drawn: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for drawn_path in synthesis["links"]:
-        pair = tuple(sorted((drawn_path["source_id"], drawn_path["target_id"])))
-        drawn.setdefault(pair, []).append(drawn_path)
+    for drawn_circuit in synthesis["links"]:
+        pair = tuple(sorted((drawn_circuit["source_id"], drawn_circuit["target_id"])))
+        drawn.setdefault(pair, []).append(drawn_circuit)
     names = {row["id"]: row["name"] for row in synthesis["backbone"]}
     asked = synthesis["number_of_diverse_paths"]
     overbuilt: list[tuple[str, int]] = []
-    for pair, paths in sorted(drawn.items()):
-        if len(paths) < 2:
+    for pair, circuits in sorted(drawn.items()):
+        if len(circuits) < 2:
             continue
-        spare = max(paths, key=lambda path: path["distance_miles"])
-        kept = [path for path in synthesis["links"] if path is not spare]
+        spare = max(circuits, key=lambda circuit: circuit["distance_miles"])
+        kept = [circuit for circuit in synthesis["links"] if circuit is not spare]
         if not any(
             independent_ways_out(kept, end, names)
             < min(asked, independent_ways_out(synthesis["links"], end, names))
             for end in pair
         ):
-            overbuilt.append((" <-> ".join(pair), len(paths)))
+            overbuilt.append((" <-> ".join(pair), len(circuits)))
     return overbuilt
 
 
@@ -151,8 +151,8 @@ def _all_one_network(joined: dict[str, set[str]]) -> bool:
     return all(_reached(joined, start) == set(joined) for start in sorted(joined)[:1])
 
 
-def cut_cities(paths: list[dict[str, Any]]) -> list[str]:
-    joined = _cities_the_paths_cross(paths)
+def cut_cities(circuits: list[dict[str, Any]]) -> list[str]:
+    joined = _cities_the_circuits_cross(circuits)
     if not _all_one_network(joined):
         return []
     return sorted(
@@ -164,22 +164,24 @@ def cut_cities(paths: list[dict[str, Any]]) -> list[str]:
     )
 
 
-def _sites_the_paths_join(
-    paths: list[dict[str, Any]], sites: list[str]
+def _sites_the_circuits_join(
+    circuits: list[dict[str, Any]], sites: list[str]
 ) -> dict[str, set[str]]:
     alone: dict[str, set[str]] = {site: set() for site in sites}
-    return alone | _joined_to([(path["source_id"], path["target_id"]) for path in paths])
+    return alone | _joined_to(
+        [(circuit["source_id"], circuit["target_id"]) for circuit in circuits]
+    )
 
 
-def _cities_the_paths_cross(paths: list[dict[str, Any]]) -> dict[str, set[str]]:
+def _cities_the_circuits_cross(circuits: list[dict[str, Any]]) -> dict[str, set[str]]:
     return _joined_to([
         (near, far)
-        for path in paths
-        for near, far in zip(path["path"], path["path"][1:])
+        for circuit in circuits
+        for near, far in zip(circuit["path"], circuit["path"][1:])
     ])
 
 
-def removable_paths(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
+def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
     names = {row["id"]: row["name"] for row in synthesis["backbone"]}
     sites = list(names)
     asked = synthesis["number_of_diverse_paths"]
@@ -195,12 +197,12 @@ def removable_paths(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
     for spare in synthesis["links"]:
         if frozenset((names[spare["source_id"]], names[spare["target_id"]])) in pinned:
             continue
-        kept = [path for path in synthesis["links"] if path is not spare]
+        kept = [circuit for circuit in synthesis["links"] if circuit is not spare]
         if any(
             independent_ways_out(kept, site, names) < held_ways_out[site] for site in sites
         ):
             continue
-        if not _all_one_network(_sites_the_paths_join(kept, sites)):
+        if not _all_one_network(_sites_the_circuits_join(kept, sites)):
             continue
         if survives_a_city_loss and cut_cities(kept):
             continue

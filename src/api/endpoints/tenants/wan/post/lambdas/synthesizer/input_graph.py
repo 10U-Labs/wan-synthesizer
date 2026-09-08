@@ -47,11 +47,11 @@ def segment_key(left: str, right: str) -> tuple[str, str]:
     return (left, right) if left < right else (right, left)
 
 def carriers_along(
-    path: tuple[str, ...], fiber_segments: dict[tuple[str, str], FiberSegment]
+    pop_ids: tuple[str, ...], fiber_segments: dict[tuple[str, str], FiberSegment]
 ) -> frozenset[str]:
     common: frozenset[str] | None = None
-    for index in range(len(path) - 1):
-        owners = fiber_segments[segment_key(path[index], path[index + 1])].carriers
+    for index in range(len(pop_ids) - 1):
+        owners = fiber_segments[segment_key(pop_ids[index], pop_ids[index + 1])].carriers
         if not owners:
             continue
         common = owners if common is None else common & owners

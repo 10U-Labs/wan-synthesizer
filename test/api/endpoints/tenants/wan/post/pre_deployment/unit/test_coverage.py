@@ -135,7 +135,7 @@ def test_the_better_connected_of_two_covering_candidates_is_seated() -> None:
     assert _seated(_BOTH_COVER) == "rich"
 
 
-def test_a_candidates_segments_are_not_counted_as_independent_paths() -> None:
+def test_a_candidates_segments_are_not_counted_as_independent_circuits() -> None:
     assert candidate_mesh_ceiling("poor", _FIBER_BACKBONE, _FIBER_ADJACENCY) == 2
 
 

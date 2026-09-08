@@ -8,7 +8,7 @@ import fixtures
 from synthesizer.input_graph import Site
 from synthesizer.strength import (
     backbone_strength,
-    diverse_path_bounds,
+    diverse_circuit_bounds,
     segment_bearing,
     segment_sectors,
 )
@@ -58,7 +58,7 @@ def test_the_direction_term_stays_within_one(compass_sector_count: int) -> None:
 
 
 _FUNNEL_INPUTS = fixtures.funnel_inputs()
-_FUNNEL_BOUNDS = diverse_path_bounds(set(fixtures.FUNNEL_ELIGIBLE), _FUNNEL_INPUTS.adjacency)
+_FUNNEL_BOUNDS = diverse_circuit_bounds(set(fixtures.FUNNEL_ELIGIBLE), _FUNNEL_INPUTS.adjacency)
 
 
 def _funnel_strength(site: str) -> float:
@@ -84,8 +84,8 @@ def test_strength_ranks_the_spread_site_above_the_funnelled_one() -> None:
 
 
 def test_a_site_with_no_fiber_cannot_divide_the_score_by_zero() -> None:
-    assert diverse_path_bounds({"lonely"}, {}).largest == 1
+    assert diverse_circuit_bounds({"lonely"}, {}).largest == 1
 
 
 def test_a_site_with_no_fiber_is_not_listed_among_the_bounds() -> None:
-    assert diverse_path_bounds({"lonely"}, {}).per_site == {}
+    assert diverse_circuit_bounds({"lonely"}, {}).per_site == {}

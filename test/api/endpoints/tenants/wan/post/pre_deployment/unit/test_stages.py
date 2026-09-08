@@ -5,14 +5,14 @@ import pytest
 from synthesizer.stages import dual_home, finalize
 from synthesizer.model import SynthesisParams, Tuning, ValidationReport
 
-_TWO_DIVERSE_PATHS = Tuning(backbone_number_of_diverse_paths=2)
+_TWO_DIVERSE_CIRCUITS = Tuning(backbone_number_of_diverse_paths=2)
 
 
 def test_dual_home_returns_a_graph_without_off_net() -> None:
-    homed_sites, homed_paths = dual_home(
+    homed_sites, homed_circuits = dual_home(
         fixtures.ring_sites(), fixtures.ring_fiber_segments(), fixtures.ring_params(), []
     )
-    assert homed_sites and homed_paths
+    assert homed_sites and homed_circuits
 
 
 def test_dual_home_realizes_a_forced_off_net_site() -> None:
@@ -61,18 +61,18 @@ def test_finalize_reports_the_independent_mesh_target() -> None:
 
 def test_finalize_refuses_a_synthesis_short_of_the_configured_number_of_diverse_paths() -> None:
     synthesis = fixtures.meshed_backbone_synthesis(
-        fixtures.SHARED_TRANSIT_PATHS, fixtures.SHARED_TRANSIT_BACKBONE
+        fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
     )
-    params = SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_PATHS)
+    params = SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_CIRCUITS)
     with pytest.raises(ValueError, match="independently failing backbone mesh paths at"):
         finalize(list(fixtures.carrier_pops_by_id("abcx").values()), {}, synthesis, params)
 
 
 def test_finalize_holds_a_node_to_the_ceiling_of_the_merged_carriers_it_is_given() -> None:
     synthesis = fixtures.meshed_backbone_synthesis(
-        fixtures.SHARED_TRANSIT_PATHS, fixtures.SHARED_TRANSIT_BACKBONE
+        fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
     )
-    params = SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_PATHS)
+    params = SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_CIRCUITS)
     fiber = fixtures.fiber_segments_from({
         ("a", "x"): 1.0, ("x", "b"): 1.0, ("x", "c"): 1.0, ("b", "c"): 1.0,
     })
@@ -84,9 +84,9 @@ def test_finalize_holds_a_node_to_the_ceiling_of_the_merged_carriers_it_is_given
 
 def _finalize_shared_transit(degree_exempt: frozenset[str]) -> ValidationReport:
     synthesis = fixtures.meshed_backbone_synthesis(
-        fixtures.SHARED_TRANSIT_PATHS, fixtures.SHARED_TRANSIT_BACKBONE
+        fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
     )
-    params = SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_PATHS)
+    params = SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_CIRCUITS)
     _sites, _fiber, _synthesis, validation = finalize(
         list(fixtures.carrier_pops_by_id("abcx").values()), {}, synthesis, params, degree_exempt
     )

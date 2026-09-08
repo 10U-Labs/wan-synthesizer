@@ -12,7 +12,7 @@ from test_published_syntheses import (
     offered_ways_out,
     ordered_fiber_miles,
     overbuilt_pairs,
-    removable_paths,
+    removable_circuits,
     worst_haul,
 )
 
@@ -45,16 +45,16 @@ def _tenants_outside(
     }
 
 
-def _paths_clear_of_a_capped_seat(synthesis: dict[str, Any]) -> list[dict[str, Any]]:
+def _circuits_clear_of_a_capped_seat(synthesis: dict[str, Any]) -> list[dict[str, Any]]:
     capped = {
         entry["id"]
         for entry in synthesis["status"]["diverse_paths"]["ceilings"]
         if entry["ceiling"] < 2
     }
     return [
-        path
-        for path in synthesis["links"]
-        if path["source_id"] not in capped and path["target_id"] not in capped
+        circuit
+        for circuit in synthesis["links"]
+        if circuit["source_id"] not in capped and circuit["target_id"] not in capped
     ]
 
 
@@ -142,7 +142,7 @@ def test_no_published_status_carries_a_backup_path_multiple(
     ] == []
 
 
-def test_no_published_network_leaves_a_site_short_of_the_paths_it_was_asked_for(
+def test_no_published_network_leaves_a_site_short_of_the_circuits_it_was_asked_for(
         delivered_syntheses: list[dict[str, Any]]) -> None:
     short = {
         synthesis["tenant"]: synthesis["status"]["diverse_paths"]["short"]
@@ -151,7 +151,7 @@ def test_no_published_network_leaves_a_site_short_of_the_paths_it_was_asked_for(
     assert {tenant: sites for tenant, sites in short.items() if sites} == {}
 
 
-def test_no_published_network_draws_a_pair_more_paths_than_its_tenant_asked_for(
+def test_no_published_network_draws_a_pair_more_circuits_than_its_tenant_asked_for(
         delivered_syntheses: list[dict[str, Any]]) -> None:
     overbuilt = {
         synthesis["tenant"]: overbuilt_pairs(synthesis)
@@ -161,16 +161,19 @@ def test_no_published_network_draws_a_pair_more_paths_than_its_tenant_asked_for(
     assert overbuilt == {}
 
 
-def test_no_published_network_holds_a_path_that_buys_nobody_a_diverse_path(
+def test_no_published_network_holds_a_circuit_that_buys_nobody_a_diverse_circuit(
         delivered_syntheses: list[dict[str, Any]]) -> None:
-    spare = {synthesis["tenant"]: removable_paths(synthesis) for synthesis in delivered_syntheses}
-    assert {tenant: paths for tenant, paths in spare.items() if paths} == {}
+    spare = {
+        synthesis["tenant"]: removable_circuits(synthesis)
+        for synthesis in delivered_syntheses
+    }
+    assert {tenant: circuits for tenant, circuits in spare.items() if circuits} == {}
 
 
 def test_no_published_network_is_split_by_the_loss_of_one_city(
         delivered_syntheses: list[dict[str, Any]]) -> None:
     split = {
-        synthesis["tenant"]: cut_cities(_paths_clear_of_a_capped_seat(synthesis))
+        synthesis["tenant"]: cut_cities(_circuits_clear_of_a_capped_seat(synthesis))
         for synthesis in delivered_syntheses
         if synthesis["number_of_diverse_paths"] >= 2
     }
@@ -234,52 +237,52 @@ def _anybodys_fiber(held: dict[str, set[frozenset[str]]]) -> set[frozenset[str]]
     return everyone
 
 
-def _hops(path: dict[str, Any]) -> list[frozenset[str]]:
-    cities = path.get("path") or []
+def _hops(circuit: dict[str, Any]) -> list[frozenset[str]]:
+    cities = circuit.get("path") or []
     return [frozenset({left, right}) for left, right in zip(cities, cities[1:])]
 
 
-def _paths_changing_hands(syntheses: list[dict[str, Any]]) -> dict[str, list[str]]:
+def _circuits_changing_hands(syntheses: list[dict[str, Any]]) -> dict[str, list[str]]:
     held = _fiber_by_carrier()
     anybody = _anybodys_fiber(held)
     found: dict[str, list[str]] = {}
     for synthesis in syntheses:
-        for path in synthesis["links"]:
-            mine = held.get(path.get("carrier", ""), set())
-            if any(hop in anybody and hop not in mine for hop in _hops(path)):
+        for circuit in synthesis["links"]:
+            mine = held.get(circuit.get("carrier", ""), set())
+            if any(hop in anybody and hop not in mine for hop in _hops(circuit)):
                 found.setdefault(synthesis["tenant"], []).append(
-                    f"{path['source_name']} to {path['target_name']}"
+                    f"{circuit['source_name']} to {circuit['target_name']}"
                 )
     return found
 
 
-def _paths_naming_no_carrier(syntheses: list[dict[str, Any]]) -> dict[str, list[str]]:
+def _circuits_naming_no_carrier(syntheses: list[dict[str, Any]]) -> dict[str, list[str]]:
     anybody = _anybodys_fiber(_fiber_by_carrier())
     found: dict[str, list[str]] = {}
     for synthesis in syntheses:
-        for path in synthesis["links"]:
-            if not path.get("carrier") and any(hop in anybody for hop in _hops(path)):
+        for circuit in synthesis["links"]:
+            if not circuit.get("carrier") and any(hop in anybody for hop in _hops(circuit)):
                 found.setdefault(synthesis["tenant"], []).append(
-                    f"{path['source_name']} to {path['target_name']}"
+                    f"{circuit['source_name']} to {circuit['target_name']}"
                 )
     return found
 
 
-def test_no_published_path_changes_carrier_partway_along_itself(
+def test_no_published_circuit_changes_carrier_partway_along_itself(
         delivered_syntheses: list[dict[str, Any]]) -> None:
-    assert not _paths_changing_hands(delivered_syntheses)
+    assert not _circuits_changing_hands(delivered_syntheses)
 
 
-def test_every_published_path_over_a_carriers_fiber_names_that_carrier(
+def test_every_published_circuit_over_a_carriers_fiber_names_that_carrier(
         delivered_syntheses: list[dict[str, Any]]) -> None:
-    assert not _paths_naming_no_carrier(delivered_syntheses)
+    assert not _circuits_naming_no_carrier(delivered_syntheses)
 
 
 def _tenants_fiber(synthesis: dict[str, Any]) -> dict[str, set[frozenset[str]]]:
     held = _fiber_by_carrier()
     anybody = _anybodys_fiber(held)
     laid = {
-        hop for path in synthesis["links"] for hop in _hops(path) if hop not in anybody
+        hop for circuit in synthesis["links"] for hop in _hops(circuit) if hop not in anybody
     }
     return {carrier: pairs | laid for carrier, pairs in held.items()}
 
@@ -288,7 +291,7 @@ def _cities_with_fiber(held: dict[str, set[frozenset[str]]]) -> set[str]:
     return {city for pair in _anybodys_fiber(held) for city in pair}
 
 
-def _paths_one_peer_may_end(synthesis: dict[str, Any]) -> int:
+def _circuits_one_peer_may_end(synthesis: dict[str, Any]) -> int:
     peers = synthesis["seat_cap"] - 1
     asked = synthesis["number_of_diverse_paths"]
     return max(1, -(-asked // peers)) if peers > 0 else 1
@@ -300,7 +303,7 @@ def _overstated_ceilings(syntheses: list[dict[str, Any]]) -> dict[str, list[str]
         held = _tenants_fiber(synthesis)
         reached = _cities_with_fiber(held)
         cities = _published_cities(synthesis)
-        per_peer = _paths_one_peer_may_end(synthesis)
+        per_peer = _circuits_one_peer_may_end(synthesis)
         for entry in synthesis["status"].get("diverse_paths", {}).get("ceilings", []):
             city = str(entry["name"])
             if city not in reached:
@@ -315,7 +318,7 @@ def _overstated_ceilings(syntheses: list[dict[str, Any]]) -> dict[str, list[str]
     return found
 
 
-def test_no_published_networks_ceiling_is_higher_than_the_paths_its_carriers_can_offer(
+def test_no_published_networks_ceiling_is_higher_than_the_circuits_its_carriers_can_offer(
         delivered_syntheses: list[dict[str, Any]]) -> None:
     assert not _overstated_ceilings(delivered_syntheses)
 
@@ -328,32 +331,32 @@ def _submarine_pairs(synthesis: dict[str, Any]) -> set[frozenset[str]]:
     }
 
 
-def _runs_under_water(path: list[str], under_water: set[frozenset[str]]) -> bool:
+def _runs_under_water(pops: list[str], under_water: set[frozenset[str]]) -> bool:
     return any(
-        frozenset({near, far}) in under_water for near, far in zip(path, path[1:])
+        frozenset({near, far}) in under_water for near, far in zip(pops, pops[1:])
     )
 
 
-def _paths_each_site_holds(synthesis: dict[str, Any]) -> dict[str, list[list[str]]]:
+def _circuits_each_site_holds(synthesis: dict[str, Any]) -> dict[str, list[list[str]]]:
     held: dict[str, list[list[str]]] = {}
-    for path in synthesis["links"]:
-        for end in (path["path"][0], path["path"][-1]):
-            held.setdefault(end, []).append(path["path"])
+    for circuit in synthesis["links"]:
+        for end in (circuit["path"][0], circuit["path"][-1]):
+            held.setdefault(end, []).append(circuit["path"])
     return held
 
 
 def _sites_ashore_holding_a_crossing(synthesis: dict[str, Any]) -> list[tuple[str, ...]]:
     under_water = _submarine_pairs(synthesis)
     return [
-        (synthesis["tenant"], site, " -> ".join(path))
-        for site, paths in sorted(_paths_each_site_holds(synthesis).items())
-        for path in paths
-        if _runs_under_water(path, under_water)
-        and any(not _runs_under_water(other, under_water) for other in paths)
+        (synthesis["tenant"], site, " -> ".join(pops))
+        for site, circuits in sorted(_circuits_each_site_holds(synthesis).items())
+        for pops in circuits
+        if _runs_under_water(pops, under_water)
+        and any(not _runs_under_water(other, under_water) for other in circuits)
     ]
 
 
-def test_no_published_site_with_a_path_over_land_is_drawn_one_under_water(
+def test_no_published_site_with_a_circuit_over_land_is_drawn_one_under_water(
         delivered_syntheses: list[dict[str, Any]]) -> None:
     assert [
         offender

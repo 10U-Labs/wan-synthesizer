@@ -46,8 +46,8 @@ def reconstruct_path(source: str, target: str, predecessors: dict[str, str]) -> 
     path.reverse()
     return tuple(path)
 
-def path_segment_keys(path: tuple[str, ...]) -> set[tuple[str, str]]:
-    return {segment_key(path[index], path[index + 1]) for index in range(len(path) - 1)}
+def fiber_segments_along(pop_ids: tuple[str, ...]) -> set[tuple[str, str]]:
+    return {segment_key(pop_ids[index], pop_ids[index + 1]) for index in range(len(pop_ids) - 1)}
 
 def undirected_adjacency(
     site_ids: set[str], fiber_segment_keys: set[tuple[str, str]]

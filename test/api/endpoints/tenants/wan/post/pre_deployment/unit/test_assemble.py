@@ -10,7 +10,7 @@ from fixtures import (
     synthesis_inputs_from_fiber,
     search_plan,
 )
-from synthesizer.model import AccessPath, SynthesisInputs, ForcedPaths
+from synthesizer.model import AccessCircuit, SynthesisInputs, ForcedCircuits
 from synthesizer.assemble import (
     assign_access,
     backbone_physically_biconnectable,
@@ -30,10 +30,10 @@ def _dual_inputs(s_coord: tuple[float, float] = (0.0, 0.05)) -> SynthesisInputs:
     )
 
 
-def _access_homing_counts(access_paths: list[AccessPath]) -> dict[str, int]:
+def _access_homing_counts(access_circuits: list[AccessCircuit]) -> dict[str, int]:
     counts: dict[str, int] = {}
-    for access_path in access_paths:
-        counts[access_path.source] = counts.get(access_path.source, 0) + 1
+    for access_circuit in access_circuits:
+        counts[access_circuit.source] = counts.get(access_circuit.source, 0) + 1
     return counts
 
 
@@ -62,11 +62,11 @@ def test_assign_access_homes_to_the_configured_count() -> None:
 
 
 def test_assign_access_leads_with_a_forced_home() -> None:
-    plan = replace(search_plan([]), forced_paths=ForcedPaths(access=frozenset({("s", "c2")})))
+    plan = replace(search_plan([]), forced_circuits=ForcedCircuits(access=frozenset({("s", "c2")})))
     result = assign_access(("c1", "c2"), _dual_inputs((0.0, 0.0)), plan)
-    assert result is not None and {path.target for path in result if path.source == "s"} == {
-        "c1", "c2",
-    }
+    assert result is not None and {
+        circuit.target for circuit in result if circuit.source == "s"
+    } == {"c1", "c2"}
 
 
 def test_build_synthesis_returns_none_without_homing() -> None:

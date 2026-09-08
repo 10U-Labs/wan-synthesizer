@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from synthesizer.config import AppConfig, app_config_from_parts, config_from_data
-from synthesizer.model import NamedPath, OperatorPaths
+from synthesizer.model import NamedCircuit, OperatorCircuits
 
 
 _REQUIRED_TUNING = {
@@ -131,13 +131,13 @@ def test_degree_exempt_backbone_must_be_a_list() -> None:
 
 
 def test_default_has_no_forced_paths() -> None:
-    assert len(default_config().operator_paths.backbone) == 0
+    assert len(default_config().operator_circuits.backbone) == 0
 
 
 def test_reads_forced_paths() -> None:
     pinned = {"source": "Dallas, TX", "target": "Denver, CO"}
-    assert _config({"synthesis": {"forced_paths": [pinned]}}).operator_paths.backbone == (
-        NamedPath("Dallas, TX", "Denver, CO"),
+    assert _config({"synthesis": {"forced_paths": [pinned]}}).operator_circuits.backbone == (
+        NamedCircuit("Dallas, TX", "Denver, CO"),
     )
 
 
@@ -158,19 +158,19 @@ def test_a_forced_path_requires_a_source_and_target() -> None:
 
 def test_a_forced_path_ignores_a_leftover_type() -> None:
     pinned = {"source": "A", "target": "B", "type": "access-backbone"}
-    assert _config({"synthesis": {"forced_paths": [pinned]}}).operator_paths.backbone == (
-        NamedPath("A", "B"),
+    assert _config({"synthesis": {"forced_paths": [pinned]}}).operator_circuits.backbone == (
+        NamedCircuit("A", "B"),
     )
 
 
 def test_default_has_no_forced_homes() -> None:
-    assert len(default_config().operator_paths.access) == 0
+    assert len(default_config().operator_circuits.access) == 0
 
 
 def test_reads_forced_homes() -> None:
     home = {"source": "Kirtland, NM", "target": "Denver, CO"}
-    assert _config({"synthesis": {"forced_homes": [home]}}).operator_paths.access == (
-        NamedPath("Kirtland, NM", "Denver, CO"),
+    assert _config({"synthesis": {"forced_homes": [home]}}).operator_circuits.access == (
+        NamedCircuit("Kirtland, NM", "Denver, CO"),
     )
 
 
@@ -181,17 +181,17 @@ def test_forced_homes_must_be_a_list() -> None:
 
 def test_a_forced_home_is_not_read_as_a_mesh_pair() -> None:
     home = {"source": "Kirtland, NM", "target": "Denver, CO"}
-    assert len(_config({"synthesis": {"forced_homes": [home]}}).operator_paths.backbone) == 0
+    assert len(_config({"synthesis": {"forced_homes": [home]}}).operator_circuits.backbone) == 0
 
 
 def test_default_has_no_excluded_paths() -> None:
-    assert len(default_config().operator_paths.removed_backbone) == 0
+    assert len(default_config().operator_circuits.removed_backbone) == 0
 
 
 def test_reads_excluded_paths() -> None:
     synthesis = {"excluded_paths": [{"source": "Seattle, WA", "target": "Boise, ID"}]}
-    assert _config({"synthesis": synthesis}).operator_paths.removed_backbone == (
-        NamedPath("Seattle, WA", "Boise, ID"),
+    assert _config({"synthesis": synthesis}).operator_circuits.removed_backbone == (
+        NamedCircuit("Seattle, WA", "Boise, ID"),
     )
 
 
@@ -517,8 +517,8 @@ def test_app_config_from_parts_parses_the_written_paths() -> None:
             "prohibited-paths": [{"source": "C", "target": "D"}],
         }
     )
-    assert app_config_from_parts(parts).operator_paths == OperatorPaths(
-        backbone=(NamedPath("A", "B"),),
-        access=(NamedPath("S", "B"),),
-        removed_backbone=(NamedPath("C", "D"),),
+    assert app_config_from_parts(parts).operator_circuits == OperatorCircuits(
+        backbone=(NamedCircuit("A", "B"),),
+        access=(NamedCircuit("S", "B"),),
+        removed_backbone=(NamedCircuit("C", "D"),),
     )

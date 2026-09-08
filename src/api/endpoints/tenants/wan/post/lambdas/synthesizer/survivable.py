@@ -5,8 +5,8 @@ from dataclasses import dataclass, field, replace
 from typing import TypeVar
 
 from synthesizer.ceiling import (
-    PathProofInputs,
-    paths_per_peer,
+    CircuitProofInputs,
+    circuits_per_peer,
     ways_out_by_carrier_and_peer,
 )
 from synthesizer.flow_cuts import Separation, SeparationQuestion, weakest_separation
@@ -54,7 +54,7 @@ class _Writing:
     by_carrier: Mapping[str, frozenset[tuple[str, str]]]
     whole: Mapping[tuple[str, str], float]
     per_peer: int
-    proof: PathProofInputs
+    proof: CircuitProofInputs
     land: frozenset[tuple[str, str]]
     land_reach: Mapping[str, frozenset[str]]
 
@@ -237,8 +237,8 @@ def _writing(
         fiber,
         _fiber_by_carrier(inputs, fiber),
         {segment: 1.0 for segment in fiber},
-        paths_per_peer(inputs.seat_cap, len(inputs.backbone_ids), inputs.ways_out),
-        PathProofInputs(
+        circuits_per_peer(inputs.seat_cap, len(inputs.backbone_ids), inputs.ways_out),
+        CircuitProofInputs(
             inputs.backbone_ids,
             build_adjacency(dict(inputs.fiber_segments)),
             inputs.ways_out,

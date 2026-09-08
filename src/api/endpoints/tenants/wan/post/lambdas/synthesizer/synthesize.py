@@ -22,7 +22,7 @@ from synthesizer.graphs import (
 from synthesizer.assemble import evaluate_backbone, forced_backbone_resilience_error
 from synthesizer.coverage import grow_backbone_for_coverage
 from synthesizer.search_plan import _SearchPlan
-from synthesizer.strength import backbone_strength, diverse_path_bounds
+from synthesizer.strength import backbone_strength, diverse_circuit_bounds
 
 logger = logging.getLogger(__name__)
 
@@ -132,10 +132,10 @@ def best_backbone_at_size(
         if strength < best_strength:
             logger.info("  strongest feasible backbone locked at set %d/%d", index, len(combos))
             break
-        access_paths = evaluate_backbone(backbone_set, inputs, plan)
-        if access_paths is None:
+        access_circuits = evaluate_backbone(backbone_set, inputs, plan)
+        if access_circuits is None:
             continue
-        access_miles = sum(path.distance_miles for path in access_paths)
+        access_miles = sum(circuit.distance_miles for circuit in access_circuits)
         key = (-strength, round(access_miles, 6))
         if best_key is None or key < best_key:
             best_set, best_key, best_strength = backbone_set, key, strength
@@ -223,7 +223,7 @@ def build_search_plan(
     promoted_backbone_ids: frozenset[str] = frozenset(),
 ) -> _SearchPlan:
     pop_by_id = {pop.id: pop for pop in inputs.carrier_pops}
-    bounds = diverse_path_bounds(eligible_ids, inputs.adjacency)
+    bounds = diverse_circuit_bounds(eligible_ids, inputs.adjacency)
     strength_by_id = {
         pop_id: backbone_strength(
             pop_id, inputs, pop_by_id, bounds, params.tuning.compass_sector_count
@@ -235,15 +235,15 @@ def build_search_plan(
         key=lambda pop_id: (-strength_by_id[pop_id], pop_id),
     )
     required = (overrides.forced_backbone_ids & eligible_ids) | promoted_backbone_ids
-    forced_paths = replace(
-        overrides.forced_paths,
+    forced_circuits = replace(
+        overrides.forced_circuits,
         required_backbone=frozenset(required),
     )
     return _SearchPlan(
         backbone_candidates,
         strength_by_id,
         tuning=params.tuning,
-        forced_paths=forced_paths,
+        forced_circuits=forced_circuits,
         seat_cap=params.max_backbone_count,
     )
 

@@ -6,7 +6,7 @@ from typing import TypedDict
 from synthesizer.input_graph import Site, haversine_miles
 from synthesizer.model import Synthesis, SynthesisInputs, SynthesisParams
 from synthesizer.assemble import build_synthesis_for_backbone, evaluate_backbone
-from synthesizer.ceiling import PathProofInputs, independent_path_ceiling
+from synthesizer.ceiling import CircuitProofInputs, independent_circuit_ceiling
 from synthesizer.search_plan import _SearchPlan
 
 logger = logging.getLogger(__name__)
@@ -82,9 +82,9 @@ def candidate_mesh_ceiling(
     backbone_ids: tuple[str, ...],
     adjacency: dict[str, list[tuple[str, float]]],
 ) -> int:
-    return independent_path_ceiling(
+    return independent_circuit_ceiling(
         candidate_id,
-        PathProofInputs(tuple(sorted((*backbone_ids, candidate_id))), adjacency),
+        CircuitProofInputs(tuple(sorted((*backbone_ids, candidate_id))), adjacency),
     )
 
 

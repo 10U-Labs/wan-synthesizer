@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import fixtures
 from synthesizer.input_graph import FiberSegment, segment_key
-from synthesizer.model import PATH_FOR_PIN, PATH_FOR_TARGET, SynthesisPath
+from synthesizer.model import CIRCUIT_FOR_PIN, CIRCUIT_FOR_TARGET, SynthesisCircuit
 from synthesizer.backbone import (
     BackboneConstraints,
     BackboneMesh,
     _needed,
     backbone_mesh,
-    path_geometry_miles,
+    miles_along,
 )
 from synthesizer.survivable import FiberInputs, select_fiber
 from synthesizer.synthesize import all_pairs_shortest
@@ -16,7 +16,7 @@ from synthesizer.graphs import (
     adjacency_by_carrier,
     articulation_points,
     build_adjacency,
-    path_segment_keys,
+    fiber_segments_along,
 )
 
 pop = fixtures.carrier_pop
@@ -57,23 +57,30 @@ def _asking(asked_for: int = 2) -> BackboneConstraints:
 
 
 def _pairs(mesh: BackboneMesh) -> set[tuple[str, str]]:
-    return {segment_key(drawn_path.source, drawn_path.target) for drawn_path in mesh.paths}
+    return {
+        segment_key(drawn_circuit.source, drawn_circuit.target)
+        for drawn_circuit in mesh.circuits
+    }
 
 
 def _mesh_miles(mesh: BackboneMesh) -> float:
-    return sum(drawn_path.distance_miles for drawn_path in mesh.paths)
+    return sum(drawn_circuit.distance_miles for drawn_circuit in mesh.circuits)
 
 
 def _cut(mesh: BackboneMesh) -> set[str]:
-    segments = {key for drawn_path in mesh.paths for key in path_segment_keys(drawn_path.path)}
+    segments = {
+        key
+        for drawn_circuit in mesh.circuits
+        for key in fiber_segments_along(drawn_circuit.pop_ids)
+    }
     return articulation_points({city for pair in segments for city in pair}, segments)
 
 
-def _joining(mesh: BackboneMesh, left: str, right: str) -> SynthesisPath:
+def _joining(mesh: BackboneMesh, left: str, right: str) -> SynthesisCircuit:
     return next(
-        drawn_path
-        for drawn_path in mesh.paths
-        if segment_key(drawn_path.source, drawn_path.target) == segment_key(left, right)
+        drawn_circuit
+        for drawn_circuit in mesh.circuits
+        if segment_key(drawn_circuit.source, drawn_circuit.target) == segment_key(left, right)
     )
 
 
@@ -86,7 +93,7 @@ _TWO_WAYS_OUT = BackboneConstraints(number_of_diverse_paths=2, seat_cap=4)
 _SQUARE = _drawn(_SQUARE_SITES, _SQUARE_FIBER, _TWO_WAYS_OUT)
 
 
-def test_the_square_is_drawn_with_one_path_a_pair_round_the_ring() -> None:
+def test_the_square_is_drawn_with_one_circuit_a_pair_round_the_ring() -> None:
     assert _pairs(_SQUARE) == {
         segment_key("w", "x"), segment_key("x", "y"), segment_key("y", "z"), segment_key("z", "w"),
     }
@@ -95,8 +102,8 @@ def test_the_square_is_drawn_with_one_path_a_pair_round_the_ring() -> None:
 def test_the_square_selects_neither_of_the_chords() -> None:
     assert _SQUARE_FIBER.keys() - {
         segment_key(*pair)
-        for drawn_path in _SQUARE.paths
-        for pair in zip(drawn_path.path, drawn_path.path[1:])
+        for drawn_circuit in _SQUARE.circuits
+        for pair in zip(drawn_circuit.pop_ids, drawn_circuit.pop_ids[1:])
     } == {segment_key("w", "y"), segment_key("x", "z")}
 
 
@@ -112,16 +119,16 @@ def test_the_square_runs_no_further_than_twice_the_floor() -> None:
     assert _mesh_miles(_SQUARE) <= 2 * _SQUARE.lower_bound_miles
 
 
-def test_every_path_the_square_draws_says_a_site_reached_for_it() -> None:
-    assert {drawn_path.reason for drawn_path in _SQUARE.paths} == {PATH_FOR_TARGET}
+def test_every_circuit_the_square_draws_says_a_site_reached_for_it() -> None:
+    assert {drawn_circuit.reason for drawn_circuit in _SQUARE.circuits} == {CIRCUIT_FOR_TARGET}
 
 
-def test_a_path_names_both_of_the_sites_that_reached_for_it() -> None:
+def test_a_circuit_names_both_of_the_sites_that_reached_for_it() -> None:
     assert _joining(_SQUARE, "w", "x").requested_by == ("w", "x")
 
 
-def test_no_path_the_square_holds_could_be_taken_back_out() -> None:
-    assert _needed(_SQUARE.paths, _SQUARE_SITES, 2) == _SQUARE.paths
+def test_no_circuit_the_square_holds_could_be_taken_back_out() -> None:
+    assert _needed(_SQUARE.circuits, _SQUARE_SITES, 2) == _SQUARE.circuits
 
 
 _EGRESS_SITES = ("hub", "p", "q")
@@ -135,27 +142,27 @@ _EGRESS = _drawn(_EGRESS_SITES, _EGRESS_FIBER, BackboneConstraints(
 
 
 def test_the_longer_way_round_a_shared_city_is_the_one_drawn() -> None:
-    assert ("hub", "n", "q") in {drawn_path.path for drawn_path in _EGRESS.paths}
+    assert ("hub", "n", "q") in {drawn_circuit.pop_ids for drawn_circuit in _EGRESS.circuits}
 
 
 def test_the_shorter_way_round_that_shared_city_is_not_selected_at_all() -> None:
     assert segment_key("m", "q") not in {
         segment_key(*pair)
-        for drawn_path in _EGRESS.paths
-        for pair in zip(drawn_path.path, drawn_path.path[1:])
+        for drawn_circuit in _EGRESS.circuits
+        for pair in zip(drawn_circuit.pop_ids, drawn_circuit.pop_ids[1:])
     }
 
 
 def test_the_shared_egress_graph_joins_all_three_pairs_once() -> None:
-    assert len(_EGRESS.paths) == 3
+    assert len(_EGRESS.circuits) == 3
 
 
 def test_the_shared_egress_synthesis_runs_the_miles_its_five_segments_cost() -> None:
     assert _mesh_miles(_EGRESS) == 52.0
 
 
-def test_no_path_the_shared_egress_synthesis_holds_could_be_taken_back_out() -> None:
-    assert _needed(_EGRESS.paths, _EGRESS_SITES, 2) == _EGRESS.paths
+def test_no_circuit_the_shared_egress_synthesis_holds_could_be_taken_back_out() -> None:
+    assert _needed(_EGRESS.circuits, _EGRESS_SITES, 2) == _EGRESS.circuits
 
 
 _LOBE_SITES = ("a", "b", "c", "d")
@@ -176,29 +183,31 @@ _BOWTIE = _drawn(_LOBE_SITES, _BOWTIE_FIBER, _asking())
 _ONE_WAY_OUT_LOBES = _drawn(_LOBE_SITES, _LOBE_FIBER, _asking(1))
 
 
-def test_a_city_every_drawn_path_crosses_is_given_a_way_round_it() -> None:
+def test_a_city_every_drawn_circuit_crosses_is_given_a_way_round_it() -> None:
     assert _cut(_TWO_LOBES) == set()
 
 
-def test_the_path_drawn_round_that_city_is_one_company_can_offer() -> None:
+def test_the_circuit_drawn_round_that_city_is_one_company_can_offer() -> None:
     assert [
-        drawn_path.carrier
-        for drawn_path in _TWO_LOBES.paths
-        if segment_key("b", "w") in path_segment_keys(drawn_path.path)
+        drawn_circuit.carrier
+        for drawn_circuit in _TWO_LOBES.circuits
+        if segment_key("b", "w") in fiber_segments_along(drawn_circuit.pop_ids)
     ] == ["zayo"]
 
 
-def test_a_city_no_fiber_goes_round_still_leaves_every_seat_its_paths() -> None:
+def test_a_city_no_fiber_goes_round_still_leaves_every_seat_its_circuits() -> None:
     assert {
-        end for drawn_path in _BOWTIE.paths for end in (drawn_path.source, drawn_path.target)
+        end
+        for drawn_circuit in _BOWTIE.circuits
+        for end in (drawn_circuit.source, drawn_circuit.target)
     } == set(_LOBE_SITES)
 
 
 def test_a_tenant_that_asked_for_one_way_out_is_not_given_a_way_round_anything() -> None:
     assert [
-        drawn_path.path
-        for drawn_path in _ONE_WAY_OUT_LOBES.paths
-        if segment_key("b", "w") in path_segment_keys(drawn_path.path)
+        drawn_circuit.pop_ids
+        for drawn_circuit in _ONE_WAY_OUT_LOBES.circuits
+        if segment_key("b", "w") in fiber_segments_along(drawn_circuit.pop_ids)
     ] == []
 
 
@@ -209,7 +218,11 @@ _OFFERED_MESH = _drawn(
 
 
 def _run_over(mesh: BackboneMesh) -> set[tuple[str, str]]:
-    return {key for drawn_path in mesh.paths for key in path_segment_keys(drawn_path.path)}
+    return {
+        key
+        for drawn_circuit in mesh.circuits
+        for key in fiber_segments_along(drawn_circuit.pop_ids)
+    }
 
 
 def test_a_site_is_drawn_over_fiber_one_carrier_could_offer_it() -> None:
@@ -229,7 +242,7 @@ _PINNED_SEGMENT = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
 ))
 
 
-def test_a_pruned_pair_is_never_joined_by_a_drawn_path() -> None:
+def test_a_pruned_pair_is_never_joined_by_a_drawn_circuit() -> None:
     assert segment_key("w", "x") not in _pairs(_PRUNED)
 
 
@@ -241,16 +254,16 @@ def test_a_pinned_pair_is_joined_however_the_fiber_was_selected() -> None:
     assert segment_key("w", "y") in _pairs(_PINNED_CHORD)
 
 
-def test_a_pinned_path_says_the_operator_is_what_put_it_there() -> None:
-    assert _joining(_PINNED_CHORD, "w", "y").reason == PATH_FOR_PIN
+def test_a_pinned_circuit_says_the_operator_is_what_put_it_there() -> None:
+    assert _joining(_PINNED_CHORD, "w", "y").reason == CIRCUIT_FOR_PIN
 
 
-def test_a_pinned_path_is_never_taken_back_out_as_unneeded() -> None:
-    assert len(_PINNED_CHORD.paths) == 5
+def test_a_pinned_circuit_is_never_taken_back_out_as_unneeded() -> None:
+    assert len(_PINNED_CHORD.circuits) == 5
 
 
 def test_a_pin_over_fiber_the_synthesis_would_have_selected_anyway_is_still_a_pin() -> None:
-    assert _joining(_PINNED_SEGMENT, "w", "x").reason == PATH_FOR_PIN
+    assert _joining(_PINNED_SEGMENT, "w", "x").reason == CIRCUIT_FOR_PIN
 
 
 _ISLANDS = physical({("a", "b"): 1.0, ("c", "d"): 1.0})
@@ -259,8 +272,8 @@ _ISLAND_PIN = _drawn(("a", "c"), _ISLANDS, BackboneConstraints(
 ))
 
 
-def test_a_backbone_the_fiber_never_joins_is_drawn_with_no_paths() -> None:
-    assert not _ISLAND_PIN.paths
+def test_a_backbone_the_fiber_never_joins_is_drawn_with_no_circuits() -> None:
+    assert not _ISLAND_PIN.circuits
 
 
 def test_a_backbone_the_fiber_never_joins_is_floored_at_nothing() -> None:
@@ -273,12 +286,12 @@ def test_a_site_the_fiber_does_not_carry_costs_the_others_nothing() -> None:
     assert _pairs(mesh) == {segment_key("a", "b")}
 
 
-def test_path_geometry_miles_adds_up_the_segments_a_path_crosses() -> None:
-    assert path_geometry_miles(("w", "x", "y"), _SQUARE_FIBER) == 200.0
+def test_miles_along_adds_up_the_segments_a_circuit_crosses() -> None:
+    assert miles_along(("w", "x", "y"), _SQUARE_FIBER) == 200.0
 
 
-def _use(source: str, target: str, path: tuple[str, ...], miles: float) -> SynthesisPath:
-    return SynthesisPath("backbone_mesh", source, target, path, miles)
+def _use(source: str, target: str, pop_ids: tuple[str, ...], miles: float) -> SynthesisCircuit:
+    return SynthesisCircuit("backbone_mesh", source, target, pop_ids, miles)
 
 
 _RING_PLUS_CHORD = [
@@ -300,19 +313,19 @@ _CHAIN = [
 ]
 
 
-def test_a_path_nobody_needs_is_taken_back_out() -> None:
+def test_a_circuit_nobody_needs_is_taken_back_out() -> None:
     assert _needed(_RING_PLUS_CHORD, _SQUARE_SITES, 2) == _RING_PLUS_CHORD[:4]
 
 
-def test_a_path_a_site_would_lose_a_way_out_by_is_kept() -> None:
+def test_a_circuit_a_site_would_lose_a_way_out_by_is_kept() -> None:
     assert _needed(_RING_PLUS_CHORD[:4], _SQUARE_SITES, 2) == _RING_PLUS_CHORD[:4]
 
 
-def test_a_path_whose_loss_would_leave_a_city_carrying_the_network_is_kept() -> None:
+def test_a_circuit_whose_loss_would_leave_a_city_carrying_the_network_is_kept() -> None:
     assert _needed(_TRIANGLE, ("a", "b", "c"), 1) == _TRIANGLE
 
 
-def test_a_path_whose_loss_would_break_the_backbone_in_two_is_kept() -> None:
+def test_a_circuit_whose_loss_would_break_the_backbone_in_two_is_kept() -> None:
     assert _needed(_CHAIN, ("a", "b", "c", "d"), 1) == _CHAIN
 
 
@@ -338,18 +351,26 @@ _PIN_WY = BackboneConstraints(
 )
 
 
-def test_a_pin_no_carrier_can_join_draws_no_path() -> None:
+def test_a_pin_no_carrier_can_join_draws_no_circuit() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _SPLIT_SQUARE, _PIN_WY)
-    assert not [drawn_path for drawn_path in mesh.paths if drawn_path.reason == PATH_FOR_PIN]
+    assert not [
+        drawn_circuit
+        for drawn_circuit in mesh.circuits
+        if drawn_circuit.reason == CIRCUIT_FOR_PIN
+    ]
 
 
 def test_a_pin_one_carrier_can_join_is_drawn_over_that_carriers_fiber() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _WHOLE_SQUARE, _PIN_WY)
-    assert [drawn_path.path for drawn_path in mesh.paths if drawn_path.reason == PATH_FOR_PIN] == [
+    assert [
+        drawn_circuit.pop_ids
+        for drawn_circuit in mesh.circuits
+        if drawn_circuit.reason == CIRCUIT_FOR_PIN
+    ] == [
         ("w", "x", "y"),
     ]
 
 
-def test_a_drawn_path_names_the_carrier_it_is_ordered_from() -> None:
+def test_a_drawn_circuit_names_the_carrier_it_is_ordered_from() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _WHOLE_SQUARE, _PIN_WY)
-    assert all(drawn_path.carrier in ("lumen", "zayo") for drawn_path in mesh.paths)
+    assert all(drawn_circuit.carrier in ("lumen", "zayo") for drawn_circuit in mesh.circuits)

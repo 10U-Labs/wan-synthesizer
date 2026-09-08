@@ -3,11 +3,11 @@ from __future__ import annotations
 import fixtures
 from synthesizer.validation import demand_without_backbone_redundancy, validate_synthesis
 from synthesizer.model import (
-    AccessPath,
+    AccessCircuit,
     Synthesis,
     SynthesisMetrics,
     MeshRequirements,
-    SynthesisPath,
+    SynthesisCircuit,
     ValidationReport,
 )
 from synthesizer.input_graph import Site, segment_key
@@ -20,15 +20,15 @@ def make_pop(site_id: str) -> Site:
 def build_synthesis(
     backbone_ids: tuple[str, ...],
     transit_ids: tuple[str, ...],
-    access_paths: list[AccessPath],
+    access_circuits: list[AccessCircuit],
     physical_pairs: list[tuple[str, str]],
 ) -> Synthesis:
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=transit_ids,
-        access_paths=access_paths,
+        access_circuits=access_circuits,
         fiber_segment_keys={segment_key(left, right) for left, right in physical_pairs},
-        drawn_paths=[],
+        drawn_circuits=[],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
 
@@ -36,13 +36,13 @@ def build_synthesis(
 GOOD = build_synthesis(
     backbone_ids=("B1", "B2"),
     transit_ids=("X", "Y"),
-    access_paths=[AccessPath("A", "B1", 1.0), AccessPath("A", "B2", 1.0)],
+    access_circuits=[AccessCircuit("A", "B1", 1.0), AccessCircuit("A", "B2", 1.0)],
     physical_pairs=[("X", "B1"), ("Y", "B2"), ("B1", "B2")],
 )
 SINGLE_HOMED = build_synthesis(
     backbone_ids=("B1", "B2"),
     transit_ids=(),
-    access_paths=[AccessPath("A", "B1", 1.0)],
+    access_circuits=[AccessCircuit("A", "B1", 1.0)],
     physical_pairs=[("B1", "B2")],
 )
 
@@ -68,7 +68,7 @@ def test_backbone_mesh_survives_any_one_link_loss_with_fewer_than_two_nodes() ->
 TRIPLE_HOMED = build_synthesis(
     backbone_ids=("B1", "B2", "B3"),
     transit_ids=(),
-    access_paths=[AccessPath("s", target, 1.0) for target in ("B1", "B2", "B3")],
+    access_circuits=[AccessCircuit("s", target, 1.0) for target in ("B1", "B2", "B3")],
     physical_pairs=[("B1", "B2")],
 )
 TRIPLE_HOMED_SITES = [make_pop(name) for name in ("s", "B1", "B2", "B3")]
@@ -96,10 +96,11 @@ def _mesh_synthesis(backbone_ids: tuple[str, ...], pairs: list[tuple[str, str]])
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
-        access_paths=[],
+        access_circuits=[],
         fiber_segment_keys={segment_key(left, right) for left, right in pairs},
-        drawn_paths=[
-            SynthesisPath("backbone_mesh", left, right, (left, right), 1.0) for left, right in pairs
+        drawn_circuits=[
+            SynthesisCircuit("backbone_mesh", left, right, (left, right), 1.0)
+            for left, right in pairs
         ],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
@@ -197,27 +198,27 @@ def test_small_backbone_is_exempt_from_the_mesh_rule() -> None:
     assert _mesh_report(*_SMALL)["backbone_meets_mesh_link_target"] is True
 
 
-def _independence_report(paths: list[tuple[str, ...]]) -> ValidationReport:
+def _independence_report(circuits: list[tuple[str, ...]]) -> ValidationReport:
     return validate_synthesis(
         [make_pop(name) for name in (*fixtures.SHARED_TRANSIT_BACKBONE, "x", "y")],
-        fixtures.meshed_backbone_synthesis(paths, fixtures.SHARED_TRANSIT_BACKBONE),
+        fixtures.meshed_backbone_synthesis(circuits, fixtures.SHARED_TRANSIT_BACKBONE),
         targets=MeshRequirements(2),
     )
 
 
 def test_shared_transit_fails_the_independent_mesh_target() -> None:
-    assert _independence_report(fixtures.SHARED_TRANSIT_PATHS)[
+    assert _independence_report(fixtures.SHARED_TRANSIT_CIRCUITS)[
         "backbone_meets_independent_mesh_link_target"
     ] is False
 
 
 def test_shared_transit_names_the_node_that_falls_short() -> None:
-    report = _independence_report(fixtures.SHARED_TRANSIT_PATHS)
+    report = _independence_report(fixtures.SHARED_TRANSIT_CIRCUITS)
     assert {item["id"] for item in report["backbone_mesh_independence_deficient"]} == {"a"}
 
 
 def test_diverse_transit_meets_the_independent_mesh_target() -> None:
-    assert _independence_report(fixtures.DIVERSE_TRANSIT_PATHS)[
+    assert _independence_report(fixtures.DIVERSE_TRANSIT_CIRCUITS)[
         "backbone_meets_independent_mesh_link_target"
     ] is True
 
@@ -232,13 +233,15 @@ def test_bridged_backbone_is_not_survives_any_one_link_loss() -> None:
     assert report["backbone_mesh_survives_any_one_link_loss"] is False
 
 
-def _drawn_synthesis(backbone_ids: tuple[str, ...], drawn_paths: list[SynthesisPath]) -> Synthesis:
+def _drawn_synthesis(
+    backbone_ids: tuple[str, ...], drawn_circuits: list[SynthesisCircuit]
+) -> Synthesis:
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
-        access_paths=[],
+        access_circuits=[],
         fiber_segment_keys=set(),
-        drawn_paths=drawn_paths,
+        drawn_circuits=drawn_circuits,
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
     )
 
@@ -246,17 +249,17 @@ def _drawn_synthesis(backbone_ids: tuple[str, ...], drawn_paths: list[SynthesisP
 _SHARED_CORRIDOR = _drawn_synthesis(
     ("A", "B", "C"),
     [
-        SynthesisPath("backbone_mesh", "A", "B", ("A", "X", "B"), 2.0),
-        SynthesisPath("backbone_mesh", "A", "C", ("A", "X", "C"), 2.0),
-        SynthesisPath("backbone_mesh", "B", "C", ("B", "C"), 1.0),
-        SynthesisPath("access", "B", "C", ("B", "C"), 1.0),
+        SynthesisCircuit("backbone_mesh", "A", "B", ("A", "X", "B"), 2.0),
+        SynthesisCircuit("backbone_mesh", "A", "C", ("A", "X", "C"), 2.0),
+        SynthesisCircuit("backbone_mesh", "B", "C", ("B", "C"), 1.0),
+        SynthesisCircuit("access", "B", "C", ("B", "C"), 1.0),
     ],
 )
-_DISJOINT_PATHS = _drawn_synthesis(
+_DISJOINT_CIRCUITS = _drawn_synthesis(
     ("A", "B"),
     [
-        SynthesisPath("backbone_mesh", "A", "B", ("A", "B"), 1.0),
-        SynthesisPath("backbone_mesh", "A", "B", ("A", "Y", "B"), 2.0),
+        SynthesisCircuit("backbone_mesh", "A", "B", ("A", "B"), 1.0),
+        SynthesisCircuit("backbone_mesh", "A", "B", ("A", "Y", "B"), 2.0),
     ],
 )
 
@@ -266,8 +269,8 @@ def test_shared_physical_corridor_is_not_survives_any_one_link_loss() -> None:
     assert report["backbone_mesh_survives_any_one_link_loss"] is False
 
 
-def test_segment_disjoint_paths_are_survives_any_one_link_loss() -> None:
-    report = validate_synthesis([make_pop(n) for n in ("A", "B", "Y")], _DISJOINT_PATHS)
+def test_segment_disjoint_circuits_are_survives_any_one_link_loss() -> None:
+    report = validate_synthesis([make_pop(n) for n in ("A", "B", "Y")], _DISJOINT_CIRCUITS)
     assert report["backbone_mesh_survives_any_one_link_loss"] is True
 
 
@@ -296,12 +299,12 @@ def test_an_undrawn_backbone_node_is_not_survives_any_one_site_loss() -> None:
 _BOWTIE_SYNTHESIS = _drawn_synthesis(
     ("B1", "B2", "B3", "B4"),
     [
-        SynthesisPath("backbone_mesh", "B1", "B2", ("B1", "B2"), 1.0),
-        SynthesisPath("backbone_mesh", "B2", "H", ("B2", "H"), 1.0),
-        SynthesisPath("backbone_mesh", "B1", "H", ("B1", "H"), 1.0),
-        SynthesisPath("backbone_mesh", "H", "B3", ("H", "B3"), 1.0),
-        SynthesisPath("backbone_mesh", "B3", "B4", ("B3", "B4"), 1.0),
-        SynthesisPath("backbone_mesh", "H", "B4", ("H", "B4"), 1.0),
+        SynthesisCircuit("backbone_mesh", "B1", "B2", ("B1", "B2"), 1.0),
+        SynthesisCircuit("backbone_mesh", "B2", "H", ("B2", "H"), 1.0),
+        SynthesisCircuit("backbone_mesh", "B1", "H", ("B1", "H"), 1.0),
+        SynthesisCircuit("backbone_mesh", "H", "B3", ("H", "B3"), 1.0),
+        SynthesisCircuit("backbone_mesh", "B3", "B4", ("B3", "B4"), 1.0),
+        SynthesisCircuit("backbone_mesh", "H", "B4", ("H", "B4"), 1.0),
     ],
 )
 _BOWTIE_SITES = [make_pop(name) for name in ("B1", "B2", "B3", "B4", "H")]
@@ -320,7 +323,7 @@ def test_bowtie_backbone_is_not_survives_any_one_site_loss() -> None:
 _DISCONNECTED = build_synthesis(
     backbone_ids=("B1", "B2", "B3", "B4"),
     transit_ids=(),
-    access_paths=[],
+    access_circuits=[],
     physical_pairs=[("B1", "B2"), ("B3", "B4")],
 )
 _DISCONNECTED_SITES = [make_pop(name) for name in ("B1", "B2", "B3", "B4")]

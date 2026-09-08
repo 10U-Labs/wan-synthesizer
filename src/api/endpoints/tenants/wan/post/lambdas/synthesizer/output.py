@@ -22,7 +22,7 @@ def included_demand_count(sites: Iterable[Site], synthesis: Synthesis) -> int:
     )
 
 
-def _demand_path_kind(source_site: Site) -> str:
+def _demand_circuit_kind(source_site: Site) -> str:
     return "provider_to_backbone" if source_site.kind == PROVIDER_KIND else "tenant_to_backbone"
 
 
@@ -45,7 +45,7 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
             "backbone_count": len(synthesis.backbone_ids),
             "transit_count": len(synthesis.transit_ids),
             "demand_site_count": included_demand_count(sites, synthesis),
-            "access_path_count": len(synthesis.access_paths),
+            "access_path_count": len(synthesis.access_circuits),
             "fiber_segment_count": len(synthesis.fiber_segment_keys),
             "access_miles": round(synthesis.metrics.access_miles, 3),
             "physical_carrier_miles": round(synthesis.metrics.physical_miles, 3),
@@ -71,15 +71,15 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
         ],
         "access_paths": [
             {
-                "source_id": access_path.source,
-                "source_name": sites_by_id[access_path.source].name,
-                "target_id": access_path.target,
-                "target_name": sites_by_id[access_path.target].name,
-                "link_kind": _demand_path_kind(sites_by_id[access_path.source]),
-                "distance_miles": round(access_path.distance_miles, 3),
+                "source_id": access_circuit.source,
+                "source_name": sites_by_id[access_circuit.source].name,
+                "target_id": access_circuit.target,
+                "target_name": sites_by_id[access_circuit.target].name,
+                "link_kind": _demand_circuit_kind(sites_by_id[access_circuit.source]),
+                "distance_miles": round(access_circuit.distance_miles, 3),
             }
-            for access_path in sorted(
-                synthesis.access_paths, key=lambda item: (item.source, item.target)
+            for access_circuit in sorted(
+                synthesis.access_circuits, key=lambda item: (item.source, item.target)
             )
         ],
         "fiber_segments": [
@@ -98,19 +98,19 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
         ],
         "drawn_paths": [
             {
-                "purpose": drawn_path.purpose,
-                "source_id": drawn_path.source,
-                "source_name": sites_by_id[drawn_path.source].name,
-                "target_id": drawn_path.target,
-                "target_name": sites_by_id[drawn_path.target].name,
-                "distance_miles": round(drawn_path.distance_miles, 3),
-                "carrier": drawn_path.carrier,
-                "path": [sites_by_id[site_id].name for site_id in drawn_path.path],
-                "reason": drawn_path.reason,
+                "purpose": drawn_circuit.purpose,
+                "source_id": drawn_circuit.source,
+                "source_name": sites_by_id[drawn_circuit.source].name,
+                "target_id": drawn_circuit.target,
+                "target_name": sites_by_id[drawn_circuit.target].name,
+                "distance_miles": round(drawn_circuit.distance_miles, 3),
+                "carrier": drawn_circuit.carrier,
+                "path": [sites_by_id[site_id].name for site_id in drawn_circuit.pop_ids],
+                "reason": drawn_circuit.reason,
                 "requested_by": [
-                    sites_by_id[site_id].name for site_id in drawn_path.requested_by
+                    sites_by_id[site_id].name for site_id in drawn_circuit.requested_by
                 ],
             }
-            for drawn_path in synthesis.drawn_paths
+            for drawn_circuit in synthesis.drawn_circuits
         ],
     }

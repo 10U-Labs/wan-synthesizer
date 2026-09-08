@@ -4,14 +4,14 @@ import fixtures
 import pytest
 
 from synthesizer.input_graph import segment_key
-from synthesizer.model import AccessPath, Synthesis, SynthesisMetrics, MeshRequirements
+from synthesizer.model import AccessCircuit, Synthesis, SynthesisMetrics, MeshRequirements
 from synthesizer.validation import (
     backbone_mesh_deficient,
     backbone_mesh_independence_deficient,
     demand_backbone_homes,
     synthesis_site_pairs,
     included_site_ids,
-    diverse_path_count,
+    diverse_circuit_count,
     neighbor_degrees,
 )
 
@@ -21,14 +21,14 @@ def make_synthesis(
     *,
     backbone_ids: tuple[str, ...] = (),
     transit_ids: tuple[str, ...] = (),
-    access_paths: list[AccessPath] | None = None,
+    access_circuits: list[AccessCircuit] | None = None,
 ) -> Synthesis:
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=transit_ids,
-        access_paths=access_paths or [],
+        access_circuits=access_circuits or [],
         fiber_segment_keys={segment_key(a, b) for a, b in physical_pairs},
-        drawn_paths=[],
+        drawn_circuits=[],
         metrics=SynthesisMetrics(0.0, 0.0, 0.0),
     )
 
@@ -37,7 +37,7 @@ meshed_synthesis = fixtures.meshed_backbone_synthesis
 
 
 def test_included_site_ids_covers_access_endpoints() -> None:
-    synthesis = make_synthesis([("a", "b")], access_paths=[AccessPath("s", "a", 1.0)])
+    synthesis = make_synthesis([("a", "b")], access_circuits=[AccessCircuit("s", "a", 1.0)])
     assert included_site_ids(synthesis) == {"a", "b", "s"}
 
 
@@ -47,7 +47,7 @@ def test_included_site_ids_covers_the_tier_ids() -> None:
 
 
 def test_synthesis_site_pairs_merge_access_and_physical() -> None:
-    synthesis = make_synthesis([("a", "b")], access_paths=[AccessPath("s", "a", 1.0)])
+    synthesis = make_synthesis([("a", "b")], access_circuits=[AccessCircuit("s", "a", 1.0)])
     assert synthesis_site_pairs(synthesis) == {segment_key("a", "b"), segment_key("s", "a")}
 
 
@@ -63,49 +63,49 @@ def test_neighbor_degrees_ignores_external_endpoints() -> None:
 
 def test_demand_backbone_homes_groups_targets_per_source() -> None:
     synthesis = make_synthesis(
-        [], access_paths=[AccessPath("s", "a", 1.0), AccessPath("s", "b", 1.0)]
+        [], access_circuits=[AccessCircuit("s", "a", 1.0), AccessCircuit("s", "b", 1.0)]
     )
     assert demand_backbone_homes(synthesis) == {"s": {"a", "b"}}
 
 
 _SHARED_EGRESS = meshed_synthesis(
-    fixtures.SHARED_TRANSIT_PATHS, fixtures.SHARED_TRANSIT_BACKBONE
+    fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
 )
 _DIVERSE_EGRESS = meshed_synthesis(
-    fixtures.DIVERSE_TRANSIT_PATHS, fixtures.SHARED_TRANSIT_BACKBONE
+    fixtures.DIVERSE_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
 )
 _MESH_SITES = fixtures.carrier_pops_by_id("abcxy")
 
 
 @pytest.mark.parametrize("degree", [2, 3, 4])
-def test_diverse_path_count_counts_every_city_disjoint_path(degree: int) -> None:
+def test_diverse_circuit_count_counts_every_city_disjoint_circuit(degree: int) -> None:
     peers = "bcde"[:degree]
     synthesis = meshed_synthesis(
         [("a", f"x{peer}", peer) for peer in peers], ("a", *peers)
     )
-    assert diverse_path_count(synthesis.drawn_paths, "a") == degree
+    assert diverse_circuit_count(synthesis.drawn_circuits, "a") == degree
 
 
-def test_diverse_path_count_counts_paths_sharing_a_transit_city_once() -> None:
-    assert diverse_path_count(_SHARED_EGRESS.drawn_paths, "a") == 1
+def test_diverse_circuit_count_counts_circuits_sharing_a_transit_city_once() -> None:
+    assert diverse_circuit_count(_SHARED_EGRESS.drawn_circuits, "a") == 1
 
 
-def test_diverse_path_count_counts_a_diverse_pair_as_two() -> None:
-    assert diverse_path_count(_DIVERSE_EGRESS.drawn_paths, "a") == 2
+def test_diverse_circuit_count_counts_a_diverse_pair_as_two() -> None:
+    assert diverse_circuit_count(_DIVERSE_EGRESS.drawn_circuits, "a") == 2
 
 
-def test_diverse_path_count_of_a_node_with_no_paths_is_zero() -> None:
-    assert diverse_path_count(meshed_synthesis([], ("a",)).drawn_paths, "a") == 0
+def test_diverse_circuit_count_of_a_node_with_no_circuits_is_zero() -> None:
+    assert diverse_circuit_count(meshed_synthesis([], ("a",)).drawn_circuits, "a") == 0
 
 
-def test_diverse_path_count_counts_two_paths_to_the_only_peer_as_two() -> None:
+def test_diverse_circuit_count_counts_two_circuits_to_the_only_peer_as_two() -> None:
     synthesis = meshed_synthesis([("a", "x", "b"), ("a", "y", "b")], ("a", "b"))
-    assert diverse_path_count(synthesis.drawn_paths, "a") == 2
+    assert diverse_circuit_count(synthesis.drawn_circuits, "a") == 2
 
 
-def test_diverse_path_count_counts_a_path_crossing_a_peer_with_that_peers_path_once() -> None:
+def test_diverse_circuit_count_counts_a_circuit_crossing_a_peer_with_that_peer_once() -> None:
     synthesis = meshed_synthesis([("a", "b"), ("a", "b", "c")], ("a", "b", "c"))
-    assert diverse_path_count(synthesis.drawn_paths, "a") == 1
+    assert diverse_circuit_count(synthesis.drawn_circuits, "a") == 1
 
 
 _MESH_DEGREES = {"a": 1, "b": 2, "c": 2, "d": 2}

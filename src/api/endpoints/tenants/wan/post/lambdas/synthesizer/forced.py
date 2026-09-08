@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from synthesizer.input_graph import Site, haversine_miles
-from synthesizer.model import ForcedPaths
+from synthesizer.model import ForcedCircuits
 
 
 def _pairs_within(
@@ -13,25 +13,25 @@ def _pairs_within(
 
 
 def removed_backbone_pairs(
-    backbone_set: set[str], paths: ForcedPaths
+    backbone_set: set[str], circuits: ForcedCircuits
 ) -> frozenset[tuple[str, str]]:
-    return _pairs_within(backbone_set, paths.removed_backbone)
+    return _pairs_within(backbone_set, circuits.removed_backbone)
 
 
 def forced_backbone_pairs(
-    backbone_set: set[str], paths: ForcedPaths
+    backbone_set: set[str], circuits: ForcedCircuits
 ) -> frozenset[tuple[str, str]]:
-    return _pairs_within(backbone_set, paths.backbone)
+    return _pairs_within(backbone_set, circuits.backbone)
 
 
 def apply_forced_access_homes(
     access: Site,
     completed: list[str],
-    paths: ForcedPaths,
+    circuits: ForcedCircuits,
     pop_by_id: dict[str, Site],
     homes: int,
 ) -> list[str]:
-    required = [backbone for acc, backbone in sorted(paths.access) if acc == access.id]
+    required = [backbone for acc, backbone in sorted(circuits.access) if acc == access.id]
     if not required:
         return completed
     nearest = sorted(

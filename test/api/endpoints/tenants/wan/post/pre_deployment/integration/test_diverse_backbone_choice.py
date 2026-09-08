@@ -19,7 +19,7 @@ def test_the_synthesis_seats_two_backbone_sites() -> None:
     assert len(ARTIFACTS.synthesis.backbone_ids) == 2
 
 
-def test_the_backbone_holds_the_site_whose_fiber_carries_the_most_paths() -> None:
+def test_the_backbone_holds_the_site_whose_fiber_carries_the_most_circuits() -> None:
     assert "spread" in ARTIFACTS.synthesis.backbone_ids
 
 

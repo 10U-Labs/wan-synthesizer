@@ -62,15 +62,16 @@ def test_backbone_links_exist_for_a_meshed_synthesis() -> None:
     assert gc.backbone_links(_payload())
 
 
-def test_backbone_links_are_all_backbone_mesh_paths() -> None:
-    assert all(path["purpose"] == "backbone_mesh" for path in gc.backbone_links(_payload()))
+def test_backbone_links_are_all_backbone_mesh_circuits() -> None:
+    assert all(circuit["purpose"] == "backbone_mesh" for circuit in gc.backbone_links(_payload()))
 
 
-def test_backbone_links_omit_other_drawn_paths() -> None:
+def test_backbone_links_omit_other_drawn_circuits() -> None:
     assert gc.backbone_links({"drawn_paths": [{"purpose": "access"}]}) == []
 
 
 def test_backbone_links_name_both_endpoints() -> None:
     assert all(
-        path["source_name"] and path["target_name"] for path in gc.backbone_links(_payload())
+        circuit["source_name"] and circuit["target_name"]
+        for circuit in gc.backbone_links(_payload())
     )

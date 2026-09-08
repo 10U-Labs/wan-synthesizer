@@ -29,9 +29,9 @@ def paths(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 def backbone_links(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return [
-        drawn_path
-        for drawn_path in payload["drawn_paths"]
-        if drawn_path["purpose"] == "backbone_mesh"
+        drawn_circuit
+        for drawn_circuit in payload["drawn_paths"]
+        if drawn_circuit["purpose"] == "backbone_mesh"
     ]
 
 

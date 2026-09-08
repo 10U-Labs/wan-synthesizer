@@ -5,27 +5,27 @@ from typing import Any
 from test_published_syntheses import cut_cities
 
 
-def _published_paths(crossings: list[tuple[str, ...]]) -> list[dict[str, Any]]:
+def _published_circuits(crossings: list[tuple[str, ...]]) -> list[dict[str, Any]]:
     return [{"path": list(cities)} for cities in crossings]
 
 
-_RING = _published_paths([
+_RING = _published_circuits([
     ("west", "a", "north"),
     ("north", "b", "east"),
     ("east", "d", "south"),
     ("south", "f", "west"),
 ])
 
-_BOWTIE = _published_paths([
+_BOWTIE = _published_circuits([
     ("west", "a", "waist"),
     ("waist", "b", "west"),
     ("east", "c", "waist"),
     ("waist", "d", "east"),
 ])
 
-_CHAIN = _published_paths([("west", "middle", "centre", "east")])
+_CHAIN = _published_circuits([("west", "middle", "centre", "east")])
 
-_APART = _published_paths([("west", "a", "north"), ("east", "b", "south")])
+_APART = _published_circuits([("west", "a", "north"), ("east", "b", "south")])
 
 
 def test_a_network_no_city_carries_names_nobody() -> None:

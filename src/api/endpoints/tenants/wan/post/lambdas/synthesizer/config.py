@@ -7,8 +7,8 @@ from typing import Any
 from synthesizer.model import (
     SynthesisParams,
     InputFiles,
-    NamedPath,
-    OperatorPaths,
+    NamedCircuit,
+    OperatorCircuits,
     RoleExclusions,
     SearchMemoryBudget,
     Tuning,
@@ -26,7 +26,7 @@ class AppConfig:
     input_files: InputFiles
     params: SynthesisParams
     label: str = ""
-    operator_paths: OperatorPaths = field(default_factory=OperatorPaths)
+    operator_circuits: OperatorCircuits = field(default_factory=OperatorCircuits)
 
 
 def _mapping(data: dict[str, Any], key: str) -> dict[str, Any]:
@@ -61,25 +61,25 @@ def _required_int(data: dict[str, Any], key: str) -> int:
     return value
 
 
-def _named_path_list(synthesis: dict[str, Any], key: str) -> tuple[NamedPath, ...]:
+def _named_circuit_list(synthesis: dict[str, Any], key: str) -> tuple[NamedCircuit, ...]:
     value = synthesis.get(key, [])
     if not isinstance(value, list):
         raise ValueError(f"config key '{key}' must be a list")
-    written: list[NamedPath] = []
+    written: list[NamedCircuit] = []
     for item in value:
         if not isinstance(item, dict) or not all(
             isinstance(item.get(name), str) for name in ("source", "target")
         ):
             raise ValueError(f"each {key} entry must map source and target to strings")
-        written.append(NamedPath(item["source"], item["target"]))
+        written.append(NamedCircuit(item["source"], item["target"]))
     return tuple(written)
 
 
-def _operator_paths(synthesis: dict[str, Any]) -> OperatorPaths:
-    return OperatorPaths(
-        backbone=_named_path_list(synthesis, "forced_paths"),
-        access=_named_path_list(synthesis, "forced_homes"),
-        removed_backbone=_named_path_list(synthesis, "excluded_paths"),
+def _operator_circuits(synthesis: dict[str, Any]) -> OperatorCircuits:
+    return OperatorCircuits(
+        backbone=_named_circuit_list(synthesis, "forced_paths"),
+        access=_named_circuit_list(synthesis, "forced_homes"),
+        removed_backbone=_named_circuit_list(synthesis, "excluded_paths"),
     )
 
 
@@ -175,7 +175,7 @@ def config_from_data(data: dict[str, Any]) -> AppConfig:
         input_files=_input_files(_mapping(data, "inputs")),
         params=_params(synthesis, _mapping(data, "tuning"), _mapping(data, "settings")),
         label=str(data.get("label", "")),
-        operator_paths=_operator_paths(synthesis),
+        operator_circuits=_operator_circuits(synthesis),
     )
 
 

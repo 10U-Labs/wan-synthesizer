@@ -5,9 +5,9 @@ from itertools import combinations
 
 from synthesizer.input_graph import Site, segment_key
 from synthesizer.model import (
-    PATH_FOR_TARGET,
+    CIRCUIT_FOR_TARGET,
     Synthesis,
-    SynthesisPath,
+    SynthesisCircuit,
     MeshRequirements,
     ValidationReport,
 )
@@ -16,7 +16,7 @@ from synthesizer.graphs import (
     connected_components,
     survives_any_one_segment_loss,
     survives_any_one_site_loss,
-    path_segment_keys,
+    fiber_segments_along,
 )
 
 
@@ -46,22 +46,22 @@ def backbone_mesh_deficient(
 def synthesis_site_pairs(synthesis: Synthesis) -> set[tuple[str, str]]:
     pairs = set(synthesis.fiber_segment_keys)
     pairs.update(
-        segment_key(access_path.source, access_path.target)
-        for access_path in synthesis.access_paths
+        segment_key(access_circuit.source, access_circuit.target)
+        for access_circuit in synthesis.access_circuits
     )
     return pairs
 
 def included_site_ids(synthesis: Synthesis) -> set[str]:
     ids = set(synthesis.backbone_ids) | set(synthesis.transit_ids)
     ids.update(site_id for key in synthesis.fiber_segment_keys for site_id in key)
-    ids.update(access_path.source for access_path in synthesis.access_paths)
-    ids.update(access_path.target for access_path in synthesis.access_paths)
+    ids.update(access_circuit.source for access_circuit in synthesis.access_circuits)
+    ids.update(access_circuit.target for access_circuit in synthesis.access_circuits)
     return ids
 
 def demand_backbone_homes(synthesis: Synthesis) -> dict[str, set[str]]:
     homes: dict[str, set[str]] = {}
-    for access_path in synthesis.access_paths:
-        homes.setdefault(access_path.source, set()).add(access_path.target)
+    for access_circuit in synthesis.access_circuits:
+        homes.setdefault(access_circuit.source, set()).add(access_circuit.target)
     return homes
 
 def demand_without_backbone_redundancy(synthesis: Synthesis, homes: int) -> list[str]:
@@ -73,16 +73,16 @@ def demand_without_backbone_redundancy(synthesis: Synthesis, homes: int) -> list
 
 def backbone_mesh_pairs(synthesis: Synthesis) -> set[tuple[str, str]]:
     return {
-        segment_key(drawn_path.source, drawn_path.target)
-        for drawn_path in synthesis.drawn_paths
-        if drawn_path.purpose == "backbone_mesh"
+        segment_key(drawn_circuit.source, drawn_circuit.target)
+        for drawn_circuit in synthesis.drawn_circuits
+        if drawn_circuit.purpose == "backbone_mesh"
     }
 
 def backbone_mesh_fiber_segments(synthesis: Synthesis) -> set[tuple[str, str]]:
     segments: set[tuple[str, str]] = set()
-    for drawn_path in synthesis.drawn_paths:
-        if drawn_path.purpose == "backbone_mesh":
-            segments |= path_segment_keys(drawn_path.path)
+    for drawn_circuit in synthesis.drawn_circuits:
+        if drawn_circuit.purpose == "backbone_mesh":
+            segments |= fiber_segments_along(drawn_circuit.pop_ids)
     return segments
 
 def _backbone_mesh_survives(
@@ -101,21 +101,22 @@ def backbone_mesh_survives_any_one_link_loss(synthesis: Synthesis) -> bool:
 def backbone_mesh_survives_any_one_site_loss(synthesis: Synthesis) -> bool:
     return _backbone_mesh_survives(synthesis, survives_any_one_site_loss)
 
-def paths_out_of(
-    drawn_paths: list[SynthesisPath], site: str
+def circuits_out_of(
+    drawn_circuits: list[SynthesisCircuit], site: str
 ) -> list[tuple[str, frozenset[str]]]:
     return [
         (
-            drawn_path.target if drawn_path.source == site else drawn_path.source,
-            frozenset(drawn_path.path) - {site},
+            drawn_circuit.target if drawn_circuit.source == site else drawn_circuit.source,
+            frozenset(drawn_circuit.pop_ids) - {site},
         )
-        for drawn_path in drawn_paths
-        if drawn_path.purpose == "backbone_mesh" and site in (drawn_path.source, drawn_path.target)
+        for drawn_circuit in drawn_circuits
+        if drawn_circuit.purpose == "backbone_mesh"
+        and site in (drawn_circuit.source, drawn_circuit.target)
     ]
 
 
-def _all_disjoint(paths: tuple[tuple[str, frozenset[str]], ...]) -> bool:
-    for (near_peer, near), (far_peer, far) in combinations(paths, 2):
+def _all_disjoint(circuits: tuple[tuple[str, frozenset[str]], ...]) -> bool:
+    for (near_peer, near), (far_peer, far) in combinations(circuits, 2):
         shared = near & far
         if near_peer == far_peer:
             shared -= {near_peer}
@@ -124,10 +125,10 @@ def _all_disjoint(paths: tuple[tuple[str, frozenset[str]], ...]) -> bool:
     return True
 
 
-def diverse_path_count(drawn_paths: list[SynthesisPath], site: str) -> int:
-    paths = paths_out_of(drawn_paths, site)
-    for size in range(len(paths), 0, -1):
-        if any(_all_disjoint(combo) for combo in combinations(paths, size)):
+def diverse_circuit_count(drawn_circuits: list[SynthesisCircuit], site: str) -> int:
+    circuits = circuits_out_of(drawn_circuits, site)
+    for size in range(len(circuits), 0, -1):
+        if any(_all_disjoint(combo) for combo in combinations(circuits, size)):
             return size
     return 0
 
@@ -144,7 +145,7 @@ def backbone_mesh_independence_deficient(
             "independent_degree": degree,
         }
         for backbone_id, degree in sorted(
-            (site, diverse_path_count(synthesis.drawn_paths, site))
+            (site, diverse_circuit_count(synthesis.drawn_circuits, site))
             for site in synthesis.backbone_ids
         )
         if degree < node_mesh_target(backbone_id, targets)
@@ -178,7 +179,7 @@ def _ceiling_rows(
     ]
 
 
-def diverse_path_ceilings_reported(
+def diverse_circuit_ceilings_reported(
     backbone_ids: tuple[str, ...],
     sites_by_id: dict[str, Site],
     targets: MeshRequirements,
@@ -202,22 +203,31 @@ def ceiling_limited_nodes(
     )
 
 
-def mesh_paths_out_of(synthesis: Synthesis, site: str) -> list[SynthesisPath]:
+def mesh_circuits_out_of(synthesis: Synthesis, site: str) -> list[SynthesisCircuit]:
     return [
-        drawn_path
-        for drawn_path in synthesis.drawn_paths
-        if drawn_path.purpose == "backbone_mesh" and site in (drawn_path.source, drawn_path.target)
+        drawn_circuit
+        for drawn_circuit in synthesis.drawn_circuits
+        if drawn_circuit.purpose == "backbone_mesh"
+        and site in (drawn_circuit.source, drawn_circuit.target)
     ]
 
 
-def unrequested_mesh_paths(synthesis: Synthesis, site: str) -> list[dict[str, object]]:
+def unrequested_mesh_circuits(synthesis: Synthesis, site: str) -> list[dict[str, object]]:
     unrequested: list[dict[str, object]] = [
         {
-            "peer": drawn_path.target if drawn_path.source == site else drawn_path.source,
-            "reason": "peer_target" if drawn_path.reason == PATH_FOR_TARGET else drawn_path.reason,
+            "peer": (
+                drawn_circuit.target
+                if drawn_circuit.source == site
+                else drawn_circuit.source
+            ),
+            "reason": (
+                "peer_target"
+                if drawn_circuit.reason == CIRCUIT_FOR_TARGET
+                else drawn_circuit.reason
+            ),
         }
-        for drawn_path in mesh_paths_out_of(synthesis, site)
-        if not (drawn_path.reason == PATH_FOR_TARGET and site in drawn_path.requested_by)
+        for drawn_circuit in mesh_circuits_out_of(synthesis, site)
+        if not (drawn_circuit.reason == CIRCUIT_FOR_TARGET and site in drawn_circuit.requested_by)
     ]
     return sorted(unrequested, key=lambda item: (str(item["peer"]), str(item["reason"])))
 
@@ -230,16 +240,16 @@ def above_target_nodes(
     asked_for = targets.number_of_diverse_paths
     rows: list[dict[str, object]] = []
     for site in sorted(synthesis.backbone_ids):
-        paths = mesh_paths_out_of(synthesis, site)
-        if len(paths) <= asked_for:
+        circuits = mesh_circuits_out_of(synthesis, site)
+        if len(circuits) <= asked_for:
             continue
         rows.append({
             "id": site,
             "name": sites_by_id[site].name,
             "target": asked_for,
-            "link_count": len(paths),
-            "diverse_path_count": diverse_path_count(synthesis.drawn_paths, site),
-            "unrequested_links": unrequested_mesh_paths(synthesis, site),
+            "link_count": len(circuits),
+            "diverse_path_count": diverse_circuit_count(synthesis.drawn_circuits, site),
+            "unrequested_links": unrequested_mesh_circuits(synthesis, site),
         })
     return rows
 
@@ -312,7 +322,7 @@ def validate_synthesis(
             {"id": backbone_id, "name": sites_by_id[backbone_id].name}
             for backbone_id in sorted(set(synthesis.backbone_ids) & targets.degree_exempt)
         ],
-        "backbone_diverse_paths_ceilings": diverse_path_ceilings_reported(
+        "backbone_diverse_paths_ceilings": diverse_circuit_ceilings_reported(
             synthesis.backbone_ids, sites_by_id, targets
         ),
         "backbone_diverse_paths_ceiling_limited": ceiling_limited_nodes(

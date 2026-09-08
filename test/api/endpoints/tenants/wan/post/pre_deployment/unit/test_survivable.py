@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 import fixtures
-from synthesizer.ceiling import PathProofInputs, diverse_path_ceilings
+from synthesizer.ceiling import CircuitProofInputs, diverse_circuit_ceilings
 from synthesizer.graphs import adjacency_by_carrier, build_adjacency
 from synthesizer.input_graph import FiberSegment
 from synthesizer.survivable import (
@@ -182,7 +182,7 @@ def test_the_segment_the_first_answer_missed_is_selected_once_it_is_written_down
 _OFFERED = frozenset({("a", "r"), ("b", "r")})
 
 
-def test_the_fiber_selected_is_fiber_one_carrier_can_offer_a_whole_path_over() -> None:
+def test_the_fiber_selected_is_fiber_one_carrier_can_offer_a_whole_circuit_over() -> None:
     assert _selected(
         fixtures.OFFERED_WAYS_FIBER, fixtures.OFFERED_WAYS_SITES, seat_cap=2
     ).segments == _OFFERED
@@ -196,7 +196,7 @@ _DISTANT_PEER_SELECTION = select_fiber(FiberInputs(
 
 
 def _distant_peer_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, int]:
-    return diverse_path_ceilings(PathProofInputs(
+    return diverse_circuit_ceilings(CircuitProofInputs(
         _DISTANT_PEER_SITES,
         build_adjacency({
             segment: fixtures.DISTANT_PEER_FIBER[segment] for segment in segments

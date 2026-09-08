@@ -4,7 +4,7 @@ import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from synthesizer.ceiling import PathProofInputs, diverse_path_ceilings
+from synthesizer.ceiling import CircuitProofInputs, diverse_circuit_ceilings
 from synthesizer.input_graph import Site, haversine_miles
 from synthesizer.model import SynthesisInputs
 from synthesizer.graphs import reconstruct_path
@@ -40,37 +40,37 @@ def site_straightness(
     origin = pop_by_id[pop_id]
     ratios: list[float] = []
     for dest_id in predecessors:
-        path = reconstruct_path(pop_id, dest_id, predecessors)
-        along_path = sum(
-            haversine_miles(pop_by_id[path[index]], pop_by_id[path[index + 1]])
-            for index in range(len(path) - 1)
+        pop_ids = reconstruct_path(pop_id, dest_id, predecessors)
+        along_fiber = sum(
+            haversine_miles(pop_by_id[pop_ids[index]], pop_by_id[pop_ids[index + 1]])
+            for index in range(len(pop_ids) - 1)
         )
         straight = haversine_miles(origin, pop_by_id[dest_id])
-        if along_path > 0.0:
-            ratios.append(straight / along_path)
+        if along_fiber > 0.0:
+            ratios.append(straight / along_fiber)
     return sum(ratios) / len(ratios) if ratios else 0.0
 
 @dataclass(frozen=True)
-class DiversePathBounds:
+class DiverseCircuitBounds:
     per_site: Mapping[str, int]
     largest: int
 
 
-def diverse_path_bounds(
+def diverse_circuit_bounds(
     candidate_ids: set[str],
     adjacency: dict[str, list[tuple[str, float]]],
-) -> DiversePathBounds:
-    per_site = diverse_path_ceilings(
-        PathProofInputs(tuple(sorted(candidate_ids)), adjacency)
+) -> DiverseCircuitBounds:
+    per_site = diverse_circuit_ceilings(
+        CircuitProofInputs(tuple(sorted(candidate_ids)), adjacency)
     )
-    return DiversePathBounds(per_site, max((*per_site.values(), 1)))
+    return DiverseCircuitBounds(per_site, max((*per_site.values(), 1)))
 
 
 def backbone_strength(
     pop_id: str,
     inputs: SynthesisInputs,
     pop_by_id: dict[str, Site],
-    bounds: DiversePathBounds,
+    bounds: DiverseCircuitBounds,
     compass_sector_count: int,
 ) -> float:
     diverse = bounds.per_site.get(pop_id, 0)

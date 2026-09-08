@@ -15,15 +15,15 @@ _SEGMENTS = {
     ("w", "y"): 250.0, ("x", "z"): 250.0,
 }
 ARTIFACTS = fixtures.synthesis_over_segments(_SITES, _SEGMENTS, _ASKED_FOR)
-_MESH = fixtures.mesh_paths(ARTIFACTS)
+_MESH = fixtures.mesh_circuits(ARTIFACTS)
 
 
 def test_the_delivered_synthesis_orders_the_four_hundred_miles_the_ring_costs() -> None:
     assert ARTIFACTS.synthesis.metrics.physical_miles == 400.0
 
 
-def test_the_delivered_synthesis_draws_one_path_a_pair_round_the_ring() -> None:
-    assert sum(drawn_path.distance_miles for drawn_path in _MESH) == 400.0
+def test_the_delivered_synthesis_draws_one_circuit_a_pair_round_the_ring() -> None:
+    assert sum(drawn_circuit.distance_miles for drawn_circuit in _MESH) == 400.0
 
 
 def test_the_delivered_synthesis_publishes_the_floor_it_is_judged_against() -> None:

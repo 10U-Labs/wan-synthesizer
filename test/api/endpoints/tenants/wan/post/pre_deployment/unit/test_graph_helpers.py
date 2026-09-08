@@ -12,7 +12,7 @@ from synthesizer.graphs import (
     connected_components,
     dijkstra,
     survives_any_one_site_loss,
-    path_segment_keys,
+    fiber_segments_along,
     reconstruct_path,
 )
 from synthesizer.input_graph import FiberSegment, Site, carriers_along, segment_key, haversine_miles
@@ -117,8 +117,8 @@ def test_reconstruct_path_broken_chain_returns_empty() -> None:
     assert not reconstruct_path("a", "c", {"c": "b"})
 
 
-def test_path_segment_keys_for_a_three_site_path() -> None:
-    assert path_segment_keys(("a", "b", "c")) == {segment_key("a", "b"), segment_key("b", "c")}
+def test_fiber_segments_along_a_three_site_circuit() -> None:
+    assert fiber_segments_along(("a", "b", "c")) == {segment_key("a", "b"), segment_key("b", "c")}
 
 
 def test_dfs_root_with_two_children_is_an_articulation_point() -> None:
@@ -215,11 +215,11 @@ def test_adjacency_by_carrier_splits_fiber_naming_nobody_into_nothing() -> None:
     assert adjacency_by_carrier({segment_key("c", "d"): FiberSegment("c", "d", 1.0)}) == {}
 
 
-def test_carriers_along_names_who_can_offer_a_whole_path() -> None:
+def test_carriers_along_names_who_can_offer_a_whole_circuit() -> None:
     assert carriers_along(("a", "b"), _OWNED_FIBER) == frozenset({"lumen"})
 
 
-def test_carriers_along_names_nobody_for_a_path_that_changes_hands() -> None:
+def test_carriers_along_names_nobody_for_a_circuit_that_changes_hands() -> None:
     assert carriers_along(("a", "b", "c"), _OWNED_FIBER) == frozenset()
 
 
@@ -227,5 +227,5 @@ def test_carriers_along_lets_a_lateral_pass() -> None:
     assert carriers_along(("a", "c", "d"), _OWNED_FIBER) == frozenset({"lumen", "zayo"})
 
 
-def test_carriers_along_names_nobody_for_a_path_of_laterals_only() -> None:
+def test_carriers_along_names_nobody_for_a_circuit_of_laterals_only() -> None:
     assert carriers_along(("c", "d"), _OWNED_FIBER) == frozenset()

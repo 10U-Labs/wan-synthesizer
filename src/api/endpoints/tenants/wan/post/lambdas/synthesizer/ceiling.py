@@ -104,8 +104,8 @@ def _spent_arcs(residual: _Residual, arcs: list[_Arc]) -> dict[_Node, list[_Node
     return spent
 
 
-def _paths_through(spent: dict[_Node, list[_Node]], source: _Node) -> list[tuple[str, ...]]:
-    paths: list[tuple[str, ...]] = []
+def _circuits_through(spent: dict[_Node, list[_Node]], source: _Node) -> list[tuple[str, ...]]:
+    circuits: list[tuple[str, ...]] = []
     while spent.get(source):
         cities = [source[1]]
         cursor = spent[source].pop(0)
@@ -114,8 +114,8 @@ def _paths_through(spent: dict[_Node, list[_Node]], source: _Node) -> list[tuple
             if side == "in":
                 cities.append(city)
             cursor = spent[cursor].pop(0)
-        paths.append(tuple(cities))
-    return paths
+        circuits.append(tuple(cities))
+    return circuits
 
 
 def _fiber_segment_miles(
@@ -127,15 +127,15 @@ def _fiber_segment_miles(
     )
 
 
-def _path_miles(
-    path: tuple[str, ...], adjacency: dict[str, list[tuple[str, float]]]
+def _miles_along(
+    pop_ids: tuple[str, ...], adjacency: dict[str, list[tuple[str, float]]]
 ) -> float:
     return sum(
-        _fiber_segment_miles(adjacency, left, right) for left, right in zip(path, path[1:])
+        _fiber_segment_miles(adjacency, left, right) for left, right in zip(pop_ids, pop_ids[1:])
     )
 
 
-def _proved_paths(
+def _proved_circuits(
     site: str,
     backbone_ids: tuple[str, ...],
     adjacency: dict[str, list[tuple[str, float]]],
@@ -147,17 +147,17 @@ def _proved_paths(
     while True:
         path = _augmenting_path(residual, costs, potential, source)
         if path is None:
-            return _paths_through(_spent_arcs(residual, arcs), source)
+            return _circuits_through(_spent_arcs(residual, arcs), source)
         for head, tail in zip(path, path[1:]):
             residual[tail][head] -= 1
             residual[head][tail] += 1
 
 
 @dataclass(frozen=True)
-class PathProofInputs:
+class CircuitProofInputs:
     backbone_ids: tuple[str, ...]
     adjacency: dict[str, list[tuple[str, float]]]
-    paths_wanted: int = 1
+    circuits_wanted: int = 1
     seat_cap: int | None = None
     fiber_by_carrier: dict[str, dict[str, list[tuple[str, float]]]] = field(
         default_factory=dict
@@ -165,15 +165,15 @@ class PathProofInputs:
     terrestrial: dict[str, list[tuple[str, float]]] = field(default_factory=dict)
 
 
-def paths_per_peer(seat_cap: int | None, seats: int, paths_wanted: int) -> int:
+def circuits_per_peer(seat_cap: int | None, seats: int, circuits_wanted: int) -> int:
     peers = (seat_cap if seat_cap is not None else seats) - 1
-    return max(1, -(-paths_wanted // peers)) if peers > 0 else 1
+    return max(1, -(-circuits_wanted // peers)) if peers > 0 else 1
 
 
 def _no_city_twice(
     site: str,
     found: list[tuple[str, ...]],
-    inputs: PathProofInputs,
+    inputs: CircuitProofInputs,
     per_peer: int,
 ) -> list[tuple[str, ...]]:
     peers = {peer for peer in inputs.backbone_ids if peer != site}
@@ -182,13 +182,13 @@ def _no_city_twice(
     ends: dict[str, int] = {}
     seen: set[tuple[str, ...]] = set()
     kept: list[tuple[str, ...]] = []
-    ordered = sorted(found, key=lambda one: (_path_miles(one, inputs.adjacency), one))
-    for path in ordered:
-        if path in seen:
+    ordered = sorted(found, key=lambda one: (_miles_along(one, inputs.adjacency), one))
+    for pop_ids in ordered:
+        if pop_ids in seen:
             continue
-        seen.add(path)
-        interior = set(path[1:-1])
-        end = path[-1]
+        seen.add(pop_ids)
+        interior = set(pop_ids[1:-1])
+        end = pop_ids[-1]
         if interior & spent or (termini_only and interior & peers):
             continue
         if end in spent or (termini_only and ends.get(end, 0) >= per_peer):
@@ -198,21 +198,21 @@ def _no_city_twice(
             ends[end] = ends.get(end, 0) + 1
         else:
             spent.add(end)
-        kept.append(path)
+        kept.append(pop_ids)
     return kept
 
 
-def independent_paths(site: str, inputs: PathProofInputs) -> list[tuple[str, ...]]:
-    return [path for _carrier, path in _ways_out_and_their_carriers(site, inputs)]
+def independent_circuits(site: str, inputs: CircuitProofInputs) -> list[tuple[str, ...]]:
+    return [pop_ids for _carrier, pop_ids in _ways_out_and_their_carriers(site, inputs)]
 
 
-def _peers_over_land(site: str, inputs: PathProofInputs) -> frozenset[str]:
+def _peers_over_land(site: str, inputs: CircuitProofInputs) -> frozenset[str]:
     joined = reachable_over(inputs.terrestrial).get(site, frozenset())
     return joined & frozenset(peer for peer in inputs.backbone_ids if peer != site)
 
 
 def _over_land(
-    site: str, inputs: PathProofInputs, adjacency: dict[str, list[tuple[str, float]]]
+    site: str, inputs: CircuitProofInputs, adjacency: dict[str, list[tuple[str, float]]]
 ) -> dict[str, list[tuple[str, float]]]:
     if not _peers_over_land(site, inputs):
         return adjacency
@@ -231,12 +231,12 @@ def _over_land(
     return {city: neighbors for city, neighbors in kept.items() if neighbors}
 
 
-def _paths_over_each_carrier(
-    site: str, inputs: PathProofInputs, per_peer: int
+def _circuits_over_each_carrier(
+    site: str, inputs: CircuitProofInputs, per_peer: int
 ) -> dict[str, list[tuple[str, ...]]]:
     if not inputs.fiber_by_carrier:
         return {
-            "": _proved_paths(
+            "": _proved_circuits(
                 site,
                 inputs.backbone_ids,
                 _over_land(site, inputs, inputs.adjacency),
@@ -244,7 +244,7 @@ def _paths_over_each_carrier(
             )
         }
     return {
-        carrier: _proved_paths(
+        carrier: _proved_circuits(
             site, inputs.backbone_ids, _over_land(site, inputs, adjacency), per_peer
         )
         for carrier, adjacency in sorted(inputs.fiber_by_carrier.items())
@@ -252,58 +252,58 @@ def _paths_over_each_carrier(
     }
 
 
-def _per_peer(inputs: PathProofInputs) -> int:
-    return paths_per_peer(
-        inputs.seat_cap, len(inputs.backbone_ids), inputs.paths_wanted
+def _per_peer(inputs: CircuitProofInputs) -> int:
+    return circuits_per_peer(
+        inputs.seat_cap, len(inputs.backbone_ids), inputs.circuits_wanted
     )
 
 
 def _kept_with_their_carriers(
     site: str,
-    inputs: PathProofInputs,
+    inputs: CircuitProofInputs,
     by_carrier: dict[str, list[tuple[str, ...]]],
     per_peer: int,
 ) -> list[tuple[str, tuple[str, ...]]]:
     offered_by: dict[tuple[str, ...], str] = {}
-    for carrier, paths in sorted(by_carrier.items()):
-        for path in paths:
-            offered_by.setdefault(path, carrier)
+    for carrier, circuits in sorted(by_carrier.items()):
+        for pop_ids in circuits:
+            offered_by.setdefault(pop_ids, carrier)
     if not inputs.fiber_by_carrier:
-        return [("", path) for path in by_carrier[""]]
-    found = [path for _carrier, paths in sorted(by_carrier.items()) for path in paths]
+        return [("", pop_ids) for pop_ids in by_carrier[""]]
+    found = [pop_ids for _carrier, circuits in sorted(by_carrier.items()) for pop_ids in circuits]
     return [
-        (offered_by[path], path)
-        for path in _no_city_twice(site, found, inputs, per_peer)
+        (offered_by[pop_ids], pop_ids)
+        for pop_ids in _no_city_twice(site, found, inputs, per_peer)
     ]
 
 
 def _ways_out_and_their_carriers(
-    site: str, inputs: PathProofInputs
+    site: str, inputs: CircuitProofInputs
 ) -> list[tuple[str, tuple[str, ...]]]:
     per_peer = _per_peer(inputs)
     return _kept_with_their_carriers(
-        site, inputs, _paths_over_each_carrier(site, inputs, per_peer), per_peer
+        site, inputs, _circuits_over_each_carrier(site, inputs, per_peer), per_peer
     )
 
 
 def ways_out_by_carrier_and_peer(
-    site: str, inputs: PathProofInputs
+    site: str, inputs: CircuitProofInputs
 ) -> dict[tuple[str, str], int]:
     per_peer = _per_peer(inputs)
-    by_carrier = _paths_over_each_carrier(site, inputs, per_peer)
+    by_carrier = _circuits_over_each_carrier(site, inputs, per_peer)
     counted: dict[tuple[str, str], int] = {}
-    for carrier, path in _kept_with_their_carriers(site, inputs, by_carrier, per_peer):
-        counted[(carrier, path[-1])] = counted.get((carrier, path[-1]), 0) + 1
+    for carrier, pop_ids in _kept_with_their_carriers(site, inputs, by_carrier, per_peer):
+        counted[(carrier, pop_ids[-1])] = counted.get((carrier, pop_ids[-1]), 0) + 1
     return counted
 
 
-def independent_path_ceiling(site: str, inputs: PathProofInputs) -> int:
-    return len(independent_paths(site, inputs))
+def independent_circuit_ceiling(site: str, inputs: CircuitProofInputs) -> int:
+    return len(independent_circuits(site, inputs))
 
 
-def diverse_path_ceilings(inputs: PathProofInputs) -> dict[str, int]:
+def diverse_circuit_ceilings(inputs: CircuitProofInputs) -> dict[str, int]:
     return {
-        site: independent_path_ceiling(site, inputs)
+        site: independent_circuit_ceiling(site, inputs)
         for site in inputs.backbone_ids
         if site in inputs.adjacency
     }

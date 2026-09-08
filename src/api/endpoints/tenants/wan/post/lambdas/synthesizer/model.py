@@ -9,23 +9,23 @@ from synthesizer.input_graph import FiberSegment, Site
 
 
 @dataclass(frozen=True)
-class AccessPath:
+class AccessCircuit:
     source: str
     target: str
     distance_miles: float
 
-PATH_FOR_TARGET = "site_target"
-PATH_FOR_PIN = "operator_pin"
+CIRCUIT_FOR_TARGET = "site_target"
+CIRCUIT_FOR_PIN = "operator_pin"
 
 
 @dataclass(frozen=True)
-class SynthesisPath:
+class SynthesisCircuit:
     purpose: str
     source: str
     target: str
-    path: tuple[str, ...]
+    pop_ids: tuple[str, ...]
     distance_miles: float
-    reason: str = PATH_FOR_TARGET
+    reason: str = CIRCUIT_FOR_TARGET
     requested_by: tuple[str, ...] = ()
     carrier: str = ""
 
@@ -40,9 +40,9 @@ class SynthesisMetrics:
 class Synthesis:
     backbone_ids: tuple[str, ...]
     transit_ids: tuple[str, ...]
-    access_paths: list[AccessPath]
+    access_circuits: list[AccessCircuit]
     fiber_segment_keys: set[tuple[str, str]]
-    drawn_paths: list[SynthesisPath]
+    drawn_circuits: list[SynthesisCircuit]
     metrics: SynthesisMetrics
 
 @dataclass(frozen=True)
@@ -60,7 +60,7 @@ class Tuning:
     search_memory_budget: SearchMemoryBudget = field(default_factory=SearchMemoryBudget)
 
 @dataclass(frozen=True)
-class NamedPath:
+class NamedCircuit:
     source: str
     target: str
 
@@ -79,13 +79,13 @@ class SynthesisParams:
     tuning: Tuning = field(default_factory=Tuning)
 
 @dataclass(frozen=True)
-class OperatorPaths:
-    backbone: tuple[NamedPath, ...] = ()
-    access: tuple[NamedPath, ...] = ()
-    removed_backbone: tuple[NamedPath, ...] = ()
+class OperatorCircuits:
+    backbone: tuple[NamedCircuit, ...] = ()
+    access: tuple[NamedCircuit, ...] = ()
+    removed_backbone: tuple[NamedCircuit, ...] = ()
 
 @dataclass(frozen=True)
-class ForcedPaths:
+class ForcedCircuits:
     backbone: frozenset[tuple[str, str]] = frozenset()
     access: frozenset[tuple[str, str]] = frozenset()
     removed_backbone: frozenset[tuple[str, str]] = frozenset()
@@ -96,7 +96,7 @@ class RoleOverrides:
     forced_backbone_ids: frozenset[str] = frozenset()
     prohibited_backbone_ids: frozenset[str] = frozenset()
     degree_exempt_backbone_ids: frozenset[str] = frozenset()
-    forced_paths: ForcedPaths = field(default_factory=ForcedPaths)
+    forced_circuits: ForcedCircuits = field(default_factory=ForcedCircuits)
 
 @dataclass(frozen=True)
 class SynthesisInputs:

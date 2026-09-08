@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from synthesizer.ceiling import PathProofInputs, diverse_path_ceilings
+from synthesizer.ceiling import CircuitProofInputs, diverse_circuit_ceilings
 from synthesizer.graphs import adjacency_by_carrier, build_adjacency
 from synthesizer.input_graph import FiberSegment, Site
 from synthesizer.model import Synthesis, SynthesisParams, MeshRequirements, ValidationReport
@@ -49,7 +49,7 @@ def finalize(
     targets = MeshRequirements(
         number_of_diverse_paths=params.tuning.backbone_number_of_diverse_paths,
         degree_exempt=degree_exempt,
-        ceilings=diverse_path_ceilings(PathProofInputs(
+        ceilings=diverse_circuit_ceilings(CircuitProofInputs(
             synthesis.backbone_ids,
             adjacency,
             params.tuning.backbone_number_of_diverse_paths,

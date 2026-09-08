@@ -20,8 +20,8 @@ def test_the_backbone_is_the_one_site() -> None:
     assert ARTIFACTS.synthesis.backbone_ids == ("a",)
 
 
-def test_no_backbone_mesh_path_is_drawn() -> None:
-    assert fixtures.mesh_paths(ARTIFACTS) == []
+def test_no_backbone_mesh_circuit_is_drawn() -> None:
+    assert fixtures.mesh_circuits(ARTIFACTS) == []
 
 
 def test_no_fiber_is_selected_for_a_site_with_no_peer_to_reach() -> None:
@@ -38,5 +38,5 @@ def test_the_lone_site_is_credited_with_no_ways_out() -> None:
     ]
 
 
-def test_the_lone_site_is_not_reported_short_of_the_paths_it_asked_for() -> None:
+def test_the_lone_site_is_not_reported_short_of_the_circuits_it_asked_for() -> None:
     assert ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []

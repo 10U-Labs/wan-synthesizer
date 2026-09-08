@@ -113,7 +113,7 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     )
     graph, fiber_segments = dual_home(graph, fiber_segments, params, off_net)
     graph, fiber_segments, overrides = apply_role_overrides(
-        graph, fiber_segments, params, config.operator_paths
+        graph, fiber_segments, params, config.operator_circuits
     )
     logger.info("Synthesizing two-tier synthesis (this is the long step)")
     synthesis = synthesize_two_tier(graph, fiber_segments, params, overrides)

@@ -9,12 +9,12 @@ from synthesizer.input_graph import segment_key
 from synthesizer.model import (
     SynthesisArtifacts,
     SynthesisParams,
-    NamedPath,
-    OperatorPaths,
+    NamedCircuit,
+    OperatorCircuits,
     Tuning,
 )
 from synthesizer.synthesize import convergence_promotion_ids
-from synthesizer.validation import backbone_mesh_pairs, diverse_path_count
+from synthesizer.validation import backbone_mesh_pairs, diverse_circuit_count
 
 ARTIFACTS = fixtures.ring_artifacts()
 FORCED = fixtures.forced_backbone_artifacts("P3")
@@ -27,21 +27,23 @@ _MESHED_RING = SynthesisParams(
     forced_backbone_names=_RING_BACKBONE,
     tuning=Tuning(backbone_number_of_diverse_paths=2),
 )
-FORCED_BACKBONE_PATH = fixtures.forced_path_artifacts(
-    _MESHED_RING, OperatorPaths(backbone=(NamedPath("P0", "P3"),))
+FORCED_BACKBONE_CIRCUIT = fixtures.forced_circuit_artifacts(
+    _MESHED_RING, OperatorCircuits(backbone=(NamedCircuit("P0", "P3"),))
 )
-UNFORCED_RING = fixtures.forced_path_artifacts(_MESHED_RING, OperatorPaths())
+UNFORCED_RING = fixtures.forced_circuit_artifacts(_MESHED_RING, OperatorCircuits())
 
 _DEMAND_RING = fixtures.ring_inputs_with_demand("S1", "P0")
-FORCED_HOME = fixtures.forced_path_artifacts(
-    _MESHED_RING, OperatorPaths(access=(NamedPath("S1", "P3"),)), _DEMAND_RING
+FORCED_HOME = fixtures.forced_circuit_artifacts(
+    _MESHED_RING, OperatorCircuits(access=(NamedCircuit("S1", "P3"),)), _DEMAND_RING
 )
-UNFORCED_HOME = fixtures.forced_path_artifacts(_MESHED_RING, OperatorPaths(), _DEMAND_RING)
+UNFORCED_HOME = fixtures.forced_circuit_artifacts(_MESHED_RING, OperatorCircuits(), _DEMAND_RING)
 
 
 def _homes_of(artifacts: SynthesisArtifacts, access_id: str) -> set[str]:
     return {
-        path.target for path in artifacts.synthesis.access_paths if path.source == access_id
+        circuit.target
+        for circuit in artifacts.synthesis.access_circuits
+        if circuit.source == access_id
     }
 
 
@@ -59,8 +61,8 @@ def test_the_opposite_pair_is_never_meshed_on_its_own() -> None:
     assert segment_key("P0", "P3") not in backbone_mesh_pairs(UNFORCED_RING.synthesis)
 
 
-def test_a_forced_backbone_path_appears_in_the_mesh() -> None:
-    assert segment_key("P0", "P3") in backbone_mesh_pairs(FORCED_BACKBONE_PATH.synthesis)
+def test_a_forced_backbone_circuit_appears_in_the_mesh() -> None:
+    assert segment_key("P0", "P3") in backbone_mesh_pairs(FORCED_BACKBONE_CIRCUIT.synthesis)
 
 
 def test_the_opposite_backbone_is_never_a_home_on_its_own() -> None:
@@ -103,12 +105,12 @@ def test_backbone_survives_any_single_city() -> None:
     assert ARTIFACTS.validation["backbone_mesh_survives_any_one_site_loss"] is True
 
 
-def test_every_meshed_ring_node_holds_its_paths_independently() -> None:
+def test_every_meshed_ring_node_holds_its_circuits_independently() -> None:
     assert UNFORCED_RING.validation["backbone_meets_independent_mesh_link_target"] is True
 
 
-_RING_AT_THREE = fixtures.forced_path_artifacts(
-    replace(_MESHED_RING, tuning=Tuning(backbone_number_of_diverse_paths=3)), OperatorPaths()
+_RING_AT_THREE = fixtures.forced_circuit_artifacts(
+    replace(_MESHED_RING, tuning=Tuning(backbone_number_of_diverse_paths=3)), OperatorCircuits()
 )
 
 
@@ -158,7 +160,7 @@ def test_the_chorded_ring_names_the_spur_whose_target_it_lowered() -> None:
 
 def test_a_chorded_node_ends_above_the_number_because_a_peer_asked() -> None:
     assert max(
-        diverse_path_count(CHORDED.synthesis.drawn_paths, site) for site in _CHORDED_BACKBONE
+        diverse_circuit_count(CHORDED.synthesis.drawn_circuits, site) for site in _CHORDED_BACKBONE
     ) > 3
 
 
@@ -167,7 +169,7 @@ def test_the_chorded_ring_names_the_nodes_holding_more_than_was_asked() -> None:
     assert above != []
 
 
-def test_every_path_past_the_number_is_attributed_to_a_peer() -> None:
+def test_every_circuit_past_the_number_is_attributed_to_a_peer() -> None:
     above = CHORDED.validation["backbone_diverse_paths_above_target"]
     assert {
         str(unrequested["reason"])
@@ -182,7 +184,8 @@ def test_no_chorded_node_finishes_below_what_its_own_fiber_allows() -> None:
     assert [
         site
         for site in _CHORDED_BACKBONE
-        if diverse_path_count(CHORDED.synthesis.drawn_paths, site) < min(3, capped.get(site, 3))
+        if diverse_circuit_count(CHORDED.synthesis.drawn_circuits, site)
+        < min(3, capped.get(site, 3))
     ] == []
 
 
