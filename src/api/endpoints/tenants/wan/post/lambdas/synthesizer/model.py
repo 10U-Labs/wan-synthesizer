@@ -54,7 +54,7 @@ class SearchMemoryBudget:
 @dataclass(frozen=True)
 class Tuning:
     compass_sector_count: int = 8
-    backbone_number_of_diverse_paths: int = 3
+    backbone_number_of_diverse_circuits: int = 3
     backbone_coverage_target_miles: int = 600
     access_homing_degree: int = 2
     search_memory_budget: SearchMemoryBudget = field(default_factory=SearchMemoryBudget)
@@ -111,7 +111,7 @@ class SynthesisInputs:
 
 @dataclass(frozen=True)
 class MeshRequirements:
-    number_of_diverse_paths: int = 3
+    number_of_diverse_circuits: int = 3
     degree_exempt: frozenset[str] = frozenset()
     ceilings: Mapping[str, int] | None = None
 
@@ -126,13 +126,13 @@ class ValidationReport(TypedDict):
     access_sites_with_required_backbone_links: bool
     demand_missing_backbone_redundancy: list[dict[str, str]]
     backbone_meets_mesh_link_target: bool
-    backbone_diverse_paths_deficient: list[dict[str, object]]
+    backbone_diverse_circuits_deficient: list[dict[str, object]]
     backbone_meets_independent_mesh_link_target: bool
     backbone_mesh_independence_deficient: list[dict[str, object]]
     backbone_degree_exempt: list[dict[str, str]]
-    backbone_diverse_paths_ceilings: list[dict[str, object]]
-    backbone_diverse_paths_ceiling_limited: list[dict[str, object]]
-    backbone_diverse_paths_above_target: list[dict[str, object]]
+    backbone_diverse_circuits_ceilings: list[dict[str, object]]
+    backbone_diverse_circuits_ceiling_limited: list[dict[str, object]]
+    backbone_diverse_circuits_above_target: list[dict[str, object]]
     backbone_mesh_survives_any_one_link_loss: bool
     backbone_mesh_survives_any_one_site_loss: bool
 

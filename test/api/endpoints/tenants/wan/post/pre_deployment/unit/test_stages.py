@@ -5,7 +5,7 @@ import pytest
 from synthesizer.stages import dual_home, finalize
 from synthesizer.model import SynthesisParams, Tuning, ValidationReport
 
-_TWO_DIVERSE_CIRCUITS = Tuning(backbone_number_of_diverse_paths=2)
+_TWO_DIVERSE_CIRCUITS = Tuning(backbone_number_of_diverse_circuits=2)
 
 
 def test_dual_home_returns_a_graph_without_off_net() -> None:
@@ -59,7 +59,7 @@ def test_finalize_reports_the_independent_mesh_target() -> None:
     assert validation["backbone_meets_independent_mesh_link_target"] is True
 
 
-def test_finalize_refuses_a_synthesis_short_of_the_configured_number_of_diverse_paths() -> None:
+def test_finalize_refuses_a_synthesis_short_of_the_configured_number_of_diverse_circuits() -> None:
     synthesis = fixtures.meshed_backbone_synthesis(
         fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
     )

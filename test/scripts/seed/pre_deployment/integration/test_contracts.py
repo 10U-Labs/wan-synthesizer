@@ -279,7 +279,7 @@ def _ceiling_bounds(
     bounds: list[tuple[str, str, int, int]] = []
     for tenant, backbone in sorted(_backbone_blocks().items()):
         pinned = _pinned_ids(backbone, by_name)
-        asked = backbone["number_of_diverse_paths"]
+        asked = backbone["number_of_diverse_circuits"]
         for city in cities(backbone):
             city_id = by_name.get(city)
             if city_id is None or _path_endpoints(city_id, pinned) < 1:

@@ -56,7 +56,7 @@ backbone:
   node_count:
     max: 3
     min: 3
-  number_of_diverse_paths: 2
+  number_of_diverse_circuits: 2
   prohibited:
     nodes:
       - Link, TX
@@ -468,11 +468,11 @@ def test_push_tenants_puts_the_access_homing_degree_resource(
     assert bodies["tenants/f-35/access-homing-degree"] == {"degree": 1}
 
 
-def test_push_tenants_puts_the_backbone_number_of_diverse_paths_resource(
+def test_push_tenants_puts_the_backbone_number_of_diverse_circuits_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/backbone-number-of-diverse-paths"] == {"degree": 2}
+    assert bodies["tenants/f-35/backbone-number-of-diverse-circuits"] == {"degree": 2}
 
 
 def test_push_tenants_puts_the_backbone_node_count_resource(

@@ -27,7 +27,7 @@ def _artifacts(
             max_backbone_count=_SEATS,
             exclusions=RoleExclusions(prohibited_backbone_names=transit_names),
             promote_high_degree_convergences=False,
-            tuning=Tuning(backbone_number_of_diverse_paths=2),
+            tuning=Tuning(backbone_number_of_diverse_circuits=2),
         ),
     )
 
@@ -105,7 +105,7 @@ def test_the_synthesis_wires_every_site_into_one_backbone(
 def test_no_site_is_credited_with_a_way_out_its_fiber_does_not_carry(
     crossing: SynthesisArtifacts,
 ) -> None:
-    assert crossing.validation["backbone_diverse_paths_ceiling_limited"] == []
+    assert crossing.validation["backbone_diverse_circuits_ceiling_limited"] == []
 
 
 def test_no_site_is_asked_for_a_circuit_its_fiber_cannot_lay(

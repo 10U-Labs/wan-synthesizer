@@ -8,7 +8,7 @@ _TWO_SEATS = SynthesisParams(
     max_backbone_count=2,
     exclusions=RoleExclusions(prohibited_backbone_names=fixtures.funnel_transit_names()),
     promote_high_degree_convergences=False,
-    tuning=Tuning(backbone_number_of_diverse_paths=2),
+    tuning=Tuning(backbone_number_of_diverse_circuits=2),
 )
 ARTIFACTS = fixtures.run_synthesis(
     fixtures.funnel_sites(), fixtures.FUNNEL_FIBER, _TWO_SEATS

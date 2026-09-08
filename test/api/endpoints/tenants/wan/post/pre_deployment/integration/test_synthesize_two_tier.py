@@ -25,7 +25,7 @@ _RING_BACKBONE = ("P0", "P1", "P2", "P3", "P4", "P5")
 _MESHED_RING = SynthesisParams(
     min_backbone_count=2,
     forced_backbone_names=_RING_BACKBONE,
-    tuning=Tuning(backbone_number_of_diverse_paths=2),
+    tuning=Tuning(backbone_number_of_diverse_circuits=2),
 )
 FORCED_BACKBONE_CIRCUIT = fixtures.forced_circuit_artifacts(
     _MESHED_RING, OperatorCircuits(backbone=(NamedCircuit("P0", "P3"),))
@@ -110,7 +110,7 @@ def test_every_meshed_ring_node_holds_its_circuits_independently() -> None:
 
 
 _RING_AT_THREE = fixtures.forced_circuit_artifacts(
-    replace(_MESHED_RING, tuning=Tuning(backbone_number_of_diverse_paths=3)), OperatorCircuits()
+    replace(_MESHED_RING, tuning=Tuning(backbone_number_of_diverse_circuits=3)), OperatorCircuits()
 )
 
 
@@ -119,7 +119,7 @@ def test_a_degree_the_ring_cannot_carry_is_lowered_rather_than_refused() -> None
 
 
 def test_the_ring_reports_every_node_whose_target_it_lowered() -> None:
-    lowered = _RING_AT_THREE.validation["backbone_diverse_paths_ceiling_limited"]
+    lowered = _RING_AT_THREE.validation["backbone_diverse_circuits_ceiling_limited"]
     assert [entry["id"] for entry in lowered] == list(_RING_BACKBONE)
 
 
@@ -139,7 +139,7 @@ def _chorded_synthesis(exempt: tuple[str, ...] = ()) -> SynthesisArtifacts:
         min_backbone_count=2,
         forced_backbone_names=_CHORDED_BACKBONE,
         degree_exempt_backbone_names=exempt,
-        tuning=Tuning(backbone_number_of_diverse_paths=3),
+        tuning=Tuning(backbone_number_of_diverse_circuits=3),
     )
     return run_synthesis(sites, fixtures.fiber_segments_from(_CHORDED_PAIRS), params)
 
@@ -153,7 +153,7 @@ def test_the_chorded_ring_is_no_longer_refused_at_its_one_spur() -> None:
 
 
 def test_the_chorded_ring_names_the_spur_whose_target_it_lowered() -> None:
-    assert CHORDED.validation["backbone_diverse_paths_ceiling_limited"] == [
+    assert CHORDED.validation["backbone_diverse_circuits_ceiling_limited"] == [
         {"id": "P5", "name": "P5", "ceiling": 2}
     ]
 
@@ -165,12 +165,12 @@ def test_a_chorded_node_ends_above_the_number_because_a_peer_asked() -> None:
 
 
 def test_the_chorded_ring_names_the_nodes_holding_more_than_was_asked() -> None:
-    above = CHORDED.validation["backbone_diverse_paths_above_target"]
+    above = CHORDED.validation["backbone_diverse_circuits_above_target"]
     assert above != []
 
 
 def test_every_circuit_past_the_number_is_attributed_to_a_peer() -> None:
-    above = CHORDED.validation["backbone_diverse_paths_above_target"]
+    above = CHORDED.validation["backbone_diverse_circuits_above_target"]
     assert {
         str(unrequested["reason"])
         for entry in above
@@ -179,7 +179,7 @@ def test_every_circuit_past_the_number_is_attributed_to_a_peer() -> None:
 
 
 def test_no_chorded_node_finishes_below_what_its_own_fiber_allows() -> None:
-    ceilings = CHORDED.validation["backbone_diverse_paths_ceiling_limited"]
+    ceilings = CHORDED.validation["backbone_diverse_circuits_ceiling_limited"]
     capped = {str(entry["id"]): int(str(entry["ceiling"])) for entry in ceilings}
     assert [
         site

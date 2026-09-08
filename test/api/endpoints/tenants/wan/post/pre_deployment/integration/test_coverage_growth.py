@@ -23,7 +23,7 @@ _PARAMS = SynthesisParams(
     forced_backbone_names=("hub_a", "hub_b"),
     promote_high_degree_convergences=False,
     tuning=Tuning(
-        backbone_number_of_diverse_paths=2,
+        backbone_number_of_diverse_circuits=2,
         backbone_coverage_target_miles=_TARGET_MILES,
     ),
 )

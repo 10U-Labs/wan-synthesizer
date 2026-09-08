@@ -23,8 +23,8 @@ from synthesizer.graphs import (
 def node_mesh_target(site: str, targets: MeshRequirements) -> int:
     ceilings = targets.ceilings
     if ceilings is None or site not in ceilings:
-        return targets.number_of_diverse_paths
-    return min(targets.number_of_diverse_paths, ceilings[site])
+        return targets.number_of_diverse_circuits
+    return min(targets.number_of_diverse_circuits, ceilings[site])
 
 
 def backbone_mesh_deficient(
@@ -33,7 +33,7 @@ def backbone_mesh_deficient(
     sites_by_id: dict[str, Site],
     targets: MeshRequirements,
 ) -> list[dict[str, object]]:
-    if len(backbone_ids) <= targets.number_of_diverse_paths:
+    if len(backbone_ids) <= targets.number_of_diverse_circuits:
         return []
     return [
         {"id": backbone_id, "name": sites_by_id[backbone_id].name, "degree": degree}
@@ -199,7 +199,7 @@ def ceiling_limited_nodes(
 ) -> list[dict[str, object]]:
     return _ceiling_rows(
         backbone_ids, sites_by_id, targets.ceilings,
-        lambda value: value < targets.number_of_diverse_paths,
+        lambda value: value < targets.number_of_diverse_circuits,
     )
 
 
@@ -237,7 +237,7 @@ def above_target_nodes(
     sites_by_id: dict[str, Site],
     targets: MeshRequirements,
 ) -> list[dict[str, object]]:
-    asked_for = targets.number_of_diverse_paths
+    asked_for = targets.number_of_diverse_circuits
     rows: list[dict[str, object]] = []
     for site in sorted(synthesis.backbone_ids):
         circuits = mesh_circuits_out_of(synthesis, site)
@@ -248,7 +248,7 @@ def above_target_nodes(
             "name": sites_by_id[site].name,
             "target": asked_for,
             "link_count": len(circuits),
-            "diverse_path_count": diverse_circuit_count(synthesis.drawn_circuits, site),
+            "diverse_circuit_count": diverse_circuit_count(synthesis.drawn_circuits, site),
             "unrequested_links": unrequested_mesh_circuits(synthesis, site),
         })
     return rows
@@ -315,20 +315,20 @@ def validate_synthesis(
             for site_id in missing_redundancy
         ],
         "backbone_meets_mesh_link_target": not mesh_deficient,
-        "backbone_diverse_paths_deficient": mesh_deficient,
+        "backbone_diverse_circuits_deficient": mesh_deficient,
         "backbone_meets_independent_mesh_link_target": not independence_deficient,
         "backbone_mesh_independence_deficient": independence_deficient,
         "backbone_degree_exempt": [
             {"id": backbone_id, "name": sites_by_id[backbone_id].name}
             for backbone_id in sorted(set(synthesis.backbone_ids) & targets.degree_exempt)
         ],
-        "backbone_diverse_paths_ceilings": diverse_circuit_ceilings_reported(
+        "backbone_diverse_circuits_ceilings": diverse_circuit_ceilings_reported(
             synthesis.backbone_ids, sites_by_id, targets
         ),
-        "backbone_diverse_paths_ceiling_limited": ceiling_limited_nodes(
+        "backbone_diverse_circuits_ceiling_limited": ceiling_limited_nodes(
             synthesis.backbone_ids, sites_by_id, targets
         ),
-        "backbone_diverse_paths_above_target": above_target_nodes(
+        "backbone_diverse_circuits_above_target": above_target_nodes(
             synthesis, sites_by_id, targets
         ),
         "backbone_mesh_survives_any_one_link_loss":

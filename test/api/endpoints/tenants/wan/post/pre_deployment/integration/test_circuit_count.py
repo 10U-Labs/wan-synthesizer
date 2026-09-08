@@ -38,12 +38,12 @@ def test_no_circuit_in_the_synthesis_could_be_taken_back_out() -> None:
 
 
 def test_no_site_is_reported_above_the_number_with_nothing_to_blame() -> None:
-    above = ARTIFACTS.validation["backbone_diverse_paths_above_target"]
+    above = ARTIFACTS.validation["backbone_diverse_circuits_above_target"]
     assert all(entry["unrequested_links"] for entry in above)
 
 
 def test_every_circuit_past_the_number_names_the_peer_that_reached_for_it() -> None:
-    above = ARTIFACTS.validation["backbone_diverse_paths_above_target"]
+    above = ARTIFACTS.validation["backbone_diverse_circuits_above_target"]
     assert {
         str(unrequested["reason"])
         for entry in above

@@ -230,13 +230,13 @@ def mesh_circuits(artifacts: SynthesisArtifacts) -> list[SynthesisCircuit]:
 def synthesis_over_segments(
     site_ids: tuple[str, ...],
     segments: dict[tuple[str, str], float],
-    number_of_diverse_paths: int,
+    number_of_diverse_circuits: int,
     transit_ids: tuple[str, ...] = (),
     min_backbone_count: int | None = None,
     access_homing_degree: int = 2,
 ) -> SynthesisArtifacts:
     return synthesis_over_fiber(
-        site_ids, fiber_segments_from(segments), number_of_diverse_paths,
+        site_ids, fiber_segments_from(segments), number_of_diverse_circuits,
         transit_ids, min_backbone_count, access_homing_degree,
     )
 
@@ -244,18 +244,18 @@ def synthesis_over_segments(
 def synthesis_over_owned_fiber(
     site_ids: tuple[str, ...],
     segments: dict[tuple[str, str], tuple[float, tuple[str, ...]]],
-    number_of_diverse_paths: int,
+    number_of_diverse_circuits: int,
     transit_ids: tuple[str, ...] = (),
 ) -> SynthesisArtifacts:
     return synthesis_over_fiber(
-        site_ids, carrier_fiber_segments(segments), number_of_diverse_paths, transit_ids,
+        site_ids, carrier_fiber_segments(segments), number_of_diverse_circuits, transit_ids,
     )
 
 
 def synthesis_over_fiber(
     site_ids: tuple[str, ...],
     fiber: dict[tuple[str, str], FiberSegment],
-    number_of_diverse_paths: int,
+    number_of_diverse_circuits: int,
     transit_ids: tuple[str, ...] = (),
     min_backbone_count: int | None = None,
     access_homing_degree: int = 2,
@@ -274,7 +274,7 @@ def synthesis_over_fiber(
             forced_backbone_names=site_ids,
             promote_high_degree_convergences=False,
             tuning=Tuning(
-                backbone_number_of_diverse_paths=number_of_diverse_paths,
+                backbone_number_of_diverse_circuits=number_of_diverse_circuits,
                 access_homing_degree=access_homing_degree,
             ),
         ),
@@ -563,7 +563,7 @@ def shared_hub_peer_artifacts(asked_for: int = 2) -> SynthesisArtifacts:
                 prohibited_backbone_names=shared_hub_peer_transit_names()
             ),
             promote_high_degree_convergences=False,
-            tuning=Tuning(backbone_number_of_diverse_paths=asked_for),
+            tuning=Tuning(backbone_number_of_diverse_circuits=asked_for),
         ),
     )
 

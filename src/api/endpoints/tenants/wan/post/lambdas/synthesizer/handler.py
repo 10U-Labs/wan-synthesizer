@@ -43,7 +43,7 @@ CONFIG_RESOURCES = (
     "prohibited-paths",
     "degree-exempt-backbone-nodes",
     "backbone-node-count",
-    "backbone-number-of-diverse-paths",
+    "backbone-number-of-diverse-circuits",
     "access-homing-degree",
     "convergence-promotion",
     "knobs",
@@ -78,13 +78,13 @@ def _delivered(
     )
     logger.info("Coverage delivered for %s: %s", tenant, coverage)
     short = validation["backbone_mesh_independence_deficient"]
-    logger.info("Sites short of their diverse-path target for %s: %s", tenant, short)
+    logger.info("Sites short of their diverse-circuit target for %s: %s", tenant, short)
     return {
         "coverage": coverage,
         "backbone_lower_bound_miles": round(synthesis.metrics.backbone_lower_bound_miles, 3),
-        "diverse_paths": {
-            "number_of_diverse_paths": params.tuning.backbone_number_of_diverse_paths,
-            "ceilings": validation["backbone_diverse_paths_ceilings"],
+        "diverse_circuits": {
+            "number_of_diverse_circuits": params.tuning.backbone_number_of_diverse_circuits,
+            "ceilings": validation["backbone_diverse_circuits_ceilings"],
             "short": short,
         },
     }

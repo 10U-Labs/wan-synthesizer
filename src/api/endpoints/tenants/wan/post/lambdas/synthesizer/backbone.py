@@ -35,7 +35,7 @@ def miles_along(
 @dataclass(frozen=True)
 class BackboneConstraints:
     removed_pairs: frozenset[tuple[str, str]] = frozenset()
-    number_of_diverse_paths: int = 3
+    number_of_diverse_circuits: int = 3
     forced_pairs: frozenset[tuple[str, str]] = frozenset()
     seat_cap: int | None = None
 
@@ -125,12 +125,12 @@ def _proved_over(
     )
     proof = CircuitProofInputs(
         peers, build_adjacency(fiber),
-        constraints.number_of_diverse_paths, constraints.seat_cap, by_carrier,
+        constraints.number_of_diverse_circuits, constraints.seat_cap, by_carrier,
     )
     return sorted(
         independent_circuits(site, proof),
         key=lambda pop_ids: (miles_along(pop_ids, fiber), pop_ids),
-    )[: constraints.number_of_diverse_paths]
+    )[: constraints.number_of_diverse_circuits]
 
 
 def _ways_out_of(site: str, drawn: _DrawnFiber) -> list[tuple[str, ...]]:
@@ -216,7 +216,7 @@ def _circuit_around(
 
 def _relieved(circuits: list[SynthesisCircuit], drawn: _DrawnFiber) -> list[SynthesisCircuit]:
     relieved = list(circuits)
-    if drawn.constraints.number_of_diverse_paths < 2:
+    if drawn.constraints.number_of_diverse_circuits < 2:
         return relieved
     beyond_help: set[str] = set()
     while True:
@@ -262,7 +262,7 @@ def _selected_fiber(
 ) -> tuple[frozenset[tuple[str, str]], float, list[SynthesisCircuit]]:
     selection = select_fiber(FiberInputs(
         backbone_ids, fiber_segments,
-        constraints.number_of_diverse_paths, constraints.seat_cap,
+        constraints.number_of_diverse_circuits, constraints.seat_cap,
         by_carrier,
     ))
     drawn = (
@@ -293,5 +293,5 @@ def backbone_mesh(
     )
     laid = _relieved(_laid(drawn, pinned), drawn)
     return BackboneMesh(
-        _needed(laid, backbone_ids, constraints.number_of_diverse_paths), floor
+        _needed(laid, backbone_ids, constraints.number_of_diverse_circuits), floor
     )

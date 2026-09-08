@@ -54,7 +54,7 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         metrics=SimpleNamespace(backbone_lower_bound_miles=1250.0),
     )
     validation = {
-        "backbone_diverse_paths_ceilings": [
+        "backbone_diverse_circuits_ceilings": [
             {"id": "P", "name": "P", "ceiling": 1, "target": 1}
         ],
         "backbone_mesh_independence_deficient": [],
@@ -152,7 +152,7 @@ def test_the_success_status_carries_what_each_site_was_asked_for(
 ) -> None:
     objects = _run(synthesizer, monkeypatch)
     status = json.loads(objects["tenants/f-35/wan-status.json"])
-    assert status["diverse_paths"]["ceilings"] == [
+    assert status["diverse_circuits"]["ceilings"] == [
         {"id": "P", "name": "P", "ceiling": 1, "target": 1}
     ]
 
@@ -162,7 +162,7 @@ def test_the_success_status_carries_the_sites_short_of_their_target(
 ) -> None:
     objects = _run(synthesizer, monkeypatch)
     status = json.loads(objects["tenants/f-35/wan-status.json"])
-    assert status["diverse_paths"]["short"] == []
+    assert status["diverse_circuits"]["short"] == []
 
 
 def test_the_status_says_synthesizing_while_the_build_runs(

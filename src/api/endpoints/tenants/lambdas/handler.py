@@ -25,7 +25,7 @@ _INPUTS = frozenset({
     "prohibited-paths",
     "degree-exempt-backbone-nodes",
     "backbone-node-count",
-    "backbone-number-of-diverse-paths",
+    "backbone-number-of-diverse-circuits",
     "access-homing-degree",
     "convergence-promotion",
     "knobs",

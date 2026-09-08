@@ -19,7 +19,7 @@ def _published_network(
     ]
     seated = sorted({end for cities in crossings for end in (cities[0], cities[-1])})
     return {
-        "number_of_diverse_paths": 2,
+        "number_of_diverse_circuits": 2,
         "forced_paths": [{"source": source, "target": target} for source, target in forced],
         "backbone": [{"id": city, "name": city} for city in seated],
         "links": drawn,

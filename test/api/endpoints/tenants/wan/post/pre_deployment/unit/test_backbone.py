@@ -47,13 +47,13 @@ def _selected(
     constraints: BackboneConstraints,
 ) -> frozenset[tuple[str, str]]:
     return select_fiber(FiberInputs(
-        sites, fiber, constraints.number_of_diverse_paths,
+        sites, fiber, constraints.number_of_diverse_circuits,
         constraints.seat_cap, adjacency_by_carrier(fiber),
     )).segments
 
 
 def _asking(asked_for: int = 2) -> BackboneConstraints:
-    return BackboneConstraints(number_of_diverse_paths=asked_for, seat_cap=4)
+    return BackboneConstraints(number_of_diverse_circuits=asked_for, seat_cap=4)
 
 
 def _pairs(mesh: BackboneMesh) -> set[tuple[str, str]]:
@@ -89,7 +89,7 @@ _SQUARE_FIBER = physical({
     ("w", "x"): 100.0, ("x", "y"): 100.0, ("y", "z"): 100.0, ("z", "w"): 100.0,
     ("w", "y"): 250.0, ("x", "z"): 250.0,
 })
-_TWO_WAYS_OUT = BackboneConstraints(number_of_diverse_paths=2, seat_cap=4)
+_TWO_WAYS_OUT = BackboneConstraints(number_of_diverse_circuits=2, seat_cap=4)
 _SQUARE = _drawn(_SQUARE_SITES, _SQUARE_FIBER, _TWO_WAYS_OUT)
 
 
@@ -137,7 +137,7 @@ _EGRESS_FIBER = physical({
     ("hub", "n"): 11.0, ("n", "q"): 11.0, ("p", "q"): 10.0,
 })
 _EGRESS = _drawn(_EGRESS_SITES, _EGRESS_FIBER, BackboneConstraints(
-    number_of_diverse_paths=2, seat_cap=3,
+    number_of_diverse_circuits=2, seat_cap=3,
 ))
 
 
@@ -211,7 +211,7 @@ def test_a_tenant_that_asked_for_one_way_out_is_not_given_a_way_round_anything()
     ] == []
 
 
-_OFFERED_TERMS = BackboneConstraints(number_of_diverse_paths=2, seat_cap=2)
+_OFFERED_TERMS = BackboneConstraints(number_of_diverse_circuits=2, seat_cap=2)
 _OFFERED_MESH = _drawn(
     fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_FIBER, _OFFERED_TERMS
 )
@@ -232,13 +232,13 @@ def test_a_site_is_drawn_over_fiber_one_carrier_could_offer_it() -> None:
 
 
 _PRUNED = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
-    removed_pairs=frozenset({segment_key("w", "x")}), number_of_diverse_paths=2, seat_cap=4,
+    removed_pairs=frozenset({segment_key("w", "x")}), number_of_diverse_circuits=2, seat_cap=4,
 ))
 _PINNED_CHORD = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
-    number_of_diverse_paths=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
+    number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
 ))
 _PINNED_SEGMENT = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
-    number_of_diverse_paths=2, forced_pairs=frozenset({segment_key("w", "x")}), seat_cap=4,
+    number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "x")}), seat_cap=4,
 ))
 
 
@@ -282,7 +282,7 @@ def test_a_backbone_the_fiber_never_joins_is_floored_at_nothing() -> None:
 
 def test_a_site_the_fiber_does_not_carry_costs_the_others_nothing() -> None:
     fiber = physical({("a", "b"): 1.0})
-    mesh = _drawn(("a", "b", "zed"), fiber, BackboneConstraints(number_of_diverse_paths=1))
+    mesh = _drawn(("a", "b", "zed"), fiber, BackboneConstraints(number_of_diverse_circuits=1))
     assert _pairs(mesh) == {segment_key("a", "b")}
 
 
@@ -347,7 +347,7 @@ _WHOLE_SQUARE = fixtures.carrier_fiber_segments({
     ("z", "y"): (100.0, ("zayo",)),
 })
 _PIN_WY = BackboneConstraints(
-    number_of_diverse_paths=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
+    number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
 )
 
 

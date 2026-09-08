@@ -16,7 +16,7 @@ PROVIDER_FILES = frozenset({"regions.json"})
 TENANT_FILES = frozenset({
     "access-homing-degree.json",
     "backbone-node-count.json",
-    "backbone-number-of-diverse-paths.json",
+    "backbone-number-of-diverse-circuits.json",
     "convergence-promotion.json",
     "degree-exempt-backbone-nodes.json",
     "forced-backbone-nodes.json",

@@ -47,12 +47,12 @@ def finalize(
         key: segment for key, segment in fiber_segments.items() if not segment.submarine
     })
     targets = MeshRequirements(
-        number_of_diverse_paths=params.tuning.backbone_number_of_diverse_paths,
+        number_of_diverse_circuits=params.tuning.backbone_number_of_diverse_circuits,
         degree_exempt=degree_exempt,
         ceilings=diverse_circuit_ceilings(CircuitProofInputs(
             synthesis.backbone_ids,
             adjacency,
-            params.tuning.backbone_number_of_diverse_paths,
+            params.tuning.backbone_number_of_diverse_circuits,
             params.max_backbone_count,
             adjacency_by_carrier(fiber_segments),
             terrestrial,

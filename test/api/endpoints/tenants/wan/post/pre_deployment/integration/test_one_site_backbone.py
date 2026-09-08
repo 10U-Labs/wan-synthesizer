@@ -33,7 +33,7 @@ def test_the_floor_is_no_miles_at_all() -> None:
 
 
 def test_the_lone_site_is_credited_with_no_ways_out() -> None:
-    assert ARTIFACTS.validation["backbone_diverse_paths_ceilings"] == [
+    assert ARTIFACTS.validation["backbone_diverse_circuits_ceilings"] == [
         {"id": "a", "name": "a", "ceiling": 0, "target": 0}
     ]
 

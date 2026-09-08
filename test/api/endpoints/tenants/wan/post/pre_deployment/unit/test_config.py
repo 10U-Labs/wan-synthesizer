@@ -10,7 +10,7 @@ from synthesizer.model import NamedCircuit, OperatorCircuits
 
 
 _REQUIRED_TUNING = {
-    "backbone_number_of_diverse_paths": 3,
+    "backbone_number_of_diverse_circuits": 3,
     "access_homing_degree": 2,
     "backbone_coverage_target_miles": 600,
 }
@@ -85,18 +85,18 @@ def test_reads_access_homing_degree() -> None:
     ).params.tuning.access_homing_degree == 3
 
 
-def test_default_backbone_number_of_diverse_paths_is_three() -> None:
-    assert default_config().params.tuning.backbone_number_of_diverse_paths == 3
+def test_default_backbone_number_of_diverse_circuits_is_three() -> None:
+    assert default_config().params.tuning.backbone_number_of_diverse_circuits == 3
 
 
-def test_reads_backbone_number_of_diverse_paths() -> None:
+def test_reads_backbone_number_of_diverse_circuits() -> None:
     assert _config(
-        {"tuning": {"backbone_number_of_diverse_paths": 4}}
-    ).params.tuning.backbone_number_of_diverse_paths == 4
+        {"tuning": {"backbone_number_of_diverse_circuits": 4}}
+    ).params.tuning.backbone_number_of_diverse_circuits == 4
 
 
 def test_the_old_mesh_degree_key_is_refused() -> None:
-    with pytest.raises(ValueError, match="backbone_number_of_diverse_paths"):
+    with pytest.raises(ValueError, match="backbone_number_of_diverse_circuits"):
         config_from_data({
             "synthesis": {
                     "promote_high_degree_convergences_to_backbone_nodes": True,
@@ -305,7 +305,7 @@ def test_missing_required_degree_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data({
             "tuning": {
-                "backbone_number_of_diverse_paths": 3,
+                "backbone_number_of_diverse_circuits": 3,
                 "backbone_coverage_target_miles": 600,
             }
         })
@@ -314,14 +314,14 @@ def test_missing_required_degree_is_rejected() -> None:
 def test_non_integer_degree_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data(
-            {"tuning": {"backbone_number_of_diverse_paths": "three", "access_homing_degree": 2}}
+            {"tuning": {"backbone_number_of_diverse_circuits": "three", "access_homing_degree": 2}}
         )
 
 
 def test_boolean_degree_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data(
-            {"tuning": {"backbone_number_of_diverse_paths": True, "access_homing_degree": 2}}
+            {"tuning": {"backbone_number_of_diverse_circuits": True, "access_homing_degree": 2}}
         )
 
 
@@ -329,7 +329,7 @@ def test_missing_coverage_target_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data(
             {
-                "tuning": {"backbone_number_of_diverse_paths": 3, "access_homing_degree": 2},
+                "tuning": {"backbone_number_of_diverse_circuits": 3, "access_homing_degree": 2},
                 "synthesis": {
                     "promote_high_degree_convergences_to_backbone_nodes": True
                 },
@@ -346,13 +346,13 @@ def test_a_config_naming_no_backup_path_multiple_loads() -> None:
     assert config_from_data(
         {
             "tuning": {
-                "backbone_number_of_diverse_paths": 3,
+                "backbone_number_of_diverse_circuits": 3,
                 "access_homing_degree": 2,
                 "backbone_coverage_target_miles": 600,
             },
             "synthesis": {"promote_high_degree_convergences_to_backbone_nodes": True},
         }
-    ).params.tuning.backbone_number_of_diverse_paths == 3
+    ).params.tuning.backbone_number_of_diverse_circuits == 3
 
 
 def test_fractional_coverage_target_is_rejected() -> None:
@@ -378,7 +378,7 @@ def _parts(**overrides: Any) -> dict[str, Any]:
         "prohibited-backbone-nodes": [],
         "prohibited-paths": [],
         "backbone-node-count": {"min": 3, "max": 5},
-        "backbone-number-of-diverse-paths": {"degree": 3},
+        "backbone-number-of-diverse-circuits": {"degree": 3},
         "access-homing-degree": {"degree": 2},
         "convergence-promotion": {"promote": True},
         "knobs": {"backbone_coverage_target_miles": 600},
@@ -417,7 +417,7 @@ def test_app_config_from_parts_without_settings_is_unchanged() -> None:
 
 def test_app_config_from_parts_assembles_the_two_degrees() -> None:
     tuning = app_config_from_parts(_parts()).params.tuning
-    assert (tuning.backbone_number_of_diverse_paths, tuning.access_homing_degree) == (3, 2)
+    assert (tuning.backbone_number_of_diverse_circuits, tuning.access_homing_degree) == (3, 2)
 
 
 def test_app_config_from_parts_reads_the_label() -> None:
@@ -458,8 +458,8 @@ def test_app_config_from_parts_requires_each_degree() -> None:
 
 def test_app_config_from_parts_refuses_the_old_mesh_degree_resource() -> None:
     parts = _parts()
-    parts["backbone-mesh-degree"] = parts.pop("backbone-number-of-diverse-paths")
-    with pytest.raises(ValueError, match="backbone-number-of-diverse-paths"):
+    parts["backbone-mesh-degree"] = parts.pop("backbone-number-of-diverse-circuits")
+    with pytest.raises(ValueError, match="backbone-number-of-diverse-circuits"):
         app_config_from_parts(parts)
 
 
@@ -471,14 +471,14 @@ def test_app_config_from_parts_requires_coverage_target() -> None:
 
 def test_app_config_from_parts_rejects_a_malformed_degree_document() -> None:
     parts = _parts()
-    parts["backbone-number-of-diverse-paths"] = 3
+    parts["backbone-number-of-diverse-circuits"] = 3
     with pytest.raises(ValueError):
         app_config_from_parts(parts)
 
 
 def test_app_config_from_parts_rejects_a_non_integer_degree() -> None:
     parts = _parts()
-    parts["backbone-number-of-diverse-paths"] = {"degree": "three"}
+    parts["backbone-number-of-diverse-circuits"] = {"degree": "three"}
     with pytest.raises(ValueError):
         app_config_from_parts(parts)
 

@@ -17,7 +17,7 @@ def _circuit(source: str, target: str, *transit: str) -> dict[str, Any]:
 def _synthesis(circuits: list[dict[str, Any]], allowed: int = 2) -> dict[str, Any]:
     sites = sorted({circuit[end] for circuit in circuits for end in ("source_id", "target_id")})
     return {
-        "number_of_diverse_paths": allowed,
+        "number_of_diverse_circuits": allowed,
         "backbone": [{"id": site, "name": site} for site in sites],
         "links": circuits,
     }

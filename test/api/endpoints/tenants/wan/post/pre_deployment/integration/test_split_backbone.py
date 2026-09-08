@@ -64,7 +64,7 @@ def _config_documents() -> dict[str, Any]:
     return {
         **{resource: [] for resource in _NAMES_NOBODY},
         "backbone-node-count": {"min": 2, "max": 6},
-        "backbone-number-of-diverse-paths": {"degree": 2},
+        "backbone-number-of-diverse-circuits": {"degree": 2},
         "access-homing-degree": {"degree": 2},
         "convergence-promotion": {"promote": False},
         "knobs": {

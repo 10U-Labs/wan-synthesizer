@@ -477,7 +477,7 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/backbone-number-of-diverse-paths": {
+    "/wan-synthesizer/tenants/{tenant}/backbone-number-of-diverse-circuits": {
       "get": {
         "summary": "A tenant's backbone number of diverse paths (input).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],

@@ -43,7 +43,7 @@ def _above_target(*extra: SynthesisCircuit) -> list[dict[str, object]]:
         synthesis,
         targets=MeshRequirements(_TARGET),
     )
-    return report["backbone_diverse_paths_above_target"]
+    return report["backbone_diverse_circuits_above_target"]
 
 
 def test_a_site_holding_exactly_what_it_asked_for_is_not_reported() -> None:

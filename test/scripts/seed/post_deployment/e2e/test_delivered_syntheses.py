@@ -48,7 +48,7 @@ def _tenants_outside(
 def _circuits_clear_of_a_capped_seat(synthesis: dict[str, Any]) -> list[dict[str, Any]]:
     capped = {
         entry["id"]
-        for entry in synthesis["status"]["diverse_paths"]["ceilings"]
+        for entry in synthesis["status"]["diverse_circuits"]["ceilings"]
         if entry["ceiling"] < 2
     }
     return [
@@ -145,7 +145,7 @@ def test_no_published_status_carries_a_backup_path_multiple(
 def test_no_published_network_leaves_a_site_short_of_the_circuits_it_was_asked_for(
         delivered_syntheses: list[dict[str, Any]]) -> None:
     short = {
-        synthesis["tenant"]: synthesis["status"]["diverse_paths"]["short"]
+        synthesis["tenant"]: synthesis["status"]["diverse_circuits"]["short"]
         for synthesis in delivered_syntheses
     }
     assert {tenant: sites for tenant, sites in short.items() if sites} == {}
@@ -175,7 +175,7 @@ def test_no_published_network_is_split_by_the_loss_of_one_city(
     split = {
         synthesis["tenant"]: cut_cities(_circuits_clear_of_a_capped_seat(synthesis))
         for synthesis in delivered_syntheses
-        if synthesis["number_of_diverse_paths"] >= 2
+        if synthesis["number_of_diverse_circuits"] >= 2
     }
     assert {tenant: cities for tenant, cities in split.items() if cities} == {}
 
@@ -293,7 +293,7 @@ def _cities_with_fiber(held: dict[str, set[frozenset[str]]]) -> set[str]:
 
 def _circuits_one_peer_may_end(synthesis: dict[str, Any]) -> int:
     peers = synthesis["seat_cap"] - 1
-    asked = synthesis["number_of_diverse_paths"]
+    asked = synthesis["number_of_diverse_circuits"]
     return max(1, -(-asked // peers)) if peers > 0 else 1
 
 
@@ -304,7 +304,7 @@ def _overstated_ceilings(syntheses: list[dict[str, Any]]) -> dict[str, list[str]
         reached = _cities_with_fiber(held)
         cities = _published_cities(synthesis)
         per_peer = _circuits_one_peer_may_end(synthesis)
-        for entry in synthesis["status"].get("diverse_paths", {}).get("ceilings", []):
+        for entry in synthesis["status"].get("diverse_circuits", {}).get("ceilings", []):
             city = str(entry["name"])
             if city not in reached:
                 continue

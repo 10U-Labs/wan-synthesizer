@@ -11,7 +11,7 @@ from synthesizer.output import synthesis_payload
 _SEATED_RING = replace(
     fixtures.ring_params(),
     forced_backbone_names=("P0", "P1", "P2", "P3", "P4", "P5"),
-    tuning=Tuning(backbone_number_of_diverse_paths=2),
+    tuning=Tuning(backbone_number_of_diverse_circuits=2),
 )
 _PAYLOAD = synthesis_payload(
     fixtures.sample_sources(),

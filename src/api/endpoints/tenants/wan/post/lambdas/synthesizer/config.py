@@ -136,7 +136,9 @@ def _tuning(tuning: dict[str, Any], settings: dict[str, Any]) -> Tuning:
     settings = _checked_settings(settings)
     return Tuning(
         compass_sector_count=_sector_count(settings, base.compass_sector_count),
-        backbone_number_of_diverse_paths=_required_int(tuning, "backbone_number_of_diverse_paths"),
+        backbone_number_of_diverse_circuits=_required_int(
+            tuning, "backbone_number_of_diverse_circuits"
+        ),
         backbone_coverage_target_miles=_required_int(
             tuning, "backbone_coverage_target_miles"
         ),
@@ -210,7 +212,9 @@ def app_config_from_parts(parts: dict[str, Any]) -> AppConfig:
         synthesis["max_backbone_count"] = count["max"]
     tuning = {
         **_mapping(parts, "knobs"),
-        "backbone_number_of_diverse_paths": _degree(parts, "backbone-number-of-diverse-paths"),
+        "backbone_number_of_diverse_circuits": _degree(
+            parts, "backbone-number-of-diverse-circuits"
+        ),
         "access_homing_degree": _degree(parts, "access-homing-degree"),
     }
     label = parts.get("label", {})

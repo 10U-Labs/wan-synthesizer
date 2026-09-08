@@ -40,7 +40,7 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
     return {
         "tenant": tenant,
         "target_miles": backbone["coverage_target_miles"],
-        "number_of_diverse_paths": backbone["number_of_diverse_paths"],
+        "number_of_diverse_circuits": backbone["number_of_diverse_circuits"],
         "seat_cap": backbone["node_count"]["max"],
         "forced": backbone.get("forced", {}).get("nodes", []),
         "forced_paths": backbone.get("forced", {}).get("paths", []),
@@ -112,7 +112,7 @@ def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
         pair = tuple(sorted((drawn_circuit["source_id"], drawn_circuit["target_id"])))
         drawn.setdefault(pair, []).append(drawn_circuit)
     names = {row["id"]: row["name"] for row in synthesis["backbone"]}
-    asked = synthesis["number_of_diverse_paths"]
+    asked = synthesis["number_of_diverse_circuits"]
     overbuilt: list[tuple[str, int]] = []
     for pair, circuits in sorted(drawn.items()):
         if len(circuits) < 2:
@@ -184,7 +184,7 @@ def _cities_the_circuits_cross(circuits: list[dict[str, Any]]) -> dict[str, set[
 def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
     names = {row["id"]: row["name"] for row in synthesis["backbone"]}
     sites = list(names)
-    asked = synthesis["number_of_diverse_paths"]
+    asked = synthesis["number_of_diverse_circuits"]
     pinned = {
         frozenset((pair["source"], pair["target"])) for pair in synthesis["forced_paths"]
     }

@@ -14,13 +14,14 @@ metadata:
   - [A circuit's route is PoPs, not cities and not a path](#a-circuits-route-is-pops-not-cities-and-not-a-path)
   - [The PoPs between the two ends are transit PoPs](#the-pops-between-the-two-ends-are-transit-pops)
   - [Diverse ways out are diverse circuits](#diverse-ways-out-are-diverse-circuits)
+  - [The synthesizer synthesizes; the tenant orders](#the-synthesizer-synthesizes-the-tenant-orders)
   - [Nothing mechanical checks this](#nothing-mechanical-checks-this)
 
 ## Overview
 
 The synthesizer answers one question for a tenant: which ways out of each of their sites should be ordered from a carrier. One such way runs from one site to another over many fiber segments and it is a single line on an invoice — one order, one monthly charge, one thing that either works or does not. The word for it is **circuit**, because that is the word the network engineers who read this repository already own and the word a carrier can take an order in. A tenant asking a carrier for a path will be asked what they mean.
 
-The identifiers inside the program say it. GitHub issue #150 renamed them on 2026-09-07 — `SynthesisCircuit`, `AccessCircuit`, `ForcedCircuits`, `independent_circuits`, `diverse_circuit_count`, `CircuitProofInputs` and the rest, some 1,600 uses across `src/`, `lib/python/` and `test/`. What still spells the unit `path` is the surface a caller reads: the `paths` collection, the `access_paths`, `drawn_paths` and `summary.access_path_count` keys of the served payload, the `"path"` field on each `backbone-links` entry, the `forced-paths`, `prohibited-paths` and `backbone-number-of-diverse-paths` resources, and the `backbone_diverse_paths_*` keys of the validation report. Moving those is GitHub issue #148, which is open. So a name inside the program is a circuit; a key a caller reads is written exactly as it is served, and a name read straight off one of those resources — `Tuning.backbone_number_of_diverse_paths` — moves when the resource does and not before.
+The identifiers inside the program say it. GitHub issue #150 renamed them on 2026-09-07 — `SynthesisCircuit`, `AccessCircuit`, `ForcedCircuits`, `independent_circuits`, `diverse_circuit_count`, `CircuitProofInputs` and the rest, some 1,600 uses across `src/`, `lib/python/` and `test/`. What still spells the unit `path` is the surface a caller reads: the `paths` collection, the `access_paths`, `drawn_paths` and `summary.access_path_count` keys of the served payload, the `"path"` field on each `backbone-links` entry, and the `forced-paths` and `prohibited-paths` resources. Moving those is GitHub issue #148, which is open. So a name inside the program is a circuit, and a key a caller reads is written exactly as it is served.
 
 ## Conventions
 
@@ -36,7 +37,15 @@ A circuit's two ends are backbone nodes; the carrier PoPs it crosses in between 
 
 ### Diverse ways out are diverse circuits
 
-`number_of_diverse_paths` is how many ways out of a site the operator asks for, and every one of those ways out is ordered and paid for, so they are diverse circuits — "circuit diversity" is what a carrier is asked for. That is why `independent_circuits`, `independent_circuit_ceiling`, `diverse_circuit_count`, `diverse_circuit_ceilings` and `DiverseCircuitBounds` all say circuit. `number_of_diverse_paths` itself still says path in `Tuning`, `MeshRequirements` and `BackboneConstraints` because it is the `backbone-number-of-diverse-paths` resource read down a chain, and that the name is served is a reason to sequence its change behind GitHub issue #148, not a reason to keep the word. Which single word the idea should take once every spelling says circuit is GitHub issue #128's question, since the same thing is called ways out, independent paths and diverse paths in three places.
+`number_of_diverse_circuits` is how many ways out of a site the operator asks for, and every one of those ways out is ordered and paid for, so they are diverse circuits — "circuit diversity" is what a carrier is asked for. That is why `independent_circuits`, `independent_circuit_ceiling`, `diverse_circuit_count`, `diverse_circuit_ceilings` and `DiverseCircuitBounds` all say circuit.
+
+This one moved as a whole chain on 2026-09-07 rather than waiting behind GitHub issue #148, because the operator asked for it directly and the word was wrong on both sides of the wire. All 132 uses went at once: `Tuning.backbone_number_of_diverse_circuits`, `MeshRequirements.number_of_diverse_circuits` and `BackboneConstraints.number_of_diverse_circuits` inside the program; the `backbone-number-of-diverse-circuits` resource and its `.json` object in the store; the `diverse_circuits` block of the served status and its `number_of_diverse_circuits` key; the `backbone_diverse_circuits_*` keys of the validation report; `src/www/api/openapi.json`; and the `number_of_diverse_circuits` key of all seven `etc/*.yml` tenant configs. It is a breaking change for every caller, which is why the whole chain had to go in one commit — a served key and the identifier read off it cannot be renamed apart.
+
+Which single word the idea should take is still GitHub issue #128's question: the same thing is called ways out, independent circuits and diverse circuits in three places, and this rename settled only that none of them says path.
+
+### The synthesizer synthesizes; the tenant orders
+
+The synthesizer does not order anything. It synthesizes a WAN from a tenant's inputs — which carrier PoPs become backbone nodes, and which circuits join them — and a tenant is who takes those circuits to a carrier. Nor is fiber ordered: a fiber segment is what a synthesized circuit runs over, one circuit runs over many of them, and two circuits can run over the same one. So a figure adding up fiber is the miles a WAN's circuits **run over**, never miles ordered. GitHub issue #153 is open on the seven names that still get this backwards, all of them descended from `ordered_fiber_miles`.
 
 ### Nothing mechanical checks this
 

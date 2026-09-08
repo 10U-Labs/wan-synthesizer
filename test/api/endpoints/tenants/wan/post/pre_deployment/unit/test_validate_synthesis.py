@@ -109,14 +109,14 @@ def _mesh_synthesis(backbone_ids: tuple[str, ...], pairs: list[tuple[str, str]])
 def _mesh_report(
     backbone_ids: tuple[str, ...],
     pairs: list[tuple[str, str]],
-    backbone_number_of_diverse_paths: int = 3,
+    backbone_number_of_diverse_circuits: int = 3,
     degree_exempt: frozenset[str] = frozenset(),
     ceilings: dict[str, int] | None = None,
 ) -> ValidationReport:
     return validate_synthesis(
         [make_pop(name) for name in backbone_ids],
         _mesh_synthesis(backbone_ids, pairs),
-        targets=MeshRequirements(backbone_number_of_diverse_paths, degree_exempt, ceilings),
+        targets=MeshRequirements(backbone_number_of_diverse_circuits, degree_exempt, ceilings),
     )
 
 
@@ -140,15 +140,17 @@ def test_backbone_below_the_target_fails_the_mesh_rule() -> None:
     assert _mesh_report(*_DEFICIENT)["backbone_meets_mesh_link_target"] is False
 
 
-def test_number_of_diverse_paths_is_configurable() -> None:
-    assert _mesh_report(*_DEFICIENT, backbone_number_of_diverse_paths=2)[
+def test_number_of_diverse_circuits_is_configurable() -> None:
+    assert _mesh_report(*_DEFICIENT, backbone_number_of_diverse_circuits=2)[
         "backbone_meets_mesh_link_target"
     ] is True
 
 
 def test_backbone_below_the_target_names_the_deficient_nodes() -> None:
     report = _mesh_report(*_DEFICIENT)
-    assert {item["id"] for item in report["backbone_diverse_paths_deficient"]} == {"C3", "C4", "C5"}
+    assert {item["id"] for item in report["backbone_diverse_circuits_deficient"]} == {
+        "C3", "C4", "C5"
+    }
 
 
 def test_exempting_every_short_node_satisfies_the_mesh_rule() -> None:
@@ -158,7 +160,7 @@ def test_exempting_every_short_node_satisfies_the_mesh_rule() -> None:
 
 def test_exempting_one_short_node_leaves_the_others_reported() -> None:
     report = _mesh_report(*_DEFICIENT, degree_exempt=frozenset({"C3"}))
-    assert {item["id"] for item in report["backbone_diverse_paths_deficient"]} == {"C4", "C5"}
+    assert {item["id"] for item in report["backbone_diverse_circuits_deficient"]} == {"C4", "C5"}
 
 
 def test_the_report_names_the_exempt_nodes() -> None:
@@ -172,18 +174,18 @@ def test_the_report_names_no_exempt_node_by_default() -> None:
 
 def test_the_report_names_a_node_whose_target_the_tool_lowered() -> None:
     report = _mesh_report(*_DEFICIENT, ceilings={"C3": 2})
-    assert report["backbone_diverse_paths_ceiling_limited"] == [
+    assert report["backbone_diverse_circuits_ceiling_limited"] == [
         {"id": "C3", "name": "C3", "ceiling": 2}
     ]
 
 
 def test_the_report_lowers_nobody_when_the_fiber_meets_the_degree() -> None:
-    assert _mesh_report(*_HEALTHY)["backbone_diverse_paths_ceiling_limited"] == []
+    assert _mesh_report(*_HEALTHY)["backbone_diverse_circuits_ceiling_limited"] == []
 
 
 def test_the_report_gives_every_measured_node_its_count_and_its_target() -> None:
     report = _mesh_report(*_DEFICIENT, ceilings={"C3": 2, "C4": 4})
-    assert report["backbone_diverse_paths_ceilings"] == [
+    assert report["backbone_diverse_circuits_ceilings"] == [
         {"id": "C3", "name": "C3", "ceiling": 2, "target": 2},
         {"id": "C4", "name": "C4", "ceiling": 4, "target": 3},
     ]
@@ -191,7 +193,7 @@ def test_the_report_gives_every_measured_node_its_count_and_its_target() -> None
 
 def test_the_report_measures_no_node_the_merged_carriers_said_nothing_about() -> None:
     report = _mesh_report(*_DEFICIENT, ceilings={"C3": 2})
-    assert [entry["id"] for entry in report["backbone_diverse_paths_ceilings"]] == ["C3"]
+    assert [entry["id"] for entry in report["backbone_diverse_circuits_ceilings"]] == ["C3"]
 
 
 def test_small_backbone_is_exempt_from_the_mesh_rule() -> None:
