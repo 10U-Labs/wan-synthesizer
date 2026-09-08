@@ -20,14 +20,13 @@
     - [Which issues owe the five middle sections](#which-issues-owe-the-five-middle-sections)
     - [Why static analysis is asked separately](#why-static-analysis-is-asked-separately)
   - [Tests](#tests)
-    - [Read the test tenets first](#read-the-test-tenets-first)
+    - [Cover every tier the change touches](#cover-every-tier-the-change-touches)
     - [The test tree splits on deployment phase](#the-test-tree-splits-on-deployment-phase)
     - [Write the test first](#write-the-test-first)
   - [Third-party code](#third-party-code)
   - [Verification](#verification)
     - [CI is the source of truth](#ci-is-the-source-of-truth)
     - [Find a run by the full hash](#find-a-run-by-the-full-hash)
-- [Notes](#notes)
 
 ## Overview
 
@@ -104,9 +103,9 @@ Static analysis is the half of CI that reads the source without running it, and 
 
 ### Tests
 
-#### Read the test tenets first
+#### Cover every tier the change touches
 
-Read `docs/tenets/tests/` before implementing. Unit tests alone are not sufficient: add coverage at every tier the change touches, one assert per pytest. Those docs are tenets: they name no language, tool or directory, and when a tenet and the repository disagree, the repository is what changes.
+Unit tests alone are not sufficient: add coverage at every tier the change touches, one assert per pytest.
 
 #### The test tree splits on deployment phase
 
@@ -132,7 +131,3 @@ CI is the source of truth. Do not run tests, linters or builds locally to verify
 #### Find a run by the full hash
 
 Find the run by the full forty-character hash, from `git rev-parse HEAD`. `gh run list --commit` silently returns an empty list for the short hash `git log --oneline` prints, which is indistinguishable from a run that has not started, so anything that polls should instead run `gh run list --limit 10 --json workflowName,status,conclusion,headSha` and match `headSha` by prefix locally.
-
-## Notes
-
-A convention learned in a session belongs in this repository: a paragraph in this file and a topic file under `.claude/memories/`, linked from both indexes. The session tool's local memory directory is one machine's unversioned files, and a rule kept in both places drifts with nothing to signal it. Keep there only what is true of that machine alone.

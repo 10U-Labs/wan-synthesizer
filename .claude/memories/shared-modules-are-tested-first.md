@@ -12,7 +12,7 @@
 
 ## Overview
 
-When a shared test helper is wrong, the run that fails should name the helper. The nine modules under `lib/python/` are the fixtures, doubles, loaders and readers most of the suite is written on top of. Run them in the same `pytest` command as the tests that import them and a defect in one reaches the reader as a failure in whatever tier consumed it, named for the subject that tier was testing, with no result anywhere naming the module that was wrong. `docs/tenets/tests/OVERVIEW.md`, under "Nothing Is Trusted Before What It Presumes", settles it: the result presuming least is the one that names the defect.
+When a shared test helper is wrong, the run that fails should name the helper. The nine modules under `lib/python/` are the fixtures, doubles, loaders and readers most of the suite is written on top of. Run them in the same `pytest` command as the tests that import them and a defect in one reaches the reader as a failure in whatever tier consumed it, named for the subject that tier was testing, with no result anywhere naming the module that was wrong. Nothing is trusted before what it presumes: the result presuming least is the one that names the defect.
 
 ## Conventions
 
@@ -34,4 +34,4 @@ A workflow of its own for these modules would run beside the workflows that cons
 
 ### Why the edges out of the job were kept
 
-The tenet fixes what a result means, not what may be attempted, so it does not supply the reason. Two others do: a run that carries on past a broken module spends a `tofu apply` and a seeding pass on results that will be thrown away, and a reader facing a screenful of red consumer jobs has to be told which one to read, where one red job and the rest skipped has already told them.
+That rule fixes what a result means, not what may be attempted, so it does not supply the reason. Two others do: a run that carries on past a broken module spends a `tofu apply` and a seeding pass on results that will be thrown away, and a reader facing a screenful of red consumer jobs has to be told which one to read, where one red job and the rest skipped has already told them.
