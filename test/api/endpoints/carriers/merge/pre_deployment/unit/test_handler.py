@@ -50,7 +50,9 @@ def test_merge_post_stores_the_merged_carriers(monkeypatch: pytest.MonkeyPatch) 
     module = load_handler("carriers/merge", monkeypatch)
     with patch("boto3.client", return_value=fake_s3(objects, keys=[])):
         module.lambda_handler({"httpMethod": "POST"}, None)
-    assert "carriers/merge/pops.json" in objects and "carriers/merge/fiber-segments.json" in objects
+    assert set(objects) >= {
+        "carriers/merge/pops.json", "carriers/merge/fiber-segments.json",
+    }
 
 
 def test_merge_get_serves_pops(monkeypatch: pytest.MonkeyPatch) -> None:

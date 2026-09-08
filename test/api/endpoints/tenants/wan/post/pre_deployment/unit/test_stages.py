@@ -12,7 +12,7 @@ def test_dual_home_returns_a_graph_without_off_net() -> None:
     homed_sites, homed_circuits = dual_home(
         fixtures.ring_sites(), fixtures.ring_fiber_segments(), fixtures.ring_params(), []
     )
-    assert homed_sites and homed_circuits
+    assert all((homed_sites, homed_circuits))
 
 
 def test_dual_home_realizes_a_forced_off_net_site() -> None:

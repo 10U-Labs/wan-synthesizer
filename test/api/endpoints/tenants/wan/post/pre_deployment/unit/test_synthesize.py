@@ -260,7 +260,7 @@ def test_best_backbone_at_size_selects_strongest_then_least_last_mile(
 ) -> None:
     plan = search_plan(["a", "b", "c", "d"], strength=strength)
     seats = best_backbone_at_size(_mesh_inputs(), plan, 2)
-    assert seats is not None and set(seats) == {"a", "b"}
+    assert set(seats or ()) == {"a", "b"}
 
 
 def test_best_backbone_at_size_returns_none_when_nothing_feasible() -> None:

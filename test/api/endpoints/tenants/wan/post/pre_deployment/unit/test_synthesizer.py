@@ -228,4 +228,4 @@ def test_logs_progress_at_info(
     with caplog.at_level(logging.INFO):
         _run(synthesizer, monkeypatch)
     messages = " ".join(record.getMessage() for record in caplog.records)
-    assert "f-35" in messages and "Publishing" in messages
+    assert all(word in messages for word in ("f-35", "Publishing"))
