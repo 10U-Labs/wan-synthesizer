@@ -56,4 +56,4 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 
 ### Vocabulary
 
-- [a-circuit-is-what-a-tenant-orders](a-circuit-is-what-a-tenant-orders.md) — the unit a tenant orders is a circuit, its route is the carrier PoPs it runs through, and `path` survives only for files on disk and two graph walks
+- [a-way-out-of-a-site-is-a-circuit](a-way-out-of-a-site-is-a-circuit.md) — a way out of a site is a circuit, its route is the carrier PoPs it runs through, `path` survives only for files on disk and two graph walks, and ordering and cost are outside the vocabulary
