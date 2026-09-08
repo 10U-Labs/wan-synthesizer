@@ -18,8 +18,6 @@ metadata:
 
 Static analysis is the half of CI that reads the source without running it, and it is asked about separately from the tiers because it catches a different kind of defect. A tier executes the program and judges what comes back, so it can only catch what a caller could observe, and it catches it in the one place the test happens to reach. A job reads the text and refuses a shape, so it catches every occurrence of that shape everywhere in the tree at once, and it goes on refusing it in code nobody has written yet. Where the defect is one a rule could have named — an unused definition, a type the caller cannot pass, a duplicated block, a comment — the job is the right answer and a regression test for the single occurrence is the wrong one.
 
-The section this belongs to is in [[an-issue-has-seven-sections-in-a-fixed-order]], and which issues owe it is [[which-issues-owe-the-five-middle-sections]].
-
 ## Conventions
 
 ### Which checks are the jobs

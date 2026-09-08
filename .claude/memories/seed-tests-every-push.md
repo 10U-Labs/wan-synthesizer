@@ -20,7 +20,7 @@ metadata:
 
 `.github/workflows/seed.yml` publishes the git-authored inputs to the live API and rebuilds each tenant's WAN, so whatever runs before its `seeding` job is the whole of what stands between a push and a live deploy. Every push that starts the workflow runs all of it, and there is no push that reaches the API having tested less than another one did. A run that tests less reports success without testing the code that seeds: two config commits that moved the tenant knobs under new root keys, after a separate commit had repointed every read in `scripts/seed.py`, left the suite red for four commits with no run saying so.
 
-The job everything here waits on is [[shared-modules-are-tested-first]]; what can still fail a first `seed` run is [[seeding-races-the-routing-deploy]].
+The job everything here waits on is [shared-modules-are-tested-first](shared-modules-are-tested-first.md); what can still fail a first `seed` run is [seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md).
 
 ## Conventions
 

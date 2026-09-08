@@ -22,8 +22,8 @@ A defect noticed while doing something else is filed as an issue before the repl
 
 ### File it in the shape an issue takes
 
-Seven sections for the program, two for everything else — [[an-issue-has-seven-sections-in-a-fixed-order]] and [[which-issues-owe-the-five-middle-sections]] — and then say in one line which number it is. The reply still names the finding; the difference is that it points at something a reader can open.
+Seven sections for the program, two for everything else, and then say in one line which number it is. The reply still names the finding; the difference is that it points at something a reader can open.
 
 ### Three cases are not this
 
-Something inside the scope of the task in hand is done, not filed. A finding that reaches a genuine fork is asked about before filing, per [[an-issue-states-one-solution]]. And a finding that cannot carry a "Problem" section saying what the defect costs is dropped, not mentioned: offering it to the user as a question files it in their head instead of in the repository.
+Something inside the scope of the task in hand is done, not filed. A finding that reaches a genuine fork is asked about before filing. And a finding that cannot carry a "Problem" section saying what the defect costs is dropped, not mentioned: offering it to the user as a question files it in their head instead of in the repository.

@@ -21,7 +21,7 @@ metadata:
 
 When a shared test helper is wrong, the run that fails should name the helper. The nine modules under `lib/python/` are the fixtures, doubles, loaders and readers most of the suite is written on top of. Run them in the same `pytest` command as the tests that import them and a defect in one reaches the reader as a failure in whatever tier consumed it, named for the subject that tier was testing, with no result anywhere naming the module that was wrong. Nothing is trusted before what it presumes: the result presuming least is the one that names the defect.
 
-Why these modules get a job in every workflow rather than a workflow of their own is the same fact behind [[seeding-races-the-routing-deploy]]: GitHub Actions orders nothing between workflows started by the same push. Which workflow a test runs in otherwise is [[where-a-test-runs-follows-what-starts-it]].
+Why these modules get a job in every workflow rather than a workflow of their own is the same fact behind [seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md): GitHub Actions orders nothing between workflows started by the same push. Which workflow a test runs in otherwise is [where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md).
 
 ## Conventions
 

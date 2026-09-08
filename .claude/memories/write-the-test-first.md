@@ -7,6 +7,6 @@ metadata:
 
 # Write the test first
 
-We do TDD: the test is written first, then the code that makes it pass. Test-first means authoring order — the red and green observations belong to CI, since nothing runs locally, per [[ci-is-the-source-of-truth]].
+We do TDD: the test is written first, then the code that makes it pass. Test-first means authoring order — the red and green observations belong to CI, since nothing runs locally, per [ci-is-the-source-of-truth](ci-is-the-source-of-truth.md).
 
-How much to write is [[cover-every-tier-the-change-touches]].
+How much to write is [cover-every-tier-the-change-touches](cover-every-tier-the-change-touches.md).

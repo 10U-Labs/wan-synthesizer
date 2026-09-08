@@ -17,7 +17,7 @@ metadata:
 
 ## Overview
 
-Nothing here explains the code except the code. There are no docstrings and no comments in `src/`, `lib/python/`, `scripts/`, `test/`, the `.tf` files, the files under `.github/workflows/` or `src/www/spa/app.js`, and the `assert-no-comments` job fails the run when one appears. A name, a signature and the shape of a function are the whole of what a reader gets, and when that is not enough to say what something holds or does, the thing is named or shaped wrong rather than under-explained. The vendored code that keeps its comments does so on the same ground as [[third-party-code-ships-as-a-layer]].
+Nothing here explains the code except the code. There are no docstrings and no comments in `src/`, `lib/python/`, `scripts/`, `test/`, the `.tf` files, the files under `.github/workflows/` or `src/www/spa/app.js`, and the `assert-no-comments` job fails the run when one appears. A name, a signature and the shape of a function are the whole of what a reader gets, and when that is not enough to say what something holds or does, the thing is named or shaped wrong rather than under-explained. The vendored code that keeps its comments does so on the same ground as [third-party-code-ships-as-a-layer](third-party-code-ships-as-a-layer.md).
 
 ## Conventions
 

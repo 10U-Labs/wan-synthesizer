@@ -11,4 +11,4 @@ Every subsystem under `test/` is laid out as `pre_deployment/{unit,integration}`
 
 A journey against a localhost stub is pre-deployment integration however end-to-end it looks: `test/scripts/seed/pre_deployment/integration/test_cli.py` drives `scripts/seed.py` as a subprocess and touches nothing live, while `test/scripts/seed/post_deployment/e2e/test_delivered_syntheses.py` reads the deployed API.
 
-Which directory a file sits in is a separate question from which workflow runs it: [[where-a-test-runs-follows-what-starts-it]].
+Which directory a file sits in is a separate question from which workflow runs it: [where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md).

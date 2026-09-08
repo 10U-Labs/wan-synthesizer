@@ -11,4 +11,4 @@ A push rejected by CI is answered with a follow-up commit. Do not amend and forc
 
 Read the whole failed log rather than its first error, and sweep the change for other instances of the same shape before pushing the fix. A run reports every gate at once, so a fix that answers only the first line of the log buys one more red run.
 
-The rule it defers to is [[ci-is-the-source-of-truth]]; what makes `main` already published is [[commit-straight-to-main]].
+The rule it defers to is [ci-is-the-source-of-truth](ci-is-the-source-of-truth.md); what makes `main` already published is [commit-straight-to-main](commit-straight-to-main.md).

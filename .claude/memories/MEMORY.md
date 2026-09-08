@@ -36,10 +36,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 
 ### Issues
 
-- [an-issue-has-seven-sections-in-a-fixed-order](an-issue-has-seven-sections-in-a-fixed-order.md) — the seven headings, their order, and what each one answers
-- [which-issues-owe-the-five-middle-sections](which-issues-owe-the-five-middle-sections.md) — seven sections for the program, two for the configs, the maps, the workflow files and the docs
 - [why-static-analysis-is-asked-separately](why-static-analysis-is-asked-separately.md) — a job refuses a shape everywhere at once where a tier catches one occurrence
-- [an-issue-states-one-solution](an-issue-states-one-solution.md) — a `Proposed Solution` names one change; a fork is asked about before the issue is filed
 - [a-finding-is-filed-not-mentioned](a-finding-is-filed-not-mentioned.md) — a defect noticed while doing something else is filed, never parked at the end of a reply
 
 ### Tests

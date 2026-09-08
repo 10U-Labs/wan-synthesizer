@@ -18,7 +18,7 @@ metadata:
 
 ## Overview
 
-The checks on every push exist to grade the code the people working here wrote. A package this repository merely installs was written by somebody else, is graded by somebody else, and a complaint about it is a complaint nobody who reads this run can answer. So a package the synthesizer needs while it runs is shipped to AWS as a Lambda layer, built at deploy time from wheels pinned by version and by sha256, and is never unpacked into the code this repository publishes. It is the same ground on which vendored code keeps its comments: [[the-code-is-the-only-explanation]].
+The checks on every push exist to grade the code the people working here wrote. A package this repository merely installs was written by somebody else, is graded by somebody else, and a complaint about it is a complaint nobody who reads this run can answer. So a package the synthesizer needs while it runs is shipped to AWS as a Lambda layer, built at deploy time from wheels pinned by version and by sha256, and is never unpacked into the code this repository publishes. It is the same ground on which vendored code keeps its comments: [the-code-is-the-only-explanation](the-code-is-the-only-explanation.md).
 
 ## Conventions
 

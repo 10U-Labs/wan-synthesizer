@@ -11,4 +11,4 @@ Do not run tests, linters or builds locally to verify a change — write the cod
 
 A push can trigger several path-filtered workflows. The change is done when each workflow that fired is green, not when the first one is.
 
-How to find the run is [[find-a-run-by-the-full-hash]]; what to do with a red one is [[a-rejected-push-is-fixed-forward]]; where the push goes is [[commit-straight-to-main]].
+How to find the run is [find-a-run-by-the-full-hash](find-a-run-by-the-full-hash.md); what to do with a red one is [a-rejected-push-is-fixed-forward](a-rejected-push-is-fixed-forward.md); where the push goes is [commit-straight-to-main](commit-straight-to-main.md).
