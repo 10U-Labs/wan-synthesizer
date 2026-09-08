@@ -1,3 +1,10 @@
+---
+name: an-issue-states-one-solution
+description: An issue's Proposed Solution names one change; a genuine fork is asked about before the issue is filed
+metadata:
+  type: feedback
+---
+
 # An issue states one solution
 
 ## Table of Contents
@@ -10,7 +17,7 @@
 
 ## Overview
 
-An issue is the instruction to whoever picks it up, and it has to be workable on its own. Its `Proposed Solution` names one change: this function, this file, this algorithm, this test. Not two options to weigh, not a menu with a recommendation, and never a question the reader is left holding. If the section ends with something still to decide, the issue is not finished and should not be filed.
+An issue is the instruction to whoever picks it up, and it has to be workable on its own. Its `Proposed Solution` names one change: this function, this file, this algorithm, this test. Not two options to weigh, not a menu with a recommendation, and never a question the reader is left holding. If the section ends with something still to decide, the issue is not finished and should not be filed. Which sections come before it is [[an-issue-has-seven-sections-in-a-fixed-order]].
 
 ## Conventions
 

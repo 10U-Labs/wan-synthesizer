@@ -1,3 +1,10 @@
+---
+name: seed-tests-every-push
+description: Every push that starts seed.yml runs every tier, and a new check is wired into the needs and if of reconciliation and seeding
+metadata:
+  type: project
+---
+
 # Every push that starts seed tests every tier
 
 ## Table of Contents
@@ -13,6 +20,8 @@
 
 `.github/workflows/seed.yml` publishes the git-authored inputs to the live API and rebuilds each tenant's WAN, so whatever runs before its `seeding` job is the whole of what stands between a push and a live deploy. Every push that starts the workflow runs all of it, and there is no push that reaches the API having tested less than another one did. A run that tests less reports success without testing the code that seeds: two config commits that moved the tenant knobs under new root keys, after a separate commit had repointed every read in `scripts/seed.py`, left the suite red for four commits with no run saying so.
 
+The job everything here waits on is [[shared-modules-are-tested-first]]; what can still fail a first `seed` run is [[seeding-races-the-routing-deploy]].
+
 ## Conventions
 
 ### A skip cascades unless a status-check function breaks it
@@ -21,7 +30,7 @@ A skip cascades transitively wherever one is possible, and an ordinary expressio
 
 ### The gates seeding names
 
-`unit-tests` and `integration-tests` carry `needs: test-repo-libraries` and no `if` at all, so a red `test-repo-libraries` skips them both. `seeding` names all fifteen gates in one flat `and` of `== 'success'` readings, beside `github.ref == 'refs/heads/main'`. `test_seeding_waits_for_every_check_the_workflow_runs` and `test_seeding_demands_a_success_from_every_check_it_waits_for` in `test/scripts/seed/pre_deployment/integration/test_contracts.py` fail when a job that is neither `seeding` nor downstream of it is missing from either place, so the next check added is wired in or the run says so.
+`reconciliation` and `seeding` wait on every check in their workflow, because they run `tofu apply` and PUT to live AWS and neither can be taken back, so a new check is wired into their `needs:` and their `if:` when it is added. `unit-tests` and `integration-tests` carry `needs: test-repo-libraries` and no `if` at all, so a red `test-repo-libraries` skips them both. `seeding` names all fifteen gates in one flat `and` of `== 'success'` readings, beside `github.ref == 'refs/heads/main'`. `test_seeding_waits_for_every_check_the_workflow_runs` and `test_seeding_demands_a_success_from_every_check_it_waits_for` in `test/scripts/seed/pre_deployment/integration/test_contracts.py` fail when a job that is neither `seeding` nor downstream of it is missing from either place, so the next check added is wired in or the run says so.
 
 ### YAML linting stands between a push and the live API
 

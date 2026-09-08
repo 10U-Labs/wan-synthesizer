@@ -1,3 +1,10 @@
+---
+name: where-a-test-runs-follows-what-starts-it
+description: A test runs in the workflow the change it guards arrives on, not the one that owns its directory
+metadata:
+  type: project
+---
+
 # A test runs in the workflow the change it guards arrives on
 
 ## Table of Contents
@@ -12,7 +19,7 @@
 
 ## Overview
 
-A test is worth nothing in a workflow the change it guards does not trigger. So the question "which workflow runs this test" is answered by asking what kind of push would break it, and putting the test where that push goes — not by which subsystem the test file happens to sit under.
+A test is worth nothing in a workflow the change it guards does not trigger. So the question "which workflow runs this test" is answered by asking what kind of push would break it, and putting the test where that push goes — not by which subsystem the test file happens to sit under. Which directory it sits under is [[the-test-tree-splits-on-deployment-phase]].
 
 ## Conventions
 
