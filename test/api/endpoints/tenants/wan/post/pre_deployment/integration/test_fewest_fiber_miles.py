@@ -138,38 +138,94 @@ def test_the_delivered_synthesis_holds_the_shorter_of_two_ways_round() -> None:
     ) & fixtures.THE_LONG_WAY
 
 
-_CUT_SITES = ("a", "b", "e")
-_CUT_TRANSIT = ("f", "g")
-_CUT_SEGMENTS = {
-    ("a", "b"): 20.0, ("b", "e"): 22.0,
-    ("a", "f"): 32.0, ("b", "f"): 32.0,
-    ("b", "g"): 32.0, ("e", "g"): 32.0,
-}
-CUT_ARTIFACTS = fixtures.synthesis_over_segments(
-    _CUT_SITES, _CUT_SEGMENTS, _ASKED_FOR, _CUT_TRANSIT
-)
-
-
-def test_a_seat_owed_one_circuit_a_peer_is_not_floored_above_the_miles_it_runs_over() -> None:
-    assert CUT_ARTIFACTS.synthesis.metrics.physical_miles >= (
-        CUT_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles - _SLACK
+def _floor_sits_under_the_miles_run(artifacts: SynthesisArtifacts) -> bool:
+    return artifacts.synthesis.metrics.physical_miles >= (
+        artifacts.synthesis.metrics.backbone_lower_bound_miles - _SLACK
     )
 
 
-_ROUND_SITES = ("w", "x")
-_ROUND_TRANSIT = ("p", "r")
-_ROUND_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
+_SHARED_HOP_SITES = ("w", "x")
+_SHARED_HOP_TRANSIT = ("p", "q", "r")
+_SHARED_HOP_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
     ("w", "p"): (100.0, ("lumen", "zayo")),
-    ("p", "x"): (100.0, ("lumen",)),
-    ("p", "r"): (400.0, ("zayo",)),
+    ("p", "x"): (100.0, ("lumen", "zayo")),
+    ("w", "q"): (100.0, ("lumen",)),
+    ("q", "x"): (100.0, ("lumen",)),
+    ("w", "r"): (400.0, ("zayo",)),
     ("r", "x"): (400.0, ("zayo",)),
 }
-ROUND_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
-    _ROUND_SITES, _ROUND_SEGMENTS, _ASKED_FOR, _ROUND_TRANSIT
+SHARED_HOP_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
+    _SHARED_HOP_SITES, _SHARED_HOP_SEGMENTS, _ASKED_FOR, _SHARED_HOP_TRANSIT
 )
 
 
-def test_a_second_carriers_way_round_is_not_floored_above_the_miles_run_over() -> None:
-    assert ROUND_ARTIFACTS.synthesis.metrics.physical_miles >= (
-        ROUND_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles - _SLACK
-    )
+def test_a_first_hop_both_carriers_own_is_not_floored_above_the_miles_run() -> None:
+    assert _floor_sits_under_the_miles_run(SHARED_HOP_ARTIFACTS)
+
+
+_HANDOVER_SITES = ("w", "x")
+_HANDOVER_TRANSIT = ("p", "q", "r")
+_HANDOVER_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
+    ("w", "p"): (100.0, ("lumen",)),
+    ("p", "x"): (100.0, ("lumen",)),
+    ("w", "q"): (100.0, ("lumen",)),
+    ("q", "x"): (100.0, ("lumen",)),
+    ("w", "r"): (400.0, ("lumen", "zayo")),
+    ("r", "x"): (400.0, ("zayo",)),
+}
+HANDOVER_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
+    _HANDOVER_SITES, _HANDOVER_SEGMENTS, _ASKED_FOR, _HANDOVER_TRANSIT
+)
+
+
+def test_a_second_carriers_way_round_is_not_floored_above_the_miles_run() -> None:
+    assert _floor_sits_under_the_miles_run(HANDOVER_ARTIFACTS)
+
+
+_SPURRED_SITES = ("a", "b", "c")
+_SPURRED_TRANSIT = ("t", "u")
+_SPURRED_SEGMENTS = {
+    ("a", "b"): 10.0, ("b", "c"): 10.0, ("a", "c"): 10.0,
+    ("a", "t"): 500.0, ("t", "c"): 500.0,
+    ("b", "u"): 500.0, ("u", "c"): 500.0,
+}
+SPURRED_ARTIFACTS = fixtures.synthesis_over_segments(
+    _SPURRED_SITES, _SPURRED_SEGMENTS, _ASKED_FOR, _SPURRED_TRANSIT
+)
+
+
+def test_three_seats_over_long_spurs_are_not_floored_above_the_miles_run() -> None:
+    assert _floor_sits_under_the_miles_run(SPURRED_ARTIFACTS)
+
+
+_CHORDED_SITES = ("a", "b", "c", "d")
+_CHORDED_SEGMENTS = {
+    ("a", "b"): 10.0, ("b", "c"): 10.0, ("c", "d"): 10.0, ("d", "a"): 10.0,
+    ("a", "c"): 1000.0, ("b", "d"): 1000.0,
+}
+CHORDED_ARTIFACTS = fixtures.synthesis_over_segments(
+    _CHORDED_SITES, _CHORDED_SEGMENTS, _ASKED_FOR
+)
+
+
+def test_four_seats_over_long_chords_are_not_floored_above_the_miles_run() -> None:
+    assert _floor_sits_under_the_miles_run(CHORDED_ARTIFACTS)
+
+
+_STARRED_SITES = ("a", "b", "c")
+_STARRED_TRANSIT = ("t",)
+_STARRED_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
+    ("a", "b"): (10.0, ("lumen",)),
+    ("b", "c"): (10.0, ("lumen",)),
+    ("a", "c"): (10.0, ("lumen",)),
+    ("a", "t"): (400.0, ("zayo",)),
+    ("b", "t"): (400.0, ("zayo",)),
+    ("c", "t"): (400.0, ("zayo",)),
+}
+STARRED_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
+    _STARRED_SITES, _STARRED_SEGMENTS, _ASKED_FOR, _STARRED_TRANSIT
+)
+
+
+def test_three_seats_a_second_carrier_stars_are_not_floored_above_the_miles_run() -> None:
+    assert _floor_sits_under_the_miles_run(STARRED_ARTIFACTS)
