@@ -6,33 +6,30 @@ import fixtures
 from synthesizer.input_graph import segment_key
 
 _ASKED_FOR = 2
-_CITIES = 7
 _GRAPHS = 60
 _SEATS = 3
 
 
-def _degrees(segments: dict[tuple[str, str], float]) -> dict[str, int]:
-    degree: dict[str, int] = {}
-    for left, right in segments:
-        degree[left] = degree.get(left, 0) + 1
-        degree[right] = degree.get(right, 0) + 1
-    return degree
+_LEFT = ("l0", "l1", "l2")
+_RIGHT = ("r0", "r1", "r2")
+_HUB = "h"
+
+
+def _blob(group: tuple[str, ...], rng: random.Random) -> dict[tuple[str, str], float]:
+    ring = list(group) + [_HUB]
+    segments = {
+        segment_key(ring[index], ring[(index + 1) % len(ring)]): float(
+            rng.randrange(10, 400)
+        )
+        for index in range(len(ring))
+    }
+    if rng.random() < 0.5:
+        segments[segment_key(ring[0], ring[2])] = float(rng.randrange(10, 400))
+    return segments
 
 
 def _random_segments(rng: random.Random) -> dict[tuple[str, str], float]:
-    cities = [f"c{index}" for index in range(_CITIES)]
-    segments: dict[tuple[str, str], float] = {}
-    for index in range(1, _CITIES):
-        joined = cities[rng.randrange(index)]
-        segments[segment_key(cities[index], joined)] = float(rng.randrange(10, 400))
-    for _extra in range(rng.randrange(2, 5)):
-        left, right = rng.sample(cities, 2)
-        segments[segment_key(left, right)] = float(rng.randrange(10, 400))
-    for city in cities:
-        while _degrees(segments).get(city, 0) < 2:
-            other = rng.choice([one for one in cities if one != city])
-            segments[segment_key(city, other)] = float(rng.randrange(10, 400))
-    return segments
+    return {**_blob(_LEFT, rng), **_blob(_RIGHT, rng)}
 
 
 def _measured(seed: int) -> tuple[float, str] | None:
@@ -49,6 +46,8 @@ def _measured(seed: int) -> tuple[float, str] | None:
         floor / run if run else 0.0,
         f"seed={seed} run={run} floor={floor} "
         f"seats={artifacts.synthesis.backbone_ids} "
+        f"over={len(artifacts.synthesis.fiber_segment_keys)} "
+        f"circuits={len(artifacts.synthesis.drawn_circuits)} "
         f"segments={sorted(segments.items())}",
     )
 
