@@ -5,8 +5,7 @@ import pytest
 import fixtures
 from synthesizer import linear_program
 from synthesizer.graphs import adjacency_by_carrier
-from synthesizer.input_graph import FiberSegment
-from synthesizer.model import SynthesisArtifacts, SynthesisParams, Tuning
+from synthesizer.model import SynthesisArtifacts
 from synthesizer.survivable import FiberInputs, select_fiber
 
 _SITES = ("w", "x", "y", "z")
@@ -145,31 +144,14 @@ def _floor_sits_under_the_miles_run(artifacts: SynthesisArtifacts) -> bool:
     )
 
 
-def _over_chosen_seats(
-    fiber: dict[tuple[str, str], FiberSegment], seats: int
-) -> SynthesisArtifacts:
-    cities = sorted({city for pair in fiber for city in pair})
-    return fixtures.run_synthesis(
-        [
-            fixtures.carrier_pop(city, 38.0, -115.0 + 2.0 * index)
-            for index, city in enumerate(cities)
-        ],
-        fiber,
-        SynthesisParams(
-            min_backbone_count=seats,
-            max_backbone_count=seats,
-            promote_high_degree_convergences=False,
-            tuning=Tuning(backbone_number_of_diverse_circuits=_ASKED_FOR),
-        ),
-    )
-
-
 _CUT_SEGMENTS = {
     ("a", "b"): 20.0, ("b", "e"): 22.0,
     ("a", "f"): 32.0, ("b", "f"): 32.0,
     ("b", "g"): 32.0, ("e", "g"): 32.0,
 }
-CUT_ARTIFACTS = _over_chosen_seats(fixtures.fiber_segments_from(_CUT_SEGMENTS), 3)
+CUT_ARTIFACTS = fixtures.synthesis_over_chosen_fiber(
+    fixtures.fiber_segments_from(_CUT_SEGMENTS), 3, _ASKED_FOR
+)
 
 
 def test_three_seats_round_a_cut_city_are_not_floored_above_the_miles_run() -> None:
@@ -181,8 +163,8 @@ _FAR_CUT_SEGMENTS = {
     ("a", "f"): 300.0, ("b", "f"): 300.0,
     ("b", "g"): 300.0, ("e", "g"): 300.0,
 }
-FAR_CUT_ARTIFACTS = _over_chosen_seats(
-    fixtures.fiber_segments_from(_FAR_CUT_SEGMENTS), 3
+FAR_CUT_ARTIFACTS = fixtures.synthesis_over_chosen_fiber(
+    fixtures.fiber_segments_from(_FAR_CUT_SEGMENTS), 3, _ASKED_FOR
 )
 
 
@@ -195,8 +177,8 @@ _OWNED_CUT_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
     ("a", "f"): (300.0, ("zayo",)), ("b", "f"): (300.0, ("zayo",)),
     ("b", "g"): (300.0, ("zayo",)), ("e", "g"): (300.0, ("zayo",)),
 }
-OWNED_CUT_ARTIFACTS = _over_chosen_seats(
-    fixtures.carrier_fiber_segments(_OWNED_CUT_SEGMENTS), 2
+OWNED_CUT_ARTIFACTS = fixtures.synthesis_over_chosen_fiber(
+    fixtures.carrier_fiber_segments(_OWNED_CUT_SEGMENTS), 2, _ASKED_FOR
 )
 
 

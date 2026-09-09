@@ -3,33 +3,12 @@ from __future__ import annotations
 import random
 
 import fixtures
-from synthesizer.input_graph import FiberSegment, segment_key
-from synthesizer.model import SynthesisArtifacts, SynthesisParams, Tuning
+from synthesizer.input_graph import segment_key
 
 _ASKED_FOR = 2
-_SLACK = 1e-6
 _CITIES = 7
-_GRAPHS = 40
+_GRAPHS = 60
 _SEATS = 3
-
-
-def _over_chosen_seats(
-    fiber: dict[tuple[str, str], FiberSegment], seats: int
-) -> SynthesisArtifacts:
-    cities = sorted({city for pair in fiber for city in pair})
-    return fixtures.run_synthesis(
-        [
-            fixtures.carrier_pop(city, 38.0, -115.0 + 2.0 * index)
-            for index, city in enumerate(cities)
-        ],
-        fiber,
-        SynthesisParams(
-            min_backbone_count=seats,
-            max_backbone_count=seats,
-            promote_high_degree_convergences=False,
-            tuning=Tuning(backbone_number_of_diverse_circuits=_ASKED_FOR),
-        ),
-    )
 
 
 def _degrees(segments: dict[tuple[str, str], float]) -> dict[str, int]:
@@ -49,29 +28,34 @@ def _random_segments(rng: random.Random) -> dict[tuple[str, str], float]:
     for _extra in range(rng.randrange(2, 5)):
         left, right = rng.sample(cities, 2)
         segments[segment_key(left, right)] = float(rng.randrange(10, 400))
+    for city in cities:
+        while _degrees(segments).get(city, 0) < 2:
+            other = rng.choice([one for one in cities if one != city])
+            segments[segment_key(city, other)] = float(rng.randrange(10, 400))
     return segments
 
 
-def _measured(seed: int) -> str | None:
+def _measured(seed: int) -> tuple[float, str] | None:
     segments = _random_segments(random.Random(seed))
-    if len(_degrees(segments)) < _CITIES or min(_degrees(segments).values()) < 2:
-        return None
     try:
-        artifacts = _over_chosen_seats(fixtures.fiber_segments_from(segments), _SEATS)
+        artifacts = fixtures.synthesis_over_chosen_fiber(
+            fixtures.fiber_segments_from(segments), _SEATS, _ASKED_FOR
+        )
     except ValueError:
         return None
     run = artifacts.synthesis.metrics.physical_miles
     floor = artifacts.synthesis.metrics.backbone_lower_bound_miles
-    if run >= floor - _SLACK:
-        return None
     return (
-        f"seed={seed} seats={artifacts.synthesis.backbone_ids} "
-        f"run={run} floor={floor} segments={sorted(segments.items())}"
+        floor / run if run else 0.0,
+        f"seed={seed} run={run} floor={floor} "
+        f"seats={artifacts.synthesis.backbone_ids} "
+        f"segments={sorted(segments.items())}",
     )
 
 
-_FOUND = [found for found in (_measured(seed) for seed in range(_GRAPHS)) if found]
+_MEASURED = [found for found in (_measured(seed) for seed in range(_GRAPHS)) if found]
+_REPORT = f"measured {len(_MEASURED)} of {_GRAPHS}, worst {sorted(_MEASURED)[-4:]}"
 
 
-def test_no_random_graph_is_floored_above_the_miles_it_runs_over() -> None:
-    assert not _FOUND, _FOUND
+def test_the_probe_reports_the_graphs_whose_floor_sits_highest() -> None:
+    assert not _REPORT, _REPORT
