@@ -136,3 +136,40 @@ def test_the_delivered_synthesis_holds_the_shorter_of_two_ways_round() -> None:
     assert not set(
         SHORT_AND_LONG_ARTIFACTS.synthesis.fiber_segment_keys
     ) & fixtures.THE_LONG_WAY
+
+
+_CUT_SITES = ("a", "b", "e")
+_CUT_TRANSIT = ("f", "g")
+_CUT_SEGMENTS = {
+    ("a", "b"): 20.0, ("b", "e"): 22.0,
+    ("a", "f"): 32.0, ("b", "f"): 32.0,
+    ("b", "g"): 32.0, ("e", "g"): 32.0,
+}
+CUT_ARTIFACTS = fixtures.synthesis_over_segments(
+    _CUT_SITES, _CUT_SEGMENTS, _ASKED_FOR, _CUT_TRANSIT
+)
+
+
+def test_a_seat_owed_one_circuit_a_peer_is_not_floored_above_the_miles_it_runs_over() -> None:
+    assert CUT_ARTIFACTS.synthesis.metrics.physical_miles >= (
+        CUT_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles - _SLACK
+    )
+
+
+_ROUND_SITES = ("w", "x")
+_ROUND_TRANSIT = ("p", "r")
+_ROUND_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
+    ("w", "p"): (100.0, ("lumen", "zayo")),
+    ("p", "x"): (100.0, ("lumen",)),
+    ("p", "r"): (400.0, ("zayo",)),
+    ("r", "x"): (400.0, ("zayo",)),
+}
+ROUND_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
+    _ROUND_SITES, _ROUND_SEGMENTS, _ASKED_FOR, _ROUND_TRANSIT
+)
+
+
+def test_a_second_carriers_way_round_is_not_floored_above_the_miles_run_over() -> None:
+    assert ROUND_ARTIFACTS.synthesis.metrics.physical_miles >= (
+        ROUND_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles - _SLACK
+    )
