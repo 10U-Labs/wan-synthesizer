@@ -15,7 +15,7 @@ const ROLE_STYLE = {
 };
 
 const LINK_STYLE = {
-  access: { color: ROLE_STYLE.tenant.color, weight: 1.5 },
+  homing: { color: ROLE_STYLE.tenant.color, weight: 1.5 },
   backbone: { color: ROLE_STYLE.backbone.color, weight: 4.5 },
 };
 
@@ -206,11 +206,11 @@ async function render(tenantId) {
 
   const byId = indexById(sites);
   const physical = links.filter((link) => link.link_kind === "carrier_physical");
-  const access = links.filter(
+  const homings = links.filter(
     (link) => link.link_kind === "tenant_to_backbone" || link.link_kind === "provider_to_backbone",
   );
   drawLinks(physical, byId, LINK_STYLE.backbone);
-  drawLinks(access, byId, LINK_STYLE.access);
+  drawLinks(homings, byId, LINK_STYLE.homing);
   const points = drawSites(sites);
 
   if (points.length) {

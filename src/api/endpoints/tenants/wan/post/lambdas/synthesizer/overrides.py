@@ -78,14 +78,14 @@ def _backbone_backbone_pair(
 
 def _forced_home_pair(
     home: NamedCircuit,
-    access_name_to_id: dict[str, str],
+    site_id_by_name: dict[str, str],
     name_to_id: dict[str, str],
     forced_backbone: set[str],
 ) -> tuple[str, str]:
-    if home.source not in access_name_to_id:
-        raise ValueError(f"forced-home access node not found: {home.source}")
+    if home.source not in site_id_by_name:
+        raise ValueError(f"forced-home site not found: {home.source}")
     backbone = _forced_backbone_endpoint(home.target, name_to_id, forced_backbone, "forced-home")
-    return access_name_to_id[home.source], backbone
+    return site_id_by_name[home.source], backbone
 
 
 def _excluded_backbone_endpoint(name: str, name_to_id: dict[str, str]) -> str:
@@ -113,7 +113,7 @@ def resolve_forced_circuits(
     forced_backbone: set[str],
 ) -> ForcedCircuits:
     name_to_id = pop_id_by_name([site for site in sites if is_carrier_pop(site)])
-    access_name_to_id = {
+    site_id_by_name = {
         site.name: site.id for site in sites if not is_carrier_pop(site)
     }
     return ForcedCircuits(
@@ -121,9 +121,9 @@ def resolve_forced_circuits(
             _backbone_backbone_pair(circuit, name_to_id, forced_backbone)
             for circuit in circuits.backbone
         ),
-        access=frozenset(
-            _forced_home_pair(home, access_name_to_id, name_to_id, forced_backbone)
-            for home in circuits.access
+        homes=frozenset(
+            _forced_home_pair(home, site_id_by_name, name_to_id, forced_backbone)
+            for home in circuits.homes
         ),
         removed_backbone=_removed_backbone_circuits(circuits.removed_backbone, name_to_id),
     )

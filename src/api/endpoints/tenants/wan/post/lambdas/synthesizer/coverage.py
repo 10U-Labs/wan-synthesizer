@@ -19,25 +19,25 @@ class CoverageReport(TypedDict):
     met: bool
 
 
-def demand_hauls(
+def hauls(
     backbone_ids: tuple[str, ...],
-    access_sites: list[Site],
+    sites: list[Site],
     pop_by_id: dict[str, Site],
 ) -> list[float]:
     backbone_sites = [pop_by_id[backbone_id] for backbone_id in backbone_ids]
     return [
-        min(haversine_miles(access, site) for site in backbone_sites)
-        for access in access_sites
+        min(haversine_miles(site, backbone_site) for backbone_site in backbone_sites)
+        for site in sites
     ]
 
 
 def coverage_haul_profile(
     backbone_ids: tuple[str, ...],
-    access_sites: list[Site],
+    sites: list[Site],
     pop_by_id: dict[str, Site],
 ) -> tuple[float, ...]:
-    covered = [v for v in access_sites if not v.exempt_from_distance_constraint]
-    return tuple(sorted(demand_hauls(backbone_ids, covered, pop_by_id), reverse=True))
+    covered = [site for site in sites if not site.exempt_from_distance_constraint]
+    return tuple(sorted(hauls(backbone_ids, covered, pop_by_id), reverse=True))
 
 
 def coverage_worst_haul(profile: tuple[float, ...]) -> float:
@@ -46,11 +46,11 @@ def coverage_worst_haul(profile: tuple[float, ...]) -> float:
 
 def coverage_report(
     backbone_ids: tuple[str, ...],
-    access_sites: list[Site],
+    sites: list[Site],
     pop_by_id: dict[str, Site],
     target_miles: float,
 ) -> CoverageReport:
-    profile = coverage_haul_profile(backbone_ids, access_sites, pop_by_id)
+    profile = coverage_haul_profile(backbone_ids, sites, pop_by_id)
     worst = coverage_worst_haul(profile)
     return {
         "target_miles": target_miles,
@@ -67,14 +67,14 @@ def coverage_candidate_hauls(
     plan: _SearchPlan,
     pop_by_id: dict[str, Site],
 ) -> list[tuple[tuple[float, ...], str]]:
-    hauls: list[tuple[tuple[float, ...], str]] = []
+    scored: list[tuple[tuple[float, ...], str]] = []
     for candidate_id in free:
         candidate_set = tuple(sorted((*backbone_ids, candidate_id)))
         if evaluate_backbone(candidate_set, inputs, plan) is None:
             continue
         profile = coverage_haul_profile(candidate_set, inputs.access_sites, pop_by_id)
-        hauls.append((profile, candidate_id))
-    return hauls
+        scored.append((profile, candidate_id))
+    return scored
 
 
 def candidate_mesh_ceiling(

@@ -78,7 +78,7 @@ def _named_circuit_list(synthesis: dict[str, Any], key: str) -> tuple[NamedCircu
 def _operator_circuits(synthesis: dict[str, Any]) -> OperatorCircuits:
     return OperatorCircuits(
         backbone=_named_circuit_list(synthesis, "forced_paths"),
-        access=_named_circuit_list(synthesis, "forced_homes"),
+        homes=_named_circuit_list(synthesis, "forced_homes"),
         removed_backbone=_named_circuit_list(synthesis, "excluded_paths"),
     )
 
@@ -142,7 +142,7 @@ def _tuning(tuning: dict[str, Any], settings: dict[str, Any]) -> Tuning:
         backbone_coverage_target_miles=_required_int(
             tuning, "backbone_coverage_target_miles"
         ),
-        access_homing_degree=_required_int(tuning, "access_homing_degree"),
+        homing_degree=_required_int(tuning, "homing_degree"),
         search_memory_budget=SearchMemoryBudget(
             memory_share=_memory_share(settings, base.search_memory_budget.memory_share),
             bytes_per_combination=settings.get(
@@ -215,7 +215,7 @@ def app_config_from_parts(parts: dict[str, Any]) -> AppConfig:
         "backbone_number_of_diverse_circuits": _degree(
             parts, "backbone-number-of-diverse-circuits"
         ),
-        "access_homing_degree": _degree(parts, "access-homing-degree"),
+        "homing_degree": _degree(parts, "homing-degree"),
     }
     label = parts.get("label", {})
     label_text = label.get("label", "") if isinstance(label, dict) else str(label)

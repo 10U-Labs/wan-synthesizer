@@ -59,7 +59,7 @@ def finalize(
         )),
     )
     validation = validate_synthesis(
-        sites, synthesis, params.tuning.access_homing_degree, targets
+        sites, synthesis, params.tuning.homing_degree, targets
     )
     if not validation["connected"]:
         groups = "; ".join(

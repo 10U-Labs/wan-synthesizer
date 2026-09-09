@@ -65,7 +65,7 @@ def _config_documents() -> dict[str, Any]:
         **{resource: [] for resource in _NAMES_NOBODY},
         "backbone-node-count": {"min": 2, "max": 6},
         "backbone-number-of-diverse-circuits": {"degree": 2},
-        "access-homing-degree": {"degree": 2},
+        "homing-degree": {"degree": 2},
         "convergence-promotion": {"promote": False},
         "knobs": {
             "backbone_coverage_target_miles": 500,

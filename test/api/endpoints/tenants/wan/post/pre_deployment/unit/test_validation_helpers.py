@@ -8,7 +8,7 @@ from synthesizer.model import AccessCircuit, Synthesis, SynthesisMetrics, MeshRe
 from synthesizer.validation import (
     backbone_mesh_deficient,
     backbone_mesh_independence_deficient,
-    demand_backbone_homes,
+    homes_by_site,
     synthesis_site_pairs,
     included_site_ids,
     diverse_circuit_count,
@@ -61,11 +61,11 @@ def test_neighbor_degrees_ignores_external_endpoints() -> None:
     assert degrees == {"a": 1, "b": 1}
 
 
-def test_demand_backbone_homes_groups_targets_per_source() -> None:
+def test_homes_by_site_groups_targets_per_source() -> None:
     synthesis = make_synthesis(
         [], access_circuits=[AccessCircuit("s", "a", 1.0), AccessCircuit("s", "b", 1.0)]
     )
-    assert demand_backbone_homes(synthesis) == {"s": {"a", "b"}}
+    assert homes_by_site(synthesis) == {"s": {"a", "b"}}
 
 
 _SHARED_EGRESS = meshed_synthesis(

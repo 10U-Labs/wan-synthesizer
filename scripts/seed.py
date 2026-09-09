@@ -169,11 +169,11 @@ def push_tenants(api: str) -> list[str]:
         tid = _slug(path.stem)
         tenant_ids.append(tid)
         inputs = config.get("inputs", {})
-        access = config["access"]
+        homing = config["homing"]
         backbone = config["backbone"]
         forced = backbone.get("forced", {})
         prohibited = backbone.get("prohibited", {})
-        homes = access.get("forced", {}).get("homes", [])
+        homes = homing.get("forced", [])
         locations = _mapping_rows(inputs.get("locations", {}))
         regions = _rows(REPO_ROOT / inputs["providers"]) if inputs.get("providers") else []
         off_net_file = inputs.get("forced")
@@ -193,8 +193,8 @@ def push_tenants(api: str) -> list[str]:
         _put(api, f"tenants/{tid}/backbone-node-count", backbone.get("node_count", {}))
         _put(api, f"tenants/{tid}/backbone-number-of-diverse-circuits",
              _degree_doc(backbone["number_of_diverse_circuits"]))
-        _put(api, f"tenants/{tid}/access-homing-degree",
-             _degree_doc(access["homing_degree"]))
+        _put(api, f"tenants/{tid}/homing-degree",
+             _degree_doc(homing["degree"]))
         _put(api, f"tenants/{tid}/convergence-promotion",
              {"promote": backbone["promote_high_degree_convergences"]})
         _put(api, f"tenants/{tid}/knobs", {

@@ -11,7 +11,7 @@ from synthesizer.model import NamedCircuit, OperatorCircuits
 
 _REQUIRED_TUNING = {
     "backbone_number_of_diverse_circuits": 3,
-    "access_homing_degree": 2,
+    "homing_degree": 2,
     "backbone_coverage_target_miles": 600,
 }
 
@@ -75,14 +75,14 @@ def test_reads_max_backbone_count() -> None:
     assert _config({"synthesis": {"max_backbone_count": 7}}).params.max_backbone_count == 7
 
 
-def test_default_access_homing_degree() -> None:
-    assert default_config().params.tuning.access_homing_degree == 2
+def test_default_homing_degree() -> None:
+    assert default_config().params.tuning.homing_degree == 2
 
 
-def test_reads_access_homing_degree() -> None:
+def test_reads_homing_degree() -> None:
     assert _config(
-        {"tuning": {"access_homing_degree": 3}}
-    ).params.tuning.access_homing_degree == 3
+        {"tuning": {"homing_degree": 3}}
+    ).params.tuning.homing_degree == 3
 
 
 def test_default_backbone_number_of_diverse_circuits_is_three() -> None:
@@ -103,7 +103,7 @@ def test_the_old_mesh_degree_key_is_refused() -> None:
             },
             "tuning": {
                 "backbone_mesh_degree": 3,
-                "access_homing_degree": 2,
+                "homing_degree": 2,
                 "backbone_coverage_target_miles": 600,
             },
         })
@@ -164,12 +164,12 @@ def test_a_forced_path_ignores_a_leftover_type() -> None:
 
 
 def test_default_has_no_forced_homes() -> None:
-    assert len(default_config().operator_circuits.access) == 0
+    assert len(default_config().operator_circuits.homes) == 0
 
 
 def test_reads_forced_homes() -> None:
     home = {"source": "Kirtland, NM", "target": "Denver, CO"}
-    assert _config({"synthesis": {"forced_homes": [home]}}).operator_circuits.access == (
+    assert _config({"synthesis": {"forced_homes": [home]}}).operator_circuits.homes == (
         NamedCircuit("Kirtland, NM", "Denver, CO"),
     )
 
@@ -314,14 +314,14 @@ def test_missing_required_degree_is_rejected() -> None:
 def test_non_integer_degree_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data(
-            {"tuning": {"backbone_number_of_diverse_circuits": "three", "access_homing_degree": 2}}
+            {"tuning": {"backbone_number_of_diverse_circuits": "three", "homing_degree": 2}}
         )
 
 
 def test_boolean_degree_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data(
-            {"tuning": {"backbone_number_of_diverse_circuits": True, "access_homing_degree": 2}}
+            {"tuning": {"backbone_number_of_diverse_circuits": True, "homing_degree": 2}}
         )
 
 
@@ -329,7 +329,7 @@ def test_missing_coverage_target_is_rejected() -> None:
     with pytest.raises(ValueError):
         config_from_data(
             {
-                "tuning": {"backbone_number_of_diverse_circuits": 3, "access_homing_degree": 2},
+                "tuning": {"backbone_number_of_diverse_circuits": 3, "homing_degree": 2},
                 "synthesis": {
                     "promote_high_degree_convergences_to_backbone_nodes": True
                 },
@@ -347,7 +347,7 @@ def test_a_config_naming_no_backup_path_multiple_loads() -> None:
         {
             "tuning": {
                 "backbone_number_of_diverse_circuits": 3,
-                "access_homing_degree": 2,
+                "homing_degree": 2,
                 "backbone_coverage_target_miles": 600,
             },
             "synthesis": {"promote_high_degree_convergences_to_backbone_nodes": True},
@@ -379,7 +379,7 @@ def _parts(**overrides: Any) -> dict[str, Any]:
         "prohibited-paths": [],
         "backbone-node-count": {"min": 3, "max": 5},
         "backbone-number-of-diverse-circuits": {"degree": 3},
-        "access-homing-degree": {"degree": 2},
+        "homing-degree": {"degree": 2},
         "convergence-promotion": {"promote": True},
         "knobs": {"backbone_coverage_target_miles": 600},
         "label": {"label": "Minuteman"},
@@ -417,7 +417,7 @@ def test_app_config_from_parts_without_settings_is_unchanged() -> None:
 
 def test_app_config_from_parts_assembles_the_two_degrees() -> None:
     tuning = app_config_from_parts(_parts()).params.tuning
-    assert (tuning.backbone_number_of_diverse_circuits, tuning.access_homing_degree) == (3, 2)
+    assert (tuning.backbone_number_of_diverse_circuits, tuning.homing_degree) == (3, 2)
 
 
 def test_app_config_from_parts_reads_the_label() -> None:
@@ -451,7 +451,7 @@ def test_app_config_from_parts_exempts_nobody_without_the_document() -> None:
 
 def test_app_config_from_parts_requires_each_degree() -> None:
     parts = _parts()
-    del parts["access-homing-degree"]
+    del parts["homing-degree"]
     with pytest.raises(ValueError):
         app_config_from_parts(parts)
 
@@ -519,6 +519,6 @@ def test_app_config_from_parts_parses_the_written_paths() -> None:
     )
     assert app_config_from_parts(parts).operator_circuits == OperatorCircuits(
         backbone=(NamedCircuit("A", "B"),),
-        access=(NamedCircuit("S", "B"),),
+        homes=(NamedCircuit("S", "B"),),
         removed_backbone=(NamedCircuit("C", "D"),),
     )

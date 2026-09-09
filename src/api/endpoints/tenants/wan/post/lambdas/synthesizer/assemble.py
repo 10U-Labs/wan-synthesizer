@@ -11,7 +11,7 @@ from synthesizer.model import (
     SynthesisCircuit,
 )
 from synthesizer.forced import (
-    apply_forced_access_homes,
+    apply_forced_homes,
     forced_backbone_pairs,
     removed_backbone_pairs,
 )
@@ -64,7 +64,7 @@ def assign_access(
     inputs: SynthesisInputs,
     plan: _SearchPlan,
 ) -> list[AccessCircuit] | None:
-    homing_degree = plan.tuning.access_homing_degree
+    homing_degree = plan.tuning.homing_degree
     backbone_set = set(backbone_ids)
     if len(backbone_set) < homing_degree:
         return None
@@ -78,7 +78,7 @@ def assign_access(
                 for backbone_id in backbone_set
             )
         ][:homing_degree]
-        completed = apply_forced_access_homes(
+        completed = apply_forced_homes(
             access, completed, plan.forced_circuits, pop_by_id, homing_degree
         )
         access_circuits.extend(

@@ -233,11 +233,11 @@ def synthesis_over_segments(
     number_of_diverse_circuits: int,
     transit_ids: tuple[str, ...] = (),
     min_backbone_count: int | None = None,
-    access_homing_degree: int = 2,
+    homing_degree: int = 2,
 ) -> SynthesisArtifacts:
     return synthesis_over_fiber(
         site_ids, fiber_segments_from(segments), number_of_diverse_circuits,
-        transit_ids, min_backbone_count, access_homing_degree,
+        transit_ids, min_backbone_count, homing_degree,
     )
 
 
@@ -258,7 +258,7 @@ def synthesis_over_fiber(
     number_of_diverse_circuits: int,
     transit_ids: tuple[str, ...] = (),
     min_backbone_count: int | None = None,
-    access_homing_degree: int = 2,
+    homing_degree: int = 2,
 ) -> SynthesisArtifacts:
     cities = site_ids + transit_ids
     fewest = len(site_ids) if min_backbone_count is None else min_backbone_count
@@ -275,7 +275,7 @@ def synthesis_over_fiber(
             promote_high_degree_convergences=False,
             tuning=Tuning(
                 backbone_number_of_diverse_circuits=number_of_diverse_circuits,
-                access_homing_degree=access_homing_degree,
+                homing_degree=homing_degree,
             ),
         ),
     )
@@ -415,14 +415,14 @@ def synthesis_inputs_from_fiber(
 def search_plan(
     candidates: list[str],
     strength: dict[str, float] | None = None,
-    access_homing_degree: int = 2,
+    homing_degree: int = 2,
     forced_circuits: ForcedCircuits | None = None,
 ) -> _SearchPlan:
     strength_by_id = strength if strength is not None else {name: 1.0 for name in candidates}
     return _SearchPlan(
         candidates,
         strength_by_id,
-        tuning=Tuning(access_homing_degree=access_homing_degree),
+        tuning=Tuning(homing_degree=homing_degree),
         forced_circuits=forced_circuits or ForcedCircuits(),
     )
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import fixtures
-from synthesizer.validation import demand_without_backbone_redundancy, validate_synthesis
+from synthesizer.validation import sites_below_homing_degree, validate_synthesis
 from synthesizer.model import (
     AccessCircuit,
     Synthesis,
@@ -52,11 +52,11 @@ SINGLE_SITES = [make_pop(name) for name in ("A", "B1", "B2")]
 
 def test_good_synthesis_homes_demand_with_redundancy() -> None:
     report = validate_synthesis(GOOD_SITES, GOOD)
-    assert report["access_sites_with_required_backbone_links"] is True
+    assert report["every_site_meets_homing_degree"] is True
 
 
 def test_good_synthesis_has_no_missing_redundancy() -> None:
-    assert not demand_without_backbone_redundancy(GOOD, 2)
+    assert not sites_below_homing_degree(GOOD, 2)
 
 
 def test_backbone_mesh_survives_any_one_link_loss_with_fewer_than_two_nodes() -> None:
@@ -75,21 +75,21 @@ TRIPLE_HOMED_SITES = [make_pop(name) for name in ("s", "B1", "B2", "B3")]
 
 
 def test_homing_passes_at_the_configured_count() -> None:
-    report = validate_synthesis(TRIPLE_HOMED_SITES, TRIPLE_HOMED, access_homing_degree=3)
-    assert report["access_sites_with_required_backbone_links"] is True
+    report = validate_synthesis(TRIPLE_HOMED_SITES, TRIPLE_HOMED, homing_degree=3)
+    assert report["every_site_meets_homing_degree"] is True
 
 
 def test_homing_fails_above_the_configured_count() -> None:
-    assert demand_without_backbone_redundancy(TRIPLE_HOMED, 2) == ["s"]
+    assert sites_below_homing_degree(TRIPLE_HOMED, 2) == ["s"]
 
 
 def test_homing_fails_below_the_configured_count() -> None:
     report = validate_synthesis(SINGLE_SITES, SINGLE_HOMED)
-    assert report["access_sites_with_required_backbone_links"] is False
+    assert report["every_site_meets_homing_degree"] is False
 
 
 def test_missing_redundancy_names_the_failing_demand_site() -> None:
-    assert demand_without_backbone_redundancy(SINGLE_HOMED, 2) == ["A"]
+    assert sites_below_homing_degree(SINGLE_HOMED, 2) == ["A"]
 
 
 def _mesh_synthesis(backbone_ids: tuple[str, ...], pairs: list[tuple[str, str]]) -> Synthesis:

@@ -58,17 +58,17 @@ def included_site_ids(synthesis: Synthesis) -> set[str]:
     ids.update(access_circuit.target for access_circuit in synthesis.access_circuits)
     return ids
 
-def demand_backbone_homes(synthesis: Synthesis) -> dict[str, set[str]]:
+def homes_by_site(synthesis: Synthesis) -> dict[str, set[str]]:
     homes: dict[str, set[str]] = {}
     for access_circuit in synthesis.access_circuits:
         homes.setdefault(access_circuit.source, set()).add(access_circuit.target)
     return homes
 
-def demand_without_backbone_redundancy(synthesis: Synthesis, homes: int) -> list[str]:
+def sites_below_homing_degree(synthesis: Synthesis, degree: int) -> list[str]:
     return [
-        demand_id
-        for demand_id, targets in sorted(demand_backbone_homes(synthesis).items())
-        if len(targets) != homes
+        site_id
+        for site_id, targets in sorted(homes_by_site(synthesis).items())
+        if len(targets) != degree
     ]
 
 def backbone_mesh_pairs(synthesis: Synthesis) -> set[tuple[str, str]]:
@@ -277,7 +277,7 @@ def backbone_names_by_group(sites: list[Site], synthesis: Synthesis) -> list[lis
 def validate_synthesis(
     sites: list[Site],
     synthesis: Synthesis,
-    access_homing_degree: int = 2,
+    homing_degree: int = 2,
     targets: MeshRequirements = MeshRequirements(),
 ) -> ValidationReport:
     sites_by_id = {site.id: site for site in sites}
@@ -286,7 +286,7 @@ def validate_synthesis(
     components = connected_components(ids, pairs)
     degrees = neighbor_degrees(ids, pairs)
     articulations = articulation_points(ids, pairs) if len(components) == 1 else set()
-    missing_redundancy = demand_without_backbone_redundancy(synthesis, access_homing_degree)
+    missing_redundancy = sites_below_homing_degree(synthesis, homing_degree)
     backbone_degrees = neighbor_degrees(set(synthesis.backbone_ids), backbone_mesh_pairs(synthesis))
     mesh_deficient = backbone_mesh_deficient(
         synthesis.backbone_ids, backbone_degrees, sites_by_id, targets
@@ -309,8 +309,8 @@ def validate_synthesis(
             {"id": site_id, "name": sites_by_id[site_id].name}
             for site_id in sorted(articulations)
         ],
-        "access_sites_with_required_backbone_links": not missing_redundancy,
-        "demand_missing_backbone_redundancy": [
+        "every_site_meets_homing_degree": not missing_redundancy,
+        "sites_below_homing_degree": [
             {"id": site_id, "name": sites_by_id[site_id].name}
             for site_id in missing_redundancy
         ],

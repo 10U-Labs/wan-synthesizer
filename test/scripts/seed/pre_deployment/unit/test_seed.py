@@ -37,12 +37,6 @@ from seed import (
 )
 
 _TENANT_YML = """\
-access:
-  forced:
-    homes:
-      - source: Kirtland, NM
-        target: Nellis, NV
-  homing_degree: 1
 backbone:
   coverage_target_miles: 500
   degree_exempt:
@@ -64,6 +58,11 @@ backbone:
       - source: Luke, AZ
         target: Link, TX
   promote_high_degree_convergences: false
+homing:
+  degree: 1
+  forced:
+    - source: Kirtland, NM
+      target: Nellis, NV
 inputs:
   forced: offnet/off.csv
   locations:
@@ -461,11 +460,11 @@ def test_push_tenants_puts_the_convergence_promotion_resource(
     assert bodies["tenants/f-35/convergence-promotion"] == {"promote": False}
 
 
-def test_push_tenants_puts_the_access_homing_degree_resource(
+def test_push_tenants_puts_the_homing_degree_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/access-homing-degree"] == {"degree": 1}
+    assert bodies["tenants/f-35/homing-degree"] == {"degree": 1}
 
 
 def test_push_tenants_puts_the_backbone_number_of_diverse_circuits_resource(

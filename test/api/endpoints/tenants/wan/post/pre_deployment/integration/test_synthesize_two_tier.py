@@ -34,7 +34,7 @@ UNFORCED_RING = fixtures.forced_circuit_artifacts(_MESHED_RING, OperatorCircuits
 
 _DEMAND_RING = fixtures.ring_inputs_with_demand("S1", "P0")
 FORCED_HOME = fixtures.forced_circuit_artifacts(
-    _MESHED_RING, OperatorCircuits(access=(NamedCircuit("S1", "P3"),)), _DEMAND_RING
+    _MESHED_RING, OperatorCircuits(homes=(NamedCircuit("S1", "P3"),)), _DEMAND_RING
 )
 UNFORCED_HOME = fixtures.forced_circuit_artifacts(_MESHED_RING, OperatorCircuits(), _DEMAND_RING)
 

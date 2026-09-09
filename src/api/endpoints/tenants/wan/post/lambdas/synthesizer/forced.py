@@ -24,18 +24,18 @@ def forced_backbone_pairs(
     return _pairs_within(backbone_set, circuits.backbone)
 
 
-def apply_forced_access_homes(
-    access: Site,
+def apply_forced_homes(
+    site: Site,
     completed: list[str],
     circuits: ForcedCircuits,
     pop_by_id: dict[str, Site],
     homes: int,
 ) -> list[str]:
-    required = [backbone for acc, backbone in sorted(circuits.access) if acc == access.id]
+    required = [backbone for homed, backbone in sorted(circuits.homes) if homed == site.id]
     if not required:
         return completed
     nearest = sorted(
         (home for home in completed if home not in required),
-        key=lambda home: haversine_miles(access, pop_by_id[home]),
+        key=lambda home: haversine_miles(site, pop_by_id[home]),
     )
     return (required + nearest)[:homes]

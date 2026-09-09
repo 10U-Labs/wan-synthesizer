@@ -1,8 +1,4 @@
 ---
-access:
-  forced:
-    homes: []
-  homing_degree: 2
 backbone:
   coverage_target_miles: 745
   forced:
@@ -28,6 +24,9 @@ backbone:
     nodes: []
     paths: []
   promote_high_degree_convergences: false
+homing:
+  degree: 2
+  forced: []
 inputs:
   locations:
     DAF: data/tenants/daf.csv

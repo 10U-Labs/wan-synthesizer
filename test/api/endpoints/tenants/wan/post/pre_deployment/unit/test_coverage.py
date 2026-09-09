@@ -17,7 +17,7 @@ from synthesizer.coverage import (
     coverage_haul_profile,
     coverage_report,
     coverage_worst_haul,
-    demand_hauls,
+    hauls,
     grow_backbone_for_coverage,
 )
 
@@ -35,7 +35,7 @@ def _wired_to_base(names: tuple[str, ...]) -> dict[tuple[str, str], FiberSegment
     )
 
 
-def test_demand_hauls_report_each_site_by_its_nearest_node() -> None:
+def test_hauls_report_each_site_by_its_nearest_node() -> None:
     pops = {
         "node_w": pop("node_w", 40.0, -100.0),
         "node_e": pop("node_e", 40.0, -80.0),
@@ -46,7 +46,7 @@ def test_demand_hauls_report_each_site_by_its_nearest_node() -> None:
         haversine_miles(pops["near"], pops["node_w"]),
         haversine_miles(pops["far"], pops["node_w"]),
     ]
-    result = demand_hauls(("node_w", "node_e"), [pops["near"], pops["far"]], pops)
+    result = hauls(("node_w", "node_e"), [pops["near"], pops["far"]], pops)
     assert result == pytest.approx(expected)
 
 
@@ -72,10 +72,10 @@ def test_coverage_candidate_hauls_drops_an_infeasible_addition() -> None:
     inputs = synthesis_inputs_from_fiber(
         ["c1", "c2", "z", "y"], fiber, {"c1", "c2", "z"}, [access("s", 0.0, 0.05)]
     )
-    hauls = coverage_candidate_hauls(("c1", "c2"), ["z"], inputs, search_plan([]), {
+    scored = coverage_candidate_hauls(("c1", "c2"), ["z"], inputs, search_plan([]), {
         "c1": pop("c1", 0.0, 0.0), "c2": pop("c2", 0.0, 0.1), "z": pop("z", 0.0, 0.2)
     })
-    assert not hauls
+    assert not scored
 
 
 _RANKING_FIBER = _wired_to_base(

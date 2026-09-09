@@ -56,7 +56,7 @@ class Tuning:
     compass_sector_count: int = 8
     backbone_number_of_diverse_circuits: int = 3
     backbone_coverage_target_miles: int = 600
-    access_homing_degree: int = 2
+    homing_degree: int = 2
     search_memory_budget: SearchMemoryBudget = field(default_factory=SearchMemoryBudget)
 
 @dataclass(frozen=True)
@@ -81,13 +81,13 @@ class SynthesisParams:
 @dataclass(frozen=True)
 class OperatorCircuits:
     backbone: tuple[NamedCircuit, ...] = ()
-    access: tuple[NamedCircuit, ...] = ()
+    homes: tuple[NamedCircuit, ...] = ()
     removed_backbone: tuple[NamedCircuit, ...] = ()
 
 @dataclass(frozen=True)
 class ForcedCircuits:
     backbone: frozenset[tuple[str, str]] = frozenset()
-    access: frozenset[tuple[str, str]] = frozenset()
+    homes: frozenset[tuple[str, str]] = frozenset()
     removed_backbone: frozenset[tuple[str, str]] = frozenset()
     required_backbone: frozenset[str] = frozenset()
 
@@ -123,8 +123,8 @@ class ValidationReport(TypedDict):
     degree_deficient_sites: list[dict[str, object]]
     biconnected_no_articulation_points: bool
     articulation_points: list[dict[str, str]]
-    access_sites_with_required_backbone_links: bool
-    demand_missing_backbone_redundancy: list[dict[str, str]]
+    every_site_meets_homing_degree: bool
+    sites_below_homing_degree: list[dict[str, str]]
     backbone_meets_mesh_link_target: bool
     backbone_diverse_circuits_deficient: list[dict[str, object]]
     backbone_meets_independent_mesh_link_target: bool

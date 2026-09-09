@@ -40,7 +40,7 @@ def test_a_seat_no_fiber_touches_at_all_is_a_group_of_one() -> None:
     }) == [["alone"], ["east", "hub", "west"]]
 
 
-def test_a_seat_reached_only_through_an_access_homing_is_its_own_group() -> None:
+def test_a_seat_reached_only_through_a_homing_is_its_own_group() -> None:
     assert backbone_groups({
         "backbone": [*_SPLIT["backbone"][:3], _seat("far")],
         "paths": [*_JOINED, _segment("tenant_to_backbone", "east", "far")],

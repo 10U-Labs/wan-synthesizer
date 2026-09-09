@@ -491,17 +491,17 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/access-homing-degree": {
+    "/wan-synthesizer/tenants/{tenant}/homing-degree": {
       "get": {
-        "summary": "A tenant's access homing degree (input).",
+        "summary": "A tenant's homing degree (input).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The access homing degree." } },
+        "responses": { "200": { "description": "The homing degree." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       },
       "put": {
-        "summary": "Replace a tenant's access homing degree (stores only).",
+        "summary": "Replace a tenant's homing degree (stores only).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The access homing degree was replaced." } },
+        "responses": { "200": { "description": "The homing degree was replaced." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },

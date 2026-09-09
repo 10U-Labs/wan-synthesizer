@@ -12,7 +12,7 @@ _SEGMENTS = {
 _TRANSIT = ("north", "south")
 ARTIFACTS = fixtures.synthesis_over_segments(
     _SITES, _SEGMENTS, _ASKED_FOR, _TRANSIT,
-    min_backbone_count=1, access_homing_degree=1,
+    min_backbone_count=1, homing_degree=1,
 )
 
 

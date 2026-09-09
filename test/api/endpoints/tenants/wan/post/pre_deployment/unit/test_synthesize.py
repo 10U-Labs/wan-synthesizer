@@ -51,7 +51,7 @@ _ONE_NODE = SynthesisParams(
     min_backbone_count=1,
     max_backbone_count=1,
     promote_high_degree_convergences=False,
-    tuning=Tuning(backbone_number_of_diverse_circuits=1, access_homing_degree=1),
+    tuning=Tuning(backbone_number_of_diverse_circuits=1, homing_degree=1),
 )
 
 

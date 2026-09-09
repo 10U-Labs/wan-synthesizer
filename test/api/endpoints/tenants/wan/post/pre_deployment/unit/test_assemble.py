@@ -30,7 +30,7 @@ def _dual_inputs(s_coord: tuple[float, float] = (0.0, 0.05)) -> SynthesisInputs:
     )
 
 
-def _access_homing_counts(access_circuits: list[AccessCircuit]) -> dict[str, int]:
+def _homing_counts(access_circuits: list[AccessCircuit]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for access_circuit in access_circuits:
         counts[access_circuit.source] = counts.get(access_circuit.source, 0) + 1
@@ -39,11 +39,11 @@ def _access_homing_counts(access_circuits: list[AccessCircuit]) -> dict[str, int
 
 def test_assign_access_homes_a_demand_site_to_two_backbone_nodes() -> None:
     result = assign_access(("c1", "c2"), _dual_inputs(), search_plan([]))
-    assert _access_homing_counts(result or []) == {"s": 2}
+    assert _homing_counts(result or []) == {"s": 2}
 
 
 def test_assign_access_returns_none_when_backbone_smaller_than_the_homing_degree() -> None:
-    assert assign_access(("c1",), _dual_inputs(), search_plan([], access_homing_degree=2)) is None
+    assert assign_access(("c1",), _dual_inputs(), search_plan([], homing_degree=2)) is None
 
 
 def test_assign_access_homes_to_the_configured_count() -> None:
@@ -57,12 +57,12 @@ def test_assign_access_homes_to_the_configured_count() -> None:
         ["c1", "c2", "c3"], triple_fiber, {"c1", "c2", "c3"},
         [access("s", 0.0, 0.05)], {"c1": (0.0, 0.0), "c2": (0.0, 0.1), "c3": (0.0, 0.2)},
     )
-    result = assign_access(("c1", "c2", "c3"), inputs, search_plan([], access_homing_degree=3))
-    assert _access_homing_counts(result or []) == {"s": 3}
+    result = assign_access(("c1", "c2", "c3"), inputs, search_plan([], homing_degree=3))
+    assert _homing_counts(result or []) == {"s": 3}
 
 
 def test_assign_access_leads_with_a_forced_home() -> None:
-    plan = replace(search_plan([]), forced_circuits=ForcedCircuits(access=frozenset({("s", "c2")})))
+    plan = replace(search_plan([]), forced_circuits=ForcedCircuits(homes=frozenset({("s", "c2")})))
     result = assign_access(("c1", "c2"), _dual_inputs((0.0, 0.0)), plan)
     assert {
         circuit.target for circuit in result or [] if circuit.source == "s"
@@ -71,7 +71,7 @@ def test_assign_access_leads_with_a_forced_home() -> None:
 
 def test_build_synthesis_returns_none_without_homing() -> None:
     inputs = _dual_inputs()
-    plan = search_plan([], access_homing_degree=2)
+    plan = search_plan([], homing_degree=2)
     assert build_synthesis_for_backbone(("c1",), inputs, plan) is None
 
 

@@ -14,7 +14,6 @@ _ONLY_VERSION = "null"
 CARRIER_FILES = frozenset({"pops.json", "fiber-segments.json"})
 PROVIDER_FILES = frozenset({"regions.json"})
 TENANT_FILES = frozenset({
-    "access-homing-degree.json",
     "backbone-node-count.json",
     "backbone-number-of-diverse-circuits.json",
     "convergence-promotion.json",
@@ -22,6 +21,7 @@ TENANT_FILES = frozenset({
     "forced-backbone-nodes.json",
     "forced-homes.json",
     "forced-paths.json",
+    "homing-degree.json",
     "knobs.json",
     "label.json",
     "locations.json",

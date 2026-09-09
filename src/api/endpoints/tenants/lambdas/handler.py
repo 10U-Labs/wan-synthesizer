@@ -26,7 +26,7 @@ _INPUTS = frozenset({
     "degree-exempt-backbone-nodes",
     "backbone-node-count",
     "backbone-number-of-diverse-circuits",
-    "access-homing-degree",
+    "homing-degree",
     "convergence-promotion",
     "knobs",
     "settings",
