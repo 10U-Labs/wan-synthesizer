@@ -32,11 +32,17 @@ def _random_segments(rng: random.Random) -> dict[tuple[str, str], float]:
     return {**_blob(_LEFT, rng), **_blob(_RIGHT, rng)}
 
 
+_ACCESS = [
+    fixtures.access_site("west", 38.0, -111.0),
+    fixtures.access_site("east", 38.0, -103.0),
+]
+
+
 def _measured(seed: int) -> tuple[float, str] | None:
     segments = _random_segments(random.Random(seed))
     try:
         artifacts = fixtures.synthesis_over_chosen_fiber(
-            fixtures.fiber_segments_from(segments), _SEATS, _ASKED_FOR
+            fixtures.fiber_segments_from(segments), _SEATS, _ASKED_FOR, list(_ACCESS)
         )
     except ValueError:
         return None

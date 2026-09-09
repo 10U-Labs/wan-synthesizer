@@ -285,13 +285,14 @@ def synthesis_over_chosen_fiber(
     fiber: dict[tuple[str, str], FiberSegment],
     seats: int,
     number_of_diverse_circuits: int,
+    access_sites: list[Site] | None = None,
 ) -> SynthesisArtifacts:
     cities = sorted({city for pair in fiber for city in pair})
     return run_synthesis(
         [
             carrier_pop(city, 38.0, -115.0 + 2.0 * index)
             for index, city in enumerate(cities)
-        ],
+        ] + (access_sites or []),
         fiber,
         SynthesisParams(
             min_backbone_count=seats,
