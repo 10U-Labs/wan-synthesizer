@@ -229,7 +229,7 @@ def build_merged_carriers(api: str) -> None:
 
 def build_tenants(api: str, tenants: list[str]) -> None:
     for tid in tenants:
-        print(f"tenant {tid}: building WAN", flush=True)
+        print(f"tenant {tid}: synthesizing WAN", flush=True)
         _post(api, f"tenants/{tid}/wan")
 
 

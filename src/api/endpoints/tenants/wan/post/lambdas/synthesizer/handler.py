@@ -143,15 +143,15 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     tenant = event["tenant"]
     status_key = f"tenants/{tenant}/wan-status.json"
     _write_json(client, status_key, {"status": "synthesizing", "tenant": tenant})
-    logger.info("Build started for %s", tenant)
+    logger.info("Synthesis started for %s", tenant)
     try:
         wan, delivered = _build_wan(client, tenant)
     except Exception as exc:
-        logger.warning("Build failed for %s: %s", tenant, exc)
+        logger.warning("Synthesis failed for %s: %s", tenant, exc)
         _delete(client, f"tenants/{tenant}/wan.json")
         _write_json(client, status_key, {"status": "fail", "reason": str(exc)})
         return {"status": "fail", "tenant": tenant}
     _write_json(client, f"tenants/{tenant}/wan.json", wan)
     _write_json(client, status_key, {"status": "success", **delivered})
-    logger.info("Build succeeded for %s", tenant)
+    logger.info("Synthesis succeeded for %s", tenant)
     return {"status": "success", "tenant": tenant}

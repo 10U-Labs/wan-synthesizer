@@ -199,7 +199,7 @@ async function render(tenantId) {
       getJSON(`${API_BASE}/tenants/${tenantId}/paths`),
     ]);
   } catch (error) {
-    document.getElementById("counts").textContent = "WAN not built yet";
+    document.getElementById("counts").textContent = "WAN not synthesized yet";
     return;
   }
   showCounts(sites);
