@@ -21,11 +21,14 @@ const LINK_STYLE = {
 
 const VIEW_CENTER = [39.5, -98.35];
 
+const BACKBONE_POP = "Backbone PoP";
+
 const LEGEND_ROWS = [
-  { swatch: "dot", color: ROLE_STYLE.backbone.color, label: "WAN Backbone Node" },
-  { swatch: "dot", color: PROVIDER_STYLE.color, label: "Provider" },
+  { swatch: "dot", color: ROLE_STYLE.backbone.color, label: BACKBONE_POP },
+  { swatch: "dot", color: PROVIDER_STYLE.color, label: "Provider region" },
   { swatch: "dot", color: ROLE_STYLE.tenant.color, label: "Location", tenant: true },
   { swatch: "line", color: LINK_STYLE.backbone.color, label: "Fiber" },
+  { swatch: "line", color: LINK_STYLE.homing.color, label: "Homing circuit" },
 ];
 
 const map = L.map("map").setView(VIEW_CENTER, 4);
@@ -69,7 +72,7 @@ function styleFor(site) {
 }
 
 const TIER_PREFIX = {
-  backbone: "BACKBONE NODE",
+  backbone: BACKBONE_POP,
 };
 
 function cityName(site) {
@@ -186,7 +189,10 @@ function showCounts(sites) {
       tally[site.tier_role] += 1;
     }
   }
-  counts.textContent = `POPS ${tally.backbone} TENANTS ${tally.tenant} PROVIDERS ${tally.provider}`;
+  counts.textContent =
+    `BACKBONE PoPs ${tally.backbone}`
+    + ` LOCATIONS ${tally.tenant}`
+    + ` PROVIDER REGIONS ${tally.provider}`;
 }
 
 async function render(tenantId) {
