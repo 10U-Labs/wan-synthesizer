@@ -16,9 +16,9 @@ message. One line per issue: GitHub binds the keyword to a single reference, so
 
 **Why:** there is no pull request to close anything, per
 [commit-straight-to-main](commit-straight-to-main.md), so the commit message is
-the only place the link can live. Naming the issue in prose — "GitHub issue
-#114." — references it without closing it, which is what leaves a solved issue
-open and waiting for somebody to notice. Closing by hand afterwards, with a
+the only place the link can live. Naming the issue in prose, as "GitHub
+issue #114.", references it without closing it, which is what leaves a solved
+issue open and waiting for somebody to notice. Closing by hand afterwards, with a
 comment saying which commit did it, is a second record of what the message
 already says and it is not how this repository works.
 
