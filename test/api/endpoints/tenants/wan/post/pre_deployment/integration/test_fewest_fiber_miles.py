@@ -124,6 +124,34 @@ def test_the_delivered_synthesis_orders_only_fiber_selected_for_it() -> None:
     assert set(OFFERED_ARTIFACTS.synthesis.fiber_segment_keys) <= _fiber_the_selection_holds()
 
 
+SHARED_TRANSIT_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
+    fixtures.SHARED_TRANSIT_SITES,
+    fixtures.SHARED_TRANSIT_SEGMENTS,
+    _ASKED_FOR,
+    fixtures.SHARED_TRANSIT_TRANSIT,
+)
+
+
+def _fiber_selected_where_two_carriers_share_a_pop() -> frozenset[tuple[str, str]]:
+    return select_fiber(FiberInputs(
+        fixtures.SHARED_TRANSIT_SITES, fixtures.SHARED_TRANSIT_FIBER,
+        _ASKED_FOR, len(fixtures.SHARED_TRANSIT_SITES),
+        adjacency_by_carrier(fixtures.SHARED_TRANSIT_FIBER),
+    )).segments
+
+
+def test_the_synthesis_over_a_shared_pop_is_drawn_over_the_fiber_selected_for_it() -> None:
+    assert set(SHARED_TRANSIT_ARTIFACTS.synthesis.fiber_segment_keys) <= (
+        _fiber_selected_where_two_carriers_share_a_pop()
+    )
+
+
+def test_that_synthesis_runs_no_further_than_a_tenth_past_the_floor_it_publishes() -> None:
+    assert SHARED_TRANSIT_ARTIFACTS.synthesis.metrics.physical_miles <= (
+        1.1 * SHARED_TRANSIT_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles
+    )
+
+
 SHORT_AND_LONG_ARTIFACTS = fixtures.synthesis_over_segments(
     fixtures.SHORT_AND_LONG_SITES,
     fixtures.SHORT_AND_LONG_SEGMENTS,

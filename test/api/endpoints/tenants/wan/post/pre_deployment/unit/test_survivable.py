@@ -206,6 +206,32 @@ def test_the_floor_is_measured_over_the_requirements_the_build_is_held_to() -> N
     )
 
 
+_SHARED_TRANSIT_SELECTION = _selected(
+    fixtures.SHARED_TRANSIT_FIBER, fixtures.SHARED_TRANSIT_SITES, seat_cap=2
+)
+
+
+def _shared_transit_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, int]:
+    held = {segment: fixtures.SHARED_TRANSIT_FIBER[segment] for segment in segments}
+    return diverse_circuit_ceilings(CircuitProofInputs(
+        fixtures.SHARED_TRANSIT_SITES,
+        build_adjacency(held),
+        _WAYS_OUT,
+        2,
+        adjacency_by_carrier(held),
+    ))
+
+
+def test_the_fiber_selected_where_two_carriers_share_a_pop_carries_both_ways_out() -> None:
+    assert _shared_transit_ceilings(_SHARED_TRANSIT_SELECTION.segments) == {"a": 2, "b": 2}
+
+
+def test_the_floor_prices_the_way_round_the_pop_two_carriers_share() -> None:
+    assert _SHARED_TRANSIT_SELECTION.lower_bound_miles >= (
+        fixtures.SHARED_TRANSIT_MILES - _SLACK
+    )
+
+
 _TWO_TRIANGLES = physical({
     ("a", "b"): 1.0, ("b", "c"): 1.0, ("a", "c"): 1.0,
     ("d", "e"): 1.0, ("e", "f"): 1.0, ("d", "f"): 1.0,

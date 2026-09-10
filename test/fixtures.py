@@ -690,6 +690,19 @@ OFFERED_WAYS_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
 }
 OFFERED_WAYS_FIBER = carrier_fiber_segments(OFFERED_WAYS_SEGMENTS)
 
+SHARED_TRANSIT_SITES = ("a", "b")
+SHARED_TRANSIT_TRANSIT = ("m", "x", "y")
+SHARED_TRANSIT_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
+    ("a", "m"): (10.0, ("lumen", "zayo")),
+    ("b", "m"): (10.0, ("lumen", "zayo")),
+    ("a", "x"): (50.0, ("zayo",)),
+    ("b", "x"): (50.0, ("zayo",)),
+    ("a", "y"): (60.0, ("lumen",)),
+    ("b", "y"): (60.0, ("lumen",)),
+}
+SHARED_TRANSIT_FIBER = carrier_fiber_segments(SHARED_TRANSIT_SEGMENTS)
+SHARED_TRANSIT_MILES = 120.0
+
 SHORT_AND_LONG_SITES = ("s", "t", "u")
 SHORT_AND_LONG_TRANSIT = ("far", "near")
 SHORT_AND_LONG_SEGMENTS = {
