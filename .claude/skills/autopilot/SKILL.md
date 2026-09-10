@@ -5,17 +5,15 @@ description: Start or stop the standing reminders that keep an autonomous issue-
 
 # Autopilot
 
-Six recurring reminders, one per standing rule, that fire back into this session while it works through open issues on its own. Each rule gets its own reminder so that no rule can be quietly dropped from a merged block of text, and the fire times are staggered across the ten-minute period so they arrive one at a time rather than as a wall.
+Six recurring reminders, one per standing rule, that fire back into this session while it works through open issues on its own. Each rule gets its own reminder so that no rule can be quietly dropped from a merged block of text, and the fire times are staggered across the ten-minute period so they arrive one at a time.
 
 The argument is the sub-command: `start` or `stop`.
 
-`CronCreate`, `CronList` and `CronDelete` are deferred tools: the session is told their names but not their schemas, so a call made before the schema is fetched fails with `InputValidationError` and creates nothing. Fetch them first with `ToolSearch`, query `select:CronCreate,CronList,CronDelete`: `start` calls `CronCreate`, `stop` calls `CronList` and `CronDelete`.
+`CronCreate`, `CronList` and `CronDelete` are deferred tools: a call made before the schema is fetched fails with `InputValidationError` and creates nothing. Fetch them first with `ToolSearch`, query `select:CronCreate,CronList,CronDelete`.
 
 ## Start
 
-Every open issue in the repository the session is running in is in scope, and `start` takes no argument. An issue reached by following a `blocked_by` edge out of that set is in scope as well, whatever repository it lives in, because the two repositories number their issues independently and neither sequence means anything in the other. The floor this used to take was a number below which open issues were left alone, which an edge says better: an issue nobody should work yet is one that genuinely cannot be finished until another is, written down where every reader can see it rather than held as a number one session was told once.
-
-Create six jobs with `CronCreate`, exactly as listed below. Use `recurring: true` (the default), and take all six prompts verbatim. Each `cron` field is a distinct offset within the same ten-minute period, so the six reminders never land together:
+Create six jobs with `CronCreate`, exactly as listed below. Use `recurring: true` (the default), and take all six prompts verbatim:
 
 | Offset | Cron | Prompt |
 | --- | --- | --- |
@@ -28,34 +26,10 @@ Create six jobs with `CronCreate`, exactly as listed below. Use `recurring: true
 
 Then tell the user that six reminders are running, and the two limits that come with them: the jobs live in this session only and are gone when it ends, and recurring jobs auto-expire after seven days.
 
-Then start working, in the same turn that created the jobs. Read the open issues with `gh issue list`, then read `gh api repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by` for each of them; every entry names the repository its blocker lives in. Follow those entries, and the entries of the issues they reach, until nothing new comes back, and add every open issue found this way to the set. Then take the lowest-numbered issue in the set that no open issue blocks, preferring the repository the session is running in when two are equally unblocked, and begin solving it under the standing rules the reminders carry — committing in whichever repository its `Proposed Solution` names, and reading that repository's CI to confirm it. Running this skill is starting the work; the six jobs only keep it on the rails once it is going.
+Then start working, in the same turn that created the jobs. Every open issue in the repository the session is running in is in scope, and so is any issue reached by following a `blocked_by` edge out of that set, whatever repository it lives in. Read the open issues with `gh issue list`, then read `gh api repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by` for each of them and for each issue those entries reach, until nothing new comes back. Take the lowest-numbered issue in the set that no open issue blocks, preferring the repository the session is running in when two are equally unblocked, and solve it — committing in whichever repository its `Proposed Solution` names, and reading that repository's CI to confirm it.
 
-Most open issues block nothing and are blocked by nothing, so that traversal usually hands back the lowest-numbered open issue in this repository. That is the intended answer and not a sign the edges are missing.
-
-What is particular to autopilot is that the traversal reaches another repository only by following an edge into it, and true edges across a repository boundary are rare. A session started here will normally work this repository's issues alone. An issue in `10U-Labs/10ulabs.com` that nothing here genuinely waits on is not reached, and the person who wants it worked has to say so.
+`.claude/memories/` in this repository is the rulebook wherever the session is working, including in another repository the traversal reaches.
 
 ## Stop
 
-Call `CronList`, then call `CronDelete` once per job it returns — all of them, not only the six this skill created. "Delete all your reminders" means the session ends with an empty schedule. Call `CronList` again afterwards to confirm it is empty, and report how many jobs were deleted.
-
-`CronList` returning nothing is not a failure; say the schedule was already empty and stop.
-
-## Notes
-
-Starting autopilot begins the work in the same turn, changed on 2026-08-18. It used to create the jobs and stop, on the reasoning that arming the reminders and doing the work were separate things. What that produced was a session sitting idle after `/autopilot start 6`, which is how the command was written while `start` still took a floor: a cron job fires only when the session is idle and the first one is up to ten minutes out, so the skill looked like it had not worked at all. A start at eight minutes past gets going in a minute and looks fine; a start at ten minutes past sits silent for the whole period, and that is the same skill on the same rules.
-
-The three cron tools are deferred, which is why `Start` and `Stop` both open by fetching their schemas. A deferred tool is listed to the session by name only, so the first `CronCreate` call is rejected as invalid input and no job is created — a failure that reads like the tool is missing rather than like a step was skipped.
-
-Cron jobs fire only while the session is idle, never mid-turn, because a turn cannot be preempted. That limit is the reason this skill does not try to correct drift in the middle of a task: what it can do is restart a loop that has stalled, which is the failure it is there to catch.
-
-The `:09` reminder asks for the problem to be solved, changed on 2026-09-10. It used to ask for a GitHub issue to be filed — seven sections for a problem in the program and two for a problem in a config, a map, a workflow file or the docs — so a session that ran into anything on its way through an issue wrote the finding down and carried on, and the finding waited for another session. What it asks for now is the fix, in the session that met the problem and under the same standing rules as the issue it was working on. The sections it used to name are not lost with it: what an issue owes is a question for whoever files one, and it is not this skill's to carry.
-
-The `:04` and `:06` reminders name `TaskCreate` and `TaskUpdate`, changed on 2026-08-22. They used to ask for "a set of indivisible Claude tasks" and that "Claude tasks are indivisible", which names no tool and so reads as a claim about how small a unit of work ought to be — something a session already believes it is doing, and so a reminder that changes nothing. The session started that day took GitHub issue #120 and spent one long turn on a single one of its four regression tests, writing no task down and reporting nothing until it was asked what was going on; both reminders fired throughout, and so did the harness's own notices that the task tools had not been used. What the reminders ask for now is the session's task list, which the user can see.
-
-The skill body is read when the skill is invoked, so editing this file does not reach a session already running under it. Whoever lands a change here has to `/autopilot stop` and `/autopilot start` again before it takes effect: a session that solved the issue which changed this file and then carried on is still working from the scope it was started with, and it will report that it has run out of issues rather than that it is reading the wrong set of them.
-
-`.claude/memories/` in this repository is the rulebook wherever the session is working, including in another repository the dependency traversal reaches. Verification in CI only, one issue per commit straight to `main`, and everything else those memories carry holds there too. `10U-Labs/10ulabs.com` states none of its own, and a session working there under no rules at all is the worse outcome.
-
-The reminders at `:05` and `:08` were removed on 2026-09-10, leaving six. The `:05` reminder asked that every paragraph lead with what the thing is for, in chat as much as in issues and commits. The `:08` reminder governed the `blocked_by` edges on a filed issue — that an edge says this issue cannot be finished until that one is, and nothing else. Both were about how something is written down rather than about the work, and the `:08` reminder no longer has a subject at all now that the `:09` reminder asks for the fix instead of the filing. The `blocked_by` edges themselves are untouched: `Start` still follows them out of the open issues to find what is in scope, because the edges that exist say what cannot be finished yet.
-
-A reminder in this file is named by the minute it fires — the `:01` reminder, the `:09` reminder — and never by the line it sits on. The six minutes are the only numbers here a reader can use, and a second set of numbers beside them collides: line 22 is the `:01` reminder, so "the reminder at `:22`" sends a reader looking for one that fires at minute 22, and there is none. This is the same rule GitHub issue #117 settled for the rest of the repository on 2026-08-22, arrived at from the other direction — prose carries the name and not the line number, because the number moves and the name does not.
+Call `CronList`, then call `CronDelete` once per job it returns — all of them, not only the six this skill created. Call `CronList` again afterwards to confirm it is empty, and report how many jobs were deleted. `CronList` returning nothing is not a failure; say the schedule was already empty and stop.
