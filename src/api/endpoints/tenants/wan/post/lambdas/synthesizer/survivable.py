@@ -206,23 +206,6 @@ def _ways_out_rows(site: str, writing: _Writing) -> _WaysOut:
     )
 
 
-def _between_rows(root: str, peer: str, writing: _Writing) -> list[_Requirement]:
-    asking = frozenset({peer})
-    spared = frozenset(writing.inputs.backbone_ids)
-    over = {
-        carrier: _over_land(root, asking, segments, writing)
-        for carrier, segments in writing.by_carrier.items()
-    }
-    capacity = {
-        carrier: _carried(
-            _Requirement(root, asking, spared, writing.inputs.ways_out, segments),
-            writing.whole,
-        )
-        for carrier, segments in over.items()
-    }
-    return _rows_for(_Asked(root, asking, spared, over, capacity), writing)
-
-
 def _writing(
     inputs: FiberInputs, fiber: Mapping[tuple[str, str], float]
 ) -> _Writing:
@@ -255,20 +238,8 @@ def _requirements(
     inputs: FiberInputs, fiber: Mapping[tuple[str, str], float]
 ) -> list[_Requirement]:
     writing = _writing(inputs, fiber)
-    ways_out = {site: _ways_out_rows(site, writing) for site in inputs.backbone_ids}
-    if not ways_out:
-        return []
-    root = min(
-        ways_out.items(),
-        key=lambda owed: (-sum(row.required for row in owed[1].together), owed[0]),
-    )[0]
-    return [
-        row for rows in ways_out.values() for row in rows.toward_each + rows.together
-    ] + [
-        row
-        for peer in sorted(set(inputs.backbone_ids) - {root})
-        for row in _between_rows(root, peer, writing)
-    ]
+    ways_out = [_ways_out_rows(site, writing) for site in inputs.backbone_ids]
+    return [row for owed in ways_out for row in owed.toward_each + owed.together]
 
 
 def _shortfalls(
