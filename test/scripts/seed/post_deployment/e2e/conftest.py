@@ -37,3 +37,14 @@ def delivered_syntheses_fixture() -> list[dict[str, Any]]:
         time.sleep(_BUILD_POLL_SECONDS)
         syntheses = _read_syntheses()
     return syntheses
+
+
+@pytest.fixture(name="published_syntheses")
+def published_syntheses_fixture(
+    delivered_syntheses: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    return [
+        synthesis
+        for synthesis in delivered_syntheses
+        if synthesis["status"].get("status") == "success"
+    ]

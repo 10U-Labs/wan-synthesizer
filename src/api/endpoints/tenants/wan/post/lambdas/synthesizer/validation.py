@@ -101,6 +101,36 @@ def backbone_mesh_survives_any_one_link_loss(synthesis: Synthesis) -> bool:
 def backbone_mesh_survives_any_one_site_loss(synthesis: Synthesis) -> bool:
     return _backbone_mesh_survives(synthesis, survives_any_one_site_loss)
 
+def capped_seats(targets: MeshRequirements) -> frozenset[str]:
+    ceilings = targets.ceilings
+    if ceilings is None:
+        return frozenset()
+    return frozenset(site for site, ceiling in ceilings.items() if ceiling < 2)
+
+def circuits_clear_of_a_capped_seat(
+    synthesis: Synthesis, targets: MeshRequirements
+) -> list[SynthesisCircuit]:
+    capped = capped_seats(targets)
+    return [
+        drawn_circuit
+        for drawn_circuit in synthesis.drawn_circuits
+        if drawn_circuit.purpose == "backbone_mesh"
+        and not capped & {drawn_circuit.source, drawn_circuit.target}
+    ]
+
+def backbone_mesh_cut_pops(
+    synthesis: Synthesis, targets: MeshRequirements
+) -> list[str]:
+    if targets.number_of_diverse_circuits < 2:
+        return []
+    segments: set[tuple[str, str]] = set()
+    for drawn_circuit in circuits_clear_of_a_capped_seat(synthesis, targets):
+        segments |= fiber_segments_along(drawn_circuit.pop_ids)
+    pops = {pop for segment in segments for pop in segment}
+    if len(connected_components(pops, segments)) != 1:
+        return []
+    return sorted(articulation_points(pops, segments))
+
 def circuits_out_of(
     drawn_circuits: list[SynthesisCircuit], site: str
 ) -> list[tuple[str, frozenset[str]]]:
@@ -294,6 +324,7 @@ def validate_synthesis(
     independence_deficient = backbone_mesh_independence_deficient(
         synthesis, sites_by_id, targets
     )
+    cut_pops = backbone_mesh_cut_pops(synthesis, targets)
 
     return {
         "connected": len(components) == 1,
@@ -335,4 +366,8 @@ def validate_synthesis(
             backbone_mesh_survives_any_one_link_loss(synthesis),
         "backbone_mesh_survives_any_one_site_loss":
             backbone_mesh_survives_any_one_site_loss(synthesis),
+        "backbone_mesh_has_no_cut_pop": not cut_pops,
+        "backbone_mesh_cut_pops": [
+            {"id": pop, "name": sites_by_id[pop].name} for pop in cut_pops
+        ],
     }

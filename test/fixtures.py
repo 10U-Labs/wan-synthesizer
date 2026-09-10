@@ -121,6 +121,17 @@ def meshed_backbone_synthesis(
     )
 
 
+SPLIT_AT_TRANSIT_CITIES = "abcxy"
+SPLIT_AT_TRANSIT_SEGMENTS = {
+    ("a", "x"): 1.0,
+    ("x", "b"): 1.0,
+    ("x", "c"): 1.0,
+    ("b", "c"): 1.0,
+    ("a", "y"): 1.0,
+    ("y", "c"): 1.0,
+}
+
+
 SPLIT_BACKBONE = ("a", "b", "c", "d")
 SPLIT_BACKBONE_CITIES = "abcdt"
 SPLIT_BACKBONE_SEGMENTS = {("a", "t"): 50.0, ("t", "b"): 50.0, ("c", "d"): 100.0}

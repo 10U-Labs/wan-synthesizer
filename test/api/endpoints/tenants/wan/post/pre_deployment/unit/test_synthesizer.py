@@ -229,3 +229,31 @@ def test_logs_progress_at_info(
         _run(synthesizer, monkeypatch)
     messages = " ".join(record.getMessage() for record in caplog.records)
     assert all(word in messages for word in ("f-35", "Publishing"))
+
+
+def _run_over_a_published_wan(module: Any, monkeypatch: pytest.MonkeyPatch) -> dict[str, bytes]:
+    _stub_pipeline(module, monkeypatch)
+
+    def _raise(*_args: Any) -> Any:
+        raise ValueError("Loss of one PoP splits the WAN at: Cheyenne, WY")
+
+    monkeypatch.setattr(module, "synthesize_two_tier", _raise)
+    objects = _inputs(module)
+    objects["tenants/f-35/wan.json"] = b'{"backbone-nodes": []}'
+    with patch("boto3.client", return_value=fake_s3(objects)):
+        module.lambda_handler({"tenant": "f-35"}, None)
+    return objects
+
+
+def test_a_refused_build_clears_the_wan_it_published_before(
+    synthesizer: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert "tenants/f-35/wan.json" not in _run_over_a_published_wan(synthesizer, monkeypatch)
+
+
+def test_a_refused_build_records_the_reason_it_refused(
+    synthesizer: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    objects = _run_over_a_published_wan(synthesizer, monkeypatch)
+    status = json.loads(objects["tenants/f-35/wan-status.json"])
+    assert status["reason"] == "Loss of one PoP splits the WAN at: Cheyenne, WY"

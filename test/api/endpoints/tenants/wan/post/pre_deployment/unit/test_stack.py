@@ -61,6 +61,13 @@ def test_synthesizer_role_grants_store_access(synth_main: dict[str, object]) -> 
     assert "s3:PutObject" in str(policy["policy"])
 
 
+def test_synthesizer_role_may_clear_a_refused_tenants_wan(
+    synth_main: dict[str, object]
+) -> None:
+    policy = _resource(synth_main, "aws_iam_role_policy", "synthesizer_s3")
+    assert "s3:DeleteObject" in str(policy["policy"])
+
+
 def test_synthesizer_log_group_retention(synth_main: dict[str, object]) -> None:
     log_group = _resource(synth_main, "aws_cloudwatch_log_group", "synthesizer")
     assert log_group["retention_in_days"] == 14

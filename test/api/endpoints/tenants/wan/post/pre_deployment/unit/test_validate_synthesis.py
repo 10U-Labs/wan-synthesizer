@@ -357,3 +357,67 @@ def test_articulation_point_is_flagged() -> None:
     chain = _mesh_synthesis(("C1", "C2", "C3"), [("C1", "C2"), ("C2", "C3")])
     report = validate_synthesis([make_pop(n) for n in ("C1", "C2", "C3")], chain)
     assert {item["id"] for item in report["articulation_points"]} == {"C2"}
+
+
+_STUB_SEAT = (
+    ("C1", "C2", "C3", "C6"),
+    [("C1", "C2"), ("C2", "C3"), ("C1", "C3"), ("C1", "C6")],
+)
+
+
+def _cut_report(
+    circuits: list[tuple[str, ...]],
+    backbone_number_of_diverse_circuits: int = 2,
+) -> ValidationReport:
+    return validate_synthesis(
+        [make_pop(name) for name in (*fixtures.SHARED_TRANSIT_BACKBONE, "x", "y")],
+        fixtures.meshed_backbone_synthesis(circuits, fixtures.SHARED_TRANSIT_BACKBONE),
+        targets=MeshRequirements(backbone_number_of_diverse_circuits),
+    )
+
+
+def test_a_healthy_backbone_names_no_cut_pop() -> None:
+    assert _mesh_report(*_HEALTHY)["backbone_mesh_cut_pops"] == []
+
+
+def test_a_healthy_backbone_survives_the_loss_of_any_one_pop() -> None:
+    assert _mesh_report(*_HEALTHY)["backbone_mesh_has_no_cut_pop"] is True
+
+
+def test_the_transit_pop_two_circuits_share_is_named_a_cut_pop() -> None:
+    assert _cut_report(fixtures.SHARED_TRANSIT_CIRCUITS)["backbone_mesh_cut_pops"] == [
+        {"id": "x", "name": "x"}
+    ]
+
+
+def test_a_backbone_one_pops_loss_splits_has_a_cut_pop() -> None:
+    assert _cut_report(fixtures.SHARED_TRANSIT_CIRCUITS)["backbone_mesh_has_no_cut_pop"] is False
+
+
+def test_circuits_over_diverse_transit_name_no_cut_pop() -> None:
+    assert _cut_report(fixtures.DIVERSE_TRANSIT_CIRCUITS)["backbone_mesh_cut_pops"] == []
+
+
+def test_a_tenant_asking_for_one_circuit_names_no_cut_pop() -> None:
+    assert _cut_report(
+        fixtures.SHARED_TRANSIT_CIRCUITS, backbone_number_of_diverse_circuits=1
+    )["backbone_mesh_cut_pops"] == []
+
+
+def test_the_seat_a_stub_circuit_hangs_off_is_named_a_cut_pop() -> None:
+    assert _mesh_report(*_STUB_SEAT, backbone_number_of_diverse_circuits=2)[
+        "backbone_mesh_cut_pops"
+    ] == [{"id": "C1", "name": "C1"}]
+
+
+def test_a_stub_circuit_ending_at_a_capped_seat_names_no_cut_pop() -> None:
+    assert _mesh_report(
+        *_STUB_SEAT, backbone_number_of_diverse_circuits=2, ceilings={"C6": 1}
+    )["backbone_mesh_cut_pops"] == []
+
+
+def test_a_backbone_mesh_that_is_not_one_piece_names_no_cut_pop() -> None:
+    assert _mesh_report(
+        ("C1", "C2", "C3", "C4"), [("C1", "C2"), ("C3", "C4")],
+        backbone_number_of_diverse_circuits=2,
+    )["backbone_mesh_cut_pops"] == []

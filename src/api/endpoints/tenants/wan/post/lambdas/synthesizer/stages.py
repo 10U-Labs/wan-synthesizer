@@ -69,6 +69,10 @@ def finalize(
             f"Synthesis falls into {validation['component_count']} groups "
             f"no fiber joins: {groups}"
         )
+    cut_pops = validation["backbone_mesh_cut_pops"]
+    if cut_pops:
+        splits = ", ".join(str(entry["name"]) for entry in cut_pops)
+        raise ValueError(f"Loss of one PoP splits the WAN at: {splits}")
     deficient = validation["backbone_mesh_independence_deficient"]
     if deficient:
         shortfalls = ", ".join(

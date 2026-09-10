@@ -122,3 +122,30 @@ def test_finalize_refuses_a_synthesis_whose_sites_fall_into_more_than_one_group(
 def test_the_refusal_says_how_many_groups_the_synthesis_fell_into() -> None:
     with pytest.raises(ValueError, match="falls into 2 groups"):
         _finalize_split_backbone()
+
+
+def _finalize_split_at_transit() -> None:
+    finalize(
+        list(fixtures.carrier_pops_by_id(fixtures.SPLIT_AT_TRANSIT_CITIES).values()),
+        fixtures.fiber_segments_from(fixtures.SPLIT_AT_TRANSIT_SEGMENTS),
+        fixtures.meshed_backbone_synthesis(
+            fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
+        ),
+        SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_CIRCUITS),
+    )
+
+
+def test_finalize_refuses_a_wan_the_loss_of_one_pop_splits() -> None:
+    with pytest.raises(ValueError, match="splits the WAN at"):
+        _finalize_split_at_transit()
+
+
+def test_the_split_refusal_names_the_pop_whose_loss_splits_the_wan() -> None:
+    with pytest.raises(ValueError, match="splits the WAN at: x"):
+        _finalize_split_at_transit()
+
+
+def test_a_split_wan_is_refused_ahead_of_a_node_short_of_its_diverse_circuits() -> None:
+    with pytest.raises(ValueError) as refusal:
+        _finalize_split_at_transit()
+    assert "independently failing" not in str(refusal.value)

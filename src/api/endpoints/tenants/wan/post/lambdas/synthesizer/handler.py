@@ -63,6 +63,10 @@ def _write_json(client: Any, key: str, body: Any) -> None:
     )
 
 
+def _delete(client: Any, key: str) -> None:
+    client.delete_object(Bucket=os.environ["STORE_BUCKET"], Key=key)
+
+
 def _delivered(
     graph: list[Site],
     synthesis: Synthesis,
@@ -147,6 +151,7 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
         wan, delivered = _build_wan(client, tenant)
     except Exception as exc:
         logger.warning("Build failed for %s: %s", tenant, exc)
+        _delete(client, f"tenants/{tenant}/wan.json")
         _write_json(client, status_key, {"status": "fail", "reason": str(exc)})
         return {"status": "fail", "tenant": tenant}
     _write_json(client, f"tenants/{tenant}/wan.json", wan)
