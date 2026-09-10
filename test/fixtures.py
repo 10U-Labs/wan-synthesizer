@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from pathlib import Path
+from typing import cast
 
 from synthesizer.codec import OFF_NET_KIND, PROVIDER_KIND, SITE_KIND
 from synthesizer.input_graph import FiberSegment, Site, SiteInfo, segment_key
@@ -18,6 +19,7 @@ from synthesizer.model import (
     RoleExclusions,
     SourceFiles,
     Tuning,
+    ValidationReport,
 )
 from synthesizer.graphs import (
     biconnected_block_membership,
@@ -243,6 +245,14 @@ def mesh_circuits(artifacts: SynthesisArtifacts) -> list[SynthesisCircuit]:
         for drawn_circuit in artifacts.synthesis.drawn_circuits
         if drawn_circuit.purpose == "backbone_mesh"
     ]
+
+
+def reasons_past_the_number(validation: ValidationReport) -> set[str]:
+    return {
+        str(unrequested["reason"])
+        for entry in validation["backbone_diverse_circuits_above_target"]
+        for unrequested in cast(list[dict[str, object]], entry["unrequested_links"])
+    }
 
 
 def synthesis_over_segments(

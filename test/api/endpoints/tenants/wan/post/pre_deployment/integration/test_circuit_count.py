@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from itertools import combinations
-from typing import cast
 
 import fixtures
 from synthesizer.backbone import _needed
@@ -43,9 +42,4 @@ def test_no_site_is_reported_above_the_number_with_nothing_to_blame() -> None:
 
 
 def test_every_circuit_past_the_number_names_the_peer_that_reached_for_it() -> None:
-    above = ARTIFACTS.validation["backbone_diverse_circuits_above_target"]
-    assert {
-        str(unrequested["reason"])
-        for entry in above
-        for unrequested in cast(list[dict[str, object]], entry["unrequested_links"])
-    } <= {"peer_target"}
+    assert fixtures.reasons_past_the_number(ARTIFACTS.validation) <= {"peer_target"}

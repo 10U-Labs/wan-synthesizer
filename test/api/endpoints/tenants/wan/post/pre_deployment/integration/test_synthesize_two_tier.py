@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import cast
 
 import fixtures
 from fixtures import run_synthesis
@@ -170,12 +169,7 @@ def test_the_chorded_ring_names_the_nodes_holding_more_than_was_asked() -> None:
 
 
 def test_every_circuit_past_the_number_is_attributed_to_a_peer() -> None:
-    above = CHORDED.validation["backbone_diverse_circuits_above_target"]
-    assert {
-        str(unrequested["reason"])
-        for entry in above
-        for unrequested in cast(list[dict[str, object]], entry["unrequested_links"])
-    } == {"peer_target"}
+    assert fixtures.reasons_past_the_number(CHORDED.validation) == {"peer_target"}
 
 
 def test_no_chorded_node_finishes_below_what_its_own_fiber_allows() -> None:
