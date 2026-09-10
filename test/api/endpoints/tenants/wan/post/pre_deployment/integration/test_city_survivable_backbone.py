@@ -21,5 +21,7 @@ def test_the_floor_it_publishes_prices_what_surviving_that_loss_took() -> None:
     assert round(ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3) == 90.0
 
 
-def test_the_circuit_that_keeps_that_loss_from_splitting_it_says_so_in_the_report() -> None:
-    assert fixtures.reasons_past_the_number(ARTIFACTS.validation) == {"pop_loss_relief"}
+def test_the_report_tells_the_circuit_that_keeps_it_whole_from_a_peers_own_ask() -> None:
+    assert fixtures.reasons_past_the_number(ARTIFACTS.validation) == {
+        "peer_target", "pop_loss_relief",
+    }
