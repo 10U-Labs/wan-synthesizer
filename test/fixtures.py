@@ -703,6 +703,32 @@ SHARED_TRANSIT_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = 
 SHARED_TRANSIT_FIBER = carrier_fiber_segments(SHARED_TRANSIT_SEGMENTS)
 SHARED_TRANSIT_MILES = 120.0
 
+ALREADY_NEEDED_SITES = ("b", "d", "f")
+ALREADY_NEEDED_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
+    ("b", "c"): (16.0, ("cogent", "zayo")),
+    ("b", "e"): (37.0, ("lumen", "zayo")),
+    ("c", "d"): (34.0, ("lumen", "zayo")),
+    ("c", "f"): (34.0, ("cogent", "lumen")),
+    ("e", "f"): (16.0, ("cogent", "lumen")),
+}
+ALREADY_NEEDED_FIBER = carrier_fiber_segments(ALREADY_NEEDED_SEGMENTS)
+ALREADY_NEEDED_MILES = 103.0
+THE_SHORTEST_CREDIT_ALONE = frozenset({("c", "f")})
+
+FLOORED_ABOVE_SITES = ("b", "d", "e", "f")
+FLOORED_ABOVE_TRANSIT = ("a", "c")
+FLOORED_ABOVE_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
+    ("a", "d"): (56.0, ("lumen", "zayo")),
+    ("a", "f"): (11.0, ("cogent", "zayo")),
+    ("b", "d"): (33.0, ("cogent", "lumen")),
+    ("b", "e"): (19.0, ("zayo",)),
+    ("b", "f"): (47.0, ("cogent", "zayo")),
+    ("c", "f"): (54.0, ("cogent", "lumen")),
+    ("d", "f"): (16.0, ("cogent", "zayo")),
+    ("e", "f"): (16.0, ("lumen", "zayo")),
+}
+FLOORED_ABOVE_MILES = 84.0
+
 SHORT_AND_LONG_SITES = ("s", "t", "u")
 SHORT_AND_LONG_TRANSIT = ("far", "near")
 SHORT_AND_LONG_SEGMENTS = {

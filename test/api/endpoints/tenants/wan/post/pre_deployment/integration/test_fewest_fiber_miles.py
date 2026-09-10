@@ -192,3 +192,27 @@ def test_that_synthesis_runs_no_fewer_miles_than_the_floor_it_publishes() -> Non
 
 def test_no_pop_that_synthesis_runs_through_splits_it_by_being_lost() -> None:
     assert PAIRED_ARTIFACTS.validation["biconnected_no_articulation_points"]
+
+
+FLOORED_ABOVE_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
+    fixtures.FLOORED_ABOVE_SITES,
+    fixtures.FLOORED_ABOVE_SEGMENTS,
+    _ASKED_FOR,
+    fixtures.FLOORED_ABOVE_TRANSIT,
+)
+
+
+def test_the_floor_published_is_no_higher_than_the_miles_the_synthesis_runs_over() -> None:
+    assert FLOORED_ABOVE_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles <= (
+        FLOORED_ABOVE_ARTIFACTS.synthesis.metrics.physical_miles + _SLACK
+    )
+
+
+def test_that_floor_is_the_fewest_miles_the_ways_out_it_grades_can_run_over() -> None:
+    assert round(
+        FLOORED_ABOVE_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3
+    ) == fixtures.FLOORED_ABOVE_MILES
+
+
+def test_every_seat_on_that_synthesis_still_holds_the_ways_out_it_was_owed() -> None:
+    assert FLOORED_ABOVE_ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []

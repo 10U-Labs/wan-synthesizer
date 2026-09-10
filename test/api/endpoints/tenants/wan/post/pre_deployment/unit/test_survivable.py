@@ -328,3 +328,18 @@ def test_the_shorter_of_two_ways_round_is_the_one_selected() -> None:
 
 def test_the_only_way_round_there_is_gets_selected_however_far_it_runs() -> None:
     assert fixtures.THE_LONG_WAY <= _ONLY_LONG_SELECTION.segments
+
+
+_ALREADY_NEEDED_SELECTION = _selected(
+    fixtures.ALREADY_NEEDED_FIBER, fixtures.ALREADY_NEEDED_SITES
+)
+
+
+def test_the_floor_prices_the_fiber_the_rest_of_the_wan_already_needs() -> None:
+    assert _ALREADY_NEEDED_SELECTION.lower_bound_miles == pytest.approx(
+        fixtures.ALREADY_NEEDED_MILES
+    )
+
+
+def test_no_fiber_is_selected_for_the_carrier_of_a_nodes_shortest_circuit_alone() -> None:
+    assert not _ALREADY_NEEDED_SELECTION.segments & fixtures.THE_SHORTEST_CREDIT_ALONE
