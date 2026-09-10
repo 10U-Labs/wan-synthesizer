@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import fixtures
 
 _SITES = ("a", "b", "c", "d")
@@ -19,3 +21,12 @@ def test_the_published_backbone_survives_the_loss_of_any_one_city() -> None:
 
 def test_the_floor_it_publishes_prices_what_surviving_that_loss_took() -> None:
     assert round(ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3) == 90.0
+
+
+def test_the_circuit_that_keeps_that_loss_from_splitting_it_says_so_in_the_report() -> None:
+    above = ARTIFACTS.validation["backbone_diverse_circuits_above_target"]
+    assert {
+        str(unrequested["reason"])
+        for entry in above
+        for unrequested in cast(list[dict[str, object]], entry["unrequested_links"])
+    } == {"pop_loss_relief"}

@@ -7,6 +7,7 @@ import pytest
 import fixtures
 from synthesizer.model import (
     CIRCUIT_FOR_PIN,
+    CIRCUIT_FOR_RELIEF,
     CIRCUIT_FOR_TARGET,
     Synthesis,
     SynthesisMetrics,
@@ -55,6 +56,7 @@ def test_a_site_holding_exactly_what_it_asked_for_is_not_reported() -> None:
     [
         (CIRCUIT_FOR_PIN, (), "operator_pin"),
         (CIRCUIT_FOR_TARGET, ("d",), "peer_target"),
+        (CIRCUIT_FOR_RELIEF, (), "pop_loss_relief"),
     ],
 )
 def test_a_circuit_past_the_target_names_the_requirement_that_put_it_there(

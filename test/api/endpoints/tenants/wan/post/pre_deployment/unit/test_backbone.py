@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import fixtures
 from synthesizer.input_graph import FiberSegment, segment_key
-from synthesizer.model import CIRCUIT_FOR_PIN, CIRCUIT_FOR_TARGET, SynthesisCircuit
+from synthesizer.model import (
+    CIRCUIT_FOR_PIN,
+    CIRCUIT_FOR_RELIEF,
+    CIRCUIT_FOR_TARGET,
+    SynthesisCircuit,
+)
 from synthesizer.backbone import (
     BackboneConstraints,
     BackboneMesh,
@@ -193,6 +198,22 @@ def test_the_circuit_drawn_round_that_city_is_one_company_can_offer() -> None:
         for drawn_circuit in _TWO_LOBES.circuits
         if segment_key("b", "w") in fiber_segments_along(drawn_circuit.pop_ids)
     ] == ["zayo"]
+
+
+def test_the_circuit_drawn_round_that_city_says_the_split_is_what_put_it_there() -> None:
+    assert [
+        drawn_circuit.reason
+        for drawn_circuit in _TWO_LOBES.circuits
+        if segment_key("b", "w") in fiber_segments_along(drawn_circuit.pop_ids)
+    ] == [CIRCUIT_FOR_RELIEF]
+
+
+def test_the_circuit_drawn_round_that_city_is_in_no_sites_own_requirement() -> None:
+    assert [
+        drawn_circuit.requested_by
+        for drawn_circuit in _TWO_LOBES.circuits
+        if segment_key("b", "w") in fiber_segments_along(drawn_circuit.pop_ids)
+    ] == [()]
 
 
 def test_a_city_no_fiber_goes_round_still_leaves_every_seat_its_circuits() -> None:
