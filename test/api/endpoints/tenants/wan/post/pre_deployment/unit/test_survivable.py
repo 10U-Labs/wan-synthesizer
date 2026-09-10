@@ -54,7 +54,8 @@ def _owed(
     inputs = _asking(fiber, backbone_ids, seat_cap)
     miles_by_key = _whole(inputs)
     return sum(
-        row.required for row in _ways_out_rows(site, _writing(inputs, miles_by_key)).together
+        row.required
+        for row in _ways_out_rows(site, _writing(inputs, miles_by_key)).across_the_carriers
     )
 
 

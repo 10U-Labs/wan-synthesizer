@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
+from typing import TypeVar
 
 from synthesizer.ceiling import (
     CircuitProofInputs,
@@ -16,6 +17,8 @@ from synthesizer.linear_program import GrowingSegmentProgram, SegmentRow, Segmen
 _HELD_OUTRIGHT = 0.5
 
 _TOLERANCE = 1e-6
+
+_Bucket = TypeVar("_Bucket", str, tuple[str, str])
 
 
 @dataclass(frozen=True)
@@ -57,9 +60,19 @@ class _Writing:
 
 
 @dataclass(frozen=True)
+class _Asked:
+    site: str
+    peers: frozenset[str]
+    spared: frozenset[str]
+    over: Mapping[str, frozenset[tuple[str, str]]]
+    capacity: Mapping[str, int]
+
+
+@dataclass(frozen=True)
 class _WaysOut:
     toward_each: list[_Requirement]
     together: list[_Requirement]
+    across_the_carriers: list[_Requirement]
 
 
 @dataclass
@@ -105,8 +118,8 @@ def _carried(requirement: _Requirement, whole: Mapping[tuple[str, str], float]) 
     return required
 
 
-def _shared_out(owed: int, capacity: Mapping[str, int]) -> dict[str, int]:
-    shares: dict[str, int] = {}
+def _shared_out(owed: int, capacity: Mapping[_Bucket, int]) -> dict[_Bucket, int]:
+    shares: dict[_Bucket, int] = {}
     left = owed
     for bucket, able in sorted(capacity.items(), key=lambda entry: (-entry[1], entry[0])):
         shares[bucket] = min(able, left)
@@ -121,6 +134,19 @@ def _lowered(
     return [row for row in carried if row.required]
 
 
+def _rows_for(asked: _Asked, writing: _Writing) -> list[_Requirement]:
+    return _lowered(
+        [
+            _Requirement(asked.site, asked.peers, asked.spared, share, asked.over[carrier])
+            for carrier, share in _shared_out(
+                writing.inputs.ways_out, asked.capacity
+            ).items()
+            if share
+        ],
+        writing.whole,
+    )
+
+
 def _over_land(
     site: str,
     peers: frozenset[str],
@@ -133,40 +159,45 @@ def _over_land(
 
 
 def _peer_fiber(
-    site: str, writing: _Writing, proved: Mapping[tuple[str, str], int]
-) -> dict[str, frozenset[tuple[str, str]]]:
-    joined: dict[str, frozenset[tuple[str, str]]] = {}
-    for carrier, peer in proved:
-        joined[peer] = joined.get(peer, frozenset()) | _over_land(
+    site: str, writing: _Writing, capacity: Mapping[tuple[str, str], int]
+) -> dict[tuple[str, str], frozenset[tuple[str, str]]]:
+    return {
+        (carrier, peer): _over_land(
             site, frozenset({peer}), writing.by_carrier[carrier], writing
         )
-    return joined
+        for carrier, peer in capacity
+    }
 
 
-def _ways_out_by_peer(proved: Mapping[tuple[str, str], int]) -> dict[str, int]:
-    capacity: dict[str, int] = {}
-    for (_carrier, peer), able in proved.items():
-        capacity[peer] = capacity.get(peer, 0) + able
-    return capacity
-
-
-def _all_peers_together(
+def _asked_of_all_peers(
     site: str,
     spared: frozenset[str],
-    capacity: Mapping[str, int],
-    peer_fiber: Mapping[str, frozenset[tuple[str, str]]],
+    capacity: Mapping[tuple[str, str], int],
+    peer_fiber: Mapping[tuple[str, str], frozenset[tuple[str, str]]],
+) -> _Asked:
+    able: dict[str, int] = {}
+    reach: dict[str, frozenset[tuple[str, str]]] = {}
+    for (carrier, peer), proved in capacity.items():
+        able[carrier] = able.get(carrier, 0) + proved
+        reach[carrier] = reach.get(carrier, frozenset()) | peer_fiber[(carrier, peer)]
+    peers = frozenset(peer for _carrier, peer in capacity)
+    return _Asked(site, peers, spared, reach, able)
+
+
+def _across_the_carriers(
+    site: str,
+    peers: frozenset[str],
+    capacity: Mapping[tuple[str, str], int],
     writing: _Writing,
 ) -> list[_Requirement]:
     return _lowered(
         [
             _Requirement(
                 site,
-                frozenset(capacity),
-                spared,
+                peers,
+                frozenset({site}) | peers,
                 min(writing.inputs.ways_out, sum(capacity.values())),
-                frozenset(
-                    segment for over in peer_fiber.values() for segment in over
-                ),
+                _over_land(site, peers, frozenset(writing.fiber), writing),
             )
         ],
         writing.whole,
@@ -176,20 +207,24 @@ def _all_peers_together(
 def _ways_out_rows(site: str, writing: _Writing) -> _WaysOut:
     peers = frozenset(writing.inputs.backbone_ids) - {site}
     spared = frozenset({site}) if writing.per_peer == 1 else frozenset({site}) | peers
-    proved = ways_out_by_carrier_and_peer(site, writing.proof)
-    capacity = _ways_out_by_peer(proved)
-    peer_fiber = _peer_fiber(site, writing, proved)
+    capacity = ways_out_by_carrier_and_peer(site, writing.proof)
+    peer_fiber = _peer_fiber(site, writing, capacity)
     toward_each = _lowered(
         [
-            _Requirement(site, frozenset({peer}), spared, share, peer_fiber[peer])
-            for peer, share in _shared_out(writing.inputs.ways_out, capacity).items()
+            _Requirement(
+                site, frozenset({peer}), spared, share, peer_fiber[(carrier, peer)]
+            )
+            for (carrier, peer), share in _shared_out(
+                writing.inputs.ways_out, capacity
+            ).items()
             if share
         ],
         writing.whole,
     )
     return _WaysOut(
         toward_each,
-        _all_peers_together(site, spared, capacity, peer_fiber, writing),
+        _rows_for(_asked_of_all_peers(site, spared, capacity, peer_fiber), writing),
+        _across_the_carriers(site, peers, capacity, writing),
     )
 
 
@@ -226,7 +261,11 @@ def _requirements(
 ) -> list[_Requirement]:
     writing = _writing(inputs, fiber)
     ways_out = [_ways_out_rows(site, writing) for site in inputs.backbone_ids]
-    return [row for owed in ways_out for row in owed.toward_each + owed.together]
+    return [
+        row
+        for owed in ways_out
+        for row in owed.toward_each + owed.together + owed.across_the_carriers
+    ]
 
 
 def _shortfalls(
