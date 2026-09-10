@@ -79,7 +79,7 @@ _OVERLAND = frozenset({("eug", "pdx"), ("hil", "pdx"), ("pdx", "sea")})
 _UNDER_WATER_SELECTION = _selected(fixtures.CROSSING_SUBMARINE_FIBER, _CROSSING_SITES)
 
 
-def test_no_submarine_fiber_is_selected_where_a_way_round_over_land_exists() -> None:
+def test_no_submarine_fiber_is_selected_where_a_circuit_over_land_exists() -> None:
     assert _UNDER_WATER_SELECTION.segments == _OVERLAND
 
 
@@ -166,14 +166,14 @@ def test_submarine_fiber_is_selected_where_a_peer_is_reachable_no_other_way() ->
     assert _UNDER_WATER_ONLY_SELECTION.segments == frozenset(_UNDER_WATER_ONLY)
 
 
-_TWIN_WAYS = physical({
+_TWIN_CIRCUITS = physical({
     ("a", "p"): 1.0, ("b", "p"): 1.0, ("a", "q"): 1.0, ("b", "q"): 1.0,
 })
-_TWIN_SELECTION = _selected(_TWIN_WAYS, ("a", "b"), seat_cap=2)
+_TWIN_SELECTION = _selected(_TWIN_CIRCUITS, ("a", "b"), seat_cap=2)
 
 
-def test_a_pair_allowed_two_ways_between_them_is_given_both_ways_round() -> None:
-    assert _TWIN_SELECTION.segments == frozenset(_TWIN_WAYS)
+def test_a_pair_allowed_two_circuits_between_them_is_given_both() -> None:
+    assert _TWIN_SELECTION.segments == frozenset(_TWIN_CIRCUITS)
 
 
 _TWIN_SPLIT = fixtures.carrier_fiber_segments({
@@ -201,7 +201,7 @@ def test_a_site_is_owed_both_diverse_circuits_where_one_carrier_has_each() -> No
 
 
 def test_fiber_nobody_owns_is_owed_to_every_carrier() -> None:
-    assert _owed(_TWIN_WAYS, ("a", "b"), "a", seat_cap=2) == 2
+    assert _owed(_TWIN_CIRCUITS, ("a", "b"), "a", seat_cap=2) == 2
 
 
 def test_the_floor_is_measured_over_the_requirements_the_build_is_held_to() -> None:
@@ -230,7 +230,7 @@ def test_the_fiber_selected_where_two_carriers_share_a_pop_carries_both_diverse_
     assert _shared_transit_ceilings(_SHARED_TRANSIT_SELECTION.segments) == {"a": 2, "b": 2}
 
 
-def test_the_floor_prices_the_way_round_the_pop_two_carriers_share() -> None:
+def test_the_floor_prices_the_circuit_round_the_pop_two_carriers_share() -> None:
     assert _SHARED_TRANSIT_SELECTION.lower_bound_miles >= (
         fixtures.SHARED_TRANSIT_MILES - _SLACK
     )
@@ -275,7 +275,7 @@ def _distant_peer_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, in
     ))
 
 
-def test_the_fiber_selected_for_a_site_carries_every_way_out_its_fiber_carries() -> None:
+def test_the_fiber_selected_for_a_site_carries_every_diverse_circuit_its_fiber_carries() -> None:
     assert _distant_peer_ceilings(_DISTANT_PEER_SELECTION.segments) == _distant_peer_ceilings(
         frozenset(fixtures.DISTANT_PEER_FIBER)
     ) == {"hil": 2, "sea": 2, "syd": 2}
@@ -305,8 +305,8 @@ _CASES: tuple[tuple[str, FiberSelection, dict[tuple[str, str], FiberSegment]], .
     ("ring and chord", _CHORD_SELECTION, _CHORD),
     ("chain", _CHAIN_SELECTION, _CHAIN),
     ("two triangles", _TRIANGLES_SELECTION, _TWO_TRIANGLES),
-    ("pair with two ways round", _TWIN_SELECTION, _TWIN_WAYS),
-    ("pair whose second way round changes hands", _TWIN_SPLIT_SELECTION, _TWIN_SPLIT),
+    ("pair with two circuits", _TWIN_SELECTION, _TWIN_CIRCUITS),
+    ("pair whose second circuit changes hands", _TWIN_SPLIT_SELECTION, _TWIN_SPLIT),
     ("twelve cities and five seats", _MANY_PASS_SELECTION, _MANY_PASS),
 )
 
@@ -325,12 +325,12 @@ _SHORT_AND_LONG_SELECTION = _selected(
 _ONLY_LONG_SELECTION = _selected(fixtures.ONLY_LONG_FIBER, fixtures.SHORT_AND_LONG_SITES)
 
 
-def test_the_shorter_of_two_ways_round_is_the_one_selected() -> None:
-    assert not _SHORT_AND_LONG_SELECTION.segments & fixtures.THE_LONG_WAY
+def test_the_shorter_of_two_circuits_is_the_one_selected() -> None:
+    assert not _SHORT_AND_LONG_SELECTION.segments & fixtures.THE_LONG_CIRCUIT
 
 
-def test_the_only_way_round_there_is_gets_selected_however_far_it_runs() -> None:
-    assert fixtures.THE_LONG_WAY <= _ONLY_LONG_SELECTION.segments
+def test_the_only_circuit_there_is_gets_selected_however_far_it_runs() -> None:
+    assert fixtures.THE_LONG_CIRCUIT <= _ONLY_LONG_SELECTION.segments
 
 
 _ALREADY_NEEDED_SELECTION = _selected(

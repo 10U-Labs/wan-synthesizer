@@ -90,7 +90,7 @@ def test_a_site_seated_below_the_seats_its_config_allows_takes_one_circuit_to_a_
     ) == 1
 
 
-_THREE_WAYS = build_adjacency(physical({
+_THREE_CIRCUITS = build_adjacency(physical({
     ("s", "near"): 1.0, ("near", "t"): 1.0,
     ("s", "mid"): 2.0, ("mid", "t"): 2.0,
     ("s", "far"): 3.0, ("far", "t"): 3.0,
@@ -98,13 +98,13 @@ _THREE_WAYS = build_adjacency(physical({
 
 
 def test_no_more_circuits_to_one_peer_are_proved_than_were_asked_for() -> None:
-    inputs = CircuitProofInputs(_ONE_PEER, _THREE_WAYS, circuits_wanted=2)
+    inputs = CircuitProofInputs(_ONE_PEER, _THREE_CIRCUITS, circuits_wanted=2)
     assert diverse_circuit_ceiling("s", inputs) == 2
 
 
 def test_the_circuits_proved_to_one_peer_are_the_shortest_of_them() -> None:
     circuits = diverse_circuits(
-        "s", CircuitProofInputs(_ONE_PEER, _THREE_WAYS, circuits_wanted=2)
+        "s", CircuitProofInputs(_ONE_PEER, _THREE_CIRCUITS, circuits_wanted=2)
     )
     assert sorted(pop_ids[1] for pop_ids in circuits) == ["mid", "near"]
 
@@ -163,7 +163,7 @@ _PACIFIC_ADJACENCY = build_adjacency(physical({
 _PACIFIC_BACKBONE = ("eug", "hil", "sea")
 
 
-def test_a_ceiling_counts_a_way_out_however_far_it_runs() -> None:
+def test_a_ceiling_counts_a_diverse_circuit_however_far_it_runs() -> None:
     assert diverse_circuit_ceiling(
         "sea", CircuitProofInputs(_PACIFIC_BACKBONE, _PACIFIC_ADJACENCY)
     ) == 2
@@ -194,7 +194,7 @@ def _owned_proof(
     )
 
 
-def test_a_way_out_that_changes_hands_is_no_way_out() -> None:
+def test_a_circuit_that_changes_hands_is_no_diverse_circuit() -> None:
     assert not diverse_circuits("s", _owned_proof(_CHANGES_HANDS))
 
 
@@ -219,15 +219,15 @@ _SHARE_A_CITY = fixtures.carrier_fiber_segments({
 })
 
 
-def test_a_way_out_both_carriers_have_is_drawn_once() -> None:
+def test_a_circuit_both_carriers_have_is_drawn_once() -> None:
     assert diverse_circuits("s", _owned_proof(_BOTH_HAVE_IT)) == [("s", "t")]
 
 
-def test_a_way_out_standing_on_a_city_already_spent_is_not_drawn() -> None:
+def test_a_circuit_standing_on_a_city_already_spent_is_not_drawn() -> None:
     assert diverse_circuits("s", _owned_proof(_SHARE_A_CITY)) == [("s", "x", "t")]
 
 
-def test_one_peer_takes_one_way_out_however_many_carriers_offer_one() -> None:
+def test_one_peer_takes_one_circuit_however_many_carriers_offer_one() -> None:
     assert diverse_circuits("s", _owned_proof(_ONE_COMPANY_EACH)) == [("s", "x", "t")]
 
 
@@ -249,7 +249,7 @@ def _on_land(
     })
 
 
-def test_a_way_round_under_water_is_no_way_out_where_the_site_has_one_over_land() -> None:
+def test_a_circuit_under_water_is_no_diverse_circuit_where_the_site_has_one_over_land() -> None:
     assert diverse_circuits(
         "sea",
         CircuitProofInputs(
@@ -313,7 +313,7 @@ def test_a_node_the_wan_shares_no_fiber_with_keeps_its_shortest_circuits_carrier
     assert _ALREADY_NEEDED_CREDIT["b"] == {("zayo", "d"): 1, ("lumen", "f"): 1}
 
 
-def test_every_way_out_a_nodes_carriers_prove_is_credited_when_none_is_asked_for() -> None:
+def test_every_diverse_circuit_a_nodes_carriers_prove_is_credited_when_none_is_asked_for() -> None:
     assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, None)["b"] == {
         ("zayo", "e"): 1, ("cogent", "d"): 1, ("cogent", "f"): 1,
     }

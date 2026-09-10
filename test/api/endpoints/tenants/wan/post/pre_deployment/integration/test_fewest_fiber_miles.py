@@ -160,10 +160,10 @@ SHORT_AND_LONG_ARTIFACTS = fixtures.synthesis_over_segments(
 )
 
 
-def test_the_delivered_synthesis_holds_the_shorter_of_two_ways_round() -> None:
+def test_the_delivered_synthesis_holds_the_shorter_of_two_circuits() -> None:
     assert not set(
         SHORT_AND_LONG_ARTIFACTS.synthesis.fiber_segment_keys
-    ) & fixtures.THE_LONG_WAY
+    ) & fixtures.THE_LONG_CIRCUIT
 
 
 _PAIRED_SITES = ("a", "b", "c", "d")

@@ -84,13 +84,13 @@ def _mesh_miles(artifacts: SynthesisArtifacts) -> float:
     )
 
 
-def test_a_crossing_is_taken_where_it_is_a_site_second_way_out(
+def test_a_crossing_is_taken_where_it_is_a_sites_second_diverse_circuit(
     crossing: SynthesisArtifacts,
 ) -> None:
     assert "tok" in _cities_crossed(crossing)
 
 
-def test_a_crossing_a_way_round_over_land_answers_is_not_taken(
+def test_a_crossing_a_circuit_over_land_answers_is_not_taken(
     under_water: SynthesisArtifacts,
 ) -> None:
     assert "tok" not in _cities_crossed(under_water)
@@ -102,7 +102,7 @@ def test_the_synthesis_wires_every_site_into_one_backbone(
     assert crossing.validation["connected"]
 
 
-def test_no_site_is_credited_with_a_way_out_its_fiber_does_not_carry(
+def test_no_site_is_credited_with_a_diverse_circuit_its_fiber_does_not_carry(
     crossing: SynthesisArtifacts,
 ) -> None:
     assert crossing.validation["backbone_diverse_circuits_ceiling_limited"] == []

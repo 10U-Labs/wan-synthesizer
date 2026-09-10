@@ -36,17 +36,17 @@ _BOTH_QUOTE = {
 }
 
 
-def test_a_city_whose_second_way_out_changes_hands_is_offered_only_the_first() -> None:
+def test_a_city_whose_second_diverse_circuit_changes_hands_is_offered_only_the_first() -> None:
     assert offered_diverse_circuits(_SPLIT, _BOSTON, frozenset({_ASHBURN}), 1) == 1
 
 
-def test_a_city_is_offered_a_way_out_by_each_carrier_that_has_one() -> None:
+def test_a_city_is_offered_a_diverse_circuit_by_each_carrier_that_has_one() -> None:
     assert offered_diverse_circuits(
         _OWNED, _BOSTON, frozenset({_ASHBURN, _NEW_YORK}), 1
     ) == 2
 
 
-def test_one_peer_may_end_more_than_one_way_out_where_there_is_only_one_peer() -> None:
+def test_one_peer_may_end_more_than_one_circuit_where_there_is_only_one_peer() -> None:
     assert offered_diverse_circuits(_PAIR, _BOSTON, frozenset({_ASHBURN}), 2) == 2
 
 

@@ -146,11 +146,11 @@ _EGRESS = _drawn(_EGRESS_SITES, _EGRESS_FIBER, BackboneConstraints(
 ))
 
 
-def test_the_longer_way_round_a_shared_city_is_the_one_drawn() -> None:
+def test_the_longer_circuit_round_a_shared_city_is_the_one_drawn() -> None:
     assert ("hub", "n", "q") in {drawn_circuit.pop_ids for drawn_circuit in _EGRESS.circuits}
 
 
-def test_the_shorter_way_round_that_shared_city_is_not_selected_at_all() -> None:
+def test_the_shorter_circuit_round_that_shared_city_is_not_selected_at_all() -> None:
     assert segment_key("m", "q") not in {
         segment_key(*pair)
         for drawn_circuit in _EGRESS.circuits
@@ -188,7 +188,7 @@ _BOWTIE = _drawn(_LOBE_SITES, _BOWTIE_FIBER, _asking())
 _ONE_WAY_OUT_LOBES = _drawn(_LOBE_SITES, _LOBE_FIBER, _asking(1))
 
 
-def test_a_city_every_drawn_circuit_crosses_is_given_a_way_round_it() -> None:
+def test_a_city_every_drawn_circuit_crosses_is_given_a_circuit_round_it() -> None:
     assert _cut(_TWO_LOBES) == set()
 
 
@@ -224,7 +224,7 @@ def test_a_city_no_fiber_goes_round_still_leaves_every_seat_its_circuits() -> No
     } == set(_LOBE_SITES)
 
 
-def test_a_tenant_that_asked_for_one_way_out_is_not_given_a_way_round_anything() -> None:
+def test_a_tenant_that_asked_for_one_circuit_is_not_given_a_circuit_round_anything() -> None:
     assert [
         drawn_circuit.pop_ids
         for drawn_circuit in _ONE_WAY_OUT_LOBES.circuits
@@ -338,7 +338,7 @@ def test_a_circuit_nobody_needs_is_taken_back_out() -> None:
     assert _needed(_RING_PLUS_CHORD, _SQUARE_SITES, 2) == _RING_PLUS_CHORD[:4]
 
 
-def test_a_circuit_a_site_would_lose_a_way_out_by_is_kept() -> None:
+def test_a_circuit_a_site_would_lose_a_diverse_circuit_by_is_kept() -> None:
     assert _needed(_RING_PLUS_CHORD[:4], _SQUARE_SITES, 2) == _RING_PLUS_CHORD[:4]
 
 

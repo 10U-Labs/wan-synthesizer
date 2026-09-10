@@ -54,7 +54,7 @@ def test_two_sites_joined_by_one_segment_are_separated_by_that_segment() -> None
     assert _asked(_DIRECT, 2) == _ONLY_THE_SEGMENT
 
 
-def test_a_segment_held_in_part_carries_only_that_much_of_a_way_out() -> None:
+def test_a_segment_held_in_part_carries_only_that_much_of_a_diverse_circuit() -> None:
     assert _asked(_PART_SELECTED, 1) == _ONLY_THE_SEGMENT
 
 
@@ -62,7 +62,7 @@ def test_a_segment_nothing_is_held_of_is_still_the_fiber_to_select() -> None:
     assert _asked(_UNSELECTED, 1) == _ONLY_THE_SEGMENT
 
 
-def test_the_city_every_way_out_crosses_is_what_the_fiber_cannot_survive() -> None:
+def test_the_city_every_diverse_circuit_crosses_is_what_the_fiber_cannot_survive() -> None:
     assert _asked(_ROUND_ONE_CITY, 2, peers=_TWO_PEERS) == _ONLY_THE_CITY
 
 

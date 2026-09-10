@@ -748,7 +748,7 @@ ONLY_LONG_SEGMENTS = {
     ("s", "far"): 1000.0, ("far", "u"): 1000.0,
 }
 ONLY_LONG_FIBER = fiber_segments_from(ONLY_LONG_SEGMENTS)
-THE_LONG_WAY = frozenset({("far", "s"), ("far", "u")})
+THE_LONG_CIRCUIT = frozenset({("far", "s"), ("far", "u")})
 
 NEAR_AND_FAR_SITES = ("a", "b", "far")
 NEAR_AND_FAR_FIBER = fiber_segments_from({
