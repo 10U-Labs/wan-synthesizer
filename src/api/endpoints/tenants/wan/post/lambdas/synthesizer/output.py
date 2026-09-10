@@ -22,7 +22,7 @@ def included_demand_count(sites: Iterable[Site], synthesis: Synthesis) -> int:
     )
 
 
-def _demand_circuit_kind(source_site: Site) -> str:
+def _homing_circuit_kind(source_site: Site) -> str:
     return "provider_to_backbone" if source_site.kind == PROVIDER_KIND else "tenant_to_backbone"
 
 
@@ -75,7 +75,7 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
                 "source_name": sites_by_id[homing_circuit.source].name,
                 "target_id": homing_circuit.target,
                 "target_name": sites_by_id[homing_circuit.target].name,
-                "link_kind": _demand_circuit_kind(sites_by_id[homing_circuit.source]),
+                "link_kind": _homing_circuit_kind(sites_by_id[homing_circuit.source]),
                 "distance_miles": round(homing_circuit.distance_miles, 3),
             }
             for homing_circuit in sorted(
