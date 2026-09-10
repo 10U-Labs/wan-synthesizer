@@ -62,6 +62,18 @@ def test_a_second_circuit_holding_a_pop_from_splitting_the_wan_is_not_reported()
     assert not overbuilt_pairs(_synthesis(_ROUND_A_CUT_CITY))
 
 
+_ONE_END_COUNTS_IT = [
+    _circuit("north", "south", "m1"),
+    _circuit("north", "west", "m6"),
+    _circuit("west", "north", "m4"),
+    _circuit("west", "south", "m1", "m4"),
+]
+
+
+def test_a_second_circuit_an_end_counts_among_its_own_is_not_reported() -> None:
+    assert not overbuilt_pairs(_synthesis(_ONE_END_COUNTS_IT))
+
+
 def test_a_pair_joined_once_is_not_reported() -> None:
     assert not overbuilt_pairs(_synthesis([_circuit("west", "east", "m1")]))
 
