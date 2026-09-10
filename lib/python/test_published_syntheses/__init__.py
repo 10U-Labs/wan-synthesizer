@@ -113,12 +113,15 @@ def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
         drawn.setdefault(pair, []).append(drawn_circuit)
     names = {row["id"]: row["name"] for row in synthesis["backbone"]}
     asked = synthesis["number_of_diverse_circuits"]
+    survives_a_city_loss = not cut_cities(synthesis["links"])
     overbuilt: list[tuple[str, int]] = []
     for pair, circuits in sorted(drawn.items()):
         if len(circuits) < 2:
             continue
         spare = max(circuits, key=lambda circuit: circuit["distance_miles"])
         kept = [circuit for circuit in synthesis["links"] if circuit is not spare]
+        if survives_a_city_loss and cut_cities(kept):
+            continue
         if not any(
             independent_ways_out(kept, end, names)
             < min(asked, independent_ways_out(synthesis["links"], end, names))

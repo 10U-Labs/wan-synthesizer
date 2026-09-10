@@ -58,7 +58,7 @@ _ROUND_A_CUT_CITY = [
 ]
 
 
-def test_a_pair_whose_second_circuit_is_what_keeps_a_pop_from_splitting_it_is_not_reported() -> None:
+def test_a_second_circuit_holding_a_pop_from_splitting_the_wan_is_not_reported() -> None:
     assert not overbuilt_pairs(_synthesis(_ROUND_A_CUT_CITY))
 
 
