@@ -59,13 +59,22 @@ def test_finalize_reports_the_independent_mesh_target() -> None:
     assert validation["backbone_meets_independent_mesh_link_target"] is True
 
 
-def test_finalize_refuses_a_synthesis_short_of_the_configured_number_of_diverse_circuits() -> None:
-    synthesis = fixtures.meshed_backbone_synthesis(
-        fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
+def _finalize_short_of_three(degree_exempt: frozenset[str] = frozenset()) -> ValidationReport:
+    _sites, _fiber, _synthesis, validation = finalize(
+        list(fixtures.carrier_pops_by_id(fixtures.SHORT_OF_THREE_CITIES).values()),
+        {},
+        fixtures.meshed_backbone_synthesis(
+            fixtures.SHORT_OF_THREE_CIRCUITS, fixtures.SHORT_OF_THREE_BACKBONE
+        ),
+        SynthesisParams(min_backbone_count=2),
+        degree_exempt,
     )
-    params = SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_CIRCUITS)
+    return validation
+
+
+def test_finalize_refuses_a_synthesis_short_of_the_configured_number_of_diverse_circuits() -> None:
     with pytest.raises(ValueError, match="independently failing backbone mesh paths at"):
-        finalize(list(fixtures.carrier_pops_by_id("abcx").values()), {}, synthesis, params)
+        _finalize_short_of_three()
 
 
 def test_finalize_holds_a_node_to_the_ceiling_of_the_merged_carriers_it_is_given() -> None:
@@ -82,26 +91,15 @@ def test_finalize_holds_a_node_to_the_ceiling_of_the_merged_carriers_it_is_given
     assert validation["backbone_meets_independent_mesh_link_target"] is True
 
 
-def _finalize_shared_transit(degree_exempt: frozenset[str]) -> ValidationReport:
-    synthesis = fixtures.meshed_backbone_synthesis(
-        fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
-    )
-    params = SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_CIRCUITS)
-    _sites, _fiber, _synthesis, validation = finalize(
-        list(fixtures.carrier_pops_by_id("abcx").values()), {}, synthesis, params, degree_exempt
-    )
-    return validation
-
-
 def test_finalize_accepts_a_synthesis_whose_only_shortfall_is_exempt() -> None:
-    assert _finalize_shared_transit(frozenset({"a"}))[
+    assert _finalize_short_of_three(frozenset({"a", "d"}))[
         "backbone_meets_independent_mesh_link_target"
     ] is True
 
 
 def test_finalize_reports_the_exempt_node_it_accepted() -> None:
-    assert _finalize_shared_transit(frozenset({"a"}))["backbone_degree_exempt"] == [
-        {"id": "a", "name": "a"}
+    assert _finalize_short_of_three(frozenset({"a", "d"}))["backbone_degree_exempt"] == [
+        {"id": "a", "name": "a"}, {"id": "d", "name": "d"}
     ]
 
 
@@ -145,7 +143,13 @@ def test_the_split_refusal_names_the_pop_whose_loss_splits_the_wan() -> None:
         _finalize_split_at_transit()
 
 
-def test_a_split_wan_is_refused_ahead_of_a_node_short_of_its_diverse_circuits() -> None:
-    with pytest.raises(ValueError) as refusal:
+def _split_refusal() -> str:
+    try:
         _finalize_split_at_transit()
-    assert "independently failing" not in str(refusal.value)
+    except ValueError as refusal:
+        return str(refusal)
+    return ""
+
+
+def test_a_split_wan_is_refused_ahead_of_a_node_short_of_its_diverse_circuits() -> None:
+    assert "independently failing" not in _split_refusal()

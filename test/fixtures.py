@@ -121,6 +121,13 @@ def meshed_backbone_synthesis(
     )
 
 
+SHORT_OF_THREE_CITIES = "abcd"
+SHORT_OF_THREE_BACKBONE = ("a", "b", "c", "d")
+SHORT_OF_THREE_CIRCUITS = [
+    ("a", "b"), ("a", "c"), ("b", "c"), ("b", "d"), ("c", "d"),
+]
+
+
 SPLIT_AT_TRANSIT_CITIES = "abcxy"
 SPLIT_AT_TRANSIT_SEGMENTS = {
     ("a", "x"): 1.0,
