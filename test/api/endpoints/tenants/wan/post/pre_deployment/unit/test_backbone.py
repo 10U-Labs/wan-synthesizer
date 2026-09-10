@@ -374,3 +374,24 @@ def test_a_pin_one_carrier_can_join_is_drawn_over_that_carriers_fiber() -> None:
 def test_a_drawn_circuit_names_the_carrier_it_is_ordered_from() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _WHOLE_SQUARE, _PIN_WY)
     assert all(drawn_circuit.carrier in ("lumen", "zayo") for drawn_circuit in mesh.circuits)
+
+
+_STUB_SITES = ("a", "f", "g", "m", "s")
+_STUB_AND_CHORD = [
+    _use("a", "g", ("a", "p", "g"), 200.0),
+    _use("a", "g", ("a", "q", "g"), 150.0),
+    _use("a", "s", ("a", "s"), 300.0),
+    _use("f", "g", ("f", "g"), 60.0),
+    _use("g", "s", ("g", "s"), 40.0),
+    _use("f", "s", ("f", "s"), 140.0),
+    _use("g", "m", ("g", "m"), 60.0),
+    _use("f", "s", ("f", "r", "s"), 500.0),
+]
+
+
+def test_a_circuit_that_stops_a_pop_cutting_the_wan_further_is_kept() -> None:
+    assert _STUB_AND_CHORD[2] in _needed(_STUB_AND_CHORD, _STUB_SITES, 2)
+
+
+def test_a_spare_circuit_beside_an_irreparable_cut_is_still_taken_back_out() -> None:
+    assert _STUB_AND_CHORD[7] not in _needed(_STUB_AND_CHORD, _STUB_SITES, 2)

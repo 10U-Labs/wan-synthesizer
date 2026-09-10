@@ -75,10 +75,15 @@ def _cut_cities(
     return articulation_points(cities | set(backbone_ids), segments)
 
 
-def _no_single_point_of_failure(
+def _pieces_without_each(
     circuits: list[SynthesisCircuit], backbone_ids: tuple[str, ...]
-) -> bool:
-    return not _cut_cities(circuits, backbone_ids)
+) -> dict[str, int]:
+    cities, segments = _fiber_of(circuits)
+    sites = cities | set(backbone_ids)
+    return {
+        lost: len(connected_components(sites - {lost}, segments))
+        for lost in sorted(sites)
+    }
 
 
 def _pinned_circuit(
@@ -235,7 +240,7 @@ def _needed(
 ) -> list[SynthesisCircuit]:
     kept = list(circuits)
     held = {site: min(target, diverse_circuit_count(kept, site)) for site in backbone_ids}
-    intact = _no_single_point_of_failure(kept, backbone_ids)
+    apart = _pieces_without_each(kept, backbone_ids)
     for spare in sorted(
         circuits, key=lambda drawn_circuit: (-drawn_circuit.distance_miles, drawn_circuit.pop_ids)
     ):
@@ -248,7 +253,10 @@ def _needed(
             continue
         if not _one_network(left, backbone_ids):
             continue
-        if intact and not _no_single_point_of_failure(left, backbone_ids):
+        if any(
+            pieces > apart[lost]
+            for lost, pieces in _pieces_without_each(left, backbone_ids).items()
+        ):
             continue
         kept = left
     return kept

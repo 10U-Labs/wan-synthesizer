@@ -113,14 +113,14 @@ def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
         drawn.setdefault(pair, []).append(drawn_circuit)
     names = {row["id"]: row["name"] for row in synthesis["backbone"]}
     asked = synthesis["number_of_diverse_circuits"]
-    survives_a_city_loss = not cut_cities(synthesis["links"])
+    apart = pieces_without_each(synthesis["links"])
     overbuilt: list[tuple[str, int]] = []
     for pair, circuits in sorted(drawn.items()):
         if len(circuits) < 2:
             continue
         spare = max(circuits, key=lambda circuit: circuit["distance_miles"])
         kept = [circuit for circuit in synthesis["links"] if circuit is not spare]
-        if survives_a_city_loss and cut_cities(kept):
+        if _cuts_deeper(kept, apart):
             continue
         if not any(
             independent_ways_out(kept, end, names)
@@ -152,6 +152,33 @@ def _reached(joined: dict[str, set[str]], start: str) -> set[str]:
 
 def _all_one_network(joined: dict[str, set[str]]) -> bool:
     return all(_reached(joined, start) == set(joined) for start in sorted(joined)[:1])
+
+
+def _pieces(joined: dict[str, set[str]]) -> int:
+    unplaced = set(joined)
+    counted = 0
+    while unplaced:
+        unplaced -= _reached(joined, min(unplaced))
+        counted += 1
+    return counted
+
+
+def pieces_without_each(circuits: list[dict[str, Any]]) -> dict[str, int]:
+    joined = _cities_the_circuits_cross(circuits)
+    return {
+        lost: _pieces({
+            city: reached - {lost} for city, reached in joined.items() if city != lost
+        })
+        for lost in joined
+    }
+
+
+def _cuts_deeper(
+    kept: list[dict[str, Any]], apart: dict[str, int]
+) -> bool:
+    return any(
+        pieces > apart[lost] for lost, pieces in pieces_without_each(kept).items()
+    )
 
 
 def cut_cities(circuits: list[dict[str, Any]]) -> list[str]:
@@ -195,7 +222,7 @@ def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
         site: min(asked, independent_ways_out(synthesis["links"], site, names))
         for site in sites
     }
-    survives_a_city_loss = not cut_cities(synthesis["links"])
+    apart = pieces_without_each(synthesis["links"])
     removable: list[tuple[str, float]] = []
     for spare in synthesis["links"]:
         if frozenset((names[spare["source_id"]], names[spare["target_id"]])) in pinned:
@@ -207,7 +234,7 @@ def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
             continue
         if not _all_one_network(_sites_the_circuits_join(kept, sites)):
             continue
-        if survives_a_city_loss and cut_cities(kept):
+        if _cuts_deeper(kept, apart):
             continue
         removable.append((" -> ".join(spare["path"]), spare["distance_miles"]))
     return sorted(removable, key=lambda found: (-found[1], found[0]))

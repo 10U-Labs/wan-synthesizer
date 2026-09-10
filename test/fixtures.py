@@ -123,7 +123,7 @@ def meshed_backbone_synthesis(
 
 SHORT_OF_THREE_CITIES = "abcd"
 SHORT_OF_THREE_BACKBONE = ("a", "b", "c", "d")
-SHORT_OF_THREE_CIRCUITS = [
+SHORT_OF_THREE_CIRCUITS: list[tuple[str, ...]] = [
     ("a", "b"), ("a", "c"), ("b", "c"), ("b", "d"), ("c", "d"),
 ]
 

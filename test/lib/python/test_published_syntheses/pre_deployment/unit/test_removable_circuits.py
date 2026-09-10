@@ -104,10 +104,14 @@ def test_a_circuit_whose_removal_would_leave_a_city_splitting_the_fiber_is_kept(
     assert not removable_circuits(_published_network(_TWO_LOOPS))
 
 
-def test_fiber_that_already_splits_at_a_city_keeps_no_circuit_that_gains_nothing() -> None:
-    assert removable_circuits(_published_network(_SQUARE + _HOMED_TWICE)) == [
-        ("east -> n -> deep", 200.0), ("west -> n -> deep", 200.0)
-    ]
+def test_a_second_circuit_to_a_seat_behind_one_city_is_kept_though_it_is_not_diverse() -> None:
+    assert not removable_circuits(_published_network(_SQUARE + _HOMED_TWICE))
+
+
+def test_fiber_that_already_splits_at_a_city_still_reports_a_circuit_nobody_needs() -> None:
+    assert removable_circuits(
+        _published_network(_SQUARE + _HOMED_TWICE + [_SHORT_CROSSING])
+    ) == [("west -> g -> east", 200.0)]
 
 
 def test_a_network_carrying_no_circuits_reports_nothing() -> None:
