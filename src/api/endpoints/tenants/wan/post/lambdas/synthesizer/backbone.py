@@ -17,7 +17,12 @@ from synthesizer.graphs import (
     reconstruct_path,
     undirected_adjacency,
 )
-from synthesizer.model import CIRCUIT_FOR_PIN, CIRCUIT_FOR_TARGET, SynthesisCircuit
+from synthesizer.model import (
+    CIRCUIT_FOR_PIN,
+    CIRCUIT_FOR_RELIEF,
+    CIRCUIT_FOR_TARGET,
+    SynthesisCircuit,
+)
 from synthesizer.survivable import FiberInputs, select_fiber
 from synthesizer.validation import diverse_circuit_count
 
@@ -215,7 +220,7 @@ def _circuit_around(
         )
         if found is None:
             continue
-        return replace(found, reason=CIRCUIT_FOR_TARGET)
+        return replace(found, reason=CIRCUIT_FOR_RELIEF)
     return None
 
 

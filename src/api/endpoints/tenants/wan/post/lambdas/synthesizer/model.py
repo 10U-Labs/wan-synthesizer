@@ -16,6 +16,7 @@ class HomingCircuit:
 
 CIRCUIT_FOR_TARGET = "site_target"
 CIRCUIT_FOR_PIN = "operator_pin"
+CIRCUIT_FOR_RELIEF = "pop_loss_relief"
 
 
 @dataclass(frozen=True)
