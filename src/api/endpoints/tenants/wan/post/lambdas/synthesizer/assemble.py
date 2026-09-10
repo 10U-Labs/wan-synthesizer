@@ -59,7 +59,7 @@ def finalize_synthesis(
     )
 
 
-def assign_access(
+def assign_homes(
     backbone_ids: tuple[str, ...],
     inputs: SynthesisInputs,
     plan: _SearchPlan,
@@ -140,7 +140,7 @@ def evaluate_backbone(
 ) -> list[HomingCircuit] | None:
     if not backbone_physically_biconnectable(backbone_ids, inputs):
         return None
-    return assign_access(backbone_ids, inputs, plan)
+    return assign_homes(backbone_ids, inputs, plan)
 
 
 def synthesis_circuits(

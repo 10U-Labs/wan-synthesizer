@@ -12,7 +12,7 @@ from fixtures import (
 )
 from synthesizer.model import HomingCircuit, SynthesisInputs, ForcedCircuits
 from synthesizer.assemble import (
-    assign_access,
+    assign_homes,
     backbone_physically_biconnectable,
     build_synthesis_for_backbone,
     forced_backbone_resilience_error,
@@ -37,16 +37,16 @@ def _homing_counts(homing_circuits: list[HomingCircuit]) -> dict[str, int]:
     return counts
 
 
-def test_assign_access_homes_a_demand_site_to_two_backbone_nodes() -> None:
-    result = assign_access(("c1", "c2"), _dual_inputs(), search_plan([]))
+def test_assign_homes_homes_a_demand_site_to_two_backbone_nodes() -> None:
+    result = assign_homes(("c1", "c2"), _dual_inputs(), search_plan([]))
     assert _homing_counts(result or []) == {"s": 2}
 
 
-def test_assign_access_returns_none_when_backbone_smaller_than_the_homing_degree() -> None:
-    assert assign_access(("c1",), _dual_inputs(), search_plan([], homing_degree=2)) is None
+def test_assign_homes_returns_none_when_backbone_smaller_than_the_homing_degree() -> None:
+    assert assign_homes(("c1",), _dual_inputs(), search_plan([], homing_degree=2)) is None
 
 
-def test_assign_access_homes_to_the_configured_count() -> None:
+def test_assign_homes_homes_to_the_configured_count() -> None:
     triple_fiber = physical(
         {
             ("c1", "c2"): 1.0, ("c2", "c3"): 1.0, ("c1", "c3"): 1.0,
@@ -57,13 +57,13 @@ def test_assign_access_homes_to_the_configured_count() -> None:
         ["c1", "c2", "c3"], triple_fiber, {"c1", "c2", "c3"},
         [access("s", 0.0, 0.05)], {"c1": (0.0, 0.0), "c2": (0.0, 0.1), "c3": (0.0, 0.2)},
     )
-    result = assign_access(("c1", "c2", "c3"), inputs, search_plan([], homing_degree=3))
+    result = assign_homes(("c1", "c2", "c3"), inputs, search_plan([], homing_degree=3))
     assert _homing_counts(result or []) == {"s": 3}
 
 
-def test_assign_access_leads_with_a_forced_home() -> None:
+def test_assign_homes_leads_with_a_forced_home() -> None:
     plan = replace(search_plan([]), forced_circuits=ForcedCircuits(homes=frozenset({("s", "c2")})))
-    result = assign_access(("c1", "c2"), _dual_inputs((0.0, 0.0)), plan)
+    result = assign_homes(("c1", "c2"), _dual_inputs((0.0, 0.0)), plan)
     assert {
         circuit.target for circuit in result or [] if circuit.source == "s"
     } == {"c1", "c2"}
