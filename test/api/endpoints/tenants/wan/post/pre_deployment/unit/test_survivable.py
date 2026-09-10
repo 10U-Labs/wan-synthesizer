@@ -9,6 +9,8 @@ from synthesizer.input_graph import FiberSegment
 from synthesizer.survivable import (
     FiberInputs,
     FiberSelection,
+    _Requirement,
+    _carried,
     _held,
     _requirements,
     _shortfalls,
@@ -136,6 +138,28 @@ def test_no_fiber_is_selected_for_a_circuit_no_backbone_node_is_owed() -> None:
 
 def test_the_floor_prices_the_diverse_circuits_owed_and_nothing_between_a_pair() -> None:
     assert _PAIR_PRICED_SELECTION.lower_bound_miles == pytest.approx(42.0)
+
+
+_ASKED_TWO_OVER_ONE = _Requirement(
+    "a", frozenset({"b"}), frozenset({"a"}), _WAYS_OUT, frozenset({("a", "b")})
+)
+
+
+def test_a_requirement_is_lowered_to_the_circuits_the_whole_fiber_can_carry() -> None:
+    assert _carried(_ASKED_TWO_OVER_ONE, {("a", "b"): 1.0}) == 1
+
+
+_UNDER_WATER_PAIRS = {
+    ("a", "p"): 10.0, ("b", "p"): 10.0, ("a", "q"): 20.0, ("b", "q"): 20.0,
+}
+_UNDER_WATER_ONLY = fixtures.fiber_segments_under_water(
+    _UNDER_WATER_PAIRS, set(_UNDER_WATER_PAIRS)
+)
+_UNDER_WATER_ONLY_SELECTION = _selected(_UNDER_WATER_ONLY, ("a", "b"), seat_cap=2)
+
+
+def test_submarine_fiber_is_selected_where_a_peer_is_reachable_no_other_way() -> None:
+    assert _UNDER_WATER_ONLY_SELECTION.segments == frozenset(_UNDER_WATER_ONLY)
 
 
 _TWIN_WAYS = physical({
