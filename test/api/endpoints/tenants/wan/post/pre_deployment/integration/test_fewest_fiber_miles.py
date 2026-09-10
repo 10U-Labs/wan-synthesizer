@@ -180,8 +180,8 @@ PAIRED_ARTIFACTS = fixtures.synthesis_over_segments(
 )
 
 
-def test_the_floor_prices_the_fewest_miles_the_diverse_circuits_owed_run_over() -> None:
-    assert round(PAIRED_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3) == 520.0
+def test_the_floor_prices_the_ways_out_owed_and_the_loss_of_any_one_pop() -> None:
+    assert round(PAIRED_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3) == 570.0
 
 
 def test_that_synthesis_runs_no_fewer_miles_than_the_floor_it_publishes() -> None:
@@ -216,3 +216,31 @@ def test_that_floor_is_the_fewest_miles_the_ways_out_it_grades_can_run_over() ->
 
 def test_every_seat_on_that_synthesis_still_holds_the_ways_out_it_was_owed() -> None:
     assert FLOORED_ABOVE_ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []
+
+
+_ON_ONE_POP_SITES = ("a", "b", "c", "d")
+_ON_ONE_POP_TRANSIT = ("p",)
+_ON_ONE_POP_SEGMENTS = {
+    ("a", "b"): 10.0, ("a", "p"): 10.0, ("b", "p"): 10.0,
+    ("c", "d"): 10.0, ("c", "p"): 10.0, ("d", "p"): 10.0,
+    ("a", "c"): 200.0,
+}
+PAST_ONE_POP_ARTIFACTS = fixtures.synthesis_over_segments(
+    _ON_ONE_POP_SITES, _ON_ONE_POP_SEGMENTS, _ASKED_FOR, _ON_ONE_POP_TRANSIT
+)
+
+
+def test_the_floor_prices_the_circuit_that_keeps_one_pop_from_splitting_the_wan() -> None:
+    assert round(
+        PAST_ONE_POP_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3
+    ) == 240.0
+
+
+def test_that_synthesis_runs_no_further_than_a_tenth_past_what_survival_costs() -> None:
+    assert PAST_ONE_POP_ARTIFACTS.synthesis.metrics.physical_miles <= (
+        1.1 * PAST_ONE_POP_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles
+    )
+
+
+def test_that_synthesis_is_split_by_the_loss_of_no_pop_it_runs_through() -> None:
+    assert PAST_ONE_POP_ARTIFACTS.validation["backbone_mesh_has_no_cut_pop"]

@@ -15,3 +15,7 @@ ARTIFACTS = fixtures.synthesis_over_segments(_SITES, _SEGMENTS, _ASKED_FOR, _TRA
 
 def test_the_published_backbone_survives_the_loss_of_any_one_city() -> None:
     assert ARTIFACTS.validation["backbone_mesh_survives_any_one_site_loss"] is True
+
+
+def test_the_floor_it_publishes_prices_what_surviving_that_loss_took() -> None:
+    assert round(ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3) == 90.0
