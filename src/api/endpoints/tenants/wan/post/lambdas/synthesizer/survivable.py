@@ -8,7 +8,7 @@ from typing import TypeVar
 from synthesizer.ceiling import (
     CircuitProofInputs,
     circuits_per_peer,
-    ways_out_by_carrier_and_peer,
+    diverse_circuits_by_carrier_and_peer,
 )
 from synthesizer.flow_cuts import Separation, SeparationQuestion, weakest_separation
 from synthesizer.graphs import build_adjacency, reachable_over
@@ -30,7 +30,7 @@ _Bucket = TypeVar("_Bucket", str, tuple[str, str])
 class FiberInputs:
     backbone_ids: tuple[str, ...]
     fiber_segments: Mapping[tuple[str, str], FiberSegment]
-    ways_out: int = 3
+    number_of_diverse_circuits: int = 3
     seat_cap: int | None = None
     fiber_by_carrier: dict[str, dict[str, list[tuple[str, float]]]] = field(
         default_factory=dict
@@ -74,7 +74,7 @@ class _Asked:
 
 
 @dataclass(frozen=True)
-class _WaysOut:
+class _DiverseCircuits:
     toward_each: list[_Requirement]
     together: list[_Requirement]
     across_the_carriers: list[_Requirement]
@@ -144,7 +144,7 @@ def _rows_for(asked: _Asked, writing: _Writing) -> list[_Requirement]:
         [
             _Requirement(asked.site, asked.peers, asked.spared, share, asked.over[carrier])
             for carrier, share in _shared_out(
-                writing.inputs.ways_out, asked.capacity
+                writing.inputs.number_of_diverse_circuits, asked.capacity
             ).items()
             if share
         ],
@@ -201,7 +201,7 @@ def _across_the_carriers(
                 site,
                 peers,
                 frozenset({site}) | peers,
-                min(writing.inputs.ways_out, sum(capacity.values())),
+                min(writing.inputs.number_of_diverse_circuits, sum(capacity.values())),
                 _over_land(site, peers, frozenset(writing.fiber), writing),
             )
         ],
@@ -209,7 +209,7 @@ def _across_the_carriers(
     )
 
 
-def _ways_out_rows(site: str, writing: _Writing) -> _WaysOut:
+def _diverse_circuit_rows(site: str, writing: _Writing) -> _DiverseCircuits:
     peers = frozenset(writing.inputs.backbone_ids) - {site}
     spared = frozenset({site}) if writing.per_peer == 1 else frozenset({site}) | peers
     capacity = writing.credited[site]
@@ -220,13 +220,13 @@ def _ways_out_rows(site: str, writing: _Writing) -> _WaysOut:
                 site, frozenset({peer}), spared, share, peer_fiber[(carrier, peer)]
             )
             for (carrier, peer), share in _shared_out(
-                writing.inputs.ways_out, capacity
+                writing.inputs.number_of_diverse_circuits, capacity
             ).items()
             if share
         ],
         writing.whole,
     )
-    return _WaysOut(
+    return _DiverseCircuits(
         toward_each,
         _rows_for(_asked_of_all_peers(site, spared, capacity, peer_fiber), writing),
         _across_the_carriers(site, peers, capacity, writing),
@@ -242,7 +242,7 @@ def _seats_the_carriers_can_give_two_circuits(writing: _Writing) -> list[str]:
 
 
 def _two_circuits_sharing_no_pop(writing: _Writing) -> list[_Requirement]:
-    if writing.inputs.ways_out < _CIRCUITS_SHARING_NO_POP:
+    if writing.inputs.number_of_diverse_circuits < _CIRCUITS_SHARING_NO_POP:
         return []
     asked = [
         _Requirement(
@@ -271,12 +271,14 @@ def _writing(
         fiber,
         _fiber_by_carrier(inputs, fiber),
         {segment: 1.0 for segment in fiber},
-        circuits_per_peer(inputs.seat_cap, len(inputs.backbone_ids), inputs.ways_out),
-        ways_out_by_carrier_and_peer(
+        circuits_per_peer(
+            inputs.seat_cap, len(inputs.backbone_ids), inputs.number_of_diverse_circuits
+        ),
+        diverse_circuits_by_carrier_and_peer(
             CircuitProofInputs(
                 inputs.backbone_ids,
                 build_adjacency(dict(inputs.fiber_segments)),
-                inputs.ways_out,
+                inputs.number_of_diverse_circuits,
                 inputs.seat_cap,
                 inputs.fiber_by_carrier,
                 terrestrial,
@@ -289,10 +291,10 @@ def _writing(
 
 
 def _asked_of_every_node(writing: _Writing) -> list[_Requirement]:
-    ways_out = [_ways_out_rows(site, writing) for site in writing.inputs.backbone_ids]
+    owed_rows = [_diverse_circuit_rows(site, writing) for site in writing.inputs.backbone_ids]
     return [
         row
-        for owed in ways_out
+        for owed in owed_rows
         for row in owed.toward_each + owed.together + owed.across_the_carriers
     ]
 
@@ -387,7 +389,7 @@ def _floor_under_every_requirement(
     fiber: Mapping[tuple[str, str], float],
     order: list[tuple[str, str]],
 ) -> float:
-    writing = _writing(inputs, fiber, inputs.ways_out)
+    writing = _writing(inputs, fiber, inputs.number_of_diverse_circuits)
     return _tighten(
         _search_over(fiber, order),
         _asked_of_every_node(writing) + _two_circuits_sharing_no_pop(writing),

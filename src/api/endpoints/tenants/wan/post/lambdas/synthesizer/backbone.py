@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass, replace
 from itertools import combinations
 
-from synthesizer.ceiling import CircuitProofInputs, independent_circuits
+from synthesizer.ceiling import CircuitProofInputs, diverse_circuits
 from synthesizer.input_graph import FiberSegment, carriers_along, segment_key
 from synthesizer.graphs import (
     adjacency_by_carrier,
@@ -134,7 +134,7 @@ def _proved_over(
         if peer == site or segment_key(site, peer) not in constraints.removed_pairs
     )
     return sorted(
-        independent_circuits(site, CircuitProofInputs(
+        diverse_circuits(site, CircuitProofInputs(
             peers, build_adjacency(fiber),
             constraints.number_of_diverse_circuits, constraints.seat_cap, by_carrier,
         )),
@@ -142,7 +142,7 @@ def _proved_over(
     )[: constraints.number_of_diverse_circuits]
 
 
-def _ways_out_of(site: str, drawn: _DrawnFiber) -> list[tuple[str, ...]]:
+def _diverse_circuits_of(site: str, drawn: _DrawnFiber) -> list[tuple[str, ...]]:
     return _proved_over(site, drawn.selected, drawn.selected_by_carrier, drawn)
 
 
@@ -152,7 +152,7 @@ def _laid(drawn: _DrawnFiber, pinned: list[SynthesisCircuit]) -> list[SynthesisC
         for drawn_circuit in pinned
     }
     for site in sorted(drawn.backbone_ids):
-        for pop_ids in _ways_out_of(site, drawn):
+        for pop_ids in _diverse_circuits_of(site, drawn):
             key = min(pop_ids, pop_ids[::-1])
             held = laid.get(key)
             if held is None:

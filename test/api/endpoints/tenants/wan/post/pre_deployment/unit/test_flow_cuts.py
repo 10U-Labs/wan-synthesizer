@@ -66,7 +66,7 @@ def test_the_city_every_way_out_crosses_is_what_the_fiber_cannot_survive() -> No
     assert _asked(_ROUND_ONE_CITY, 2, peers=_TWO_PEERS) == _ONLY_THE_CITY
 
 
-def test_sparing_that_city_leaves_the_same_fiber_carrying_both_ways_out() -> None:
+def test_sparing_that_city_leaves_the_same_fiber_carrying_both_diverse_circuits() -> None:
     assert _asked(_ROUND_ONE_CITY, 2, peers=_TWO_PEERS, spared=frozenset({"x"})) is None
 
 

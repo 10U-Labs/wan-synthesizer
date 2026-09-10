@@ -72,7 +72,7 @@ def worst_haul(synthesis: dict[str, Any]) -> float:
     return round(max(hauls, default=0.0), 1)
 
 
-def _ways_out(
+def _circuits_out_of(
     circuits: list[dict[str, Any]], site: str, names: dict[str, str]
 ) -> list[tuple[str, frozenset[str]]]:
     return [
@@ -85,22 +85,22 @@ def _ways_out(
     ]
 
 
-def _fail_apart(ways: tuple[tuple[str, frozenset[str]], ...]) -> bool:
+def _fail_apart(circuits: tuple[tuple[str, frozenset[str]], ...]) -> bool:
     return all(
         not ((near & far) - ({peer} if peer == other else frozenset()))
-        for (peer, near), (other, far) in combinations(ways, 2)
+        for (peer, near), (other, far) in combinations(circuits, 2)
     )
 
 
-def independent_ways_out(
+def diverse_circuit_count(
     circuits: list[dict[str, Any]], site: str, names: dict[str, str]
 ) -> int:
-    ways = _ways_out(circuits, site, names)
+    out_of_site = _circuits_out_of(circuits, site, names)
     return max(
         (
             size
-            for size in range(1, len(ways) + 1)
-            if any(_fail_apart(combo) for combo in combinations(ways, size))
+            for size in range(1, len(out_of_site) + 1)
+            if any(_fail_apart(combo) for combo in combinations(out_of_site, size))
         ),
         default=0,
     )
@@ -123,8 +123,8 @@ def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
         if _cuts_deeper(kept, apart):
             continue
         if not any(
-            independent_ways_out(kept, end, names)
-            < min(asked, independent_ways_out(synthesis["links"], end, names))
+            diverse_circuit_count(kept, end, names)
+            < min(asked, diverse_circuit_count(synthesis["links"], end, names))
             for end in pair
         ):
             overbuilt.append((" <-> ".join(pair), len(circuits)))
@@ -218,8 +218,8 @@ def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
     pinned = {
         frozenset((pair["source"], pair["target"])) for pair in synthesis["forced_paths"]
     }
-    held_ways_out = {
-        site: min(asked, independent_ways_out(synthesis["links"], site, names))
+    held_diverse_circuits = {
+        site: min(asked, diverse_circuit_count(synthesis["links"], site, names))
         for site in sites
     }
     apart = pieces_without_each(synthesis["links"])
@@ -229,7 +229,7 @@ def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
             continue
         kept = [circuit for circuit in synthesis["links"] if circuit is not spare]
         if any(
-            independent_ways_out(kept, site, names) < held_ways_out[site] for site in sites
+            diverse_circuit_count(kept, site, names) < held_diverse_circuits[site] for site in sites
         ):
             continue
         if not _all_one_network(_sites_the_circuits_join(kept, sites)):
@@ -338,7 +338,7 @@ def _offered_over(
     return offered
 
 
-def offered_ways_out(
+def offered_diverse_circuits(
     fiber_by_carrier: dict[str, set[frozenset[str]]],
     city: str,
     peers: frozenset[str],

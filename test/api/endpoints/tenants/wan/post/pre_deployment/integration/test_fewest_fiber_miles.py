@@ -37,7 +37,7 @@ def test_the_delivered_synthesis_runs_no_further_than_twice_that_floor() -> None
     )
 
 
-def test_every_site_still_holds_the_two_ways_out_it_was_owed() -> None:
+def test_every_site_still_holds_the_two_diverse_circuits_it_was_owed() -> None:
     assert ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []
 
 
@@ -63,7 +63,7 @@ def test_that_synthesis_orders_exactly_the_floor_it_publishes_rather_than_twice_
     )
 
 
-def test_every_seat_on_that_synthesis_holds_the_two_ways_out_it_was_owed() -> None:
+def test_every_seat_on_that_synthesis_holds_the_two_diverse_circuits_it_was_owed() -> None:
     assert MANY_PASS_ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []
 
 
@@ -97,7 +97,7 @@ def test_no_synthesis_runs_fewer_miles_than_the_floor_it_publishes() -> None:
     )
 
 
-def test_a_site_whose_ways_out_are_split_between_carriers_is_floored_at_what_it_can_buy(
+def test_a_site_whose_diverse_circuits_are_split_between_carriers_is_floored_at_what_it_can_buy(
 ) -> None:
     assert SPLIT_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles == pytest.approx(
         SPLIT_ASKED_ONE_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles
@@ -180,7 +180,7 @@ PAIRED_ARTIFACTS = fixtures.synthesis_over_segments(
 )
 
 
-def test_the_floor_prices_the_ways_out_owed_and_the_loss_of_any_one_pop() -> None:
+def test_the_floor_prices_the_diverse_circuits_owed_and_the_loss_of_any_one_pop() -> None:
     assert round(PAIRED_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3) == 570.0
 
 
@@ -208,13 +208,13 @@ def test_the_floor_published_is_no_higher_than_the_miles_the_synthesis_runs_over
     )
 
 
-def test_that_floor_is_the_fewest_miles_the_ways_out_it_grades_can_run_over() -> None:
+def test_that_floor_is_the_fewest_miles_the_diverse_circuits_it_grades_can_run_over() -> None:
     assert round(
         FLOORED_ABOVE_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3
     ) == fixtures.FLOORED_ABOVE_MILES
 
 
-def test_every_seat_on_that_synthesis_still_holds_the_ways_out_it_was_owed() -> None:
+def test_every_seat_on_that_synthesis_still_holds_the_diverse_circuits_it_was_owed() -> None:
     assert FLOORED_ABOVE_ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []
 
 

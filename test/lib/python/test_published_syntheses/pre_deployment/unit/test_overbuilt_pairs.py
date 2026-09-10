@@ -35,7 +35,7 @@ def test_a_pair_holding_a_circuit_neither_end_needs_is_reported_with_its_count()
     assert overbuilt_pairs(_synthesis(_SPARE_CIRCUIT)) == [("east <-> west", 2)]
 
 
-def test_a_pair_whose_second_circuit_is_a_ways_out_is_not_reported() -> None:
+def test_a_pair_whose_second_circuit_is_a_diverse_circuit_is_not_reported() -> None:
     synthesis = _synthesis([_circuit("west", "east", "m1"), _circuit("west", "east", "m2")])
     assert not overbuilt_pairs(synthesis)
 

@@ -14,7 +14,7 @@ import yaml
 import seed
 from repo_utils import REPO_ROOT
 from seed import _carrier_cities, _carrier_names, _city_key, _mapping_rows, _rows, _slug
-from synthesizer.ceiling import CircuitProofInputs, independent_circuit_ceiling
+from synthesizer.ceiling import CircuitProofInputs, diverse_circuit_ceiling
 from synthesizer.codec import load_merged_carriers, load_regions, load_sites
 from synthesizer.graphs import build_adjacency
 from synthesizer.input_graph import FiberSegment, Site, haversine_miles
@@ -284,7 +284,7 @@ def _ceiling_bounds(
             city_id = by_name.get(city)
             if city_id is None or _path_endpoints(city_id, pinned) < 1:
                 continue
-            bound = independent_circuit_ceiling(city_id, CircuitProofInputs(
+            bound = diverse_circuit_ceiling(city_id, CircuitProofInputs(
                 pinned, adjacency, asked, backbone["node_count"]["max"]
             ))
             bounds.append((tenant, city, bound, asked))

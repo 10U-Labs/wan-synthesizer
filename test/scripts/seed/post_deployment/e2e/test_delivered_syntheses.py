@@ -11,7 +11,7 @@ from test_published_syntheses import (
     FIBER,
     backbone_groups,
     cut_cities,
-    offered_ways_out,
+    offered_diverse_circuits,
     ordered_fiber_miles,
     overbuilt_pairs,
     removable_circuits,
@@ -348,7 +348,7 @@ def _overstated_ceilings(syntheses: list[dict[str, Any]]) -> dict[str, list[str]
             city = str(entry["name"])
             if city not in reached:
                 continue
-            offered = offered_ways_out(
+            offered = offered_diverse_circuits(
                 held, city, frozenset(cities - {city}), per_peer
             )
             if int(entry["ceiling"]) > offered:

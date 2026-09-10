@@ -15,14 +15,14 @@ from synthesizer.survivable import (
     _carried,
     _held,
     _shortfalls,
-    _ways_out_rows,
+    _diverse_circuit_rows,
     _writing,
     select_fiber,
 )
 
 physical = fixtures.fiber_segments_from
 
-_WAYS_OUT = 2
+_DIVERSE_CIRCUITS = 2
 _SLACK = 1e-6
 
 
@@ -30,10 +30,10 @@ def _asking(
     fiber: dict[tuple[str, str], FiberSegment],
     backbone_ids: tuple[str, ...],
     seat_cap: int | None = None,
-    ways_out: int = _WAYS_OUT,
+    number_of_diverse_circuits: int = _DIVERSE_CIRCUITS,
 ) -> FiberInputs:
     return FiberInputs(
-        backbone_ids, fiber, ways_out, seat_cap, adjacency_by_carrier(fiber),
+        backbone_ids, fiber, number_of_diverse_circuits, seat_cap, adjacency_by_carrier(fiber),
     )
 
 
@@ -41,9 +41,9 @@ def _selected(
     fiber: dict[tuple[str, str], FiberSegment],
     backbone_ids: tuple[str, ...],
     seat_cap: int | None = None,
-    ways_out: int = _WAYS_OUT,
+    number_of_diverse_circuits: int = _DIVERSE_CIRCUITS,
 ) -> FiberSelection:
-    return select_fiber(_asking(fiber, backbone_ids, seat_cap, ways_out))
+    return select_fiber(_asking(fiber, backbone_ids, seat_cap, number_of_diverse_circuits))
 
 
 def _owed(
@@ -56,7 +56,7 @@ def _owed(
     miles_by_key = _whole(inputs)
     return sum(
         row.required
-        for row in _ways_out_rows(
+        for row in _diverse_circuit_rows(
             site, _writing(inputs, miles_by_key, _EVERY_WAY_OUT)
         ).across_the_carriers
     )
@@ -108,7 +108,7 @@ _RING_SELECTION = _selected(_RING, _RING_SITES)
 _CHORD_SELECTION = _selected(_CHORD, _RING_SITES)
 
 
-def test_a_ring_is_selected_whole_because_nothing_short_of_it_gives_two_ways_out() -> None:
+def test_a_ring_is_selected_whole_because_nothing_short_of_it_gives_two_diverse_circuits() -> None:
     assert _RING_SELECTION.segments == _RING_SEGMENTS
 
 
@@ -145,7 +145,7 @@ def test_the_floor_prices_the_diverse_circuits_owed_and_nothing_between_a_pair()
 
 
 _ASKED_TWO_OVER_ONE = _Requirement(
-    "a", frozenset({"b"}), frozenset({"a"}), _WAYS_OUT, frozenset({("a", "b")})
+    "a", frozenset({"b"}), frozenset({"a"}), _DIVERSE_CIRCUITS, frozenset({("a", "b")})
 )
 
 
@@ -189,14 +189,14 @@ _TWIN_OWNED = fixtures.carrier_fiber_segments({
     ("b", "q"): (1.0, ("lumen",)),
 })
 _TWIN_SPLIT_SELECTION = _selected(_TWIN_SPLIT, ("a", "b"), seat_cap=2)
-_TWIN_SPLIT_ASKED_ONE = _selected(_TWIN_SPLIT, ("a", "b"), seat_cap=2, ways_out=1)
+_TWIN_SPLIT_ASKED_ONE = _selected(_TWIN_SPLIT, ("a", "b"), seat_cap=2, number_of_diverse_circuits=1)
 
 
-def test_a_site_is_owed_only_the_ways_out_one_carrier_can_offer() -> None:
+def test_a_site_is_owed_only_the_diverse_circuits_one_carrier_can_offer() -> None:
     assert _owed(_TWIN_SPLIT, ("a", "b"), "a", seat_cap=2) == 1
 
 
-def test_a_site_is_owed_both_ways_out_where_one_carrier_has_each() -> None:
+def test_a_site_is_owed_both_diverse_circuits_where_one_carrier_has_each() -> None:
     assert _owed(_TWIN_OWNED, ("a", "b"), "a", seat_cap=2) == 2
 
 
@@ -220,13 +220,13 @@ def _shared_transit_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, 
     return diverse_circuit_ceilings(CircuitProofInputs(
         fixtures.SHARED_TRANSIT_SITES,
         build_adjacency(held),
-        _WAYS_OUT,
+        _DIVERSE_CIRCUITS,
         2,
         adjacency_by_carrier(held),
     ))
 
 
-def test_the_fiber_selected_where_two_carriers_share_a_pop_carries_both_ways_out() -> None:
+def test_the_fiber_selected_where_two_carriers_share_a_pop_carries_both_diverse_circuits() -> None:
     assert _shared_transit_ceilings(_SHARED_TRANSIT_SELECTION.segments) == {"a": 2, "b": 2}
 
 
@@ -260,7 +260,7 @@ def test_the_fiber_selected_is_fiber_one_carrier_can_offer_a_whole_circuit_over(
 
 _DISTANT_PEER_SITES = ("hil", "sea", "syd")
 _DISTANT_PEER_SELECTION = select_fiber(FiberInputs(
-    _DISTANT_PEER_SITES, fixtures.DISTANT_PEER_FIBER, _WAYS_OUT, None,
+    _DISTANT_PEER_SITES, fixtures.DISTANT_PEER_FIBER, _DIVERSE_CIRCUITS, None,
     adjacency_by_carrier(fixtures.DISTANT_PEER_FIBER),
 ))
 
@@ -271,7 +271,7 @@ def _distant_peer_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, in
         build_adjacency({
             segment: fixtures.DISTANT_PEER_FIBER[segment] for segment in segments
         }),
-        _WAYS_OUT,
+        _DIVERSE_CIRCUITS,
     ))
 
 
@@ -357,7 +357,7 @@ _ON_ONE_POP_SITES = ("a", "b", "c", "d")
 _HELD_AT_ONE_POP = _selected(physical(_ON_ONE_POP), _ON_ONE_POP_SITES)
 _PAST_THE_POP_SELECTION = _selected(physical(_PAST_THE_POP), _ON_ONE_POP_SITES)
 _PAST_THE_POP_ASKED_ONE = _selected(
-    physical(_PAST_THE_POP), _ON_ONE_POP_SITES, ways_out=1
+    physical(_PAST_THE_POP), _ON_ONE_POP_SITES, number_of_diverse_circuits=1
 )
 
 

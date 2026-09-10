@@ -94,8 +94,8 @@ _SQUARE_FIBER = physical({
     ("w", "x"): 100.0, ("x", "y"): 100.0, ("y", "z"): 100.0, ("z", "w"): 100.0,
     ("w", "y"): 250.0, ("x", "z"): 250.0,
 })
-_TWO_WAYS_OUT = BackboneConstraints(number_of_diverse_circuits=2, seat_cap=4)
-_SQUARE = _drawn(_SQUARE_SITES, _SQUARE_FIBER, _TWO_WAYS_OUT)
+_TWO_DIVERSE_CIRCUITS = BackboneConstraints(number_of_diverse_circuits=2, seat_cap=4)
+_SQUARE = _drawn(_SQUARE_SITES, _SQUARE_FIBER, _TWO_DIVERSE_CIRCUITS)
 
 
 def test_the_square_is_drawn_with_one_circuit_a_pair_round_the_ring() -> None:

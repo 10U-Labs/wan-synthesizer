@@ -49,7 +49,7 @@ def test_the_short_way_that_changes_hands_is_not_drawn() -> None:
     assert not [drawn_circuit for drawn_circuit in _MESH if _SHORTCUT_CITY in drawn_circuit.pop_ids]
 
 
-def test_a_sites_ways_out_may_be_ordered_from_different_carriers() -> None:
+def test_a_sites_diverse_circuits_may_be_ordered_from_different_carriers() -> None:
     assert _carriers_at("a") == {"lumen", "zayo"}
 
 

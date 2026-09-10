@@ -3,10 +3,10 @@ from __future__ import annotations
 import fixtures
 from synthesizer.ceiling import (
     CircuitProofInputs,
-    independent_circuit_ceiling,
-    independent_circuits,
+    diverse_circuit_ceiling,
+    diverse_circuits,
     diverse_circuit_ceilings,
-    ways_out_by_carrier_and_peer,
+    diverse_circuits_by_carrier_and_peer,
 )
 from synthesizer.graphs import adjacency_by_carrier, build_adjacency
 from synthesizer.input_graph import FiberSegment
@@ -33,7 +33,7 @@ _TWO_CUT_BACKBONE = ("bos", "n1", "n2")
 
 
 def test_the_ceiling_is_the_number_of_cuts_not_of_fiber_segments() -> None:
-    assert independent_circuit_ceiling("bos", CircuitProofInputs(_TWO_CUT_BACKBONE, _TWO_CUTS)) == 2
+    assert diverse_circuit_ceiling("bos", CircuitProofInputs(_TWO_CUT_BACKBONE, _TWO_CUTS)) == 2
 
 
 _ONE_CUT = build_adjacency(physical({
@@ -43,7 +43,7 @@ _ONE_CUT = build_adjacency(physical({
 
 
 def test_a_node_behind_one_failure_point_has_a_ceiling_of_one() -> None:
-    assert independent_circuit_ceiling(
+    assert diverse_circuit_ceiling(
         "bos", CircuitProofInputs(("bos", "n1", "n2"), _ONE_CUT)
     ) == 1
 
@@ -55,7 +55,7 @@ _TWIN_CIRCUITS = build_adjacency(physical({
 
 
 def test_two_circuits_to_one_peer_count_once() -> None:
-    assert independent_circuit_ceiling(
+    assert diverse_circuit_ceiling(
         "s", CircuitProofInputs(("s", "t", "u"), _TWIN_CIRCUITS)
     ) == 1
 
@@ -65,13 +65,13 @@ _ONE_PEER = ("s", "t")
 
 def test_a_site_with_one_peer_holds_the_circuits_it_was_asked_for() -> None:
     inputs = CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=2)
-    assert independent_circuit_ceiling("s", inputs) == 2
+    assert diverse_circuit_ceiling("s", inputs) == 2
 
 
 def test_the_circuits_to_one_peer_share_no_city_but_that_peer() -> None:
     inner = [
         city
-        for pop_ids in independent_circuits(
+        for pop_ids in diverse_circuits(
             "s", CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=2)
         )
         for city in pop_ids[1:-1]
@@ -81,11 +81,11 @@ def test_the_circuits_to_one_peer_share_no_city_but_that_peer() -> None:
 
 def test_a_site_with_one_peer_is_still_held_to_one_circuit_when_one_is_asked() -> None:
     inputs = CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=1)
-    assert independent_circuit_ceiling("s", inputs) == 1
+    assert diverse_circuit_ceiling("s", inputs) == 1
 
 
 def test_a_site_seated_below_the_seats_its_config_allows_takes_one_circuit_to_a_peer() -> None:
-    assert independent_circuit_ceiling(
+    assert diverse_circuit_ceiling(
         "s", CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=2, seat_cap=6)
     ) == 1
 
@@ -99,11 +99,11 @@ _THREE_WAYS = build_adjacency(physical({
 
 def test_no_more_circuits_to_one_peer_are_proved_than_were_asked_for() -> None:
     inputs = CircuitProofInputs(_ONE_PEER, _THREE_WAYS, circuits_wanted=2)
-    assert independent_circuit_ceiling("s", inputs) == 2
+    assert diverse_circuit_ceiling("s", inputs) == 2
 
 
 def test_the_circuits_proved_to_one_peer_are_the_shortest_of_them() -> None:
-    circuits = independent_circuits(
+    circuits = diverse_circuits(
         "s", CircuitProofInputs(_ONE_PEER, _THREE_WAYS, circuits_wanted=2)
     )
     assert sorted(pop_ids[1] for pop_ids in circuits) == ["mid", "near"]
@@ -111,7 +111,7 @@ def test_the_circuits_proved_to_one_peer_are_the_shortest_of_them() -> None:
 
 def test_an_unreachable_node_has_no_ceiling_at_all() -> None:
     inputs = CircuitProofInputs(("nowhere", "n1", "n2"), _ONE_CUT)
-    assert independent_circuit_ceiling("nowhere", inputs) == 0
+    assert diverse_circuit_ceiling("nowhere", inputs) == 0
 
 
 def test_the_ceilings_are_computed_for_every_backbone_node() -> None:
@@ -120,7 +120,7 @@ def test_the_ceilings_are_computed_for_every_backbone_node() -> None:
     }
 
 
-_BOS_CIRCUITS = independent_circuits("bos", CircuitProofInputs(_TWO_CUT_BACKBONE, _TWO_CUTS))
+_BOS_CIRCUITS = diverse_circuits("bos", CircuitProofInputs(_TWO_CUT_BACKBONE, _TWO_CUTS))
 
 
 def test_the_counted_circuits_run_from_the_node_to_distinct_peers() -> None:
@@ -145,7 +145,7 @@ _EXPRESS_BACKBONE = ("eug", "hil", "sea")
 def test_the_circuits_proved_are_the_shortest_set_of_that_size() -> None:
     assert sum(
         _miles_along(pop_ids, _EXPRESS_SEGMENTS)
-        for pop_ids in independent_circuits(
+        for pop_ids in diverse_circuits(
             "sea", CircuitProofInputs(_EXPRESS_BACKBONE, _EXPRESS_SEGMENTS)
         )
     ) == 4.0
@@ -153,7 +153,7 @@ def test_the_circuits_proved_are_the_shortest_set_of_that_size() -> None:
 
 def test_taking_the_shortest_set_costs_the_site_none_of_its_circuits() -> None:
     inputs = CircuitProofInputs(_EXPRESS_BACKBONE, _EXPRESS_SEGMENTS)
-    assert independent_circuit_ceiling("sea", inputs) == 2
+    assert diverse_circuit_ceiling("sea", inputs) == 2
 
 
 _PACIFIC_ADJACENCY = build_adjacency(physical({
@@ -164,7 +164,7 @@ _PACIFIC_BACKBONE = ("eug", "hil", "sea")
 
 
 def test_a_ceiling_counts_a_way_out_however_far_it_runs() -> None:
-    assert independent_circuit_ceiling(
+    assert diverse_circuit_ceiling(
         "sea", CircuitProofInputs(_PACIFIC_BACKBONE, _PACIFIC_ADJACENCY)
     ) == 2
 
@@ -195,17 +195,17 @@ def _owned_proof(
 
 
 def test_a_way_out_that_changes_hands_is_no_way_out() -> None:
-    assert not independent_circuits("s", _owned_proof(_CHANGES_HANDS))
+    assert not diverse_circuits("s", _owned_proof(_CHANGES_HANDS))
 
 
-def test_ways_out_may_come_from_different_carriers() -> None:
-    assert sorted(independent_circuits("s", _owned_proof(_ONE_COMPANY_EACH, 2))) == [
+def test_diverse_circuits_may_come_from_different_carriers() -> None:
+    assert sorted(diverse_circuits("s", _owned_proof(_ONE_COMPANY_EACH, 2))) == [
         ("s", "x", "t"), ("s", "y", "t"),
     ]
 
 
 def test_the_same_fiber_joins_the_pair_when_nobody_owns_it() -> None:
-    assert independent_circuits("s", CircuitProofInputs(("s", "t"), build_adjacency(
+    assert diverse_circuits("s", CircuitProofInputs(("s", "t"), build_adjacency(
         physical({("s", "x"): 1.0, ("x", "t"): 1.0, ("s", "y"): 1.0, ("y", "t"): 1.0}),
     ))) == [("s", "x", "t")]
 
@@ -220,15 +220,15 @@ _SHARE_A_CITY = fixtures.carrier_fiber_segments({
 
 
 def test_a_way_out_both_carriers_have_is_drawn_once() -> None:
-    assert independent_circuits("s", _owned_proof(_BOTH_HAVE_IT)) == [("s", "t")]
+    assert diverse_circuits("s", _owned_proof(_BOTH_HAVE_IT)) == [("s", "t")]
 
 
 def test_a_way_out_standing_on_a_city_already_spent_is_not_drawn() -> None:
-    assert independent_circuits("s", _owned_proof(_SHARE_A_CITY)) == [("s", "x", "t")]
+    assert diverse_circuits("s", _owned_proof(_SHARE_A_CITY)) == [("s", "x", "t")]
 
 
 def test_one_peer_takes_one_way_out_however_many_carriers_offer_one() -> None:
-    assert independent_circuits("s", _owned_proof(_ONE_COMPANY_EACH)) == [("s", "x", "t")]
+    assert diverse_circuits("s", _owned_proof(_ONE_COMPANY_EACH)) == [("s", "x", "t")]
 
 
 _UNDER_WATER = fixtures.fiber_segments_under_water(
@@ -250,7 +250,7 @@ def _on_land(
 
 
 def test_a_way_round_under_water_is_no_way_out_where_the_site_has_one_over_land() -> None:
-    assert independent_circuits(
+    assert diverse_circuits(
         "sea",
         CircuitProofInputs(
             _UNDER_WATER_BACKBONE,
@@ -271,8 +271,8 @@ _ISLAND = fixtures.fiber_segments_under_water(
 _ISLAND_BACKBONE = ("hil", "sea", "syd")
 
 
-def test_a_site_reachable_only_over_water_keeps_the_ways_out_it_has() -> None:
-    assert sorted(independent_circuits(
+def test_a_site_reachable_only_over_water_keeps_the_diverse_circuits_it_has() -> None:
+    assert sorted(diverse_circuits(
         "syd",
         CircuitProofInputs(
             _ISLAND_BACKBONE,
@@ -288,7 +288,7 @@ def _credit_over(
     backbone_ids: tuple[str, ...],
     most: int | None,
 ) -> dict[str, dict[tuple[str, str], int]]:
-    return ways_out_by_carrier_and_peer(
+    return diverse_circuits_by_carrier_and_peer(
         CircuitProofInputs(
             backbone_ids,
             build_adjacency(fiber),
@@ -319,7 +319,7 @@ def test_every_way_out_a_nodes_carriers_prove_is_credited_when_none_is_asked_for
     }
 
 
-def test_the_credit_is_cut_to_the_ways_out_the_tenant_asked_for() -> None:
+def test_the_credit_is_cut_to_the_diverse_circuits_the_tenant_asked_for() -> None:
     assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, 2)["b"] == {
         ("zayo", "e"): 1, ("cogent", "d"): 1,
     }

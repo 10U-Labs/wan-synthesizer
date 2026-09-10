@@ -221,8 +221,8 @@ def _no_city_twice(
     return kept
 
 
-def independent_circuits(site: str, inputs: CircuitProofInputs) -> list[tuple[str, ...]]:
-    return [pop_ids for _carrier, pop_ids in _ways_out_and_their_carriers(site, inputs)]
+def diverse_circuits(site: str, inputs: CircuitProofInputs) -> list[tuple[str, ...]]:
+    return [pop_ids for _carrier, pop_ids in _diverse_circuits_and_their_carriers(site, inputs)]
 
 
 def _peers_over_land(site: str, inputs: CircuitProofInputs) -> frozenset[str]:
@@ -313,7 +313,7 @@ def _credited(
     )[:most]
 
 
-def _ways_out_and_their_carriers(
+def _diverse_circuits_and_their_carriers(
     site: str, inputs: CircuitProofInputs
 ) -> list[tuple[str, tuple[str, ...]]]:
     return _credited(site, inputs, _per_peer(inputs), frozenset(), None)
@@ -336,7 +336,7 @@ def _fiber_elsewhere(
     )
 
 
-def _ways_out_and_miles_alone(
+def _diverse_circuits_and_miles_alone(
     kept: list[tuple[str, tuple[str, ...]]],
     inputs: CircuitProofInputs,
     shared: frozenset[tuple[str, str]],
@@ -359,8 +359,8 @@ def _credited_against_the_wan(
     held = kept[site]
     shared = _fiber_elsewhere(kept, site)
     fresh = _credited(site, inputs, per_peer, shared, len(held))
-    standing = _ways_out_and_miles_alone(held, inputs, shared)
-    offered = _ways_out_and_miles_alone(fresh, inputs, shared)
+    standing = _diverse_circuits_and_miles_alone(held, inputs, shared)
+    offered = _diverse_circuits_and_miles_alone(fresh, inputs, shared)
     return fresh if offered < standing else held
 
 
@@ -388,7 +388,7 @@ def _counted(kept: list[tuple[str, tuple[str, ...]]]) -> dict[tuple[str, str], i
     return counted
 
 
-def ways_out_by_carrier_and_peer(
+def diverse_circuits_by_carrier_and_peer(
     inputs: CircuitProofInputs, most: int | None
 ) -> dict[str, dict[tuple[str, str], int]]:
     return {
@@ -399,13 +399,13 @@ def ways_out_by_carrier_and_peer(
     }
 
 
-def independent_circuit_ceiling(site: str, inputs: CircuitProofInputs) -> int:
-    return len(independent_circuits(site, inputs))
+def diverse_circuit_ceiling(site: str, inputs: CircuitProofInputs) -> int:
+    return len(diverse_circuits(site, inputs))
 
 
 def diverse_circuit_ceilings(inputs: CircuitProofInputs) -> dict[str, int]:
     return {
-        site: independent_circuit_ceiling(site, inputs)
+        site: diverse_circuit_ceiling(site, inputs)
         for site in inputs.backbone_ids
         if site in inputs.adjacency
     }
