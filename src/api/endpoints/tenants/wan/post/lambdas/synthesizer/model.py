@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import TypedDict
 
 from synthesizer.input_graph import FiberSegment, Site
@@ -138,12 +137,6 @@ class ValidationReport(TypedDict):
     backbone_mesh_survives_any_one_site_loss: bool
     backbone_mesh_has_no_cut_pop: bool
     backbone_mesh_cut_pops: list[dict[str, str]]
-
-@dataclass(frozen=True)
-class InputFiles:
-    fiber_segment_path: Path
-    regional_fiber_segment_paths: tuple[Path, ...] = ()
-    off_net_path: Path | None = None
 
 @dataclass(frozen=True)
 class SynthesisArtifacts:

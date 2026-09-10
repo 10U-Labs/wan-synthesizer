@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 from synthesizer.model import (
     SynthesisParams,
-    InputFiles,
     NamedCircuit,
     OperatorCircuits,
     RoleExclusions,
@@ -14,16 +12,8 @@ from synthesizer.model import (
     Tuning,
 )
 
-DEFAULT_CARRIER_FIBER_SEGMENTS = "data/fiber_segments/terrestrial/lumen.csv"
-DEFAULT_REGIONAL_FIBER_SEGMENTS = [
-    "data/fiber_segments/terrestrial/dcn.csv",
-    "data/fiber_segments/terrestrial/vision_net.csv",
-]
-
-
 @dataclass(frozen=True)
 class AppConfig:
-    input_files: InputFiles
     params: SynthesisParams
     label: str = ""
     operator_circuits: OperatorCircuits = field(default_factory=OperatorCircuits)
@@ -80,20 +70,6 @@ def _operator_circuits(synthesis: dict[str, Any]) -> OperatorCircuits:
         backbone=_named_circuit_list(synthesis, "forced_paths"),
         homes=_named_circuit_list(synthesis, "forced_homes"),
         removed_backbone=_named_circuit_list(synthesis, "excluded_paths"),
-    )
-
-
-def _input_files(inputs: dict[str, Any]) -> InputFiles:
-    regional_fiber_segments = _str_list(
-        inputs, "regional_fiber_segments", DEFAULT_REGIONAL_FIBER_SEGMENTS
-    )
-    off_net = inputs.get("off_net")
-    return InputFiles(
-        fiber_segment_path=Path(
-            str(inputs.get("carrier_fiber_segments", DEFAULT_CARRIER_FIBER_SEGMENTS))
-        ),
-        regional_fiber_segment_paths=tuple(Path(item) for item in regional_fiber_segments),
-        off_net_path=Path(str(off_net)) if off_net is not None else None,
     )
 
 
@@ -174,7 +150,6 @@ def _params(
 def config_from_data(data: dict[str, Any]) -> AppConfig:
     synthesis = _mapping(data, "synthesis")
     return AppConfig(
-        input_files=_input_files(_mapping(data, "inputs")),
         params=_params(synthesis, _mapping(data, "tuning"), _mapping(data, "settings")),
         label=str(data.get("label", "")),
         operator_circuits=_operator_circuits(synthesis),
