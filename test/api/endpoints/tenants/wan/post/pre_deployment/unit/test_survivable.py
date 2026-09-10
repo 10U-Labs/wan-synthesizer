@@ -122,6 +122,22 @@ def test_a_site_behind_a_single_point_of_failure_is_asked_for_what_its_fiber_can
     assert _CHAIN_SELECTION.segments == frozenset(_CHAIN)
 
 
+_PAIR_PRICED = physical({
+    ("a", "b"): 20.0, ("b", "e"): 22.0,
+    ("a", "f"): 32.0, ("b", "f"): 32.0,
+    ("b", "g"): 32.0, ("e", "g"): 32.0,
+})
+_PAIR_PRICED_SELECTION = _selected(_PAIR_PRICED, ("a", "b", "e"))
+
+
+def test_no_fiber_is_selected_for_a_circuit_no_backbone_node_is_owed() -> None:
+    assert _PAIR_PRICED_SELECTION.segments == frozenset({("a", "b"), ("b", "e")})
+
+
+def test_the_floor_prices_the_diverse_circuits_owed_and_nothing_between_a_pair() -> None:
+    assert _PAIR_PRICED_SELECTION.lower_bound_miles == pytest.approx(42.0)
+
+
 _TWIN_WAYS = physical({
     ("a", "p"): 1.0, ("b", "p"): 1.0, ("a", "q"): 1.0, ("b", "q"): 1.0,
 })

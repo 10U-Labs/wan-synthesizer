@@ -136,3 +136,31 @@ def test_the_delivered_synthesis_holds_the_shorter_of_two_ways_round() -> None:
     assert not set(
         SHORT_AND_LONG_ARTIFACTS.synthesis.fiber_segment_keys
     ) & fixtures.THE_LONG_WAY
+
+
+_PAIRED_SITES = ("a", "b", "c", "d")
+_PAIRED_TRANSIT = ("t0", "t1", "t2")
+_PAIRED_SEGMENTS = {
+    ("a", "c"): 100.0, ("a", "t1"): 80.0,
+    ("b", "d"): 40.0, ("b", "t2"): 50.0,
+    ("c", "t2"): 110.0,
+    ("d", "t0"): 90.0, ("d", "t2"): 30.0,
+    ("t0", "t1"): 100.0, ("t1", "t2"): 110.0,
+}
+PAIRED_ARTIFACTS = fixtures.synthesis_over_segments(
+    _PAIRED_SITES, _PAIRED_SEGMENTS, _ASKED_FOR, _PAIRED_TRANSIT
+)
+
+
+def test_the_floor_prices_the_fewest_miles_the_diverse_circuits_owed_run_over() -> None:
+    assert round(PAIRED_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3) == 520.0
+
+
+def test_that_synthesis_runs_no_fewer_miles_than_the_floor_it_publishes() -> None:
+    assert PAIRED_ARTIFACTS.synthesis.metrics.physical_miles >= (
+        PAIRED_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles - _SLACK
+    )
+
+
+def test_no_pop_that_synthesis_runs_through_splits_it_by_being_lost() -> None:
+    assert PAIRED_ARTIFACTS.validation["biconnected_no_articulation_points"]
