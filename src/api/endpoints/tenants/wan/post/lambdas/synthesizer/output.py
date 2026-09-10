@@ -7,7 +7,7 @@ from typing import Any
 from synthesizer.codec import PROVIDER_KIND
 from synthesizer.collections import site_role
 from synthesizer.input_graph import Site, segment_key
-from synthesizer.model import Synthesis, SynthesisArtifacts, SourceFiles, is_carrier_pop
+from synthesizer.model import Synthesis, SynthesisArtifacts, is_carrier_pop
 from synthesizer.validation import included_site_ids
 
 
@@ -26,15 +26,13 @@ def _homing_circuit_kind(source_site: Site) -> str:
     return "provider_to_backbone" if source_site.kind == PROVIDER_KIND else "tenant_to_backbone"
 
 
-def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> dict[str, Any]:
+def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
     sites = artifacts.sites
     fiber_segments = artifacts.fiber_segments
     synthesis = artifacts.synthesis
     validation = artifacts.validation
     sites_by_id = {site.id: site for site in sites}
     return {
-        "sites_files": [str(path) for path in sources.site_files],
-        "fiber_segment_file": str(sources.fiber_segment_path),
         "objective": (
             "Two-tier WAN synthesis: demand sites (tenant sites and provider regions) home "
             "to a meshed backbone of selected Carrier PoPs over the physical Carrier "

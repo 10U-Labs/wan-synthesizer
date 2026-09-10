@@ -14,10 +14,9 @@ _SEATED_RING = replace(
     tuning=Tuning(backbone_number_of_diverse_circuits=2),
 )
 _PAYLOAD = synthesis_payload(
-    fixtures.sample_sources(),
     fixtures.forced_circuit_artifacts(
         _SEATED_RING, OperatorCircuits(), fixtures.ring_inputs_with_demand("S1", "P0")
-    ),
+    )
 )
 
 _NODE_FIELDS = ("id", "name", "kind", "coords")

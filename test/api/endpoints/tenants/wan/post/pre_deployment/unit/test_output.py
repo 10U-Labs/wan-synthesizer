@@ -9,7 +9,6 @@ from synthesizer.model import (
     Synthesis,
     SynthesisArtifacts,
     SynthesisMetrics,
-    SourceFiles,
 )
 from synthesizer.output import (
     synthesis_payload,
@@ -18,7 +17,6 @@ from synthesizer.output import (
 )
 
 ARTIFACTS = fixtures.ring_artifacts()
-SOURCES = fixtures.sample_sources()
 
 
 def _synthesis_with_homed_demand(source: str) -> Synthesis:
@@ -37,32 +35,32 @@ def _payload_for(source_site: Site) -> dict[str, Any]:
     sites = [source_site, fixtures.carrier_pop("b")]
     fiber = {segment_key("b", "x"): FiberSegment("b", "x", 1.0)}
     artifacts = SynthesisArtifacts(sites, fiber, synthesis, ARTIFACTS.validation)
-    return synthesis_payload(SourceFiles((), SOURCES.fiber_segment_path), artifacts)
+    return synthesis_payload(artifacts)
 
 
 def test_synthesis_payload_includes_sites() -> None:
-    assert "sites" in synthesis_payload(SOURCES, ARTIFACTS)
+    assert "sites" in synthesis_payload(ARTIFACTS)
 
 
 def test_synthesis_payload_sites_carry_location() -> None:
-    sites = synthesis_payload(SOURCES, ARTIFACTS)["sites"]
+    sites = synthesis_payload(ARTIFACTS)["sites"]
     assert all(
         "municipality" in site["info"] and "state" in site["info"] for site in sites
     )
 
 
 def test_synthesis_payload_summary_reports_backbone_count() -> None:
-    summary = synthesis_payload(SOURCES, ARTIFACTS)["summary"]
+    summary = synthesis_payload(ARTIFACTS)["summary"]
     assert summary["backbone_count"] == len(ARTIFACTS.synthesis.backbone_ids)
 
 
 def test_synthesis_payload_summary_lists_backbone_node_names() -> None:
-    summary = synthesis_payload(SOURCES, ARTIFACTS)["summary"]
+    summary = synthesis_payload(ARTIFACTS)["summary"]
     assert len(summary["backbone_nodes"]) == len(ARTIFACTS.synthesis.backbone_ids)
 
 
 def test_synthesis_payload_summary_publishes_the_floor_under_the_fiber_it_ordered() -> None:
-    summary = synthesis_payload(SOURCES, ARTIFACTS)["summary"]
+    summary = synthesis_payload(ARTIFACTS)["summary"]
     assert summary["backbone_lower_bound_miles"] <= summary["physical_carrier_miles"]
 
 

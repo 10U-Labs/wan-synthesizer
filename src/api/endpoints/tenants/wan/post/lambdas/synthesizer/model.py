@@ -146,11 +146,6 @@ class InputFiles:
     off_net_path: Path | None = None
 
 @dataclass(frozen=True)
-class SourceFiles:
-    site_files: tuple[Path, ...]
-    fiber_segment_path: Path
-
-@dataclass(frozen=True)
 class SynthesisArtifacts:
     sites: list[Site]
     fiber_segments: dict[tuple[str, str], FiberSegment]

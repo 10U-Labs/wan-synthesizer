@@ -9,7 +9,7 @@ from synthesizer.output import synthesis_payload
 
 
 def _payload() -> dict[str, Any]:
-    return synthesis_payload(fixtures.sample_sources(), fixtures.ring_artifacts())
+    return synthesis_payload(fixtures.ring_artifacts())
 
 
 def _synthesis(backbone_ids: tuple[str, ...], transit_ids: tuple[str, ...]) -> Synthesis:

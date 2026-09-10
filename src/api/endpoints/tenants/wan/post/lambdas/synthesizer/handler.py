@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-from pathlib import Path
 from typing import Any
 
 import boto3
@@ -24,7 +23,6 @@ from synthesizer.model import (
     Synthesis,
     SynthesisArtifacts,
     SynthesisParams,
-    SourceFiles,
     ValidationReport,
     is_carrier_pop,
 )
@@ -126,8 +124,7 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
         graph, fiber_segments, synthesis, params, overrides.degree_exempt_backbone_ids
     )
     payload = synthesis_payload(
-        SourceFiles((), Path("store")),
-        SynthesisArtifacts(graph, fiber_segments, synthesis, validation),
+        SynthesisArtifacts(graph, fiber_segments, synthesis, validation)
     )
     logger.info("Publishing WAN for %s", tenant)
     return {

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-from pathlib import Path
 from typing import cast
 
 from synthesizer.codec import OFF_NET_KIND, PROVIDER_KIND, SITE_KIND
@@ -17,7 +16,6 @@ from synthesizer.model import (
     OperatorCircuits,
     SynthesisCircuit,
     RoleExclusions,
-    SourceFiles,
     Tuning,
     ValidationReport,
 )
@@ -411,10 +409,6 @@ def convergence_hub_artifacts(
     sites, fiber, overrides = apply_role_overrides(sites, fiber, params)
     synthesis = synthesize_two_tier(sites, fiber, params, overrides)
     return SynthesisArtifacts(sites, fiber, synthesis, validate_synthesis(sites, synthesis))
-
-
-def sample_sources() -> SourceFiles:
-    return SourceFiles((Path("sites/lumen.csv"),), Path("fiber_segments.csv"))
 
 
 def synthesis_inputs_from_fiber(
