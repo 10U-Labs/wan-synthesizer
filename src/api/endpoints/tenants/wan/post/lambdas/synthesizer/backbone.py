@@ -133,12 +133,11 @@ def _proved_over(
         for peer in drawn.backbone_ids
         if peer == site or segment_key(site, peer) not in constraints.removed_pairs
     )
-    proof = CircuitProofInputs(
-        peers, build_adjacency(fiber),
-        constraints.number_of_diverse_circuits, constraints.seat_cap, by_carrier,
-    )
     return sorted(
-        independent_circuits(site, proof),
+        independent_circuits(site, CircuitProofInputs(
+            peers, build_adjacency(fiber),
+            constraints.number_of_diverse_circuits, constraints.seat_cap, by_carrier,
+        )),
         key=lambda pop_ids: (miles_along(pop_ids, fiber), pop_ids),
     )[: constraints.number_of_diverse_circuits]
 
