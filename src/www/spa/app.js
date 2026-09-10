@@ -75,8 +75,12 @@ const TIER_PREFIX = {
   backbone: BACKBONE_POP,
 };
 
+function cityOf(name) {
+  return name.replace(/,\s*[^,]+$/, "");
+}
+
 function cityName(site) {
-  return site.name.replace(/,\s*[^,]+$/, "");
+  return cityOf(site.name);
 }
 
 function displayName(site) {
@@ -95,6 +99,35 @@ function siteLabel(site) {
 
 function linkLabel(source, target) {
   return `<strong>${displayName(source)}</strong> ↔ <strong>${displayName(target)}</strong>`;
+}
+
+function segmentKey(left, right) {
+  return [left, right].sort().join(" ↔ ");
+}
+
+function circuitsBySegment(circuits) {
+  const crossing = new Map();
+  for (const circuit of circuits) {
+    const route = circuit.path || [];
+    for (let step = 0; step + 1 < route.length; step += 1) {
+      const key = segmentKey(route[step], route[step + 1]);
+      crossing.set(key, (crossing.get(key) || []).concat([circuit]));
+    }
+  }
+  return crossing;
+}
+
+function circuitLabel(circuit) {
+  const ends = `${cityOf(circuit.source_name)} ↔ ${cityOf(circuit.target_name)}`;
+  return `<strong>Circuit ${ends}</strong><br>${(circuit.path || []).join(" → ")}`;
+}
+
+function fiberLabel(source, target, circuits) {
+  const fiber = `Fiber ${source.name} ↔ ${target.name}`;
+  if (!circuits.length) {
+    return fiber;
+  }
+  return [fiber, ...circuits.map(circuitLabel)].join("<br>");
 }
 
 function clear() {
@@ -159,7 +192,7 @@ function drawSites(sites) {
   return coords;
 }
 
-function drawLinks(links, byId, style) {
+function drawLinks(links, byId, style, label) {
   for (const link of links) {
     const source = byId[link.source_id];
     const target = byId[link.target_id];
@@ -168,7 +201,7 @@ function drawLinks(links, byId, style) {
         color: style.color,
         weight: style.weight,
         opacity: 0.8,
-      }).bindTooltip(linkLabel(source, target), { sticky: true }));
+      }).bindTooltip(label(source, target), { sticky: true }));
     }
   }
 }
@@ -199,10 +232,12 @@ async function render(tenantId) {
   clear();
   let sites;
   let links;
+  let circuits;
   try {
-    [sites, links] = await Promise.all([
+    [sites, links, circuits] = await Promise.all([
       getJSON(`${API_BASE}/tenants/${tenantId}/sites`),
       getJSON(`${API_BASE}/tenants/${tenantId}/paths`),
+      getJSON(`${API_BASE}/tenants/${tenantId}/backbone-links`),
     ]);
   } catch (error) {
     document.getElementById("counts").textContent = "WAN not synthesized yet";
@@ -215,8 +250,10 @@ async function render(tenantId) {
   const homings = links.filter(
     (link) => link.link_kind === "tenant_to_backbone" || link.link_kind === "provider_to_backbone",
   );
-  drawLinks(physical, byId, LINK_STYLE.backbone);
-  drawLinks(homings, byId, LINK_STYLE.homing);
+  const crossing = circuitsBySegment(circuits);
+  drawLinks(physical, byId, LINK_STYLE.backbone, (source, target) =>
+    fiberLabel(source, target, crossing.get(segmentKey(source.name, target.name)) || []));
+  drawLinks(homings, byId, LINK_STYLE.homing, linkLabel);
   const points = drawSites(sites);
 
   if (points.length) {
