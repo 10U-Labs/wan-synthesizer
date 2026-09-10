@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
+from itertools import combinations
 from typing import TypeVar
 
 from synthesizer.ceiling import (
@@ -19,6 +20,8 @@ _HELD_OUTRIGHT = 0.5
 _TOLERANCE = 1e-6
 
 _EVERY_WAY_OUT: int | None = None
+
+_CIRCUITS_SHARING_NO_POP = 2
 
 _Bucket = TypeVar("_Bucket", str, tuple[str, str])
 
@@ -230,6 +233,30 @@ def _ways_out_rows(site: str, writing: _Writing) -> _WaysOut:
     )
 
 
+def _seats_the_carriers_can_give_two_circuits(writing: _Writing) -> list[str]:
+    return [
+        site
+        for site in sorted(writing.inputs.backbone_ids)
+        if sum(writing.credited[site].values()) >= _CIRCUITS_SHARING_NO_POP
+    ]
+
+
+def _two_circuits_sharing_no_pop(writing: _Writing) -> list[_Requirement]:
+    if writing.inputs.ways_out < _CIRCUITS_SHARING_NO_POP:
+        return []
+    asked = [
+        _Requirement(
+            near,
+            frozenset({far}),
+            frozenset({near, far}),
+            _CIRCUITS_SHARING_NO_POP,
+            _over_land(near, frozenset({far}), frozenset(writing.fiber), writing),
+        )
+        for near, far in combinations(_seats_the_carriers_can_give_two_circuits(writing), 2)
+    ]
+    return asked if asked == _lowered(asked, writing.whole) else []
+
+
 def _writing(
     inputs: FiberInputs, fiber: Mapping[tuple[str, str], float], most: int | None
 ) -> _Writing:
@@ -261,11 +288,8 @@ def _writing(
     )
 
 
-def _requirements(
-    inputs: FiberInputs, fiber: Mapping[tuple[str, str], float], most: int | None
-) -> list[_Requirement]:
-    writing = _writing(inputs, fiber, most)
-    ways_out = [_ways_out_rows(site, writing) for site in inputs.backbone_ids]
+def _asked_of_every_node(writing: _Writing) -> list[_Requirement]:
+    ways_out = [_ways_out_rows(site, writing) for site in writing.inputs.backbone_ids]
     return [
         row
         for owed in ways_out
@@ -358,13 +382,15 @@ def _search_over(
     )
 
 
-def _floor_under_the_ask(
+def _floor_under_every_requirement(
     inputs: FiberInputs,
     fiber: Mapping[tuple[str, str], float],
     order: list[tuple[str, str]],
 ) -> float:
+    writing = _writing(inputs, fiber, inputs.ways_out)
     return _tighten(
-        _search_over(fiber, order), _requirements(inputs, fiber, inputs.ways_out)
+        _search_over(fiber, order),
+        _asked_of_every_node(writing) + _two_circuits_sharing_no_pop(writing),
     ).miles
 
 
@@ -374,7 +400,7 @@ def select_fiber(inputs: FiberInputs) -> FiberSelection:
     }
     if not fiber:
         return FiberSelection(frozenset(), 0.0)
-    requirements = _requirements(inputs, fiber, _EVERY_WAY_OUT)
+    requirements = _asked_of_every_node(_writing(inputs, fiber, _EVERY_WAY_OUT))
     order = sorted(fiber)
     search = _search_over(fiber, order)
     while True:
@@ -383,4 +409,7 @@ def select_fiber(inputs: FiberInputs) -> FiberSelection:
             break
         _write(search, _rows(shortfalls, search.column))
         search.selected |= _round_up(search, _tighten(search, requirements))
-    return FiberSelection(search.selected, _floor_under_the_ask(inputs, fiber, order))
+    return FiberSelection(
+        search.selected,
+        _floor_under_every_requirement(inputs, fiber, order),
+    )

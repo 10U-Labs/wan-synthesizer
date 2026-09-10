@@ -11,9 +11,9 @@ from synthesizer.survivable import (
     FiberSelection,
     _EVERY_WAY_OUT,
     _Requirement,
+    _asked_of_every_node,
     _carried,
     _held,
-    _requirements,
     _shortfalls,
     _ways_out_rows,
     _writing,
@@ -295,7 +295,7 @@ def test_a_search_that_runs_long_enough_buys_the_shortest_synthesis_there_is() -
 
 def test_the_fiber_a_long_search_settles_on_meets_every_requirement_asked_of_it() -> None:
     assert not _shortfalls(
-        _requirements(_MANY_PASS_INPUTS, _MANY_PASS_FIBER, _EVERY_WAY_OUT),
+        _asked_of_every_node(_writing(_MANY_PASS_INPUTS, _MANY_PASS_FIBER, _EVERY_WAY_OUT)),
         _held(_MANY_PASS_FIBER, _MANY_PASS_SELECTION.segments),
     )
 
