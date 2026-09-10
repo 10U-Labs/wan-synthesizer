@@ -8,6 +8,7 @@
   - [Comments](#comments)
   - [Commits](#commits)
   - [Issues](#issues)
+  - [Measurement](#measurement)
   - [Tests](#tests)
   - [Third-party code](#third-party-code)
   - [Verification](#verification)
@@ -38,6 +39,10 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 ### Issues
 
 - [why-static-analysis-is-asked-separately](why-static-analysis-is-asked-separately.md) — a job refuses a shape everywhere at once where a tier catches one occurrence
+
+### Measurement
+
+- [measure-a-change-over-the-seeded-tenants](measure-a-change-over-the-seeded-tenants.md) — every tenant's miles and floor are reproducible from `data/` and `etc/` with no deploy, which is where a commit message's before/after table comes from
 
 ### Tests
 
