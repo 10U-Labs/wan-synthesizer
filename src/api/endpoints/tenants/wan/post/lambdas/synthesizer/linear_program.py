@@ -108,11 +108,6 @@ class GrowingSegmentProgram:
             self._solver.changeColBounds(column, _WHOLE, _WHOLE)
         self._whole |= columns
 
-    def hold_nothing(self) -> None:
-        for column in sorted(self._whole):
-            self._solver.changeColBounds(column, 0.0, _WHOLE)
-        self._whole.clear()
-
     def solve(self) -> SegmentSelection:
         self._solver.setOptionValue(
             "time_limit", self._solver.getRunTime() + _SECONDS_A_PASS_MAY_RUN

@@ -9,6 +9,7 @@ from synthesizer.input_graph import FiberSegment
 from synthesizer.survivable import (
     FiberInputs,
     FiberSelection,
+    _EVERY_WAY_OUT,
     _Requirement,
     _carried,
     _held,
@@ -55,7 +56,9 @@ def _owed(
     miles_by_key = _whole(inputs)
     return sum(
         row.required
-        for row in _ways_out_rows(site, _writing(inputs, miles_by_key)).across_the_carriers
+        for row in _ways_out_rows(
+            site, _writing(inputs, miles_by_key, _EVERY_WAY_OUT)
+        ).across_the_carriers
     )
 
 
@@ -292,7 +295,7 @@ def test_a_search_that_runs_long_enough_buys_the_shortest_synthesis_there_is() -
 
 def test_the_fiber_a_long_search_settles_on_meets_every_requirement_asked_of_it() -> None:
     assert not _shortfalls(
-        _requirements(_MANY_PASS_INPUTS, _MANY_PASS_FIBER),
+        _requirements(_MANY_PASS_INPUTS, _MANY_PASS_FIBER, _EVERY_WAY_OUT),
         _held(_MANY_PASS_FIBER, _MANY_PASS_SELECTION.segments),
     )
 

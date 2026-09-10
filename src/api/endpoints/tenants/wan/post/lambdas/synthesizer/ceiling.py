@@ -4,7 +4,8 @@ import heapq
 import math
 from dataclasses import dataclass, field
 
-from synthesizer.graphs import reachable_over
+from synthesizer.graphs import fiber_segments_along, reachable_over
+from synthesizer.input_graph import segment_key
 
 _Node = tuple[str, str]
 _Residual = dict[_Node, dict[_Node, int]]
@@ -127,12 +128,22 @@ def _fiber_segment_miles(
     )
 
 
+def _miles_beyond(
+    pop_ids: tuple[str, ...],
+    adjacency: dict[str, list[tuple[str, float]]],
+    shared: frozenset[tuple[str, str]],
+) -> float:
+    return sum(
+        _fiber_segment_miles(adjacency, left, right)
+        for left, right in zip(pop_ids, pop_ids[1:])
+        if segment_key(left, right) not in shared
+    )
+
+
 def _miles_along(
     pop_ids: tuple[str, ...], adjacency: dict[str, list[tuple[str, float]]]
 ) -> float:
-    return sum(
-        _fiber_segment_miles(adjacency, left, right) for left, right in zip(pop_ids, pop_ids[1:])
-    )
+    return _miles_beyond(pop_ids, adjacency, frozenset())
 
 
 def _proved_circuits(
@@ -175,6 +186,7 @@ def _no_city_twice(
     found: list[tuple[str, ...]],
     inputs: CircuitProofInputs,
     per_peer: int,
+    shared: frozenset[tuple[str, str]],
 ) -> list[tuple[str, ...]]:
     peers = {peer for peer in inputs.backbone_ids if peer != site}
     termini_only = per_peer > 1
@@ -182,7 +194,14 @@ def _no_city_twice(
     ends: dict[str, int] = {}
     seen: set[tuple[str, ...]] = set()
     kept: list[tuple[str, ...]] = []
-    ordered = sorted(found, key=lambda one: (_miles_along(one, inputs.adjacency), one))
+    ordered = sorted(
+        found,
+        key=lambda one: (
+            _miles_beyond(one, inputs.adjacency, shared),
+            _miles_along(one, inputs.adjacency),
+            one,
+        ),
+    )
     for pop_ids in ordered:
         if pop_ids in seen:
             continue
@@ -263,6 +282,7 @@ def _kept_with_their_carriers(
     inputs: CircuitProofInputs,
     by_carrier: dict[str, list[tuple[str, ...]]],
     per_peer: int,
+    shared: frozenset[tuple[str, str]],
 ) -> list[tuple[str, tuple[str, ...]]]:
     offered_by: dict[tuple[str, ...], str] = {}
     for carrier, circuits in sorted(by_carrier.items()):
@@ -273,28 +293,110 @@ def _kept_with_their_carriers(
     found = [pop_ids for _carrier, circuits in sorted(by_carrier.items()) for pop_ids in circuits]
     return [
         (offered_by[pop_ids], pop_ids)
-        for pop_ids in _no_city_twice(site, found, inputs, per_peer)
+        for pop_ids in _no_city_twice(site, found, inputs, per_peer, shared)
     ]
+
+
+def _credited(
+    site: str,
+    inputs: CircuitProofInputs,
+    per_peer: int,
+    shared: frozenset[tuple[str, str]],
+    most: int | None,
+) -> list[tuple[str, tuple[str, ...]]]:
+    return _kept_with_their_carriers(
+        site,
+        inputs,
+        _circuits_over_each_carrier(site, inputs, per_peer),
+        per_peer,
+        shared,
+    )[:most]
 
 
 def _ways_out_and_their_carriers(
     site: str, inputs: CircuitProofInputs
 ) -> list[tuple[str, tuple[str, ...]]]:
-    per_peer = _per_peer(inputs)
-    return _kept_with_their_carriers(
-        site, inputs, _circuits_over_each_carrier(site, inputs, per_peer), per_peer
+    return _credited(site, inputs, _per_peer(inputs), frozenset(), None)
+
+
+def _fiber_under(kept: list[tuple[str, tuple[str, ...]]]) -> frozenset[tuple[str, str]]:
+    return frozenset(
+        segment for _carrier, pop_ids in kept for segment in fiber_segments_along(pop_ids)
     )
 
 
-def ways_out_by_carrier_and_peer(
-    site: str, inputs: CircuitProofInputs
-) -> dict[tuple[str, str], int]:
-    per_peer = _per_peer(inputs)
-    by_carrier = _circuits_over_each_carrier(site, inputs, per_peer)
+def _fiber_elsewhere(
+    kept: dict[str, list[tuple[str, tuple[str, ...]]]], site: str
+) -> frozenset[tuple[str, str]]:
+    return frozenset(
+        segment
+        for elsewhere, circuits in kept.items()
+        if elsewhere != site
+        for segment in _fiber_under(circuits)
+    )
+
+
+def _ways_out_and_miles_alone(
+    kept: list[tuple[str, tuple[str, ...]]],
+    inputs: CircuitProofInputs,
+    shared: frozenset[tuple[str, str]],
+) -> tuple[int, float]:
+    return (
+        -len(kept),
+        sum(
+            _fiber_segment_miles(inputs.adjacency, left, right)
+            for left, right in _fiber_under(kept) - shared
+        ),
+    )
+
+
+def _credited_against_the_wan(
+    site: str,
+    inputs: CircuitProofInputs,
+    kept: dict[str, list[tuple[str, tuple[str, ...]]]],
+    per_peer: int,
+) -> list[tuple[str, tuple[str, ...]]]:
+    held = kept[site]
+    shared = _fiber_elsewhere(kept, site)
+    fresh = _credited(site, inputs, per_peer, shared, len(held))
+    standing = _ways_out_and_miles_alone(held, inputs, shared)
+    offered = _ways_out_and_miles_alone(fresh, inputs, shared)
+    return fresh if offered < standing else held
+
+
+def _credited_across_the_wan(
+    inputs: CircuitProofInputs, per_peer: int, most: int | None
+) -> dict[str, list[tuple[str, tuple[str, ...]]]]:
+    kept = {
+        site: _credited(site, inputs, per_peer, frozenset(), most)
+        for site in inputs.backbone_ids
+    }
+    settled = False
+    while not settled:
+        settled = True
+        for site in sorted(kept):
+            fresh = _credited_against_the_wan(site, inputs, kept, per_peer)
+            settled = settled and fresh == kept[site]
+            kept[site] = fresh
+    return kept
+
+
+def _counted(kept: list[tuple[str, tuple[str, ...]]]) -> dict[tuple[str, str], int]:
     counted: dict[tuple[str, str], int] = {}
-    for carrier, pop_ids in _kept_with_their_carriers(site, inputs, by_carrier, per_peer):
+    for carrier, pop_ids in kept:
         counted[(carrier, pop_ids[-1])] = counted.get((carrier, pop_ids[-1]), 0) + 1
     return counted
+
+
+def ways_out_by_carrier_and_peer(
+    inputs: CircuitProofInputs, most: int | None
+) -> dict[str, dict[tuple[str, str], int]]:
+    return {
+        site: _counted(kept)
+        for site, kept in _credited_across_the_wan(
+            inputs, _per_peer(inputs), most
+        ).items()
+    }
 
 
 def independent_circuit_ceiling(site: str, inputs: CircuitProofInputs) -> int:

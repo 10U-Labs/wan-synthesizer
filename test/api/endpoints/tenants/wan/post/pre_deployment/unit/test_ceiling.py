@@ -6,6 +6,7 @@ from synthesizer.ceiling import (
     independent_circuit_ceiling,
     independent_circuits,
     diverse_circuit_ceilings,
+    ways_out_by_carrier_and_peer,
 )
 from synthesizer.graphs import adjacency_by_carrier, build_adjacency
 from synthesizer.input_graph import FiberSegment
@@ -280,3 +281,45 @@ def test_a_site_reachable_only_over_water_keeps_the_ways_out_it_has() -> None:
             terrestrial=_on_land(_ISLAND),
         ),
     )) == [("syd", "hil"), ("syd", "sea")]
+
+
+def _credit_over(
+    fiber: dict[tuple[str, str], FiberSegment],
+    backbone_ids: tuple[str, ...],
+    most: int | None,
+) -> dict[str, dict[tuple[str, str], int]]:
+    return ways_out_by_carrier_and_peer(
+        CircuitProofInputs(
+            backbone_ids,
+            build_adjacency(fiber),
+            circuits_wanted=2,
+            fiber_by_carrier=adjacency_by_carrier(fiber),
+        ),
+        most,
+    )
+
+
+_ALREADY_NEEDED_CREDIT = _credit_over(
+    fixtures.ALREADY_NEEDED_FIBER, fixtures.ALREADY_NEEDED_SITES, None
+)
+_FLOORED_ABOVE_FIBER = fixtures.carrier_fiber_segments(fixtures.FLOORED_ABOVE_SEGMENTS)
+
+
+def test_a_nodes_ask_is_credited_to_the_carrier_of_fiber_the_wan_already_needs() -> None:
+    assert _ALREADY_NEEDED_CREDIT["f"] == {("lumen", "b"): 1}
+
+
+def test_a_node_the_wan_shares_no_fiber_with_keeps_its_shortest_circuits_carriers() -> None:
+    assert _ALREADY_NEEDED_CREDIT["b"] == {("zayo", "d"): 1, ("lumen", "f"): 1}
+
+
+def test_every_way_out_a_nodes_carriers_prove_is_credited_when_none_is_asked_for() -> None:
+    assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, None)["b"] == {
+        ("zayo", "e"): 1, ("cogent", "d"): 1, ("cogent", "f"): 1,
+    }
+
+
+def test_the_credit_is_cut_to_the_ways_out_the_tenant_asked_for() -> None:
+    assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, 2)["b"] == {
+        ("zayo", "e"): 1, ("cogent", "d"): 1,
+    }

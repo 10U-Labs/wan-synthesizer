@@ -18,6 +18,8 @@ _HELD_OUTRIGHT = 0.5
 
 _TOLERANCE = 1e-6
 
+_EVERY_WAY_OUT: int | None = None
+
 _Bucket = TypeVar("_Bucket", str, tuple[str, str])
 
 
@@ -54,7 +56,7 @@ class _Writing:
     by_carrier: Mapping[str, frozenset[tuple[str, str]]]
     whole: Mapping[tuple[str, str], float]
     per_peer: int
-    proof: CircuitProofInputs
+    credited: Mapping[str, Mapping[tuple[str, str], int]]
     land: frozenset[tuple[str, str]]
     land_reach: Mapping[str, frozenset[str]]
 
@@ -207,7 +209,7 @@ def _across_the_carriers(
 def _ways_out_rows(site: str, writing: _Writing) -> _WaysOut:
     peers = frozenset(writing.inputs.backbone_ids) - {site}
     spared = frozenset({site}) if writing.per_peer == 1 else frozenset({site}) | peers
-    capacity = ways_out_by_carrier_and_peer(site, writing.proof)
+    capacity = writing.credited[site]
     peer_fiber = _peer_fiber(site, writing, capacity)
     toward_each = _lowered(
         [
@@ -229,7 +231,7 @@ def _ways_out_rows(site: str, writing: _Writing) -> _WaysOut:
 
 
 def _writing(
-    inputs: FiberInputs, fiber: Mapping[tuple[str, str], float]
+    inputs: FiberInputs, fiber: Mapping[tuple[str, str], float], most: int | None
 ) -> _Writing:
     on_land = {
         key: segment
@@ -243,13 +245,16 @@ def _writing(
         _fiber_by_carrier(inputs, fiber),
         {segment: 1.0 for segment in fiber},
         circuits_per_peer(inputs.seat_cap, len(inputs.backbone_ids), inputs.ways_out),
-        CircuitProofInputs(
-            inputs.backbone_ids,
-            build_adjacency(dict(inputs.fiber_segments)),
-            inputs.ways_out,
-            inputs.seat_cap,
-            inputs.fiber_by_carrier,
-            terrestrial,
+        ways_out_by_carrier_and_peer(
+            CircuitProofInputs(
+                inputs.backbone_ids,
+                build_adjacency(dict(inputs.fiber_segments)),
+                inputs.ways_out,
+                inputs.seat_cap,
+                inputs.fiber_by_carrier,
+                terrestrial,
+            ),
+            most,
         ),
         frozenset(segment for segment in fiber if segment in on_land),
         reachable_over(terrestrial),
@@ -257,9 +262,9 @@ def _writing(
 
 
 def _requirements(
-    inputs: FiberInputs, fiber: Mapping[tuple[str, str], float]
+    inputs: FiberInputs, fiber: Mapping[tuple[str, str], float], most: int | None
 ) -> list[_Requirement]:
-    writing = _writing(inputs, fiber)
+    writing = _writing(inputs, fiber, most)
     ways_out = [_ways_out_rows(site, writing) for site in inputs.backbone_ids]
     return [
         row
@@ -314,21 +319,18 @@ def _write(search: _Search, rows: list[SegmentRow]) -> bool:
     return bool(fresh)
 
 
-def _solve_search(search: _Search, fix: bool) -> SegmentSelection:
-    if fix:
-        search.program.hold_whole(
-            frozenset(search.column[segment] for segment in search.selected)
-        )
-    else:
-        search.program.hold_nothing()
+def _solve_search(search: _Search) -> SegmentSelection:
+    search.program.hold_whole(
+        frozenset(search.column[segment] for segment in search.selected)
+    )
     return search.program.solve()
 
 
 def _tighten(search: _Search, requirements: list[_Requirement]) -> SegmentSelection:
-    selection = _solve_search(search, fix=True)
+    selection = _solve_search(search)
     shortfalls = _shortfalls(requirements, _shares(selection, search.order))
     while shortfalls and _write(search, _rows(shortfalls, search.column)):
-        selection = _solve_search(search, fix=True)
+        selection = _solve_search(search)
         shortfalls = _shortfalls(requirements, _shares(selection, search.order))
     return selection
 
@@ -344,25 +346,41 @@ def _round_up(search: _Search, selection: SegmentSelection) -> frozenset[tuple[s
     return fresh or frozenset({max(left)[1]})
 
 
-def select_fiber(inputs: FiberInputs) -> FiberSelection:
-    fiber = {
-        key: segment.distance_miles for key, segment in inputs.fiber_segments.items()
-    }
-    if not fiber:
-        return FiberSelection(frozenset(), 0.0)
-    requirements = _requirements(inputs, fiber)
-    order = sorted(fiber)
-    search = _Search(
+def _search_over(
+    fiber: Mapping[tuple[str, str], float], order: list[tuple[str, str]]
+) -> _Search:
+    return _Search(
         order,
         {segment: index for index, segment in enumerate(order)},
         GrowingSegmentProgram(tuple(fiber[segment] for segment in order)),
         set(),
         frozenset(),
     )
+
+
+def _floor_under_the_ask(
+    inputs: FiberInputs,
+    fiber: Mapping[tuple[str, str], float],
+    order: list[tuple[str, str]],
+) -> float:
+    return _tighten(
+        _search_over(fiber, order), _requirements(inputs, fiber, inputs.ways_out)
+    ).miles
+
+
+def select_fiber(inputs: FiberInputs) -> FiberSelection:
+    fiber = {
+        key: segment.distance_miles for key, segment in inputs.fiber_segments.items()
+    }
+    if not fiber:
+        return FiberSelection(frozenset(), 0.0)
+    requirements = _requirements(inputs, fiber, _EVERY_WAY_OUT)
+    order = sorted(fiber)
+    search = _search_over(fiber, order)
     while True:
         shortfalls = _shortfalls(requirements, _held(fiber, search.selected))
         if not shortfalls:
             break
         _write(search, _rows(shortfalls, search.column))
         search.selected |= _round_up(search, _tighten(search, requirements))
-    return FiberSelection(search.selected, _solve_search(search, fix=False).miles)
+    return FiberSelection(search.selected, _floor_under_the_ask(inputs, fiber, order))
