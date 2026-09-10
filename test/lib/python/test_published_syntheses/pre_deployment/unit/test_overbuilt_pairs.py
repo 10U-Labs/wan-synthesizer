@@ -50,6 +50,18 @@ def test_a_second_circuit_crossing_the_same_city_as_the_first_is_reported() -> N
     assert overbuilt_pairs(synthesis) == [("east <-> west", 2)]
 
 
+_ROUND_A_CUT_CITY = [
+    _circuit("east", "north", "m2"),
+    _circuit("west", "north", "m2", "m3"),
+    _circuit("east", "west", "m3"),
+    _circuit("west", "north", "m3"),
+]
+
+
+def test_a_pair_whose_second_circuit_is_what_keeps_a_pop_from_splitting_it_is_not_reported() -> None:
+    assert not overbuilt_pairs(_synthesis(_ROUND_A_CUT_CITY))
+
+
 def test_a_pair_joined_once_is_not_reported() -> None:
     assert not overbuilt_pairs(_synthesis([_circuit("west", "east", "m1")]))
 
