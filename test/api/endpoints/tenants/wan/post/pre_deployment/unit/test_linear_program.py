@@ -58,6 +58,13 @@ def test_rows_written_a_batch_at_a_time_answer_as_the_same_rows_written_at_once(
     assert (batched.miles, *batched.held) == pytest.approx(_answer(_EVERY_ROW))
 
 
+def test_a_column_held_whole_is_paid_for_in_full_by_every_answer_that_follows() -> None:
+    growing = GrowingSegmentProgram(_TWO_COLUMNS)
+    growing.add_rows(_EVERY_ROW)
+    growing.hold_whole(frozenset({_LONG}))
+    assert growing.solve().miles == pytest.approx(11.0)
+
+
 def test_writing_no_rows_at_all_leaves_the_program_answering_as_it_did() -> None:
     growing = GrowingSegmentProgram(_TWO_COLUMNS)
     growing.add_rows(_EVERY_ROW)
