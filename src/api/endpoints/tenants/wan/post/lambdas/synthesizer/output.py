@@ -45,7 +45,7 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
             "backbone_count": len(synthesis.backbone_ids),
             "transit_count": len(synthesis.transit_ids),
             "demand_site_count": included_demand_count(sites, synthesis),
-            "access_path_count": len(synthesis.access_circuits),
+            "access_path_count": len(synthesis.homing_circuits),
             "fiber_segment_count": len(synthesis.fiber_segment_keys),
             "access_miles": round(synthesis.metrics.access_miles, 3),
             "physical_carrier_miles": round(synthesis.metrics.physical_miles, 3),
@@ -71,15 +71,15 @@ def synthesis_payload(sources: SourceFiles, artifacts: SynthesisArtifacts) -> di
         ],
         "access_paths": [
             {
-                "source_id": access_circuit.source,
-                "source_name": sites_by_id[access_circuit.source].name,
-                "target_id": access_circuit.target,
-                "target_name": sites_by_id[access_circuit.target].name,
-                "link_kind": _demand_circuit_kind(sites_by_id[access_circuit.source]),
-                "distance_miles": round(access_circuit.distance_miles, 3),
+                "source_id": homing_circuit.source,
+                "source_name": sites_by_id[homing_circuit.source].name,
+                "target_id": homing_circuit.target,
+                "target_name": sites_by_id[homing_circuit.target].name,
+                "link_kind": _demand_circuit_kind(sites_by_id[homing_circuit.source]),
+                "distance_miles": round(homing_circuit.distance_miles, 3),
             }
-            for access_circuit in sorted(
-                synthesis.access_circuits, key=lambda item: (item.source, item.target)
+            for homing_circuit in sorted(
+                synthesis.homing_circuits, key=lambda item: (item.source, item.target)
             )
         ],
         "fiber_segments": [

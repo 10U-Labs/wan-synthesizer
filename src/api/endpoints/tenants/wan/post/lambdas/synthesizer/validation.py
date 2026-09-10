@@ -46,22 +46,22 @@ def backbone_mesh_deficient(
 def synthesis_site_pairs(synthesis: Synthesis) -> set[tuple[str, str]]:
     pairs = set(synthesis.fiber_segment_keys)
     pairs.update(
-        segment_key(access_circuit.source, access_circuit.target)
-        for access_circuit in synthesis.access_circuits
+        segment_key(homing_circuit.source, homing_circuit.target)
+        for homing_circuit in synthesis.homing_circuits
     )
     return pairs
 
 def included_site_ids(synthesis: Synthesis) -> set[str]:
     ids = set(synthesis.backbone_ids) | set(synthesis.transit_ids)
     ids.update(site_id for key in synthesis.fiber_segment_keys for site_id in key)
-    ids.update(access_circuit.source for access_circuit in synthesis.access_circuits)
-    ids.update(access_circuit.target for access_circuit in synthesis.access_circuits)
+    ids.update(homing_circuit.source for homing_circuit in synthesis.homing_circuits)
+    ids.update(homing_circuit.target for homing_circuit in synthesis.homing_circuits)
     return ids
 
 def homes_by_site(synthesis: Synthesis) -> dict[str, set[str]]:
     homes: dict[str, set[str]] = {}
-    for access_circuit in synthesis.access_circuits:
-        homes.setdefault(access_circuit.source, set()).add(access_circuit.target)
+    for homing_circuit in synthesis.homing_circuits:
+        homes.setdefault(homing_circuit.source, set()).add(homing_circuit.target)
     return homes
 
 def sites_below_homing_degree(synthesis: Synthesis, degree: int) -> list[str]:

@@ -4,7 +4,7 @@ import fixtures
 import pytest
 
 from synthesizer.input_graph import segment_key
-from synthesizer.model import AccessCircuit, Synthesis, SynthesisMetrics, MeshRequirements
+from synthesizer.model import HomingCircuit, Synthesis, SynthesisMetrics, MeshRequirements
 from synthesizer.validation import (
     backbone_mesh_deficient,
     backbone_mesh_independence_deficient,
@@ -21,12 +21,12 @@ def make_synthesis(
     *,
     backbone_ids: tuple[str, ...] = (),
     transit_ids: tuple[str, ...] = (),
-    access_circuits: list[AccessCircuit] | None = None,
+    homing_circuits: list[HomingCircuit] | None = None,
 ) -> Synthesis:
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=transit_ids,
-        access_circuits=access_circuits or [],
+        homing_circuits=homing_circuits or [],
         fiber_segment_keys={segment_key(a, b) for a, b in physical_pairs},
         drawn_circuits=[],
         metrics=SynthesisMetrics(0.0, 0.0, 0.0),
@@ -36,8 +36,8 @@ def make_synthesis(
 meshed_synthesis = fixtures.meshed_backbone_synthesis
 
 
-def test_included_site_ids_covers_access_endpoints() -> None:
-    synthesis = make_synthesis([("a", "b")], access_circuits=[AccessCircuit("s", "a", 1.0)])
+def test_included_site_ids_covers_homing_endpoints() -> None:
+    synthesis = make_synthesis([("a", "b")], homing_circuits=[HomingCircuit("s", "a", 1.0)])
     assert included_site_ids(synthesis) == {"a", "b", "s"}
 
 
@@ -46,8 +46,8 @@ def test_included_site_ids_covers_the_tier_ids() -> None:
     assert included_site_ids(synthesis) == {"b", "t"}
 
 
-def test_synthesis_site_pairs_merge_access_and_physical() -> None:
-    synthesis = make_synthesis([("a", "b")], access_circuits=[AccessCircuit("s", "a", 1.0)])
+def test_synthesis_site_pairs_merge_homing_and_physical() -> None:
+    synthesis = make_synthesis([("a", "b")], homing_circuits=[HomingCircuit("s", "a", 1.0)])
     assert synthesis_site_pairs(synthesis) == {segment_key("a", "b"), segment_key("s", "a")}
 
 
@@ -63,7 +63,7 @@ def test_neighbor_degrees_ignores_external_endpoints() -> None:
 
 def test_homes_by_site_groups_targets_per_source() -> None:
     synthesis = make_synthesis(
-        [], access_circuits=[AccessCircuit("s", "a", 1.0), AccessCircuit("s", "b", 1.0)]
+        [], homing_circuits=[HomingCircuit("s", "a", 1.0), HomingCircuit("s", "b", 1.0)]
     )
     assert homes_by_site(synthesis) == {"s": {"a", "b"}}
 

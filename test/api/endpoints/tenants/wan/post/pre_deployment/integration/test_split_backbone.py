@@ -100,7 +100,7 @@ def _synthesis_over_every_segment(
             sorted(site.id for site in sites if is_carrier_pop(site))
         ),
         transit_ids=(),
-        access_circuits=[],
+        homing_circuits=[],
         fiber_segment_keys=set(fiber_segments),
         drawn_circuits=[],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),

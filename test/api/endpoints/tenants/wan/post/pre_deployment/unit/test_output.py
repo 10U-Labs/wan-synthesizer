@@ -5,7 +5,7 @@ from typing import Any
 import fixtures
 from synthesizer.input_graph import FiberSegment, Site, segment_key
 from synthesizer.model import (
-    AccessCircuit,
+    HomingCircuit,
     Synthesis,
     SynthesisArtifacts,
     SynthesisMetrics,
@@ -25,7 +25,7 @@ def _synthesis_with_homed_demand(source: str) -> Synthesis:
     return Synthesis(
         backbone_ids=(),
         transit_ids=(),
-        access_circuits=[AccessCircuit(source, "b", 1.0)],
+        homing_circuits=[HomingCircuit(source, "b", 1.0)],
         fiber_segment_keys=set(),
         drawn_circuits=[],
         metrics=SynthesisMetrics(0.0, 0.0, 0.0),
@@ -71,12 +71,12 @@ def test_sorted_fiber_segments_is_sorted() -> None:
     assert keys == sorted(keys)
 
 
-def test_tenant_access_circuit_is_labelled_tenant_to_backbone() -> None:
+def test_tenant_homing_circuit_is_labelled_tenant_to_backbone() -> None:
     payload = _payload_for(fixtures.access_site("s"))
     assert payload["access_paths"][0]["link_kind"] == "tenant_to_backbone"
 
 
-def test_provider_access_circuit_is_labelled_provider_to_backbone() -> None:
+def test_provider_homing_circuit_is_labelled_provider_to_backbone() -> None:
     payload = _payload_for(fixtures.provider_site("r"))
     assert payload["access_paths"][0]["link_kind"] == "provider_to_backbone"
 

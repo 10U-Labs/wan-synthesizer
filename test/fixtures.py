@@ -109,7 +109,7 @@ def meshed_backbone_synthesis(
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
-        access_circuits=[],
+        homing_circuits=[],
         fiber_segment_keys={
             key for pop_ids in circuits for key in fiber_segments_along(pop_ids)
         },
@@ -130,7 +130,7 @@ def split_backbone_synthesis() -> Synthesis:
     return Synthesis(
         backbone_ids=SPLIT_BACKBONE,
         transit_ids=(),
-        access_circuits=[],
+        homing_circuits=[],
         fiber_segment_keys={
             segment_key(left, right) for left, right in SPLIT_BACKBONE_SEGMENTS
         },

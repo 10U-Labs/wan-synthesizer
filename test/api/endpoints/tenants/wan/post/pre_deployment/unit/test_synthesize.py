@@ -197,7 +197,7 @@ def _synthesis(
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
-        access_circuits=[],
+        homing_circuits=[],
         fiber_segment_keys=fiber_segment_keys,
         drawn_circuits=[],
         metrics=SynthesisMetrics(0.0, 0.0, 0.0),

@@ -132,10 +132,10 @@ def best_backbone_at_size(
         if strength < best_strength:
             logger.info("  strongest feasible backbone locked at set %d/%d", index, len(combos))
             break
-        access_circuits = evaluate_backbone(backbone_set, inputs, plan)
-        if access_circuits is None:
+        homing_circuits = evaluate_backbone(backbone_set, inputs, plan)
+        if homing_circuits is None:
             continue
-        access_miles = sum(circuit.distance_miles for circuit in access_circuits)
+        access_miles = sum(circuit.distance_miles for circuit in homing_circuits)
         key = (-strength, round(access_miles, 6))
         if best_key is None or key < best_key:
             best_set, best_key, best_strength = backbone_set, key, strength

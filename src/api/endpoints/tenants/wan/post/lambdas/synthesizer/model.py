@@ -9,7 +9,7 @@ from synthesizer.input_graph import FiberSegment, Site
 
 
 @dataclass(frozen=True)
-class AccessCircuit:
+class HomingCircuit:
     source: str
     target: str
     distance_miles: float
@@ -40,7 +40,7 @@ class SynthesisMetrics:
 class Synthesis:
     backbone_ids: tuple[str, ...]
     transit_ids: tuple[str, ...]
-    access_circuits: list[AccessCircuit]
+    homing_circuits: list[HomingCircuit]
     fiber_segment_keys: set[tuple[str, str]]
     drawn_circuits: list[SynthesisCircuit]
     metrics: SynthesisMetrics

@@ -10,7 +10,7 @@ from fixtures import (
     synthesis_inputs_from_fiber,
     search_plan,
 )
-from synthesizer.model import AccessCircuit, SynthesisInputs, ForcedCircuits
+from synthesizer.model import HomingCircuit, SynthesisInputs, ForcedCircuits
 from synthesizer.assemble import (
     assign_access,
     backbone_physically_biconnectable,
@@ -30,10 +30,10 @@ def _dual_inputs(s_coord: tuple[float, float] = (0.0, 0.05)) -> SynthesisInputs:
     )
 
 
-def _homing_counts(access_circuits: list[AccessCircuit]) -> dict[str, int]:
+def _homing_counts(homing_circuits: list[HomingCircuit]) -> dict[str, int]:
     counts: dict[str, int] = {}
-    for access_circuit in access_circuits:
-        counts[access_circuit.source] = counts.get(access_circuit.source, 0) + 1
+    for homing_circuit in homing_circuits:
+        counts[homing_circuit.source] = counts.get(homing_circuit.source, 0) + 1
     return counts
 
 

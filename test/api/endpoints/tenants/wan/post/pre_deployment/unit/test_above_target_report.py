@@ -33,7 +33,7 @@ def _above_target(*extra: SynthesisCircuit) -> list[dict[str, object]]:
     synthesis = Synthesis(
         backbone_ids=_SITES,
         transit_ids=(),
-        access_circuits=[],
+        homing_circuits=[],
         fiber_segment_keys=set(),
         drawn_circuits=[*_ASKED_FOR, *extra],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),

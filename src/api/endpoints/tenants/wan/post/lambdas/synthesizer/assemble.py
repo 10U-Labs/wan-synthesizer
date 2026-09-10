@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from synthesizer.input_graph import FiberSegment, haversine_miles
 from synthesizer.model import (
-    AccessCircuit,
+    HomingCircuit,
     Synthesis,
     SynthesisInputs,
     SynthesisMetrics,
@@ -22,7 +22,7 @@ from synthesizer.search_plan import _SearchPlan
 
 @dataclass
 class _SynthesisDraft:
-    access_circuits: list[AccessCircuit]
+    homing_circuits: list[HomingCircuit]
     drawn_circuits: list[SynthesisCircuit]
     backbone_lower_bound_miles: float = 0.0
 
@@ -36,7 +36,7 @@ def finalize_synthesis(
     for drawn_circuit in draft.drawn_circuits:
         fiber_segment_keys.update(fiber_segments_along(drawn_circuit.pop_ids))
 
-    access_miles = sum(circuit.distance_miles for circuit in draft.access_circuits)
+    access_miles = sum(circuit.distance_miles for circuit in draft.homing_circuits)
     physical_miles = sum(
         fiber_segments[key].distance_miles for key in fiber_segment_keys
     )
@@ -50,7 +50,7 @@ def finalize_synthesis(
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=transit_ids,
-        access_circuits=draft.access_circuits,
+        homing_circuits=draft.homing_circuits,
         fiber_segment_keys=fiber_segment_keys,
         drawn_circuits=draft.drawn_circuits,
         metrics=SynthesisMetrics(
@@ -63,13 +63,13 @@ def assign_access(
     backbone_ids: tuple[str, ...],
     inputs: SynthesisInputs,
     plan: _SearchPlan,
-) -> list[AccessCircuit] | None:
+) -> list[HomingCircuit] | None:
     homing_degree = plan.tuning.homing_degree
     backbone_set = set(backbone_ids)
     if len(backbone_set) < homing_degree:
         return None
     pop_by_id = {pop.id: pop for pop in inputs.carrier_pops}
-    access_circuits: list[AccessCircuit] = []
+    homing_circuits: list[HomingCircuit] = []
     for access in inputs.access_sites:
         completed = [
             backbone_id
@@ -81,14 +81,14 @@ def assign_access(
         completed = apply_forced_homes(
             access, completed, plan.forced_circuits, pop_by_id, homing_degree
         )
-        access_circuits.extend(
-            AccessCircuit(
+        homing_circuits.extend(
+            HomingCircuit(
                 access.id, backbone_id,
                 haversine_miles(access, pop_by_id[backbone_id]),
             )
             for backbone_id in completed
         )
-    return access_circuits
+    return homing_circuits
 
 
 def backbone_physically_biconnectable(
@@ -137,7 +137,7 @@ def evaluate_backbone(
     backbone_ids: tuple[str, ...],
     inputs: SynthesisInputs,
     plan: _SearchPlan,
-) -> list[AccessCircuit] | None:
+) -> list[HomingCircuit] | None:
     if not backbone_physically_biconnectable(backbone_ids, inputs):
         return None
     return assign_access(backbone_ids, inputs, plan)
@@ -164,9 +164,9 @@ def build_synthesis_for_backbone(
     inputs: SynthesisInputs,
     plan: _SearchPlan,
 ) -> Synthesis | None:
-    access_circuits = evaluate_backbone(backbone_ids, inputs, plan)
-    if access_circuits is None:
+    homing_circuits = evaluate_backbone(backbone_ids, inputs, plan)
+    if homing_circuits is None:
         return None
     mesh = synthesis_circuits(backbone_ids, inputs, plan, inputs.fiber_segments)
-    draft = _SynthesisDraft(access_circuits, mesh.circuits, mesh.lower_bound_miles)
+    draft = _SynthesisDraft(homing_circuits, mesh.circuits, mesh.lower_bound_miles)
     return finalize_synthesis(backbone_ids, draft, inputs.fiber_segments)

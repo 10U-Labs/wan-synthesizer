@@ -42,7 +42,7 @@ UNFORCED_HOME = fixtures.forced_circuit_artifacts(_MESHED_RING, OperatorCircuits
 def _homes_of(artifacts: SynthesisArtifacts, access_id: str) -> set[str]:
     return {
         circuit.target
-        for circuit in artifacts.synthesis.access_circuits
+        for circuit in artifacts.synthesis.homing_circuits
         if circuit.source == access_id
     }
 

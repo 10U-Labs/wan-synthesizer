@@ -3,7 +3,7 @@ from __future__ import annotations
 import fixtures
 from synthesizer.validation import sites_below_homing_degree, validate_synthesis
 from synthesizer.model import (
-    AccessCircuit,
+    HomingCircuit,
     Synthesis,
     SynthesisMetrics,
     MeshRequirements,
@@ -20,13 +20,13 @@ def make_pop(site_id: str) -> Site:
 def build_synthesis(
     backbone_ids: tuple[str, ...],
     transit_ids: tuple[str, ...],
-    access_circuits: list[AccessCircuit],
+    homing_circuits: list[HomingCircuit],
     physical_pairs: list[tuple[str, str]],
 ) -> Synthesis:
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=transit_ids,
-        access_circuits=access_circuits,
+        homing_circuits=homing_circuits,
         fiber_segment_keys={segment_key(left, right) for left, right in physical_pairs},
         drawn_circuits=[],
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
@@ -36,13 +36,13 @@ def build_synthesis(
 GOOD = build_synthesis(
     backbone_ids=("B1", "B2"),
     transit_ids=("X", "Y"),
-    access_circuits=[AccessCircuit("A", "B1", 1.0), AccessCircuit("A", "B2", 1.0)],
+    homing_circuits=[HomingCircuit("A", "B1", 1.0), HomingCircuit("A", "B2", 1.0)],
     physical_pairs=[("X", "B1"), ("Y", "B2"), ("B1", "B2")],
 )
 SINGLE_HOMED = build_synthesis(
     backbone_ids=("B1", "B2"),
     transit_ids=(),
-    access_circuits=[AccessCircuit("A", "B1", 1.0)],
+    homing_circuits=[HomingCircuit("A", "B1", 1.0)],
     physical_pairs=[("B1", "B2")],
 )
 
@@ -68,7 +68,7 @@ def test_backbone_mesh_survives_any_one_link_loss_with_fewer_than_two_nodes() ->
 TRIPLE_HOMED = build_synthesis(
     backbone_ids=("B1", "B2", "B3"),
     transit_ids=(),
-    access_circuits=[AccessCircuit("s", target, 1.0) for target in ("B1", "B2", "B3")],
+    homing_circuits=[HomingCircuit("s", target, 1.0) for target in ("B1", "B2", "B3")],
     physical_pairs=[("B1", "B2")],
 )
 TRIPLE_HOMED_SITES = [make_pop(name) for name in ("s", "B1", "B2", "B3")]
@@ -96,7 +96,7 @@ def _mesh_synthesis(backbone_ids: tuple[str, ...], pairs: list[tuple[str, str]])
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
-        access_circuits=[],
+        homing_circuits=[],
         fiber_segment_keys={segment_key(left, right) for left, right in pairs},
         drawn_circuits=[
             SynthesisCircuit("backbone_mesh", left, right, (left, right), 1.0)
@@ -241,7 +241,7 @@ def _drawn_synthesis(
     return Synthesis(
         backbone_ids=backbone_ids,
         transit_ids=(),
-        access_circuits=[],
+        homing_circuits=[],
         fiber_segment_keys=set(),
         drawn_circuits=drawn_circuits,
         metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
@@ -325,7 +325,7 @@ def test_bowtie_backbone_is_not_survives_any_one_site_loss() -> None:
 _DISCONNECTED = build_synthesis(
     backbone_ids=("B1", "B2", "B3", "B4"),
     transit_ids=(),
-    access_circuits=[],
+    homing_circuits=[],
     physical_pairs=[("B1", "B2"), ("B3", "B4")],
 )
 _DISCONNECTED_SITES = [make_pop(name) for name in ("B1", "B2", "B3", "B4")]
