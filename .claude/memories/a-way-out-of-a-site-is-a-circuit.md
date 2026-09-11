@@ -47,7 +47,7 @@ Which single word the idea should take is still GitHub issue #128's question: th
 
 Nothing here is about ordering anything or about what anything costs. The synthesizer synthesizes a WAN from a tenant's inputs — which carrier PoPs become WAN PoPs, and which circuits join them — and that is the whole of what it models. A circuit is a connection that either works or does not, never a purchase, a line item or a charge, and no name, string or served key should say otherwise.
 
-Fiber follows the same rule: a fiber segment is what a synthesized circuit runs over, one circuit runs over many of them, and two circuits can run over the same one. So a figure adding up fiber is the miles a WAN's circuits **run over**, never miles ordered. GitHub issue #153 is open on the seven names that still get this backwards, all of them descended from `ordered_fiber_miles`.
+Fiber follows the same rule: a fiber segment is what a synthesized circuit runs over, one circuit runs over many of them, and two circuits can run over the same one. So a figure adding up fiber is the miles a WAN's circuits **run over**, never miles ordered. GitHub issue #153 settled the names on 2026-09-11: the published-synthesis library's `ordered_fiber_miles` is `fiber_miles_run_over`, its two test names say the WAN runs over the fiber rather than ordering it, and the three test names that had a drawn circuit ordered from a carrier now say it runs over that carrier's fiber. What keeps the word is sequence rather than purchase: `ceiling.py`'s local `ordered = sorted(...)` and the ordered pair a forced home resolves to.
 
 ### Nothing mechanical checks this
 

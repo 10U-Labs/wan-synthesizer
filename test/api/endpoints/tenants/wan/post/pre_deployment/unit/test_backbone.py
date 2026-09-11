@@ -392,7 +392,7 @@ def test_a_pin_one_carrier_can_join_is_drawn_over_that_carriers_fiber() -> None:
     ]
 
 
-def test_a_drawn_circuit_names_the_carrier_it_is_ordered_from() -> None:
+def test_a_drawn_circuit_names_the_carrier_whose_fiber_it_runs_over() -> None:
     mesh = _drawn(("w", "x", "y", "z"), _WHOLE_SQUARE, _PIN_WY)
     assert all(drawn_circuit.carrier in ("lumen", "zayo") for drawn_circuit in mesh.circuits)
 

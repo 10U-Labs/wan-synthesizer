@@ -268,7 +268,7 @@ def wan_pop_groups(synthesis: dict[str, Any]) -> list[list[str]]:
     return groups
 
 
-def ordered_fiber_miles(synthesis: dict[str, Any]) -> float:
+def fiber_miles_run_over(synthesis: dict[str, Any]) -> float:
     segments: list[float] = [entry["distance_miles"] for entry in synthesis["fiber"]]
     return sum(segments)
 

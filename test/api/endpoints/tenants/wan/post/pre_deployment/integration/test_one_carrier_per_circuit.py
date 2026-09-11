@@ -41,7 +41,7 @@ def test_every_drawn_circuit_is_one_carriers_to_offer() -> None:
     )
 
 
-def test_every_drawn_circuit_names_the_carrier_it_is_ordered_from() -> None:
+def test_every_drawn_circuit_names_the_carrier_whose_fiber_it_runs_over() -> None:
     assert all(drawn_circuit.carrier in ("lumen", "zayo") for drawn_circuit in _MESH)
 
 
@@ -49,7 +49,7 @@ def test_the_short_way_that_changes_hands_is_not_drawn() -> None:
     assert not [drawn_circuit for drawn_circuit in _MESH if _SHORTCUT_CITY in drawn_circuit.pop_ids]
 
 
-def test_a_sites_diverse_circuits_may_be_ordered_from_different_carriers() -> None:
+def test_a_sites_diverse_circuits_may_run_over_different_carriers_fiber() -> None:
     assert _carriers_at("a") == {"lumen", "zayo"}
 
 

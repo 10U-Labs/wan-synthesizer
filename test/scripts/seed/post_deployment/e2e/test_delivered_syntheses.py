@@ -11,7 +11,7 @@ from test_published_syntheses import (
     wan_pop_groups,
     cut_cities,
     offered_diverse_circuits,
-    ordered_fiber_miles,
+    fiber_miles_run_over,
     overbuilt_pairs,
     removable_circuits,
     worst_haul,
@@ -31,7 +31,7 @@ def _tenants_outside(
 ) -> dict[str, tuple[float, float]]:
     measured = {
         synthesis["tenant"]: (
-            ordered_fiber_miles(synthesis),
+            fiber_miles_run_over(synthesis),
             synthesis["lower_bound_miles"],
             _rounding_slack(synthesis),
         )

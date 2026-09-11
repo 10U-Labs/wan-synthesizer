@@ -59,7 +59,7 @@ def test_synthesis_payload_summary_lists_wan_pop_names() -> None:
     assert len(summary["wan_pops"]) == len(ARTIFACTS.synthesis.wan_pop_ids)
 
 
-def test_synthesis_payload_summary_publishes_the_floor_under_the_fiber_it_ordered() -> None:
+def test_synthesis_payload_summary_publishes_the_floor_under_the_fiber_it_runs_over() -> None:
     summary = synthesis_payload(ARTIFACTS)["summary"]
     assert summary["backbone_lower_bound_miles"] <= summary["physical_carrier_miles"]
 
