@@ -2,18 +2,18 @@
 backbone:
   coverage_target_miles: 1090
   forced:
+    paths: []
     wan_pops:
       - Ashburn, VA
       - Salt Lake City, UT
+  number_of_diverse_circuits: 2
+  prohibited:
     paths: []
+    wan_pops: []
+  promote_high_degree_convergences: false
   wan_pop_count:
     max: 2
     min: 2
-  number_of_diverse_circuits: 2
-  prohibited:
-    wan_pops: []
-    paths: []
-  promote_high_degree_convergences: false
 homing:
   degree: 2
   forced: []
@@ -23,6 +23,6 @@ inputs:
   providers: data/providers/providers.csv
 label: Two-PoP
 settings:
-  wan_pop_search_memory_share: 0.6
   bytes_per_wan_pop_combination: 160
   compass_sector_count: 8
+  wan_pop_search_memory_share: 0.6

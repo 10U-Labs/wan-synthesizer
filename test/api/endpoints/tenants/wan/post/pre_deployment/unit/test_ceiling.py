@@ -313,7 +313,7 @@ def test_a_wan_pop_the_wan_shares_no_fiber_with_keeps_its_shortest_circuits_carr
     assert _ALREADY_NEEDED_CREDIT["b"] == {("zayo", "d"): 1, ("lumen", "f"): 1}
 
 
-def test_every_diverse_circuit_a_wan_pops_carriers_prove_is_credited_when_none_is_asked_for() -> None:
+def test_every_diverse_circuit_a_wan_pops_carriers_prove_is_credited_when_none_is_asked() -> None:
     assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, None)["b"] == {
         ("zayo", "e"): 1, ("cogent", "d"): 1, ("cogent", "f"): 1,
     }
