@@ -64,4 +64,5 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 ### Vocabulary
 
 - [a-chosen-carrier-pop-is-a-wan-pop](a-chosen-carrier-pop-is-a-wan-pop.md) — a carrier PoP the synthesis chooses is a `wan_pop`, `backbone` survives only where it names the mesh or the tier, `node` only in a flow network and an `ast` walk, and the five published resources the rename moved
+- [a-site-is-a-named-place-not-a-building](a-site-is-a-named-place-not-a-building.md) — a site is a named place with a coordinate and nothing smaller is modelled, so no building exists here, the vertex the directive is proved over is a city, and the word to reach for instead of `building`
 - [a-way-out-of-a-site-is-a-circuit](a-way-out-of-a-site-is-a-circuit.md) — a way out of a site is a circuit, its route is the carrier PoPs it runs through, `path` survives only for files on disk and two graph walks, and ordering and cost are outside the vocabulary
