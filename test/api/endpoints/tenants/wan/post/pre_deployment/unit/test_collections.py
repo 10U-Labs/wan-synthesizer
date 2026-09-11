@@ -4,7 +4,7 @@ from typing import Any
 
 import fixtures
 from synthesizer import collections as gc
-from synthesizer.model import Synthesis, SynthesisMetrics
+from synthesizer.model import Homings, Synthesis, SynthesisMetrics
 from synthesizer.output import synthesis_payload
 
 
@@ -13,7 +13,10 @@ def _payload() -> dict[str, Any]:
 
 
 def _synthesis(wan_pop_ids: tuple[str, ...], transit_ids: tuple[str, ...]) -> Synthesis:
-    return Synthesis(wan_pop_ids, transit_ids, [], set(), [], SynthesisMetrics(0.0, 0.0, 0.0))
+    return Synthesis(
+        wan_pop_ids, transit_ids, Homings([], []), set(), [],
+        SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
+    )
 
 
 def test_site_role_wan_pop_for_selected_pop() -> None:
@@ -29,11 +32,11 @@ def test_site_role_unused_for_unselected_pop() -> None:
 
 
 def test_site_role_tenant_for_a_site() -> None:
-    assert gc.site_role(fixtures.access_site("s"), _synthesis((), ())) == "tenant"
+    assert gc.site_role(fixtures.tenant_site("s"), _synthesis((), ())) == "tenant"
 
 
 def test_site_role_provider_for_a_provider_region() -> None:
-    assert gc.site_role(fixtures.provider_site("r"), _synthesis((), ())) == "provider"
+    assert gc.site_role(fixtures.provider_region("r"), _synthesis((), ())) == "provider"
 
 
 def test_sites_returns_the_payload_sites() -> None:

@@ -12,6 +12,8 @@ from synthesizer.model import (
     OperatorCircuits,
     Tuning,
 )
+from synthesizer.assemble import homing_miles
+from synthesizer.output import synthesis_payload
 from synthesizer.synthesize import convergence_promotion_ids
 from synthesizer.validation import backbone_mesh_pairs, diverse_circuit_count
 
@@ -37,11 +39,20 @@ FORCED_HOME = fixtures.forced_circuit_artifacts(
 )
 UNFORCED_HOME = fixtures.forced_circuit_artifacts(_MESHED_RING, OperatorCircuits(), _DEMAND_RING)
 
+_RING_SITES, _RING_FIBER = _DEMAND_RING
+_MIXED_RING = (
+    [*_RING_SITES, fixtures.provider_region("R1", *fixtures.RING_COORDS["P3"])],
+    _RING_FIBER,
+)
+MIXED_DEMAND = fixtures.forced_circuit_artifacts(
+    _MESHED_RING, OperatorCircuits(), _MIXED_RING
+)
+
 
 def _homes_of(artifacts: SynthesisArtifacts, access_id: str) -> set[str]:
     return {
         circuit.target
-        for circuit in artifacts.synthesis.homing_circuits
+        for circuit in artifacts.synthesis.homings.joined()
         if circuit.source == access_id
     }
 
@@ -225,3 +236,29 @@ def test_promoted_convergence_synthesis_validates_connected() -> None:
 
 def test_convergence_promotion_reaches_a_fixpoint() -> None:
     assert convergence_promotion_ids(CONVERGENCE_HUB.synthesis) == set()
+
+
+def test_a_whole_synthesis_splits_every_homing_mile_between_the_two_kinds() -> None:
+    metrics = MIXED_DEMAND.synthesis.metrics
+    assert metrics.tenant_homing_miles + metrics.provider_homing_miles == homing_miles(
+        MIXED_DEMAND.synthesis.homings.joined()
+    )
+
+
+def test_a_whole_synthesis_counts_the_tenants_own_site_apart_from_the_region() -> None:
+    summary = synthesis_payload(MIXED_DEMAND)["summary"]
+    assert (summary["tenant_site_count"], summary["provider_region_count"]) == (1, 1)
+
+
+def test_a_whole_synthesis_publishes_the_regions_circuits_under_the_provider_kind() -> None:
+    payload = synthesis_payload(MIXED_DEMAND)
+    assert {
+        row["homing_kind"] for row in payload["homing_circuits"] if row["source_id"] == "R1"
+    } == {"provider_to_backbone"}
+
+
+def test_a_whole_synthesis_publishes_the_tenant_sites_circuits_under_the_tenant_kind() -> None:
+    payload = synthesis_payload(MIXED_DEMAND)
+    assert {
+        row["homing_kind"] for row in payload["homing_circuits"] if row["source_id"] == "S1"
+    } == {"tenant_to_backbone"}

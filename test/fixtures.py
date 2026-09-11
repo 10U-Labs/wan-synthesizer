@@ -7,6 +7,8 @@ from synthesizer.codec import OFF_NET_KIND, PROVIDER_KIND, SITE_KIND
 from synthesizer.input_graph import FiberSegment, Site, SiteInfo, segment_key
 from synthesizer.model import (
     KIND_ROADM,
+    Homings,
+    HomingSites,
     Synthesis,
     SynthesisArtifacts,
     SynthesisInputs,
@@ -52,6 +54,12 @@ _FIXTURE_STATE = "XX"
 _FIXTURE_COUNTRY = "United States"
 
 
+def _no_miles() -> SynthesisMetrics:
+    return SynthesisMetrics(
+        score=0.0, tenant_homing_miles=0.0, provider_homing_miles=0.0, physical_miles=0.0
+    )
+
+
 def carrier_pop(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:
     return Site(
         id=site_id,
@@ -64,11 +72,11 @@ def carrier_pop(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:
     )
 
 
-def access_site(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:
+def tenant_site(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:
     return Site(id=site_id, name=site_id, kind=SITE_KIND, coords=(lat, lon))
 
 
-def provider_site(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:
+def provider_region(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:
     return Site(id=site_id, name=site_id, kind=PROVIDER_KIND, coords=(lat, lon))
 
 
@@ -109,7 +117,7 @@ def meshed_backbone_synthesis(
     return Synthesis(
         wan_pop_ids=wan_pop_ids,
         transit_ids=(),
-        homing_circuits=[],
+        homings=Homings([], []),
         fiber_segment_keys={
             key for pop_ids in circuits for key in fiber_segments_along(pop_ids)
         },
@@ -117,7 +125,7 @@ def meshed_backbone_synthesis(
             SynthesisCircuit("backbone_mesh", pop_ids[0], pop_ids[-1], pop_ids, 1.0)
             for pop_ids in circuits
         ],
-        metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
+        metrics=_no_miles(),
     )
 
 
@@ -148,12 +156,12 @@ def split_backbone_synthesis() -> Synthesis:
     return Synthesis(
         wan_pop_ids=SPLIT_WAN_POPS,
         transit_ids=(),
-        homing_circuits=[],
+        homings=Homings([], []),
         fiber_segment_keys={
             segment_key(left, right) for left, right in SPLIT_BACKBONE_SEGMENTS
         },
         drawn_circuits=[],
-        metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
+        metrics=_no_miles(),
     )
 
 
@@ -366,7 +374,7 @@ def prohibited_wan_pop_artifacts(name: str) -> SynthesisArtifacts:
 
 def ring_inputs_with_demand(access_id: str, at_pop: str) -> RingInputs:
     sites, fiber = _ring_inputs()
-    return [*sites, access_site(access_id, *RING_COORDS[at_pop])], fiber
+    return [*sites, tenant_site(access_id, *RING_COORDS[at_pop])], fiber
 
 
 def forced_circuit_artifacts(
@@ -415,7 +423,8 @@ def synthesis_inputs_from_fiber(
     site_ids: list[str],
     fiber_segments: dict[tuple[str, str], FiberSegment],
     eligible: set[str],
-    access_sites: list[Site] | None = None,
+    tenant_sites: list[Site] | None = None,
+    provider_regions: list[Site] | None = None,
     coords: dict[str, tuple[float, float]] | None = None,
 ) -> SynthesisInputs:
     places = coords or {}
@@ -423,7 +432,10 @@ def synthesis_inputs_from_fiber(
     adjacency = build_adjacency(fiber_segments)
     distances, predecessors = all_pairs_shortest(pops, adjacency)
     return SynthesisInputs(
-        access_sites=access_sites if access_sites is not None else [],
+        homing_sites=HomingSites(
+            tenant_sites if tenant_sites is not None else [],
+            provider_regions if provider_regions is not None else [],
+        ),
         carrier_pops=pops,
         fiber_segments=fiber_segments,
         eligible_wan_pop_ids=eligible,

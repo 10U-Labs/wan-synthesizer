@@ -608,6 +608,14 @@
                     "backbone_lower_bound_miles": {
                       "type": "number",
                       "description": "The fewest fiber miles any backbone meeting this tenant's requirements over this carrier fiber could have run. Published so a reader outside the synthesizer can say how close the network they were handed is to the shortest one there is."
+                    },
+                    "homing_miles": {
+                      "type": "object",
+                      "description": "The miles this WAN's homing circuits run, apart: tenant for the tenant's own sites, provider for the cloud provider regions it uses. The two are published separately because a site and a region are not reached for the same reasons, not asked for by the same people, and not given up for the same reasons, so one figure covering both answers neither question.",
+                      "properties": {
+                        "tenant": { "type": "number" },
+                        "provider": { "type": "number" }
+                      }
                     }
                   }
                 }

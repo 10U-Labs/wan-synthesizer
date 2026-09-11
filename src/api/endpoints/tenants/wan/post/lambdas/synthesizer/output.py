@@ -4,10 +4,15 @@ from collections.abc import Iterable
 from dataclasses import asdict
 from typing import Any
 
-from synthesizer.codec import PROVIDER_KIND
 from synthesizer.collections import site_role
-from synthesizer.input_graph import Site, segment_key
-from synthesizer.model import Synthesis, SynthesisArtifacts, is_carrier_pop
+from synthesizer.input_graph import segment_key
+from synthesizer.model import (
+    HomingCircuit,
+    PROVIDER_HOMING,
+    TENANT_HOMING,
+    Synthesis,
+    SynthesisArtifacts,
+)
 from synthesizer.validation import included_site_ids
 
 
@@ -15,15 +20,19 @@ def sorted_fiber_segments(synthesis: Synthesis) -> list[tuple[str, str]]:
     return sorted(synthesis.fiber_segment_keys)
 
 
-def included_demand_count(sites: Iterable[Site], synthesis: Synthesis) -> int:
-    included = included_site_ids(synthesis)
-    return sum(
-        1 for site in sites if not is_carrier_pop(site) and site.id in included
+def homed_site_count(homing_circuits: Iterable[HomingCircuit]) -> int:
+    return len({homing_circuit.source for homing_circuit in homing_circuits})
+
+
+def _kinded(synthesis: Synthesis) -> list[tuple[HomingCircuit, str]]:
+    return sorted(
+        [(homing_circuit, TENANT_HOMING) for homing_circuit in synthesis.homings.tenant]
+        + [
+            (homing_circuit, PROVIDER_HOMING)
+            for homing_circuit in synthesis.homings.provider
+        ],
+        key=lambda pair: (pair[0].source, pair[0].target),
     )
-
-
-def _homing_circuit_kind(source_site: Site) -> str:
-    return "provider_to_backbone" if source_site.kind == PROVIDER_KIND else "tenant_to_backbone"
 
 
 def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
@@ -42,16 +51,22 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
         "summary": {
             "wan_pop_count": len(synthesis.wan_pop_ids),
             "transit_count": len(synthesis.transit_ids),
-            "demand_site_count": included_demand_count(sites, synthesis),
-            "homing_circuit_count": len(synthesis.homing_circuits),
+            "tenant_site_count": homed_site_count(synthesis.homings.tenant),
+            "provider_region_count": homed_site_count(synthesis.homings.provider),
+            "tenant_homing_circuit_count": len(synthesis.homings.tenant),
+            "provider_homing_circuit_count": len(synthesis.homings.provider),
             "fiber_segment_count": len(synthesis.fiber_segment_keys),
-            "access_miles": round(synthesis.metrics.access_miles, 3),
+            "tenant_homing_miles": round(synthesis.metrics.tenant_homing_miles, 3),
+            "provider_homing_miles": round(synthesis.metrics.provider_homing_miles, 3),
             "physical_carrier_miles": round(synthesis.metrics.physical_miles, 3),
             "backbone_lower_bound_miles": round(
                 synthesis.metrics.backbone_lower_bound_miles, 3
             ),
             "total_synthesis_miles": round(
-                synthesis.metrics.access_miles + synthesis.metrics.physical_miles, 3
+                synthesis.metrics.tenant_homing_miles
+                + synthesis.metrics.provider_homing_miles
+                + synthesis.metrics.physical_miles,
+                3,
             ),
             "score": round(synthesis.metrics.score, 3),
             "wan_pops": [
@@ -73,12 +88,10 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
                 "source_name": sites_by_id[homing_circuit.source].name,
                 "target_id": homing_circuit.target,
                 "target_name": sites_by_id[homing_circuit.target].name,
-                "homing_kind": _homing_circuit_kind(sites_by_id[homing_circuit.source]),
+                "homing_kind": homing_kind,
                 "distance_miles": round(homing_circuit.distance_miles, 3),
             }
-            for homing_circuit in sorted(
-                synthesis.homing_circuits, key=lambda item: (item.source, item.target)
-            )
+            for homing_circuit, homing_kind in _kinded(synthesis)
         ],
         "fiber_segments": [
             {

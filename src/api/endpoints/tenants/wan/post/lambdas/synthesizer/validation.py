@@ -47,20 +47,20 @@ def synthesis_site_pairs(synthesis: Synthesis) -> set[tuple[str, str]]:
     pairs = set(synthesis.fiber_segment_keys)
     pairs.update(
         segment_key(homing_circuit.source, homing_circuit.target)
-        for homing_circuit in synthesis.homing_circuits
+        for homing_circuit in synthesis.homings.joined()
     )
     return pairs
 
 def included_site_ids(synthesis: Synthesis) -> set[str]:
     ids = set(synthesis.wan_pop_ids) | set(synthesis.transit_ids)
     ids.update(site_id for key in synthesis.fiber_segment_keys for site_id in key)
-    ids.update(homing_circuit.source for homing_circuit in synthesis.homing_circuits)
-    ids.update(homing_circuit.target for homing_circuit in synthesis.homing_circuits)
+    ids.update(homing_circuit.source for homing_circuit in synthesis.homings.joined())
+    ids.update(homing_circuit.target for homing_circuit in synthesis.homings.joined())
     return ids
 
 def homes_by_site(synthesis: Synthesis) -> dict[str, set[str]]:
     homes: dict[str, set[str]] = {}
-    for homing_circuit in synthesis.homing_circuits:
+    for homing_circuit in synthesis.homings.joined():
         homes.setdefault(homing_circuit.source, set()).add(homing_circuit.target)
     return homes
 

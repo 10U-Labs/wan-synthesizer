@@ -14,6 +14,7 @@ from fixtures import (
 )
 from synthesizer.input_graph import segment_key
 from synthesizer.model import (
+    Homings,
     Synthesis,
     SynthesisInputs,
     SynthesisMetrics,
@@ -43,7 +44,7 @@ from synthesizer.strength import site_straightness
 
 pop = fixtures.carrier_pop
 physical = fixtures.fiber_segments_from
-access = fixtures.access_site
+access = fixtures.tenant_site
 TRIANGLE_SITES = [pop("a"), pop("b"), pop("c"), access("s", 40.0, -99.0)]
 
 
@@ -197,10 +198,10 @@ def _synthesis(
     return Synthesis(
         wan_pop_ids=wan_pop_ids,
         transit_ids=(),
-        homing_circuits=[],
+        homings=Homings([], []),
         fiber_segment_keys=fiber_segment_keys,
         drawn_circuits=[],
-        metrics=SynthesisMetrics(0.0, 0.0, 0.0),
+        metrics=SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
     )
 
 
@@ -244,7 +245,7 @@ MESH_COORDS = {"a": (0.0, 1.0), "b": (0.0, 2.0), "c": (0.0, 50.0), "d": (0.0, 51
 def _mesh_inputs() -> SynthesisInputs:
     return synthesis_inputs_from_fiber(
         ["a", "b", "c", "d"], MESH_FIBER, {"a", "b", "c", "d"},
-        [access("s", 0.0, 0.0)], MESH_COORDS,
+        [access("s", 0.0, 0.0)], coords=MESH_COORDS,
     )
 
 
@@ -348,16 +349,16 @@ def _far_demand_inputs_plan(exempt: bool = False) -> tuple[SynthesisInputs, _Sea
         "cw": (40.0, -118.0), "ce": (40.0, -78.0),
     }
     ids = ["cc1", "cc2", "cw", "ce"]
-    access_sites = [
+    tenant_sites = [
         access("aw1", 40.0, -120.3), access("aw2", 40.3, -119.7),
         access("ae1", 40.0, -76.3), access("ae2", 40.3, -75.7),
     ]
     if exempt:
-        access_sites = [
-            replace(site, exempt_from_distance_constraint=True) for site in access_sites
+        tenant_sites = [
+            replace(site, exempt_from_distance_constraint=True) for site in tenant_sites
         ]
     inputs = synthesis_inputs_from_fiber(
-        ids, fiber, {"cc1", "cc2", "cw", "ce"}, access_sites, coords
+        ids, fiber, {"cc1", "cc2", "cw", "ce"}, tenant_sites, coords=coords
     )
     plan = search_plan(
         ["cc1", "cc2", "cw", "ce"],
@@ -452,7 +453,7 @@ def test_search_holds_at_the_floor_when_the_only_candidate_is_infeasible() -> No
         "c1": (40.0, -100.0), "c2": (40.0, -99.0), "p": (40.0, -81.0),
     }
     inputs = synthesis_inputs_from_fiber(
-        ["c1", "c2", "p", "q"], fiber, {"c1", "c2", "p"}, [access("s", 40.0, -80.5)], coords
+        ["c1", "c2", "p", "q"], fiber, {"c1", "c2", "p"}, [access("s", 40.0, -80.5)], coords=coords
     )
     plan = search_plan(["c1", "c2", "p"], strength={"c1": 3.0, "c2": 3.0, "p": 1.0})
     params = SynthesisParams(

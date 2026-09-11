@@ -24,7 +24,7 @@ def test_dual_home_realizes_a_forced_off_net_site() -> None:
 
 
 def test_dual_home_fabricates_a_forced_on_net_location() -> None:
-    luke = fixtures.access_site("Luke", 40.5, -100.0)
+    luke = fixtures.tenant_site("Luke", 40.5, -100.0)
     params = SynthesisParams(
         min_wan_pop_count=2,
         forced_wan_pop_names=("Luke",),

@@ -75,7 +75,8 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
         "status": _SUCCEEDED,
         "lower_bound_miles": 1250.0,
         "wan_pops": [_WAN_POP],
-        "demand": [_SITE, _REGION],
+        "tenant_sites": [_SITE],
+        "provider_regions": [_REGION],
         "circuits": [_CIRCUIT],
         "homings": [_HOMING],
         "fiber": [_SEGMENT],
@@ -89,9 +90,9 @@ def test_a_tenant_whose_build_has_not_published_is_read_with_no_network(
     }))
     synthesis = published_synthesis(DEFAULT_API, "daf", _CONFIG)
     assert [
-        synthesis["wan_pops"], synthesis["demand"], synthesis["circuits"],
-        synthesis["homings"], synthesis["fiber"],
-    ] == [[], [], [], [], []]
+        synthesis["wan_pops"], synthesis["tenant_sites"], synthesis["provider_regions"],
+        synthesis["circuits"], synthesis["homings"], synthesis["fiber"],
+    ] == [[], [], [], [], [], []]
 
 
 def test_a_build_the_service_refuses_to_serve_is_read_as_what_it_says_went_wrong(

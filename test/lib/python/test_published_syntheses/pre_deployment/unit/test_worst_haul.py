@@ -22,8 +22,12 @@ def _site(name: str, latitude: float, exempt: bool) -> dict[str, Any]:
     }
 
 
-def _synthesis(*demand: dict[str, Any]) -> dict[str, Any]:
-    return {"wan_pops": [_SOUTH, _NORTH], "demand": list(demand)}
+def _synthesis(*sites: dict[str, Any]) -> dict[str, Any]:
+    return {"wan_pops": [_SOUTH, _NORTH], "tenant_sites": list(sites), "provider_regions": []}
+
+
+def _with_a_region(*sites: dict[str, Any]) -> dict[str, Any]:
+    return {"wan_pops": [_SOUTH, _NORTH], "tenant_sites": [], "provider_regions": list(sites)}
 
 
 def test_the_worst_haul_is_the_farthest_site_from_the_wan_pop_nearest_it() -> None:
@@ -35,3 +39,8 @@ def test_the_worst_haul_is_the_farthest_site_from_the_wan_pop_nearest_it() -> No
 
 def test_a_synthesis_whose_every_site_is_exempt_reads_zero() -> None:
     assert worst_haul(_synthesis(_site("oconus", 10.0, True))) == 0.0
+
+
+def test_a_provider_region_is_hauled_the_same_way_a_tenant_site_is() -> None:
+    region = _site("region", 43.0, False)
+    assert worst_haul(_with_a_region(region)) == worst_haul(_synthesis(region))

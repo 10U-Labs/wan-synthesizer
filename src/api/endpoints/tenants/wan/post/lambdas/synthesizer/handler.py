@@ -77,6 +77,10 @@ def _delivered(
     return {
         "coverage": coverage,
         "backbone_lower_bound_miles": round(synthesis.metrics.backbone_lower_bound_miles, 3),
+        "homing_miles": {
+            "tenant": round(synthesis.metrics.tenant_homing_miles, 3),
+            "provider": round(synthesis.metrics.provider_homing_miles, 3),
+        },
         "diverse_circuits": {
             "number_of_diverse_circuits": params.tuning.backbone_number_of_diverse_circuits,
             "ceilings": validation["backbone_diverse_circuits_ceilings"],

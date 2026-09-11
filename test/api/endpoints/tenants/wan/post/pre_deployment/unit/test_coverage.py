@@ -23,7 +23,7 @@ from synthesizer.coverage import (
 
 pop = fixtures.carrier_pop
 physical = fixtures.fiber_segments_from
-access = fixtures.access_site
+access = fixtures.tenant_site
 
 
 def _wired_to_base(names: tuple[str, ...]) -> dict[tuple[str, str], FiberSegment]:
@@ -97,7 +97,7 @@ def _ranking_hauls(
     candidates: list[str], sites: list[Site]
 ) -> list[tuple[tuple[float, ...], str]]:
     inputs = synthesis_inputs_from_fiber(
-        _RANKING_IDS, _RANKING_FIBER, set(_RANKING_IDS), sites, _RANKING_COORDS
+        _RANKING_IDS, _RANKING_FIBER, set(_RANKING_IDS), sites, coords=_RANKING_COORDS
     )
     return coverage_candidate_hauls(
         ("b1", "b2"), candidates, inputs, search_plan(_RANKING_IDS),
@@ -154,7 +154,7 @@ _GROWTH_SITES = [access("east_site", 0.0, 7.5), access("west_site", 0.0, -7.49)]
 
 def _grown(candidates: list[str], target_miles: int) -> tuple[str, ...]:
     inputs = synthesis_inputs_from_fiber(
-        _GROWTH_IDS, _GROWTH_FIBER, set(_GROWTH_IDS), _GROWTH_SITES, _GROWTH_COORDS
+        _GROWTH_IDS, _GROWTH_FIBER, set(_GROWTH_IDS), _GROWTH_SITES, coords=_GROWTH_COORDS
     )
     plan = search_plan(candidates)
     params = SynthesisParams(

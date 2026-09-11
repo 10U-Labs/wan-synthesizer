@@ -3,6 +3,7 @@ from __future__ import annotations
 import fixtures
 from synthesizer.validation import sites_below_homing_degree, validate_synthesis
 from synthesizer.model import (
+    Homings,
     HomingCircuit,
     Synthesis,
     SynthesisMetrics,
@@ -26,10 +27,15 @@ def build_synthesis(
     return Synthesis(
         wan_pop_ids=wan_pop_ids,
         transit_ids=transit_ids,
-        homing_circuits=homing_circuits,
+        homings=Homings(homing_circuits, []),
         fiber_segment_keys={segment_key(left, right) for left, right in physical_pairs},
         drawn_circuits=[],
-        metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
+        metrics=SynthesisMetrics(
+            score=0.0,
+            tenant_homing_miles=0.0,
+            provider_homing_miles=0.0,
+            physical_miles=0.0,
+        ),
     )
 
 
@@ -96,13 +102,18 @@ def _mesh_synthesis(wan_pop_ids: tuple[str, ...], pairs: list[tuple[str, str]]) 
     return Synthesis(
         wan_pop_ids=wan_pop_ids,
         transit_ids=(),
-        homing_circuits=[],
+        homings=Homings([], []),
         fiber_segment_keys={segment_key(left, right) for left, right in pairs},
         drawn_circuits=[
             SynthesisCircuit("backbone_mesh", left, right, (left, right), 1.0)
             for left, right in pairs
         ],
-        metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
+        metrics=SynthesisMetrics(
+            score=0.0,
+            tenant_homing_miles=0.0,
+            provider_homing_miles=0.0,
+            physical_miles=0.0,
+        ),
     )
 
 
@@ -241,10 +252,15 @@ def _drawn_synthesis(
     return Synthesis(
         wan_pop_ids=wan_pop_ids,
         transit_ids=(),
-        homing_circuits=[],
+        homings=Homings([], []),
         fiber_segment_keys=set(),
         drawn_circuits=drawn_circuits,
-        metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
+        metrics=SynthesisMetrics(
+            score=0.0,
+            tenant_homing_miles=0.0,
+            provider_homing_miles=0.0,
+            physical_miles=0.0,
+        ),
     )
 
 
@@ -325,7 +341,7 @@ def test_bowtie_backbone_is_not_survives_any_one_site_loss() -> None:
 _DISCONNECTED = build_synthesis(
     wan_pop_ids=("B1", "B2", "B3", "B4"),
     transit_ids=(),
-    homing_circuits=[],
+    homings=Homings([], []),
     physical_pairs=[("B1", "B2"), ("B3", "B4")],
 )
 _DISCONNECTED_SITES = [make_pop(name) for name in ("B1", "B2", "B3", "B4")]

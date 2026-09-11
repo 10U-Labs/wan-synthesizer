@@ -6,36 +6,47 @@ import fixtures
 from synthesizer.input_graph import FiberSegment, Site, segment_key
 from synthesizer.model import (
     HomingCircuit,
+    Homings,
     Synthesis,
     SynthesisArtifacts,
     SynthesisMetrics,
 )
 from synthesizer.output import (
     synthesis_payload,
-    included_demand_count,
+    homed_site_count,
     sorted_fiber_segments,
 )
 
 ARTIFACTS = fixtures.ring_artifacts()
 
+_TENANT_HOMING = HomingCircuit("s", "b", 1.0)
+_PROVIDER_HOMING = HomingCircuit("r", "b", 1.0)
 
-def _synthesis_with_homed_demand(source: str) -> Synthesis:
+
+def _synthesis(homings: Homings, metrics: SynthesisMetrics | None = None) -> Synthesis:
     return Synthesis(
         wan_pop_ids=(),
         transit_ids=(),
-        homing_circuits=[HomingCircuit(source, "b", 1.0)],
+        homings=homings,
         fiber_segment_keys=set(),
         drawn_circuits=[],
-        metrics=SynthesisMetrics(0.0, 0.0, 0.0),
+        metrics=metrics or SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
     )
 
 
-def _payload_for(source_site: Site) -> dict[str, Any]:
-    synthesis = _synthesis_with_homed_demand(source_site.id)
-    sites = [source_site, fixtures.carrier_pop("b")]
+def _payload_for(synthesis: Synthesis, sites: list[Site]) -> dict[str, Any]:
     fiber = {segment_key("b", "x"): FiberSegment("b", "x", 1.0)}
-    artifacts = SynthesisArtifacts(sites, fiber, synthesis, ARTIFACTS.validation)
+    artifacts = SynthesisArtifacts(
+        [*sites, fixtures.carrier_pop("b")], fiber, synthesis, ARTIFACTS.validation
+    )
     return synthesis_payload(artifacts)
+
+
+def _both_kinds(metrics: SynthesisMetrics | None = None) -> dict[str, Any]:
+    return _payload_for(
+        _synthesis(Homings([_TENANT_HOMING], [_PROVIDER_HOMING]), metrics),
+        [fixtures.tenant_site("s"), fixtures.provider_region("r")],
+    )
 
 
 def test_synthesis_payload_includes_sites() -> None:
@@ -69,26 +80,59 @@ def test_sorted_fiber_segments_is_sorted() -> None:
     assert keys == sorted(keys)
 
 
-def test_tenant_homing_circuit_is_labelled_tenant_to_backbone() -> None:
-    payload = _payload_for(fixtures.access_site("s"))
+def test_a_tenant_homing_circuit_is_labelled_tenant_to_backbone() -> None:
+    payload = _payload_for(
+        _synthesis(Homings([_TENANT_HOMING], [])), [fixtures.tenant_site("s")]
+    )
     assert payload["homing_circuits"][0]["homing_kind"] == "tenant_to_backbone"
 
 
-def test_provider_homing_circuit_is_labelled_provider_to_backbone() -> None:
-    payload = _payload_for(fixtures.provider_site("r"))
+def test_a_provider_homing_circuit_is_labelled_provider_to_backbone() -> None:
+    payload = _payload_for(
+        _synthesis(Homings([], [_PROVIDER_HOMING])), [fixtures.provider_region("r")]
+    )
     assert payload["homing_circuits"][0]["homing_kind"] == "provider_to_backbone"
 
 
-def test_included_demand_count_counts_a_homed_demand_site() -> None:
-    sites = [fixtures.access_site("homed")]
-    assert included_demand_count(sites, _synthesis_with_homed_demand("homed")) == 1
+def test_the_summary_counts_the_tenant_sites_a_wan_reaches() -> None:
+    assert _both_kinds()["summary"]["tenant_site_count"] == 1
 
 
-def test_included_demand_count_excludes_unhomed_demand_sites() -> None:
-    sites = [fixtures.access_site("homed"), fixtures.access_site("stranded")]
-    assert included_demand_count(sites, _synthesis_with_homed_demand("homed")) == 1
+def test_the_summary_counts_the_provider_regions_a_wan_reaches_apart_from_them() -> None:
+    assert _both_kinds()["summary"]["provider_region_count"] == 1
 
 
-def test_included_demand_count_excludes_carrier_pops() -> None:
-    sites = [fixtures.access_site("homed"), fixtures.carrier_pop("b")]
-    assert included_demand_count(sites, _synthesis_with_homed_demand("homed")) == 1
+def test_the_summary_counts_the_homing_circuits_out_of_the_tenants_own_sites() -> None:
+    assert _both_kinds()["summary"]["tenant_homing_circuit_count"] == 1
+
+
+def test_the_summary_counts_the_homing_circuits_out_of_the_provider_regions() -> None:
+    assert _both_kinds()["summary"]["provider_homing_circuit_count"] == 1
+
+
+def test_the_summary_publishes_the_miles_run_to_the_tenants_own_sites() -> None:
+    metrics = SynthesisMetrics(0.0, 120.5, 40.25, 0.0)
+    assert _both_kinds(metrics)["summary"]["tenant_homing_miles"] == 120.5
+
+
+def test_the_summary_publishes_the_miles_run_to_the_provider_regions_apart_from_them() -> None:
+    metrics = SynthesisMetrics(0.0, 120.5, 40.25, 0.0)
+    assert _both_kinds(metrics)["summary"]["provider_homing_miles"] == 40.25
+
+
+def test_the_summary_totals_the_miles_of_both_kinds_with_the_fiber_run_over() -> None:
+    metrics = SynthesisMetrics(0.0, 120.5, 40.25, 9.25)
+    assert _both_kinds(metrics)["summary"]["total_synthesis_miles"] == 170.0
+
+
+def test_a_site_that_homed_is_counted_once_however_many_circuits_it_holds() -> None:
+    twice = [_TENANT_HOMING, HomingCircuit("s", "c", 2.0)]
+    assert homed_site_count(twice) == 1
+
+
+def test_a_site_that_homed_nowhere_is_counted_in_neither_kind() -> None:
+    payload = _payload_for(
+        _synthesis(Homings([_TENANT_HOMING], [])),
+        [fixtures.tenant_site("s"), fixtures.tenant_site("stranded")],
+    )
+    assert payload["summary"]["tenant_site_count"] == 1

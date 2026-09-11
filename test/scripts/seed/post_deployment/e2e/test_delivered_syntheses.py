@@ -421,3 +421,51 @@ def test_every_published_demand_site_holds_the_homing_circuits_it_was_asked_for(
         for synthesis in published_syntheses
         if _sites_homed_the_wrong_number_of_times(synthesis)
     } == {}
+
+
+_KIND_OF = {"tenant_to_backbone": "tenant", "provider_to_backbone": "provider"}
+
+
+def _homing_miles_served(synthesis: dict[str, Any], kind: str) -> float:
+    return sum(
+        circuit["distance_miles"]
+        for circuit in synthesis["homings"]
+        if _KIND_OF[circuit["homing_kind"]] == kind
+    )
+
+
+def _figure_off_its_circuits(synthesis: dict[str, Any], kind: str) -> bool:
+    published = synthesis["status"]["homing_miles"][kind]
+    slack = (len(synthesis["homings"]) + 1) * _ROUNDED_TO / 2
+    return abs(published - _homing_miles_served(synthesis, kind)) > slack
+
+
+def test_every_published_figure_for_a_tenants_own_sites_is_the_miles_of_their_circuits(
+        published_syntheses: list[dict[str, Any]]) -> None:
+    assert [
+        synthesis["tenant"]
+        for synthesis in published_syntheses
+        if _figure_off_its_circuits(synthesis, "tenant")
+    ] == []
+
+
+def test_every_published_figure_for_the_provider_regions_is_the_miles_of_their_circuits(
+        published_syntheses: list[dict[str, Any]]) -> None:
+    assert [
+        synthesis["tenant"]
+        for synthesis in published_syntheses
+        if _figure_off_its_circuits(synthesis, "provider")
+    ] == []
+
+
+def test_no_published_site_is_served_as_a_tenant_site_and_a_provider_region_both(
+        published_syntheses: list[dict[str, Any]]) -> None:
+    assert {
+        synthesis["tenant"]: sorted(
+            {row["id"] for row in synthesis["tenant_sites"]}
+            & {row["id"] for row in synthesis["provider_regions"]}
+        )
+        for synthesis in published_syntheses
+        if {row["id"] for row in synthesis["tenant_sites"]}
+        & {row["id"] for row in synthesis["provider_regions"]}
+    } == {}

@@ -9,8 +9,8 @@ _SITES = [
     fixtures.carrier_pop("hub_b", 0.05, 0.0),
     fixtures.carrier_pop("cape", 0.0, 7.4),
     fixtures.carrier_pop("plains", 0.0, -7.39),
-    fixtures.access_site("east_site", 0.0, 7.5),
-    fixtures.access_site("west_site", 0.0, -7.49),
+    fixtures.tenant_site("east_site", 0.0, 7.5),
+    fixtures.tenant_site("west_site", 0.0, -7.49),
 ]
 _FIBER = fixtures.fiber_segments_from({
     ("hub_a", "hub_b"): 1.0,

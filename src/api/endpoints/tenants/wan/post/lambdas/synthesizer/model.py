@@ -13,6 +13,27 @@ class HomingCircuit:
     target: str
     distance_miles: float
 
+TENANT_HOMING = "tenant_to_backbone"
+PROVIDER_HOMING = "provider_to_backbone"
+
+
+@dataclass(frozen=True)
+class Homings:
+    tenant: list[HomingCircuit]
+    provider: list[HomingCircuit]
+
+    def joined(self) -> list[HomingCircuit]:
+        return self.tenant + self.provider
+
+
+@dataclass(frozen=True)
+class HomingSites:
+    tenant: list[Site]
+    provider: list[Site]
+
+    def joined(self) -> list[Site]:
+        return self.tenant + self.provider
+
 CIRCUIT_FOR_TARGET = "site_target"
 CIRCUIT_FOR_PIN = "operator_pin"
 CIRCUIT_FOR_RELIEF = "pop_loss_relief"
@@ -32,7 +53,8 @@ class SynthesisCircuit:
 @dataclass
 class SynthesisMetrics:
     score: float
-    access_miles: float
+    tenant_homing_miles: float
+    provider_homing_miles: float
     physical_miles: float
     backbone_lower_bound_miles: float = 0.0
 
@@ -40,7 +62,7 @@ class SynthesisMetrics:
 class Synthesis:
     wan_pop_ids: tuple[str, ...]
     transit_ids: tuple[str, ...]
-    homing_circuits: list[HomingCircuit]
+    homings: Homings
     fiber_segment_keys: set[tuple[str, str]]
     drawn_circuits: list[SynthesisCircuit]
     metrics: SynthesisMetrics
@@ -100,7 +122,7 @@ class RoleOverrides:
 
 @dataclass(frozen=True)
 class SynthesisInputs:
-    access_sites: list[Site]
+    homing_sites: HomingSites
     carrier_pops: list[Site]
     fiber_segments: dict[tuple[str, str], FiberSegment]
     eligible_wan_pop_ids: set[str]

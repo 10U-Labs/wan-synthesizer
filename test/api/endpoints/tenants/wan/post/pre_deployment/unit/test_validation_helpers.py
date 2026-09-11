@@ -4,7 +4,7 @@ import fixtures
 import pytest
 
 from synthesizer.input_graph import segment_key
-from synthesizer.model import HomingCircuit, Synthesis, SynthesisMetrics, MeshRequirements
+from synthesizer.model import Homings, HomingCircuit, Synthesis, SynthesisMetrics, MeshRequirements
 from synthesizer.validation import (
     backbone_mesh_deficient,
     backbone_mesh_independence_deficient,
@@ -22,14 +22,15 @@ def make_synthesis(
     wan_pop_ids: tuple[str, ...] = (),
     transit_ids: tuple[str, ...] = (),
     homing_circuits: list[HomingCircuit] | None = None,
+    provider_homing_circuits: list[HomingCircuit] | None = None,
 ) -> Synthesis:
     return Synthesis(
         wan_pop_ids=wan_pop_ids,
         transit_ids=transit_ids,
-        homing_circuits=homing_circuits or [],
+        homings=Homings(homing_circuits or [], provider_homing_circuits or []),
         fiber_segment_keys={segment_key(a, b) for a, b in physical_pairs},
         drawn_circuits=[],
-        metrics=SynthesisMetrics(0.0, 0.0, 0.0),
+        metrics=SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
     )
 
 
@@ -39,6 +40,22 @@ meshed_synthesis = fixtures.meshed_backbone_synthesis
 def test_included_site_ids_covers_homing_endpoints() -> None:
     synthesis = make_synthesis([("a", "b")], homing_circuits=[HomingCircuit("s", "a", 1.0)])
     assert included_site_ids(synthesis) == {"a", "b", "s"}
+
+
+def test_included_site_ids_covers_a_provider_regions_homing_endpoints() -> None:
+    synthesis = make_synthesis(
+        [], provider_homing_circuits=[HomingCircuit("r", "a", 1.0)]
+    )
+    assert included_site_ids(synthesis) == {"a", "r"}
+
+
+def test_homes_by_site_groups_a_provider_region_beside_a_tenant_site() -> None:
+    synthesis = make_synthesis(
+        [],
+        homing_circuits=[HomingCircuit("s", "a", 1.0)],
+        provider_homing_circuits=[HomingCircuit("r", "a", 1.0)],
+    )
+    assert homes_by_site(synthesis) == {"s": {"a"}, "r": {"a"}}
 
 
 def test_included_site_ids_covers_the_tier_ids() -> None:

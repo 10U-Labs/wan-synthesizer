@@ -8,6 +8,7 @@ from dataclasses import replace
 
 from synthesizer.input_graph import FiberSegment, Site
 from synthesizer.model import (
+    HomingSites,
     Synthesis,
     SynthesisInputs,
     SynthesisParams,
@@ -19,7 +20,12 @@ from synthesizer.graphs import (
     build_adjacency,
     dijkstra,
 )
-from synthesizer.assemble import evaluate_wan_pops, forced_wan_pop_resilience_error
+from synthesizer.assemble import (
+    evaluate_wan_pops,
+    forced_wan_pop_resilience_error,
+    homing_miles,
+)
+from synthesizer.codec import PROVIDER_KIND
 from synthesizer.coverage import grow_wan_pops_for_coverage
 from synthesizer.search_plan import _SearchPlan
 from synthesizer.strength import wan_pop_strength, diverse_circuit_bounds
@@ -132,16 +138,16 @@ def best_wan_pops_at_size(
         if strength < best_strength:
             logger.info("  strongest feasible backbone locked at set %d/%d", index, len(combos))
             break
-        homing_circuits = evaluate_wan_pops(wan_pop_set, inputs, plan)
-        if homing_circuits is None:
+        homings = evaluate_wan_pops(wan_pop_set, inputs, plan)
+        if homings is None:
             continue
-        access_miles = sum(circuit.distance_miles for circuit in homing_circuits)
-        key = (-strength, round(access_miles, 6))
+        miles = homing_miles(homings.joined())
+        key = (-strength, round(miles, 6))
         if best_key is None or key < best_key:
             best_set, best_key, best_strength = wan_pop_set, key, strength
             logger.info(
                 "  set %d/%d: new best strength %.3f, last-mile %.0f mi",
-                index, len(combos), strength, access_miles,
+                index, len(combos), strength, miles,
             )
     return best_set
 
@@ -179,7 +185,7 @@ def search_best_synthesis(
             continue
         logger.info(
             "Synthesizing %d demand sites; %d WAN PoPs, %d required; %d sets (limit %d)",
-            len(inputs.access_sites), size, len(plan.required_wan_pops), sets, limit,
+            len(inputs.homing_sites.joined()), size, len(plan.required_wan_pops), sets, limit,
         )
         base = best_wan_pops_at_size(inputs, plan, size)
         if base is not None:
@@ -200,11 +206,15 @@ def build_synthesis_inputs(
     fiber_segments: dict[tuple[str, str], FiberSegment],
 ) -> SynthesisInputs:
     carrier_pops = [site for site in sites if is_carrier_pop(site)]
+    homing_sites = [site for site in sites if not is_carrier_pop(site)]
     adjacency = build_adjacency(fiber_segments)
     validate_pop_graph(carrier_pops, fiber_segments, adjacency)
     all_distances, all_predecessors = all_pairs_shortest(carrier_pops, adjacency)
     return SynthesisInputs(
-        access_sites=[site for site in sites if not is_carrier_pop(site)],
+        homing_sites=HomingSites(
+            [site for site in homing_sites if site.kind != PROVIDER_KIND],
+            [site for site in homing_sites if site.kind == PROVIDER_KIND],
+        ),
         carrier_pops=carrier_pops,
         fiber_segments=fiber_segments,
         eligible_wan_pop_ids=set(),

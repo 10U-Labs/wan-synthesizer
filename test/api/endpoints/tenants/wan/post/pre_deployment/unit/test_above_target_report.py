@@ -6,6 +6,7 @@ import pytest
 
 import fixtures
 from synthesizer.model import (
+    Homings,
     CIRCUIT_FOR_PIN,
     CIRCUIT_FOR_RELIEF,
     CIRCUIT_FOR_TARGET,
@@ -34,10 +35,15 @@ def _above_target(*extra: SynthesisCircuit) -> list[dict[str, object]]:
     synthesis = Synthesis(
         wan_pop_ids=_SITES,
         transit_ids=(),
-        homing_circuits=[],
+        homings=Homings([], []),
         fiber_segment_keys=set(),
         drawn_circuits=[*_ASKED_FOR, *extra],
-        metrics=SynthesisMetrics(score=0.0, access_miles=0.0, physical_miles=0.0),
+        metrics=SynthesisMetrics(
+            score=0.0,
+            tenant_homing_miles=0.0,
+            provider_homing_miles=0.0,
+            physical_miles=0.0,
+        ),
     )
     report = validate_synthesis(
         [fixtures.carrier_pop(site) for site in _SITES],

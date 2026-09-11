@@ -72,7 +72,7 @@ def coverage_candidate_hauls(
         candidate_set = tuple(sorted((*wan_pop_ids, candidate_id)))
         if evaluate_wan_pops(candidate_set, inputs, plan) is None:
             continue
-        profile = coverage_haul_profile(candidate_set, inputs.access_sites, pop_by_id)
+        profile = coverage_haul_profile(candidate_set, inputs.homing_sites.joined(), pop_by_id)
         scored.append((profile, candidate_id))
     return scored
 
@@ -126,7 +126,7 @@ def grow_wan_pops_for_coverage(
         if params.max_wan_pop_count is not None and len(wan_pop_ids) >= params.max_wan_pop_count:
             logger.info("Coverage growth stopped at the %d-PoP cap", len(wan_pop_ids))
             break
-        profile = coverage_haul_profile(wan_pop_ids, inputs.access_sites, pop_by_id)
+        profile = coverage_haul_profile(wan_pop_ids, inputs.homing_sites.joined(), pop_by_id)
         worst = coverage_worst_haul(profile)
         if worst <= target_miles:
             logger.info("Coverage met at %d WAN PoPs (worst haul %.0f mi)", len(wan_pop_ids), worst)

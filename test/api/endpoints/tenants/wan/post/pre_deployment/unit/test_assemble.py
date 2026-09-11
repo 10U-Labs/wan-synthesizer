@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from typing import cast
 
 import fixtures
 from fixtures import (
@@ -10,9 +11,16 @@ from fixtures import (
     synthesis_inputs_from_fiber,
     search_plan,
 )
-from synthesizer.model import HomingCircuit, SynthesisInputs, ForcedCircuits
+from synthesizer.model import (
+    HomingCircuit,
+    Homings,
+    Synthesis,
+    SynthesisInputs,
+    ForcedCircuits,
+)
 from synthesizer.assemble import (
     assign_homes,
+    homing_miles,
     wan_pops_physically_biconnectable,
     build_synthesis_for_wan_pops,
     forced_wan_pop_resilience_error,
@@ -20,14 +28,18 @@ from synthesizer.assemble import (
 
 pop = fixtures.carrier_pop
 physical = fixtures.fiber_segments_from
-access = fixtures.access_site
+access = fixtures.tenant_site
 
 
 def _dual_inputs(s_coord: tuple[float, float] = (0.0, 0.05)) -> SynthesisInputs:
     return synthesis_inputs_from_fiber(
         ["c1", "c2"], DUAL_FIBER, {"c1", "c2"},
-        [access("s", *s_coord)], {"c1": (0.0, 0.0), "c2": (0.0, 0.1)},
+        [access("s", *s_coord)], coords={"c1": (0.0, 0.0), "c2": (0.0, 0.1)},
     )
+
+
+def _joined(homings: Homings | None) -> list[HomingCircuit]:
+    return homings.joined() if homings else []
 
 
 def _homing_counts(homing_circuits: list[HomingCircuit]) -> dict[str, int]:
@@ -39,7 +51,7 @@ def _homing_counts(homing_circuits: list[HomingCircuit]) -> dict[str, int]:
 
 def test_assign_homes_homes_a_demand_site_to_two_wan_pops() -> None:
     result = assign_homes(("c1", "c2"), _dual_inputs(), search_plan([]))
-    assert _homing_counts(result or []) == {"s": 2}
+    assert _homing_counts(_joined(result)) == {"s": 2}
 
 
 def test_assign_homes_returns_none_when_backbone_smaller_than_the_homing_degree() -> None:
@@ -55,17 +67,18 @@ def test_assign_homes_homes_to_the_configured_count() -> None:
     )
     inputs = synthesis_inputs_from_fiber(
         ["c1", "c2", "c3"], triple_fiber, {"c1", "c2", "c3"},
-        [access("s", 0.0, 0.05)], {"c1": (0.0, 0.0), "c2": (0.0, 0.1), "c3": (0.0, 0.2)},
+        [access("s", 0.0, 0.05)],
+        coords={"c1": (0.0, 0.0), "c2": (0.0, 0.1), "c3": (0.0, 0.2)},
     )
     result = assign_homes(("c1", "c2", "c3"), inputs, search_plan([], homing_degree=3))
-    assert _homing_counts(result or []) == {"s": 3}
+    assert _homing_counts(_joined(result)) == {"s": 3}
 
 
 def test_assign_homes_leads_with_a_forced_home() -> None:
     plan = replace(search_plan([]), forced_circuits=ForcedCircuits(homes=frozenset({("s", "c2")})))
     result = assign_homes(("c1", "c2"), _dual_inputs((0.0, 0.0)), plan)
     assert {
-        circuit.target for circuit in result or [] if circuit.source == "s"
+        circuit.target for circuit in _joined(result) if circuit.source == "s"
     } == {"c1", "c2"}
 
 
@@ -155,3 +168,53 @@ _BOWTIE_FIBER = physical(
     }
 )
 _BOWTIE_IDS = ["a", "b", "x", "d", "e"]
+
+
+def _mixed_inputs() -> SynthesisInputs:
+    return synthesis_inputs_from_fiber(
+        ["c1", "c2"], DUAL_FIBER, {"c1", "c2"},
+        [access("s", 0.0, 0.05)],
+        [fixtures.provider_region("r", 0.0, 0.4)],
+        coords={"c1": (0.0, 0.0), "c2": (0.0, 0.1)},
+    )
+
+
+def _mixed_homings() -> Homings:
+    return cast(Homings, assign_homes(("c1", "c2"), _mixed_inputs(), search_plan([])))
+
+
+def _mixed_synthesis() -> Synthesis:
+    return cast(
+        Synthesis,
+        build_synthesis_for_wan_pops(("c1", "c2"), _mixed_inputs(), search_plan([])),
+    )
+
+
+def test_assign_homes_keeps_a_tenant_sites_circuits_out_of_the_provider_list() -> None:
+    assert _homing_counts(_mixed_homings().tenant) == {"s": 2}
+
+
+def test_assign_homes_keeps_a_provider_regions_circuits_out_of_the_tenant_list() -> None:
+    assert _homing_counts(_mixed_homings().provider) == {"r": 2}
+
+
+def test_a_synthesis_measures_the_tenant_miles_over_the_tenants_own_circuits_alone() -> None:
+    synthesis = _mixed_synthesis()
+    assert synthesis.metrics.tenant_homing_miles == homing_miles(synthesis.homings.tenant)
+
+
+def test_a_synthesis_measures_the_provider_miles_over_the_provider_circuits_alone() -> None:
+    synthesis = _mixed_synthesis()
+    assert synthesis.metrics.provider_homing_miles == homing_miles(synthesis.homings.provider)
+
+
+def test_a_provider_region_further_out_is_not_averaged_into_the_tenant_miles() -> None:
+    metrics = _mixed_synthesis().metrics
+    assert metrics.tenant_homing_miles < metrics.provider_homing_miles
+
+
+def test_a_synthesis_scores_both_kinds_of_homing_miles_with_the_fiber() -> None:
+    metrics = _mixed_synthesis().metrics
+    assert metrics.score == (
+        metrics.tenant_homing_miles + metrics.provider_homing_miles + metrics.physical_miles
+    )

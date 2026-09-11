@@ -13,7 +13,7 @@ from synthesizer.model import ForcedCircuits, NamedCircuit, OperatorCircuits
 from synthesizer.input_graph import segment_key
 
 pop = fixtures.carrier_pop
-access = fixtures.access_site
+access = fixtures.tenant_site
 
 SITES = [pop("P0"), pop("P1"), access("A1")]
 

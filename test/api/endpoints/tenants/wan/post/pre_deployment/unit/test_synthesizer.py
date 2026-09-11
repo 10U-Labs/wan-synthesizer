@@ -53,7 +53,11 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(module, "synthesize_two_tier", lambda *_a: object())
     synthesis = SimpleNamespace(
         wan_pop_ids=("P",),
-        metrics=SimpleNamespace(backbone_lower_bound_miles=1250.0),
+        metrics=SimpleNamespace(
+            backbone_lower_bound_miles=1250.0,
+            tenant_homing_miles=880.5,
+            provider_homing_miles=120.25,
+        ),
     )
     validation = {
         "backbone_diverse_circuits_ceilings": [
@@ -131,6 +135,22 @@ def test_the_success_status_carries_the_target_the_synthesis_was_measured_agains
     objects = _run(synthesizer, monkeypatch)
     status = json.loads(objects["tenants/f-35/wan-status.json"])
     assert status["coverage"]["target_miles"] == 600
+
+
+def test_the_success_status_publishes_the_miles_run_to_the_tenants_own_sites(
+    synthesizer: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    objects = _run(synthesizer, monkeypatch)
+    status = json.loads(objects["tenants/f-35/wan-status.json"])
+    assert status["homing_miles"]["tenant"] == 880.5
+
+
+def test_the_success_status_publishes_the_provider_miles_apart_from_the_tenant_miles(
+    synthesizer: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    objects = _run(synthesizer, monkeypatch)
+    status = json.loads(objects["tenants/f-35/wan-status.json"])
+    assert status["homing_miles"]["provider"] == 120.25
 
 
 def test_the_success_status_carries_no_backup_path_multiple(
