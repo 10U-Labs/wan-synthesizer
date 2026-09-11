@@ -23,12 +23,14 @@ const VIEW_CENTER = [39.5, -98.35];
 
 const WAN_POP = "WAN PoP";
 
+const HOMING_CIRCUIT = "Homing circuit";
+
 const LEGEND_ROWS = [
   { swatch: "dot", color: ROLE_STYLE.wan_pop.color, label: WAN_POP },
   { swatch: "dot", color: PROVIDER_STYLE.color, label: "Provider region" },
   { swatch: "dot", color: ROLE_STYLE.tenant.color, label: "Location", tenant: true },
   { swatch: "line", color: LINE_STYLE.fiber.color, label: "Fiber" },
-  { swatch: "line", color: LINE_STYLE.homing.color, label: "Homing circuit" },
+  { swatch: "line", color: LINE_STYLE.homing.color, label: HOMING_CIRCUIT },
 ];
 
 const map = L.map("map").setView(VIEW_CENTER, 4);
@@ -98,7 +100,8 @@ function siteLabel(site) {
 }
 
 function homingLabel(source, target) {
-  return `<strong>${displayName(source)}</strong> ↔ <strong>${displayName(target)}</strong>`;
+  const ends = `${displayName(source)} ↔ ${displayName(target)}`;
+  return `<strong>${HOMING_CIRCUIT} ${ends}</strong>`;
 }
 
 function segmentKey(left, right) {
