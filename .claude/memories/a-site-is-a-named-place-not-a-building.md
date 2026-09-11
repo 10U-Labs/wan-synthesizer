@@ -31,7 +31,7 @@ What the program models is a **named place with a coordinate**. A tenant site, a
 
 There is no address, street, floor, suite, room or premise field in this repository. The only `address` in the tree is a Terraform resource address in `test/lib/python/test_terraform_drift/`. So a site has no interior and no postal identity, and prose that gives it one is describing a different program.
 
-The four kinds are named in `codec.py:8-11`: `PROVIDER_KIND` is `provider region`, `CARRIER_KIND` is `PoP`, `SITE_KIND` is `Tenant site`, `OFF_NET_KIND` is `Off-net site`. Those four words are the vocabulary. See [a-way-out-of-a-site-is-a-circuit](a-way-out-of-a-site-is-a-circuit.md) for the circuit that leaves one and [a-chosen-carrier-pop-is-a-wan-pop](a-chosen-carrier-pop-is-a-wan-pop.md) for the PoP a synthesis seats a WAN in.
+The four kinds are named in `codec.py:8-11`: `PROVIDER_KIND` is `provider region`, `CARRIER_KIND` is `PoP`, `SITE_KIND` is `Tenant site`, `OFF_NET_KIND` is `Off-net site`. Those four words are the vocabulary. See [a-way-out-of-a-site-is-a-circuit](a-way-out-of-a-site-is-a-circuit.md) for the circuit that leaves one and [a-chosen-carrier-pop-is-a-wan-pop](a-chosen-carrier-pop-is-a-wan-pop.md) for the PoP a synthesis selects a WAN into.
 
 ### The unit of failure is a city
 
@@ -43,7 +43,7 @@ This is why the word matters beyond taste. Calling a vertex a building claims a 
 
 ### Why a session reaches for the wrong word
 
-Because the settled vocabulary names roles in a graph and the directive's content is physical. `wan_pop`, `transit_pop`, `carrier_pop`, `site` and the directive's own `access node` all say what a place does for the WAN. None of them is a noun for the physical thing whose loss takes two circuits at once, which is the thing an issue about co-seating two vertices has to name — so the prose borrows `building` from generic telecom idiom, where a conduit, a building and a city are three granularities of common failure.
+Because the settled vocabulary names roles in a graph and the directive's content is physical. `wan_pop`, `transit_pop`, `carrier_pop` and `site` all say what a place does for the WAN. None of them is a noun for the physical thing whose loss takes two circuits at once, which is the thing an issue about two vertices in one place has to name — so the prose borrows `building` from generic telecom idiom, where a conduit, a building and a city are three granularities of common failure.
 
 The replacement is the place itself. Say **city** where the claim is about the failure the directive is proved over, and say **site** or **PoP** where the claim is about a thing's part in the WAN. Do not reach below a named place for a noun, because there is nothing down there.
 

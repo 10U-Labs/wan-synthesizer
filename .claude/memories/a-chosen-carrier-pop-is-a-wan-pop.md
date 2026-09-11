@@ -1,6 +1,6 @@
 ---
 name: a-chosen-carrier-pop-is-a-wan-pop
-description: "A carrier PoP the synthesis chooses is a wan_pop, backbone survives only where it names the mesh itself, and node survives only in two graph-algorithm types"
+description: "A carrier PoP the synthesis chooses is a wan_pop and the verb for choosing it is select, backbone survives only where it names the mesh itself, and node survives only in two graph-algorithm types"
 metadata: 
   node_type: memory
   type: project
@@ -15,6 +15,7 @@ metadata:
 - [Overview](#overview)
 - [Conventions](#conventions)
   - [The word is wan_pop, everywhere a PoP is meant](#the-word-is-wan_pop-everywhere-a-pop-is-meant)
+  - [The verb is select, not seat](#the-verb-is-select-not-seat)
   - [Where backbone survives](#where-backbone-survives)
   - [Where node survives](#where-node-survives)
   - [What this cost on the wire](#what-this-cost-on-the-wire)
@@ -23,7 +24,7 @@ metadata:
 ## Overview
 
 The synthesizer's central decision is which of the carriers' PoPs a tenant's WAN
-is seated in. An offered one is a `carrier_pop`; a chosen one is a **`wan_pop`**;
+runs through. An offered one is a `carrier_pop`; a chosen one is a **`wan_pop`**;
 one a circuit merely crosses is a `transit_pop`. The three share a word on
 purpose, because the whole of the difference between them is which ones the
 synthesis chose, and a reader who cannot see that from the names cannot follow
@@ -34,7 +35,7 @@ the program's subject. GitHub issue #147 settled this on 2026-09-10, against
 *a PoP the WAN runs through*, which CLAUDE.md's second clause says a transit PoP
 also is, so `wan_pop` and `transit_pop` overlap in a way `backbone_pop` and
 `transit_pop` would not have. What separates them in the code is that a
-`wan_pop` is seated by the tenant's inputs and a `transit_pop` is not.
+`wan_pop` is selected from the tenant's inputs and a `transit_pop` is not.
 
 ## Conventions
 
@@ -48,6 +49,52 @@ also is, so `wan_pop` and `transit_pop` overlap in a way `backbone_pop` and
 `collections.wan_pops`, the `"wan_pop"` value of a site's `tier_role`, and the
 `WAN PoP` the SPA prints under a purple dot. CLAUDE.md says WAN PoP too, and its
 heading is **The per-PoP ask**.
+
+### The verb is select, not seat
+
+The synthesizer makes two choices and they are one operation over two kinds of
+thing: which carrier PoPs the WAN runs through, and which fiber segments its
+circuits run over. Both are **selection**. The fiber side already said so —
+`survivable.select_fiber` returns a `FiberSelection` built from a
+`SegmentSelection`, and `backbone._Drawn` holds `selected` and
+`selected_by_carrier` — and the PoP side already spoke the first half of the
+pair, in `_SearchPlan.wan_pop_candidates`, `SynthesisInputs.eligible_wan_pop_ids`
+and `strength`'s `candidate_ids`. The word that completes *candidate* is
+*selected*.
+
+`seat` was the second verb for the PoP half, and it resolved no ambiguity that
+naming the object does not. This repository had already settled that question
+once: the served `paths` collection became `/homing-circuits` and
+`/fiber-segments` because it held both and no one word is true of both — see
+[a-way-out-of-a-site-is-a-circuit](a-way-out-of-a-site-is-a-circuit.md). The same
+answer holds here, so `select_fiber` and `select_wan_pops` need no third word
+between them.
+
+`seat` was also a second **noun** for a `wan_pop`, and it pointed at the wrong
+object. A seat reads as a slot inside a facility, which is the resolution
+[a-site-is-a-named-place-not-a-building](a-site-is-a-named-place-not-a-building.md)
+says this program does not model. A capped seat was never the WAN being sold one
+slot in a Minot facility; it is the merged carriers' fiber out of the *city* of
+Minot carrying one diverse circuit.
+
+The operator settled this on 2026-09-11 and CLAUDE.md changed first, the way
+GitHub issue #147 established a directive word has to: the prime directive read
+"the WAN PoPs a tenant's inputs **seat**" and now reads **select**, and its
+`access nodes` became "the sites that home into them", taking the words GitHub
+issue #161 settled when `/tenant-nodes` and `/provider-nodes` became
+`/tenant-sites` and `/provider-regions`.
+
+**The code has not moved yet.** `seat` still stands some 80 times — `seat_cap`
+through `search_plan`, `backbone`, `survivable`, `ceiling` and
+`test_published_syntheses`, the nouns `validation.capped_seats`,
+`circuits_clear_of_a_capped_seat` and
+`survivable._seats_the_carriers_can_give_two_circuits`, the verbs at
+`synthesize.py:59`, `synthesize.py:290`, `validation.py:299` and
+`coverage.py:152`, and `offnet.SeatedOffNetSites`. So the repository contradicts
+its own directive until that lands, which is GitHub issue #186 and it is open.
+No published resource name is involved — the five hits in `openapi.json` are
+prose inside `summary` and `description` — so it is a read-and-rename commit
+rather than a re-seed.
 
 ### Where backbone survives
 

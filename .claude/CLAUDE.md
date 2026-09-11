@@ -6,9 +6,9 @@ The synthesizer exists to synthesize **2-vertex-connected** WANs.
 
 A WAN is 2-vertex-connected when the loss of any one carrier PoP it runs through leaves every remaining PoP on it still reaching every other. Equivalently: between every pair of PoPs the WAN runs through, two circuits run that share no intermediate PoP.
 
-Every PoP the WAN runs through is held to this — the WAN PoPs a tenant's inputs seat and the transit PoPs its circuits pass through alike. A transit PoP is no less a single point of failure for being one nobody named.
+Every PoP the WAN runs through is held to this — the WAN PoPs a tenant's inputs select and the transit PoPs its circuits pass through alike. A transit PoP is no less a single point of failure for being one nobody named.
 
-That is an obligation on the synthesizer, not a list of what a user is owed. A user only cares about WAN PoPs, access nodes, circuits, and 2-vertex-connected. A transit PoP is none of those, because a circuit is what abstracts it.
+That is an obligation on the synthesizer, not a list of what a user is owed. A user only cares about WAN PoPs, the sites that home into them, circuits, and 2-vertex-connected. A transit PoP is none of those, because a circuit is what abstracts it.
 
 This is the goal. Everything else here is a means to it and is wrong wherever it does not serve it.
 
