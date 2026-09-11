@@ -10,11 +10,16 @@ from seed import _get
 from synthesizer.input_graph import Site, haversine_miles
 
 
-FIBER = "carrier_physical"
-
 UNFINISHED = frozenset({"creating", "synthesizing"})
 
-COLLECTIONS = ("wan-pops", "backbone-links", "tenant-nodes", "provider-nodes", "paths")
+COLLECTIONS = (
+    "wan-pops",
+    "backbone-circuits",
+    "tenant-nodes",
+    "provider-nodes",
+    "homing-circuits",
+    "fiber-segments",
+)
 
 
 def request_paths(tenant: str) -> list[str]:
@@ -41,6 +46,7 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "tenant": tenant,
         "target_miles": backbone["coverage_target_miles"],
         "number_of_diverse_circuits": backbone["number_of_diverse_circuits"],
+        "homing_degree": config["homing"]["degree"],
         "seat_cap": backbone["wan_pop_count"]["max"],
         "forced": backbone.get("forced", {}).get("wan_pops", []),
         "forced_paths": backbone.get("forced", {}).get("paths", []),
@@ -48,8 +54,9 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "lower_bound_miles": state.get("backbone_lower_bound_miles"),
         "wan_pops": published.get("wan-pops", []),
         "demand": published.get("tenant-nodes", []) + published.get("provider-nodes", []),
-        "links": published.get("backbone-links", []),
-        "paths": published.get("paths", []),
+        "circuits": published.get("backbone-circuits", []),
+        "homings": published.get("homing-circuits", []),
+        "fiber": published.get("fiber-segments", []),
     }
 
 
@@ -78,7 +85,7 @@ def _circuits_out_of(
     return [
         (
             names[circuit["target_id"] if circuit["source_id"] == site else circuit["source_id"]],
-            frozenset(circuit["path"]) - {names[site]},
+            frozenset(circuit["route"]) - {names[site]},
         )
         for circuit in circuits
         if site in (circuit["source_id"], circuit["target_id"])
@@ -108,23 +115,23 @@ def diverse_circuit_count(
 
 def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
     drawn: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for drawn_circuit in synthesis["links"]:
+    for drawn_circuit in synthesis["circuits"]:
         pair = tuple(sorted((drawn_circuit["source_id"], drawn_circuit["target_id"])))
         drawn.setdefault(pair, []).append(drawn_circuit)
     names = {row["id"]: row["name"] for row in synthesis["wan_pops"]}
     asked = synthesis["number_of_diverse_circuits"]
-    apart = pieces_without_each(synthesis["links"])
+    apart = pieces_without_each(synthesis["circuits"])
     overbuilt: list[tuple[str, int]] = []
     for pair, circuits in sorted(drawn.items()):
         if len(circuits) < 2:
             continue
         spare = max(circuits, key=lambda circuit: circuit["distance_miles"])
-        kept = [circuit for circuit in synthesis["links"] if circuit is not spare]
+        kept = [circuit for circuit in synthesis["circuits"] if circuit is not spare]
         if _cuts_deeper(kept, apart):
             continue
         if not any(
             diverse_circuit_count(kept, end, names)
-            < min(asked, diverse_circuit_count(synthesis["links"], end, names))
+            < min(asked, diverse_circuit_count(synthesis["circuits"], end, names))
             for end in pair
         ):
             overbuilt.append((" <-> ".join(pair), len(circuits)))
@@ -207,7 +214,7 @@ def _cities_the_circuits_cross(circuits: list[dict[str, Any]]) -> dict[str, set[
     return _joined_to([
         (near, far)
         for circuit in circuits
-        for near, far in zip(circuit["path"], circuit["path"][1:])
+        for near, far in zip(circuit["route"], circuit["route"][1:])
     ])
 
 
@@ -219,15 +226,15 @@ def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
         frozenset((pair["source"], pair["target"])) for pair in synthesis["forced_paths"]
     }
     held_diverse_circuits = {
-        site: min(asked, diverse_circuit_count(synthesis["links"], site, names))
+        site: min(asked, diverse_circuit_count(synthesis["circuits"], site, names))
         for site in sites
     }
-    apart = pieces_without_each(synthesis["links"])
+    apart = pieces_without_each(synthesis["circuits"])
     removable: list[tuple[str, float]] = []
-    for spare in synthesis["links"]:
+    for spare in synthesis["circuits"]:
         if frozenset((names[spare["source_id"]], names[spare["target_id"]])) in pinned:
             continue
-        kept = [circuit for circuit in synthesis["links"] if circuit is not spare]
+        kept = [circuit for circuit in synthesis["circuits"] if circuit is not spare]
         if any(
             diverse_circuit_count(kept, site, names) < held_diverse_circuits[site] for site in sites
         ):
@@ -236,15 +243,13 @@ def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
             continue
         if _cuts_deeper(kept, apart):
             continue
-        removable.append((" -> ".join(spare["path"]), spare["distance_miles"]))
+        removable.append((" -> ".join(spare["route"]), spare["distance_miles"]))
     return sorted(removable, key=lambda found: (-found[1], found[0]))
 
 
 def _published_fiber(synthesis: dict[str, Any]) -> dict[str, dict[str, float]]:
     fiber: dict[str, dict[str, float]] = {}
-    for entry in synthesis["paths"]:
-        if entry["link_kind"] != FIBER:
-            continue
+    for entry in synthesis["fiber"]:
         fiber.setdefault(entry["source_id"], {})[entry["target_id"]] = entry["distance_miles"]
         fiber.setdefault(entry["target_id"], {})[entry["source_id"]] = entry["distance_miles"]
     return fiber
@@ -264,10 +269,7 @@ def wan_pop_groups(synthesis: dict[str, Any]) -> list[list[str]]:
 
 
 def ordered_fiber_miles(synthesis: dict[str, Any]) -> float:
-    segments: list[float] = [
-        entry["distance_miles"] for entry in synthesis["paths"] if entry["link_kind"] == FIBER
-    ]
-    return sum(segments)
+    return sum(entry["distance_miles"] for entry in synthesis["fiber"])
 
 
 _ARRIVING = "into "

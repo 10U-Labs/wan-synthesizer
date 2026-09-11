@@ -7,8 +7,9 @@ def test_the_build_state_is_asked_for_before_the_collections_it_gates() -> None:
     assert request_paths("daf") == [
         "tenants/daf/wan",
         "tenants/daf/wan-pops",
-        "tenants/daf/backbone-links",
+        "tenants/daf/backbone-circuits",
         "tenants/daf/tenant-nodes",
         "tenants/daf/provider-nodes",
-        "tenants/daf/paths",
+        "tenants/daf/homing-circuits",
+        "tenants/daf/fiber-segments",
     ]

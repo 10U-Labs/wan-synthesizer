@@ -35,9 +35,11 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     )
     payload = {
         "sites": [{"id": "P", "tier_role": "wan_pop"}],
-        "access_paths": [],
+        "homing_circuits": [],
         "fiber_segments": [],
-        "drawn_paths": [{"purpose": "backbone_mesh", "source_name": "P", "target_name": "Q"}],
+        "drawn_circuits": [
+            {"purpose": "backbone_mesh", "source_name": "P", "target_name": "Q"}
+        ],
     }
     monkeypatch.setattr(module, "load_merged_carriers", lambda *_a: (graph, {}))
     monkeypatch.setattr(module, "load_sites", lambda _p: [])
@@ -98,12 +100,12 @@ def test_publishes_the_wan_on_success(synthesizer: Any, monkeypatch: pytest.Monk
     assert "tenants/f-35/wan.json" in objects
 
 
-def test_publishes_the_backbone_links_collection(
+def test_publishes_the_backbone_circuits_collection(
     synthesizer: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     objects = _run(synthesizer, monkeypatch)
     wan = json.loads(objects["tenants/f-35/wan.json"])
-    assert wan["backbone-links"] == [
+    assert wan["backbone-circuits"] == [
         {"purpose": "backbone_mesh", "source_name": "P", "target_name": "Q"}
     ]
 

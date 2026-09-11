@@ -6,7 +6,7 @@ from test_published_syntheses import cut_cities
 
 
 def _published_circuits(crossings: list[tuple[str, ...]]) -> list[dict[str, Any]]:
-    return [{"path": list(cities)} for cities in crossings]
+    return [{"route": list(cities)} for cities in crossings]
 
 
 _RING = _published_circuits([

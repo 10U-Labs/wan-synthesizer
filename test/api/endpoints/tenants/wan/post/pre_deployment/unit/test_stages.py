@@ -73,7 +73,7 @@ def _finalize_short_of_three(degree_exempt: frozenset[str] = frozenset()) -> Val
 
 
 def test_finalize_refuses_a_synthesis_short_of_the_configured_number_of_diverse_circuits() -> None:
-    with pytest.raises(ValueError, match="independently failing backbone mesh paths at"):
+    with pytest.raises(ValueError, match="independently failing backbone mesh circuits at"):
         _finalize_short_of_three()
 
 

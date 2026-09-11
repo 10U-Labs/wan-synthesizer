@@ -217,13 +217,27 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/paths": {
+    "/wan-synthesizer/tenants/{tenant}/homing-circuits": {
       "get": {
-        "summary": "A tenant WAN's paths.",
+        "summary": "A tenant WAN's circuits homing a demand site into a WAN PoP.",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The WAN's links." } },
+        "responses": { "200": { "description": "The homing circuits." } },
+        "x-amazon-apigateway-integration": {
+          "uri": "${TenantsHandlerArn}",
+          "httpMethod": "POST",
+          "type": "aws_proxy"
+        }
+      }
+    },
+    "/wan-synthesizer/tenants/{tenant}/fiber-segments": {
+      "get": {
+        "summary": "The carrier fiber segments a tenant WAN's circuits run over.",
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "The fiber segments." } },
         "x-amazon-apigateway-integration": {
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
@@ -245,13 +259,13 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/backbone-links": {
+    "/wan-synthesizer/tenants/{tenant}/backbone-circuits": {
       "get": {
-        "summary": "A tenant WAN's backbone-to-backbone mesh links.",
+        "summary": "A tenant WAN's circuits between two of its own WAN PoPs.",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The backbone links." } },
+        "responses": { "200": { "description": "The backbone circuits." } },
         "x-amazon-apigateway-integration": {
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
@@ -479,15 +493,15 @@
     },
     "/wan-synthesizer/tenants/{tenant}/backbone-number-of-diverse-circuits": {
       "get": {
-        "summary": "A tenant's backbone number of diverse paths (input).",
+        "summary": "A tenant's number of diverse circuits asked of every WAN PoP (input).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The backbone number of diverse paths." } },
+        "responses": { "200": { "description": "The number of diverse circuits." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       },
       "put": {
-        "summary": "Replace a tenant's backbone number of diverse paths (stores only).",
+        "summary": "Replace a tenant's number of diverse circuits (stores only).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The backbone number of diverse paths was replaced." } },
+        "responses": { "200": { "description": "The number of diverse circuits was replaced." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },

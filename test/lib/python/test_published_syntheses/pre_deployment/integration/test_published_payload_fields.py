@@ -21,16 +21,18 @@ _PAYLOAD = synthesis_payload(
 
 _WAN_POP_FIELDS = ("id", "name", "kind", "coords")
 _SITE_FIELDS = (*_WAN_POP_FIELDS, "exempt_from_distance_constraint")
-_LINK_FIELDS = ("source_id", "target_id", "distance_miles", "path")
-_PATH_FIELDS = ("source_id", "target_id", "distance_miles", "link_kind")
+_CIRCUIT_FIELDS = ("source_id", "target_id", "distance_miles", "route")
+_HOMING_FIELDS = ("source_id", "target_id", "distance_miles", "homing_kind")
+_SEGMENT_FIELDS = ("source_id", "target_id", "distance_miles", "submarine")
 
 
 def _subjects() -> list[tuple[str, list[dict[str, Any]], tuple[str, ...]]]:
     return [
         ("wan-pops", published.wan_pops(_PAYLOAD), _WAN_POP_FIELDS),
         ("tenant-nodes", published.tenant_nodes(_PAYLOAD), _SITE_FIELDS),
-        ("backbone-links", published.backbone_links(_PAYLOAD), _LINK_FIELDS),
-        ("paths", published.paths(_PAYLOAD), _PATH_FIELDS),
+        ("backbone-circuits", published.backbone_circuits(_PAYLOAD), _CIRCUIT_FIELDS),
+        ("homing-circuits", published.homing_circuits(_PAYLOAD), _HOMING_FIELDS),
+        ("fiber-segments", published.fiber_segments(_PAYLOAD), _SEGMENT_FIELDS),
     ]
 
 

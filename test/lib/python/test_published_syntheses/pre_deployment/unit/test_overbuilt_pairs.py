@@ -9,7 +9,7 @@ def _circuit(source: str, target: str, *transit: str) -> dict[str, Any]:
     return {
         "source_id": source,
         "target_id": target,
-        "path": [source, *transit, target],
+        "route": [source, *transit, target],
         "distance_miles": 100.0 * (len(transit) + 1),
     }
 
@@ -19,7 +19,7 @@ def _synthesis(circuits: list[dict[str, Any]], allowed: int = 2) -> dict[str, An
     return {
         "number_of_diverse_circuits": allowed,
         "wan_pops": [{"id": site, "name": site} for site in sites],
-        "links": circuits,
+        "circuits": circuits,
     }
 
 

@@ -17,20 +17,27 @@ def site_role(site: Site, synthesis: Synthesis) -> str:
     return "unused"
 
 
+def _published(payload: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = payload[key]
+    return result
+
+
 def sites(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    result: list[dict[str, Any]] = payload["sites"]
-    return result
+    return _published(payload, "sites")
 
 
-def paths(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    result: list[dict[str, Any]] = payload["access_paths"] + payload["fiber_segments"]
-    return result
+def homing_circuits(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    return _published(payload, "homing_circuits")
 
 
-def backbone_links(payload: dict[str, Any]) -> list[dict[str, Any]]:
+def fiber_segments(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    return _published(payload, "fiber_segments")
+
+
+def backbone_circuits(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return [
         drawn_circuit
-        for drawn_circuit in payload["drawn_paths"]
+        for drawn_circuit in payload["drawn_circuits"]
         if drawn_circuit["purpose"] == "backbone_mesh"
     ]
 

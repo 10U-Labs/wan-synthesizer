@@ -43,7 +43,7 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
             "wan_pop_count": len(synthesis.wan_pop_ids),
             "transit_count": len(synthesis.transit_ids),
             "demand_site_count": included_demand_count(sites, synthesis),
-            "access_path_count": len(synthesis.homing_circuits),
+            "homing_circuit_count": len(synthesis.homing_circuits),
             "fiber_segment_count": len(synthesis.fiber_segment_keys),
             "access_miles": round(synthesis.metrics.access_miles, 3),
             "physical_carrier_miles": round(synthesis.metrics.physical_miles, 3),
@@ -67,13 +67,13 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
             }
             for site in sites
         ],
-        "access_paths": [
+        "homing_circuits": [
             {
                 "source_id": homing_circuit.source,
                 "source_name": sites_by_id[homing_circuit.source].name,
                 "target_id": homing_circuit.target,
                 "target_name": sites_by_id[homing_circuit.target].name,
-                "link_kind": _homing_circuit_kind(sites_by_id[homing_circuit.source]),
+                "homing_kind": _homing_circuit_kind(sites_by_id[homing_circuit.source]),
                 "distance_miles": round(homing_circuit.distance_miles, 3),
             }
             for homing_circuit in sorted(
@@ -86,7 +86,6 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
                 "source_name": sites_by_id[left].name,
                 "target_id": right,
                 "target_name": sites_by_id[right].name,
-                "link_kind": "carrier_physical",
                 "distance_miles": round(fiber_segments[segment_key(left, right)].distance_miles, 3),
                 "source_page": fiber_segments[segment_key(left, right)].source_page,
                 "note": fiber_segments[segment_key(left, right)].note,
@@ -94,7 +93,7 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
             }
             for left, right in sorted_fiber_segments(synthesis)
         ],
-        "drawn_paths": [
+        "drawn_circuits": [
             {
                 "purpose": drawn_circuit.purpose,
                 "source_id": drawn_circuit.source,
@@ -103,7 +102,7 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
                 "target_name": sites_by_id[drawn_circuit.target].name,
                 "distance_miles": round(drawn_circuit.distance_miles, 3),
                 "carrier": drawn_circuit.carrier,
-                "path": [sites_by_id[site_id].name for site_id in drawn_circuit.pop_ids],
+                "route": [sites_by_id[site_id].name for site_id in drawn_circuit.pop_ids],
                 "reason": drawn_circuit.reason,
                 "requested_by": [
                     sites_by_id[site_id].name for site_id in drawn_circuit.requested_by

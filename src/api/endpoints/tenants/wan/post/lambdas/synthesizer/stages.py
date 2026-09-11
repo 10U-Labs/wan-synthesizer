@@ -81,6 +81,6 @@ def finalize(
             for entry in deficient
         )
         raise ValueError(
-            f"Too few independently failing backbone mesh paths at: {shortfalls}"
+            f"Too few independently failing backbone mesh circuits at: {shortfalls}"
         )
     return sites, fiber_segments, synthesis, validation

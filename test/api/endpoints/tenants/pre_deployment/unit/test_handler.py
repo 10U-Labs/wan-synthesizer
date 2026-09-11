@@ -26,7 +26,8 @@ _READER: dict[str, Any] = {
     "stored_key": "tenants/f-35/wan.json",
     "stored": {
         "sites": [],
-        "paths": [],
+        "homing-circuits": [],
+        "fiber-segments": [],
         "wan-pops": [{"id": "P"}],
         "tenant-nodes": [],
         "provider-nodes": [],
@@ -42,7 +43,7 @@ _READER: dict[str, Any] = {
     },
     "notbuilt_event": {
         "pathParameters": {"tenant": "minuteman"},
-        "path": "/x/tenants/minuteman/paths",
+        "path": "/x/tenants/minuteman/fiber-segments",
     },
 }
 
@@ -96,17 +97,19 @@ def test_tenants_list_skips_non_label_objects(monkeypatch: pytest.MonkeyPatch) -
     assert json.loads(response["body"]) == [{"id": "minuteman", "label": "Minuteman"}]
 
 
-def test_tenant_serves_the_backbone_links(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_tenant_serves_the_backbone_circuits(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
-    paths = [{"source_name": "Minot, ND", "target_name": "Kansas City, MO"}]
-    objects = {"tenants/f-35/wan.json": json.dumps({"backbone-links": paths}).encode()}
+    circuits = [{"source_name": "Minot, ND", "target_name": "Kansas City, MO"}]
+    objects = {
+        "tenants/f-35/wan.json": json.dumps({"backbone-circuits": circuits}).encode()
+    }
     event = {
         "pathParameters": {"tenant": "f-35"},
-        "path": "/x/tenants/f-35/backbone-links",
+        "path": "/x/tenants/f-35/backbone-circuits",
     }
     with patch("boto3.client", return_value=fake_s3(objects)):
         response = module.lambda_handler(event, None)
-    assert json.loads(response["body"]) == paths
+    assert json.loads(response["body"]) == circuits
 
 
 def test_tenant_accepts_a_well_formed_site_input(monkeypatch: pytest.MonkeyPatch) -> None:

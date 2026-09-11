@@ -7,15 +7,8 @@ from typing import Any
 
 import boto3
 
+from synthesizer import collections as published
 from synthesizer.codec import load_merged_carriers, load_off_net, load_regions, load_sites
-from synthesizer.collections import (
-    backbone_links,
-    wan_pops,
-    provider_nodes,
-    paths,
-    tenant_nodes,
-    sites,
-)
 from synthesizer.config import app_config_from_parts
 from synthesizer.coverage import CoverageReport, coverage_report
 from synthesizer.input_graph import Site
@@ -128,12 +121,13 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     )
     logger.info("Publishing WAN for %s", tenant)
     return {
-        "sites": sites(payload),
-        "paths": paths(payload),
-        "wan-pops": wan_pops(payload),
-        "backbone-links": backbone_links(payload),
-        "tenant-nodes": tenant_nodes(payload),
-        "provider-nodes": provider_nodes(payload),
+        "sites": published.sites(payload),
+        "homing-circuits": published.homing_circuits(payload),
+        "fiber-segments": published.fiber_segments(payload),
+        "wan-pops": published.wan_pops(payload),
+        "backbone-circuits": published.backbone_circuits(payload),
+        "tenant-nodes": published.tenant_nodes(payload),
+        "provider-nodes": published.provider_nodes(payload),
     }, _delivered(graph, synthesis, validation, params, tenant)
 
 

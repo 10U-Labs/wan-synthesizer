@@ -14,9 +14,9 @@ const ROLE_STYLE = {
   tenant: { color: "#1565c0", radius: 4 },
 };
 
-const LINK_STYLE = {
+const LINE_STYLE = {
   homing: { color: ROLE_STYLE.tenant.color, weight: 1.5 },
-  backbone: { color: ROLE_STYLE.wan_pop.color, weight: 4.5 },
+  fiber: { color: ROLE_STYLE.wan_pop.color, weight: 4.5 },
 };
 
 const VIEW_CENTER = [39.5, -98.35];
@@ -27,8 +27,8 @@ const LEGEND_ROWS = [
   { swatch: "dot", color: ROLE_STYLE.wan_pop.color, label: WAN_POP },
   { swatch: "dot", color: PROVIDER_STYLE.color, label: "Provider region" },
   { swatch: "dot", color: ROLE_STYLE.tenant.color, label: "Location", tenant: true },
-  { swatch: "line", color: LINK_STYLE.backbone.color, label: "Fiber" },
-  { swatch: "line", color: LINK_STYLE.homing.color, label: "Homing circuit" },
+  { swatch: "line", color: LINE_STYLE.fiber.color, label: "Fiber" },
+  { swatch: "line", color: LINE_STYLE.homing.color, label: "Homing circuit" },
 ];
 
 const map = L.map("map").setView(VIEW_CENTER, 4);
@@ -97,7 +97,7 @@ function siteLabel(site) {
   return `<strong>${displayName(site)}</strong>${located}`;
 }
 
-function linkLabel(source, target) {
+function homingLabel(source, target) {
   return `<strong>${displayName(source)}</strong> ↔ <strong>${displayName(target)}</strong>`;
 }
 
@@ -108,7 +108,7 @@ function segmentKey(left, right) {
 function circuitsBySegment(circuits) {
   const crossing = new Map();
   for (const circuit of circuits) {
-    const route = circuit.path || [];
+    const route = circuit.route || [];
     for (let step = 0; step + 1 < route.length; step += 1) {
       const key = segmentKey(route[step], route[step + 1]);
       crossing.set(key, (crossing.get(key) || []).concat([circuit]));
@@ -119,7 +119,7 @@ function circuitsBySegment(circuits) {
 
 function circuitLabel(circuit) {
   const ends = `${cityOf(circuit.source_name)} ↔ ${cityOf(circuit.target_name)}`;
-  return `<strong>Circuit ${ends}</strong><br>${(circuit.path || []).join(" → ")}`;
+  return `<strong>Circuit ${ends}</strong><br>${(circuit.route || []).join(" → ")}`;
 }
 
 function fiberLabel(source, target, circuits) {
@@ -192,10 +192,10 @@ function drawSites(sites) {
   return coords;
 }
 
-function drawLinks(links, byId, style, label) {
-  for (const link of links) {
-    const source = byId[link.source_id];
-    const target = byId[link.target_id];
+function drawLines(lines, byId, style, label) {
+  for (const line of lines) {
+    const source = byId[line.source_id];
+    const target = byId[line.target_id];
     if (source && target) {
       add(L.polyline([displayCoords(source), displayCoords(target)], {
         color: style.color,
@@ -231,13 +231,15 @@ function showCounts(sites) {
 async function render(tenantId) {
   clear();
   let sites;
-  let links;
+  let fiber;
+  let homings;
   let circuits;
   try {
-    [sites, links, circuits] = await Promise.all([
+    [sites, fiber, homings, circuits] = await Promise.all([
       getJSON(`${API_BASE}/tenants/${tenantId}/sites`),
-      getJSON(`${API_BASE}/tenants/${tenantId}/paths`),
-      getJSON(`${API_BASE}/tenants/${tenantId}/backbone-links`),
+      getJSON(`${API_BASE}/tenants/${tenantId}/fiber-segments`),
+      getJSON(`${API_BASE}/tenants/${tenantId}/homing-circuits`),
+      getJSON(`${API_BASE}/tenants/${tenantId}/backbone-circuits`),
     ]);
   } catch (error) {
     document.getElementById("counts").textContent = "WAN not synthesized yet";
@@ -246,14 +248,10 @@ async function render(tenantId) {
   showCounts(sites);
 
   const byId = indexById(sites);
-  const physical = links.filter((link) => link.link_kind === "carrier_physical");
-  const homings = links.filter(
-    (link) => link.link_kind === "tenant_to_backbone" || link.link_kind === "provider_to_backbone",
-  );
   const crossing = circuitsBySegment(circuits);
-  drawLinks(physical, byId, LINK_STYLE.backbone, (source, target) =>
+  drawLines(fiber, byId, LINE_STYLE.fiber, (source, target) =>
     fiberLabel(source, target, crossing.get(segmentKey(source.name, target.name)) || []));
-  drawLinks(homings, byId, LINK_STYLE.homing, linkLabel);
+  drawLines(homings, byId, LINE_STYLE.homing, homingLabel);
   const points = drawSites(sites);
 
   if (points.length) {

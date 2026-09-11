@@ -41,9 +41,14 @@ def test_sites_returns_the_payload_sites() -> None:
     assert gc.sites(payload) == payload["sites"]
 
 
-def test_paths_combines_access_and_carrier_fiber() -> None:
+def test_homing_circuits_are_the_payloads_homing_circuits() -> None:
     payload = _payload()
-    assert gc.paths(payload) == payload["access_paths"] + payload["fiber_segments"]
+    assert gc.homing_circuits(payload) == payload["homing_circuits"]
+
+
+def test_fiber_segments_are_the_payloads_fiber_segments() -> None:
+    payload = _payload()
+    assert gc.fiber_segments(payload) == payload["fiber_segments"]
 
 
 def test_wan_pops_are_all_tier_wan_pop() -> None:
@@ -58,20 +63,22 @@ def test_provider_nodes_are_all_tier_provider() -> None:
     assert all(site["tier_role"] == "provider" for site in gc.provider_nodes(_payload()))
 
 
-def test_backbone_links_exist_for_a_meshed_synthesis() -> None:
-    assert gc.backbone_links(_payload())
+def test_backbone_circuits_exist_for_a_meshed_synthesis() -> None:
+    assert gc.backbone_circuits(_payload())
 
 
-def test_backbone_links_are_all_backbone_mesh_circuits() -> None:
-    assert all(circuit["purpose"] == "backbone_mesh" for circuit in gc.backbone_links(_payload()))
+def test_backbone_circuits_are_all_backbone_mesh_circuits() -> None:
+    assert all(
+        circuit["purpose"] == "backbone_mesh" for circuit in gc.backbone_circuits(_payload())
+    )
 
 
-def test_backbone_links_omit_other_drawn_circuits() -> None:
-    assert gc.backbone_links({"drawn_paths": [{"purpose": "access"}]}) == []
+def test_backbone_circuits_omit_other_drawn_circuits() -> None:
+    assert gc.backbone_circuits({"drawn_circuits": [{"purpose": "access"}]}) == []
 
 
-def test_backbone_links_name_both_endpoints() -> None:
+def test_backbone_circuits_name_both_endpoints() -> None:
     assert all(
         circuit["source_name"] and circuit["target_name"]
-        for circuit in gc.backbone_links(_payload())
+        for circuit in gc.backbone_circuits(_payload())
     )

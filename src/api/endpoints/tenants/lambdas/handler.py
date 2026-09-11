@@ -8,9 +8,10 @@ _CLIENTS: dict[str, Any] = {}
 _HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
 _WAN_COLLECTIONS = (
     "sites",
-    "paths",
+    "homing-circuits",
+    "fiber-segments",
     "wan-pops",
-    "backbone-links",
+    "backbone-circuits",
     "tenant-nodes",
     "provider-nodes",
 )

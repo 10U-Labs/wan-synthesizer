@@ -71,12 +71,12 @@ def test_sorted_fiber_segments_is_sorted() -> None:
 
 def test_tenant_homing_circuit_is_labelled_tenant_to_backbone() -> None:
     payload = _payload_for(fixtures.access_site("s"))
-    assert payload["access_paths"][0]["link_kind"] == "tenant_to_backbone"
+    assert payload["homing_circuits"][0]["homing_kind"] == "tenant_to_backbone"
 
 
 def test_provider_homing_circuit_is_labelled_provider_to_backbone() -> None:
     payload = _payload_for(fixtures.provider_site("r"))
-    assert payload["access_paths"][0]["link_kind"] == "provider_to_backbone"
+    assert payload["homing_circuits"][0]["homing_kind"] == "provider_to_backbone"
 
 
 def test_included_demand_count_counts_a_homed_demand_site() -> None:

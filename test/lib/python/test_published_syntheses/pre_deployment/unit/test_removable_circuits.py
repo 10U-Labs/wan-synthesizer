@@ -12,7 +12,7 @@ def _published_network(
         {
             "source_id": cities[0],
             "target_id": cities[-1],
-            "path": list(cities),
+            "route": list(cities),
             "distance_miles": 100.0 * (len(cities) - 1),
         }
         for cities in crossings
@@ -22,7 +22,7 @@ def _published_network(
         "number_of_diverse_circuits": 2,
         "forced_paths": [{"source": source, "target": target} for source, target in forced],
         "wan_pops": [{"id": city, "name": city} for city in seated],
-        "links": drawn,
+        "circuits": drawn,
     }
 
 

@@ -8,7 +8,6 @@ from urllib.error import HTTPError
 import seed
 from seed import DEFAULT_API, _get
 from test_published_syntheses import (
-    FIBER,
     wan_pop_groups,
     cut_cities,
     offered_diverse_circuits,
@@ -23,8 +22,7 @@ _ROUNDED_TO = 0.001
 
 
 def _rounding_slack(synthesis: dict[str, Any]) -> float:
-    segments = sum(1 for entry in synthesis["paths"] if entry["link_kind"] == FIBER)
-    return (segments + 1) * _ROUNDED_TO / 2
+    return (len(synthesis["fiber"]) + 1) * _ROUNDED_TO / 2
 
 
 def _tenants_outside(
@@ -55,7 +53,7 @@ def _circuits_clear_of_a_capped_seat(synthesis: dict[str, Any]) -> list[dict[str
     }
     return [
         circuit
-        for circuit in synthesis["links"]
+        for circuit in synthesis["circuits"]
         if circuit["source_id"] not in capped and circuit["target_id"] not in capped
     ]
 
@@ -278,7 +276,7 @@ def _anybodys_fiber(held: dict[str, set[frozenset[str]]]) -> set[frozenset[str]]
 
 
 def _hops(circuit: dict[str, Any]) -> list[frozenset[str]]:
-    cities = circuit.get("path") or []
+    cities = circuit.get("route") or []
     return [frozenset({left, right}) for left, right in zip(cities, cities[1:])]
 
 
@@ -287,7 +285,7 @@ def _circuits_changing_hands(syntheses: list[dict[str, Any]]) -> dict[str, list[
     anybody = _anybodys_fiber(held)
     found: dict[str, list[str]] = {}
     for synthesis in syntheses:
-        for circuit in synthesis["links"]:
+        for circuit in synthesis["circuits"]:
             mine = held.get(circuit.get("carrier", ""), set())
             if any(hop in anybody and hop not in mine for hop in _hops(circuit)):
                 found.setdefault(synthesis["tenant"], []).append(
@@ -300,7 +298,7 @@ def _circuits_naming_no_carrier(syntheses: list[dict[str, Any]]) -> dict[str, li
     anybody = _anybodys_fiber(_fiber_by_carrier())
     found: dict[str, list[str]] = {}
     for synthesis in syntheses:
-        for circuit in synthesis["links"]:
+        for circuit in synthesis["circuits"]:
             if not circuit.get("carrier") and any(hop in anybody for hop in _hops(circuit)):
                 found.setdefault(synthesis["tenant"], []).append(
                     f"{circuit['source_name']} to {circuit['target_name']}"
@@ -322,7 +320,7 @@ def _tenants_fiber(synthesis: dict[str, Any]) -> dict[str, set[frozenset[str]]]:
     held = _fiber_by_carrier()
     anybody = _anybodys_fiber(held)
     laid = {
-        hop for circuit in synthesis["links"] for hop in _hops(circuit) if hop not in anybody
+        hop for circuit in synthesis["circuits"] for hop in _hops(circuit) if hop not in anybody
     }
     return {carrier: pairs | laid for carrier, pairs in held.items()}
 
@@ -366,8 +364,8 @@ def test_no_published_networks_ceiling_is_higher_than_the_circuits_its_carriers_
 def _submarine_pairs(synthesis: dict[str, Any]) -> set[frozenset[str]]:
     return {
         frozenset({entry["source_name"], entry["target_name"]})
-        for entry in synthesis["paths"]
-        if entry["link_kind"] == FIBER and entry["submarine"]
+        for entry in synthesis["fiber"]
+        if entry["submarine"]
     }
 
 
@@ -379,9 +377,9 @@ def _runs_under_water(pops: list[str], under_water: set[frozenset[str]]) -> bool
 
 def _circuits_each_site_holds(synthesis: dict[str, Any]) -> dict[str, list[list[str]]]:
     held: dict[str, list[list[str]]] = {}
-    for circuit in synthesis["links"]:
-        for end in (circuit["path"][0], circuit["path"][-1]):
-            held.setdefault(end, []).append(circuit["path"])
+    for circuit in synthesis["circuits"]:
+        for end in (circuit["route"][0], circuit["route"][-1]):
+            held.setdefault(end, []).append(circuit["route"])
     return held
 
 
@@ -403,3 +401,23 @@ def test_no_published_site_with_a_circuit_over_land_is_drawn_one_under_water(
         for synthesis in published_syntheses
         for offender in _sites_ashore_holding_a_crossing(synthesis)
     ] == []
+
+
+def _sites_homed_the_wrong_number_of_times(synthesis: dict[str, Any]) -> dict[str, int]:
+    homed: dict[str, int] = {}
+    for circuit in synthesis["homings"]:
+        homed[circuit["source_id"]] = homed.get(circuit["source_id"], 0) + 1
+    return {
+        site: count
+        for site, count in sorted(homed.items())
+        if count != synthesis["homing_degree"]
+    }
+
+
+def test_every_published_demand_site_holds_the_homing_circuits_it_was_asked_for(
+        published_syntheses: list[dict[str, Any]]) -> None:
+    assert {
+        synthesis["tenant"]: _sites_homed_the_wrong_number_of_times(synthesis)
+        for synthesis in published_syntheses
+        if _sites_homed_the_wrong_number_of_times(synthesis)
+    } == {}
