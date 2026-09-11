@@ -27,3 +27,9 @@ def root_reading_parser(description: str) -> argparse.ArgumentParser:
         help="The repository root to read (default: the one this file sits in).",
     )
     return parser
+
+
+def print_annotations(reported: list[str]) -> int:
+    for line in reported:
+        print(line)
+    return 1 if reported else 0
