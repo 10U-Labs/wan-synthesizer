@@ -13,6 +13,20 @@ jobs:
           PYTHONPATH=lib/python:scripts
           python3 -c 'import sys, assert_description_names_what_exists as check;
           sys.exit(check.main())'
+  assert-every-dataclass-field-is-read:
+    name: assert-every-dataclass-field-is-read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-every-dataclass-field-is-read
+      - name: Assert every dataclass field the repository declares is read
+        run: >-
+          assert-every-dataclass-field-is-read
+          --verbose
+          src
+          lib/python
+          scripts
   assert-no-comments:
     name: assert-no-comments
     runs-on: ubuntu-latest
@@ -61,15 +75,6 @@ jobs:
           --linters pylint,mypy,yamllint
           --verbose
           ${{ github.workspace }}
-  assert-no-unread-dataclass-field:
-    name: assert-no-unread-dataclass-field
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert every dataclass field the repository declares is read
-        run: >-
-          PYTHONPATH=lib/python:scripts
-          python3 -c 'import sys, assert_dataclass_field_is_read as check; sys.exit(check.main())'
   assert-one-assert-per-pytest:
     name: assert-one-assert-per-pytest
     runs-on: ubuntu-latest
@@ -189,24 +194,6 @@ jobs:
           test/scripts/ test/lib/python/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
-  test-assert-dataclass-field-is-read:
-    name: test-assert-dataclass-field-is-read
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install pytest pytest-cov
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts
-          python3 -m pytest
-          test/scripts/assert_dataclass_field_is_read/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=assert_dataclass_field_is_read
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
   test-assert-description-names-what-exists:
     name: test-assert-description-names-what-exists
     runs-on: ubuntu-latest

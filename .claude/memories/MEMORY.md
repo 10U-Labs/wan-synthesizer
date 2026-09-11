@@ -35,6 +35,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 
 - [commit-straight-to-main](commit-straight-to-main.md) — direct commits to `main`, no feature branch and no pull request
 - [a-rejected-push-is-fixed-forward](a-rejected-push-is-fixed-forward.md) — a red run is answered with a follow-up commit, never an amend and force-push
+- [push-over-ssh-not-https](push-over-ssh-not-https.md) — an HTTPS push carrying a workflow file is refused for want of the `workflow` scope, and the fix is the remote URL rather than the token
 - [an-issue-is-closed-by-its-commit](an-issue-is-closed-by-its-commit.md) — a `Closes #N` line in the commit that solves it, one line per issue; naming an issue in prose references it without closing it
 
 ### Issues

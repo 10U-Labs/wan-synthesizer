@@ -69,7 +69,7 @@ A candidate set is still a backbone, so `backbone_set` went to `wan_pop_set` but
 Twice, both of them graph algorithms rather than networks: `_Node` and its
 `_Residual`, `_Costs` and `_Arc` companions in `synthesizer.ceiling`, which are
 vertices of a unit-capacity flow network, and the `ast` nodes
-`scripts/assert_dataclass_field_is_read.py` walks. The same exemption
+`scripts/assert_description_names_what_exists.py` walks. The same exemption
 `reconstruct_path` and `_augmenting_path` hold for `path` — see
 [a-way-out-of-a-site-is-a-circuit](a-way-out-of-a-site-is-a-circuit.md). The two
 served collections `/tenant-nodes` and `/provider-nodes` still say it and are

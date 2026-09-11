@@ -31,4 +31,4 @@ So it stops being true and nothing says when. A test fails when the code it cove
 
 ### Write a new script without a main guard
 
-`scripts/seed.py` and `scripts/assert_dataclass_field_is_read.py` end at `main`, with no `if __name__ == "__main__":` guard: coverage.py offers no command-line flag for excluding one, so a guard body pytest never runs would fail the `--cov-fail-under=100` gates. The workflows and `test/scripts/seed/pre_deployment/integration/test_cli.py` name the entry point as `python3 -c 'import seed; seed.main()'`, which reads `sys.argv[1]` exactly as `python3 scripts/seed.py` did.
+`scripts/seed.py` and `scripts/assert_resource_names_agree.py` end at `main`, with no `if __name__ == "__main__":` guard: coverage.py offers no command-line flag for excluding one, so a guard body pytest never runs would fail the `--cov-fail-under=100` gates. The workflows and `test/scripts/seed/pre_deployment/integration/test_cli.py` name the entry point as `python3 -c 'import seed; seed.main()'`, which reads `sys.argv[1]` exactly as `python3 scripts/seed.py` did.
