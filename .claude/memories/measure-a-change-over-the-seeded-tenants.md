@@ -26,15 +26,26 @@ and `finalize`. Read `synthesis.metrics.physical_miles`,
 `.backbone_lower_bound_miles`, and the validation keys
 `backbone_mesh_independence_deficient` and `backbone_mesh_cut_pops`.
 
-The seven tenants are two-node, daf, dow, f-35, minuteman, ***REMOVED*** and ***REMOVED***;
+The seven tenants are two-pop, daf, dow, f-35, minuteman, ***REMOVED*** and ***REMOVED***;
 the last two publish 4,186.183 miles and nothing at all. A run costs a few
 seconds a tenant and needs `highspy` installed.
 
-On `4faba347` this returned two-node 4,004.949 against a floor of 4,004.949,
-daf 9,556.587 against 12,247.290, dow 10,323.419 against 11,991.811, f-35
-9,730.228 against 7,241.423 and minuteman 8,265.429 against 7,003.212, each
-matching what `e2e-tests` read off the deployed API in run `34440829190` to the
-thousandth.
+On `4faba347` this returned the tenant then called two-node 4,004.949 against a
+floor of 4,004.949, daf 9,556.587 against 12,247.290, dow 10,323.419 against
+11,991.811, f-35 9,730.228 against 7,241.423 and minuteman 8,265.429 against
+7,003.212, each matching what `e2e-tests` read off the deployed API in run
+`34440829190` to the thousandth.
+
+f-35 has since moved to 9,851.286 against a floor of 7,017.961, which is 1.40
+times the floor and fails
+`test_no_published_network_runs_more_than_a_tenth_further_than_the_floor_it_publishes`.
+That pair came back byte-identical from runs `34481718368`, `34538745937`,
+`34540870572` and `34550736476`, on four different tips, so a `seed` run that is
+red on f-35 alone and on that one assertion is the state `seed` was already in —
+not something the tip under test did. It is what GitHub issues #175, #172, #171
+and #170 are about. Repetition of a figure is also the only tell for the race in
+[seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md), so read
+which assertion failed before concluding either.
 
 This measures a change; it does not verify one. What is green is still CI's to
 say, per [ci-is-the-source-of-truth](ci-is-the-source-of-truth.md), and reading
