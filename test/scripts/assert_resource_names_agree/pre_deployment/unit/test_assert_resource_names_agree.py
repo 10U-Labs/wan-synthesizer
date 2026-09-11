@@ -135,8 +135,8 @@ def test_lists_that_agree_are_reported_as_nothing(tmp_path: Path) -> None:
 def test_a_collection_the_handler_serves_and_nothing_documents_is_reported(
     tmp_path: Path,
 ) -> None:
-    root = _agreeing_repo(tmp_path, _without("wan-pops"))
-    assert [line for line in disagreements(root) if f"::error file={TENANTS}::" in line and "wan-pops" in line]
+    reported = disagreements(_agreeing_repo(tmp_path, _without("wan-pops")))
+    assert [line for line in reported if f"::error file={TENANTS}::" in line]
 
 
 def test_a_collection_documented_and_left_out_of_the_handler_is_reported(

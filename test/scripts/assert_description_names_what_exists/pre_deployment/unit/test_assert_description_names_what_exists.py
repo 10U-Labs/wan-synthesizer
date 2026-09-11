@@ -43,19 +43,18 @@ def _spec(description: str) -> dict[str, Any]:
     }
 
 
-def _write(root: Path, relative: Path, text: str) -> None:
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-
-
 def _repo(root: Path, description: str) -> Path:
-    _write(root, OPENAPI, json.dumps(_spec(description)))
-    _write(root, _SOURCE, _HANDLER)
-    _write(root, _VENDOR, _VENDOR_SOURCE)
-    _write(root, Path("etc", "two_pop.yml"), "backbone:\n  coverage_target_miles: 1090\n")
-    _write(root, Path("src", "api", "common", "storage", "main.tf"), 'bucket = "store"\n')
-    _write(root, Path("src", "www", "spa", "style.css"), "body { margin: 0 }\n")
+    written = {
+        OPENAPI: json.dumps(_spec(description)),
+        _SOURCE: _HANDLER,
+        _VENDOR: _VENDOR_SOURCE,
+        Path("etc", "two_pop.yml"): "backbone:\n  coverage_target_miles: 1090\n",
+        Path("src", "api", "common", "storage", "main.tf"): 'bucket = "store"\n',
+        Path("src", "www", "spa", "style.css"): "body { margin: 0 }\n",
+    }
+    for relative, text in written.items():
+        (root / relative).parent.mkdir(parents=True, exist_ok=True)
+        (root / relative).write_text(text, encoding="utf-8")
     return root
 
 

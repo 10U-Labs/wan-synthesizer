@@ -103,8 +103,8 @@ def _apart(here: _Held, there: _Held) -> list[str]:
     ]
 
 
-def _both_ways(here: _Held, there: _Held) -> list[str]:
-    return _apart(here, there) + _apart(there, here)
+def _both_ways(one: _Held, other: _Held) -> list[str]:
+    return _apart(one, other) + _apart(other, one)
 
 
 def disagreements(root: Path) -> list[str]:
