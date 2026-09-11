@@ -53,10 +53,10 @@ def _fiber_rows() -> list[dict[str, Any]]:
 
 _NAMES_NOBODY = (
     "forced-wan-pops",
-    "forced-paths",
+    "forced-circuits",
     "forced-homes",
     "prohibited-wan-pops",
-    "prohibited-paths",
+    "prohibited-circuits",
     "degree-exempt-wan-pops",
 )
 

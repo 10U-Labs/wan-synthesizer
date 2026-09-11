@@ -184,10 +184,10 @@ def push_tenants(api: str) -> list[str]:
         _put(api, f"tenants/{tid}/provider-regions", regions)
         _put(api, f"tenants/{tid}/off-net", off_net)
         _put(api, f"tenants/{tid}/forced-wan-pops", forced.get("wan_pops", []))
-        _put(api, f"tenants/{tid}/forced-paths", forced.get("paths", []))
+        _put(api, f"tenants/{tid}/forced-circuits", forced.get("circuits", []))
         _put(api, f"tenants/{tid}/forced-homes", homes)
         _put(api, f"tenants/{tid}/prohibited-wan-pops", prohibited.get("wan_pops", []))
-        _put(api, f"tenants/{tid}/prohibited-paths", prohibited.get("paths", []))
+        _put(api, f"tenants/{tid}/prohibited-circuits", prohibited.get("circuits", []))
         _put(api, f"tenants/{tid}/degree-exempt-wan-pops",
              backbone.get("degree_exempt", []))
         _put(api, f"tenants/{tid}/wan-pop-count", backbone.get("wan_pop_count", {}))

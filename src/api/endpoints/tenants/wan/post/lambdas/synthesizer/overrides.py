@@ -71,8 +71,8 @@ def _forced_wan_pop_endpoint(
 def _wan_pop_pair(
     circuit: NamedCircuit, name_to_id: dict[str, str], forced_wan_pops: set[str]
 ) -> tuple[str, str]:
-    left = _forced_wan_pop_endpoint(circuit.source, name_to_id, forced_wan_pops, "forced-path")
-    right = _forced_wan_pop_endpoint(circuit.target, name_to_id, forced_wan_pops, "forced-path")
+    left = _forced_wan_pop_endpoint(circuit.source, name_to_id, forced_wan_pops, "forced-circuit")
+    right = _forced_wan_pop_endpoint(circuit.target, name_to_id, forced_wan_pops, "forced-circuit")
     return segment_key(left, right)
 
 
@@ -90,7 +90,7 @@ def _forced_home_pair(
 
 def _excluded_wan_pop_endpoint(name: str, name_to_id: dict[str, str]) -> str:
     if name not in name_to_id:
-        raise ValueError(f"prohibited-path WAN PoP not found in the Carrier graph: {name}")
+        raise ValueError(f"prohibited-circuit WAN PoP not found in the Carrier graph: {name}")
     return name_to_id[name]
 
 

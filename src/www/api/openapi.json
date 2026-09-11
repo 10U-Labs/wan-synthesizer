@@ -273,13 +273,13 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/tenant-nodes": {
+    "/wan-synthesizer/tenants/{tenant}/tenant-sites": {
       "get": {
         "summary": "A tenant WAN's tenant-site demand, homed to the backbone.",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The tenant nodes." } },
+        "responses": { "200": { "description": "The tenant's own sites." } },
         "x-amazon-apigateway-integration": {
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
@@ -287,13 +287,13 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/provider-nodes": {
+    "/wan-synthesizer/tenants/{tenant}/provider-sites": {
       "get": {
         "summary": "A tenant WAN's provider-region demand, homed to the backbone.",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The provider nodes." } },
+        "responses": { "200": { "description": "The provider regions the WAN reaches." } },
         "x-amazon-apigateway-integration": {
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
@@ -393,17 +393,17 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/forced-paths": {
+    "/wan-synthesizer/tenants/{tenant}/forced-circuits": {
       "get": {
-        "summary": "A tenant's forced paths (input).",
+        "summary": "A tenant's forced circuits (input).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The forced paths." } },
+        "responses": { "200": { "description": "The forced circuits." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       },
       "put": {
-        "summary": "Replace a tenant's forced paths (stores only).",
+        "summary": "Replace a tenant's forced circuits (stores only).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The forced paths were replaced." } },
+        "responses": { "200": { "description": "The forced circuits were replaced." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
@@ -449,17 +449,17 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/prohibited-paths": {
+    "/wan-synthesizer/tenants/{tenant}/prohibited-circuits": {
       "get": {
-        "summary": "A tenant's prohibited paths (input).",
+        "summary": "A tenant's prohibited circuits (input).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The prohibited paths." } },
+        "responses": { "200": { "description": "The prohibited circuits." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       },
       "put": {
-        "summary": "Replace a tenant's prohibited paths (stores only).",
+        "summary": "Replace a tenant's prohibited circuits (stores only).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The prohibited paths were replaced." } },
+        "responses": { "200": { "description": "The prohibited circuits were replaced." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },

@@ -44,7 +44,7 @@ backbone:
   forced:
     wan_pops:
       - Luke, AZ
-    paths:
+    circuits:
       - source: Luke, AZ
         target: Nellis, NV
   wan_pop_count:
@@ -54,7 +54,7 @@ backbone:
   prohibited:
     wan_pops:
       - Link, TX
-    paths:
+    circuits:
       - source: Luke, AZ
         target: Link, TX
   promote_high_degree_convergences: false
@@ -488,11 +488,11 @@ def test_push_tenants_puts_the_forced_wan_pops_resource(
     assert bodies["tenants/f-35/forced-wan-pops"] == ["Luke, AZ"]
 
 
-def test_push_tenants_puts_the_forced_paths_resource(
+def test_push_tenants_puts_the_forced_circuits_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/forced-paths"] == [
+    assert bodies["tenants/f-35/forced-circuits"] == [
         {"source": "Luke, AZ", "target": "Nellis, NV"}]
 
 
@@ -511,11 +511,11 @@ def test_push_tenants_puts_the_prohibited_wan_pops_resource(
     assert bodies["tenants/f-35/prohibited-wan-pops"] == ["Link, TX"]
 
 
-def test_push_tenants_puts_the_prohibited_paths_resource(
+def test_push_tenants_puts_the_prohibited_circuits_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/prohibited-paths"] == [
+    assert bodies["tenants/f-35/prohibited-circuits"] == [
         {"source": "Luke, AZ", "target": "Link, TX"}]
 
 

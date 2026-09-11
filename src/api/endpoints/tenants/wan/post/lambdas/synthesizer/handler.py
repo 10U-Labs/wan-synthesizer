@@ -28,10 +28,10 @@ logger = logging.getLogger(__name__)
 
 CONFIG_RESOURCES = (
     "forced-wan-pops",
-    "forced-paths",
+    "forced-circuits",
     "forced-homes",
     "prohibited-wan-pops",
-    "prohibited-paths",
+    "prohibited-circuits",
     "degree-exempt-wan-pops",
     "wan-pop-count",
     "backbone-number-of-diverse-circuits",
@@ -130,8 +130,8 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
         "fiber-segments": published.fiber_segments(payload),
         "wan-pops": published.wan_pops(payload),
         "backbone-circuits": published.backbone_circuits(payload),
-        "tenant-nodes": published.tenant_nodes(payload),
-        "provider-nodes": published.provider_nodes(payload),
+        "tenant-sites": published.tenant_sites(payload),
+        "provider-sites": published.provider_sites(payload),
     }, _delivered(graph, synthesis, validation, params, tenant)
 
 

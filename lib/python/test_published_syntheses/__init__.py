@@ -15,8 +15,8 @@ UNFINISHED = frozenset({"creating", "synthesizing"})
 COLLECTIONS = (
     "wan-pops",
     "backbone-circuits",
-    "tenant-nodes",
-    "provider-nodes",
+    "tenant-sites",
+    "provider-sites",
     "homing-circuits",
     "fiber-segments",
 )
@@ -49,12 +49,12 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "homing_degree": config["homing"]["degree"],
         "seat_cap": backbone["wan_pop_count"]["max"],
         "forced": backbone.get("forced", {}).get("wan_pops", []),
-        "forced_paths": backbone.get("forced", {}).get("paths", []),
+        "forced_circuits": backbone.get("forced", {}).get("circuits", []),
         "status": state,
         "lower_bound_miles": state.get("backbone_lower_bound_miles"),
         "wan_pops": published.get("wan-pops", []),
-        "tenant_sites": published.get("tenant-nodes", []),
-        "provider_regions": published.get("provider-nodes", []),
+        "tenant_sites": published.get("tenant-sites", []),
+        "provider_regions": published.get("provider-sites", []),
         "circuits": published.get("backbone-circuits", []),
         "homings": published.get("homing-circuits", []),
         "fiber": published.get("fiber-segments", []),
@@ -230,7 +230,7 @@ def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
     sites = list(names)
     asked = synthesis["number_of_diverse_circuits"]
     pinned = {
-        frozenset((pair["source"], pair["target"])) for pair in synthesis["forced_paths"]
+        frozenset((pair["source"], pair["target"])) for pair in synthesis["forced_circuits"]
     }
     held_diverse_circuits = {
         site: min(asked, diverse_circuit_count(synthesis["circuits"], site, names))

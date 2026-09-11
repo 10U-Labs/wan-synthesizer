@@ -68,14 +68,14 @@ def test_forced_backbone_pairs_keeps_only_in_set_pairs() -> None:
 
 
 def test_unknown_backbone_endpoint_is_rejected() -> None:
-    with pytest.raises(ValueError, match="forced-path"):
+    with pytest.raises(ValueError, match="forced-circuit"):
         resolve_forced_circuits(
             OperatorCircuits(backbone=(NamedCircuit("Nowhere", "P1"),)), SITES, {"P1"}
         )
 
 
 def test_backbone_endpoint_not_forced_is_rejected() -> None:
-    with pytest.raises(ValueError, match="forced-path"):
+    with pytest.raises(ValueError, match="forced-circuit"):
         resolve_forced_circuits(
             OperatorCircuits(backbone=(NamedCircuit("P0", "P1"),)), SITES, {"P0"}
         )
@@ -109,7 +109,7 @@ def test_a_mesh_pair_is_not_read_as_a_home() -> None:
     assert circuits.homes == frozenset()
 
 
-def test_no_forced_path_returns_homes_unchanged() -> None:
+def test_no_forced_circuit_returns_homes_unchanged() -> None:
     pop_by_id = {"P0": pop("P0", 40.0, -100.0), "P1": pop("P1", 50.0, -100.0)}
     homes = apply_forced_homes(
         access("A1", 40.0, -100.0), ["P0", "P1"], ForcedCircuits(), pop_by_id, 2

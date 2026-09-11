@@ -58,12 +58,12 @@ def test_wan_pops_are_all_tier_wan_pop() -> None:
     assert all(site["tier_role"] == "wan_pop" for site in gc.wan_pops(_payload()))
 
 
-def test_tenant_nodes_are_all_tier_tenant() -> None:
-    assert all(site["tier_role"] == "tenant" for site in gc.tenant_nodes(_payload()))
+def test_tenant_sites_are_all_tier_tenant() -> None:
+    assert all(site["tier_role"] == "tenant" for site in gc.tenant_sites(_payload()))
 
 
-def test_provider_nodes_are_all_tier_provider() -> None:
-    assert all(site["tier_role"] == "provider" for site in gc.provider_nodes(_payload()))
+def test_provider_sites_are_all_tier_provider() -> None:
+    assert all(site["tier_role"] == "provider" for site in gc.provider_sites(_payload()))
 
 
 def test_backbone_circuits_exist_for_a_meshed_synthesis() -> None:

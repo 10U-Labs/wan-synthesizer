@@ -2,7 +2,7 @@
 backbone:
   coverage_target_miles: 1200
   forced:
-    paths: []
+    circuits: []
     wan_pops:
       - Ashburn, VA
       - Cheyenne, WY
@@ -11,7 +11,7 @@ backbone:
       - Salt Lake City, UT
   number_of_diverse_circuits: 2
   prohibited:
-    paths: []
+    circuits: []
     wan_pops: []
   promote_high_degree_convergences: false
   wan_pop_count:

@@ -67,9 +67,9 @@ def _named_circuit_list(synthesis: dict[str, Any], key: str) -> tuple[NamedCircu
 
 def _operator_circuits(synthesis: dict[str, Any]) -> OperatorCircuits:
     return OperatorCircuits(
-        backbone=_named_circuit_list(synthesis, "forced_paths"),
+        backbone=_named_circuit_list(synthesis, "forced_circuits"),
         homes=_named_circuit_list(synthesis, "forced_homes"),
-        removed_backbone=_named_circuit_list(synthesis, "excluded_paths"),
+        removed_backbone=_named_circuit_list(synthesis, "prohibited_circuits"),
     )
 
 
@@ -174,9 +174,9 @@ def app_config_from_parts(parts: dict[str, Any]) -> AppConfig:
         "forced_wan_pops": parts.get("forced-wan-pops", []),
         "degree_exempt_wan_pops": parts.get("degree-exempt-wan-pops", []),
         "prohibited_wan_pops": parts.get("prohibited-wan-pops", []),
-        "forced_paths": parts.get("forced-paths", []),
+        "forced_circuits": parts.get("forced-circuits", []),
         "forced_homes": parts.get("forced-homes", []),
-        "excluded_paths": parts.get("prohibited-paths", []),
+        "prohibited_circuits": parts.get("prohibited-circuits", []),
     }
     promotion = _mapping(parts, "convergence-promotion")
     if "promote" in promotion:

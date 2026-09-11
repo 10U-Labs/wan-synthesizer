@@ -29,8 +29,8 @@ _READER: dict[str, Any] = {
         "homing-circuits": [],
         "fiber-segments": [],
         "wan-pops": [{"id": "P"}],
-        "tenant-nodes": [],
-        "provider-nodes": [],
+        "tenant-sites": [],
+        "provider-sites": [],
     },
     "serve_event": {
         "pathParameters": {"tenant": "f-35"},

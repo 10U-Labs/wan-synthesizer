@@ -114,35 +114,35 @@ def test_degree_exempt_wan_pops_must_be_a_list() -> None:
         _config({"synthesis": {"degree_exempt_wan_pops": "San Jose, CA"}})
 
 
-def test_default_has_no_forced_paths() -> None:
+def test_default_has_no_forced_circuits() -> None:
     assert len(default_config().operator_circuits.backbone) == 0
 
 
-def test_reads_forced_paths() -> None:
+def test_reads_forced_circuits() -> None:
     pinned = {"source": "Dallas, TX", "target": "Denver, CO"}
-    assert _config({"synthesis": {"forced_paths": [pinned]}}).operator_circuits.backbone == (
+    assert _config({"synthesis": {"forced_circuits": [pinned]}}).operator_circuits.backbone == (
         NamedCircuit("Dallas, TX", "Denver, CO"),
     )
 
 
-def test_forced_paths_must_be_a_list() -> None:
+def test_forced_circuits_must_be_a_list() -> None:
     with pytest.raises(ValueError):
-        _config({"synthesis": {"forced_paths": {"source": "A"}}})
+        _config({"synthesis": {"forced_circuits": {"source": "A"}}})
 
 
-def test_a_forced_path_must_be_a_mapping() -> None:
+def test_a_forced_circuit_must_be_a_mapping() -> None:
     with pytest.raises(ValueError):
-        _config({"synthesis": {"forced_paths": ["Dallas, TX"]}})
+        _config({"synthesis": {"forced_circuits": ["Dallas, TX"]}})
 
 
-def test_a_forced_path_requires_a_source_and_target() -> None:
+def test_a_forced_circuit_requires_a_source_and_target() -> None:
     with pytest.raises(ValueError):
-        _config({"synthesis": {"forced_paths": [{"source": "A"}]}})
+        _config({"synthesis": {"forced_circuits": [{"source": "A"}]}})
 
 
-def test_a_forced_path_ignores_a_leftover_type() -> None:
+def test_a_forced_circuit_ignores_a_leftover_type() -> None:
     pinned = {"source": "A", "target": "B", "type": "access-backbone"}
-    assert _config({"synthesis": {"forced_paths": [pinned]}}).operator_circuits.backbone == (
+    assert _config({"synthesis": {"forced_circuits": [pinned]}}).operator_circuits.backbone == (
         NamedCircuit("A", "B"),
     )
 
@@ -168,12 +168,12 @@ def test_a_forced_home_is_not_read_as_a_mesh_pair() -> None:
     assert len(_config({"synthesis": {"forced_homes": [home]}}).operator_circuits.backbone) == 0
 
 
-def test_default_has_no_excluded_paths() -> None:
+def test_default_has_no_prohibited_circuits() -> None:
     assert len(default_config().operator_circuits.removed_backbone) == 0
 
 
-def test_reads_excluded_paths() -> None:
-    synthesis = {"excluded_paths": [{"source": "Seattle, WA", "target": "Boise, ID"}]}
+def test_reads_prohibited_circuits() -> None:
+    synthesis = {"prohibited_circuits": [{"source": "Seattle, WA", "target": "Boise, ID"}]}
     assert _config({"synthesis": synthesis}).operator_circuits.removed_backbone == (
         NamedCircuit("Seattle, WA", "Boise, ID"),
     )
@@ -346,10 +346,10 @@ def test_forced_wan_pops_must_be_a_list() -> None:
 def _parts(**overrides: Any) -> dict[str, Any]:
     parts: dict[str, Any] = {
         "forced-wan-pops": [],
-        "forced-paths": [],
+        "forced-circuits": [],
         "forced-homes": [],
         "prohibited-wan-pops": [],
-        "prohibited-paths": [],
+        "prohibited-circuits": [],
         "wan-pop-count": {"min": 3, "max": 5},
         "backbone-number-of-diverse-circuits": {"degree": 3},
         "homing-degree": {"degree": 2},
@@ -482,12 +482,12 @@ def test_app_config_from_parts_requires_convergence_promotion() -> None:
         app_config_from_parts(parts)
 
 
-def test_app_config_from_parts_parses_the_written_paths() -> None:
+def test_app_config_from_parts_parses_the_written_circuits() -> None:
     parts = _parts(
         **{
-            "forced-paths": [{"source": "A", "target": "B"}],
+            "forced-circuits": [{"source": "A", "target": "B"}],
             "forced-homes": [{"source": "S", "target": "B"}],
-            "prohibited-paths": [{"source": "C", "target": "D"}],
+            "prohibited-circuits": [{"source": "C", "target": "D"}],
         }
     )
     assert app_config_from_parts(parts).operator_circuits == OperatorCircuits(

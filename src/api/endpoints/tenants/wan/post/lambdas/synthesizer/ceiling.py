@@ -222,7 +222,10 @@ def _no_city_twice(
 
 
 def diverse_circuits(site: str, inputs: CircuitProofInputs) -> list[tuple[str, ...]]:
-    return [pop_ids for _carrier, pop_ids in _diverse_circuits_and_their_carriers(site, inputs)]
+    return [
+        pop_ids
+        for _carrier, pop_ids in _credited(site, inputs, _per_peer(inputs), frozenset(), None)
+    ]
 
 
 def _peers_over_land(site: str, inputs: CircuitProofInputs) -> frozenset[str]:
@@ -311,12 +314,6 @@ def _credited(
         per_peer,
         shared,
     )[:most]
-
-
-def _diverse_circuits_and_their_carriers(
-    site: str, inputs: CircuitProofInputs
-) -> list[tuple[str, tuple[str, ...]]]:
-    return _credited(site, inputs, _per_peer(inputs), frozenset(), None)
 
 
 def _fiber_under(kept: list[tuple[str, tuple[str, ...]]]) -> frozenset[tuple[str, str]]:

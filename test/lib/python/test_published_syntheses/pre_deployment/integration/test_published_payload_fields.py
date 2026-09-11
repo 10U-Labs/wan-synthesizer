@@ -29,7 +29,7 @@ _SEGMENT_FIELDS = ("source_id", "target_id", "distance_miles", "submarine")
 def _subjects() -> list[tuple[str, list[dict[str, Any]], tuple[str, ...]]]:
     return [
         ("wan-pops", published.wan_pops(_PAYLOAD), _WAN_POP_FIELDS),
-        ("tenant-nodes", published.tenant_nodes(_PAYLOAD), _SITE_FIELDS),
+        ("tenant-sites", published.tenant_sites(_PAYLOAD), _SITE_FIELDS),
         ("backbone-circuits", published.backbone_circuits(_PAYLOAD), _CIRCUIT_FIELDS),
         ("homing-circuits", published.homing_circuits(_PAYLOAD), _HOMING_FIELDS),
         ("fiber-segments", published.fiber_segments(_PAYLOAD), _SEGMENT_FIELDS),
