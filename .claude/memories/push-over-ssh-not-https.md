@@ -5,6 +5,8 @@ metadata:
   type: project
 ---
 
+# Push over SSH, not HTTPS
+
 Push over SSH. `gh auth status` on this machine lists `admin:org`,
 `admin:public_key`, `delete_repo`, `gist` and `repo` and no `workflow`, so
 an HTTPS push that creates or changes anything under `.github/workflows/`
