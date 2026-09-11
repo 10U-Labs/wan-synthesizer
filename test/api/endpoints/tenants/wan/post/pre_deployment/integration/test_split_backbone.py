@@ -6,11 +6,12 @@ from unittest.mock import patch
 
 import pytest
 
+import fixtures
 from repo_utils import REPO_ROOT
 from test_module_utils import load_module_from_path
 from test_s3_store_mock import fake_s3
 from synthesizer.input_graph import FiberSegment, Site
-from synthesizer.model import Homings, Synthesis, SynthesisMetrics, is_carrier_pop
+from synthesizer.model import Homings, Synthesis, is_carrier_pop
 
 _PATH = REPO_ROOT / "src/api/endpoints/tenants/wan/post/lambdas/synthesizer/handler.py"
 _TENANT = "split"
@@ -103,12 +104,7 @@ def _synthesis_over_every_segment(
         homings=Homings([], []),
         fiber_segment_keys=set(fiber_segments),
         drawn_circuits=[],
-        metrics=SynthesisMetrics(
-            score=0.0,
-            tenant_homing_miles=0.0,
-            provider_homing_miles=0.0,
-            physical_miles=0.0,
-        ),
+        metrics=fixtures.no_miles(),
     )
 
 

@@ -6,7 +6,6 @@ from synthesizer.model import (
     Homings,
     HomingCircuit,
     Synthesis,
-    SynthesisMetrics,
     MeshRequirements,
     SynthesisCircuit,
     ValidationReport,
@@ -30,12 +29,7 @@ def build_synthesis(
         homings=Homings(homing_circuits, []),
         fiber_segment_keys={segment_key(left, right) for left, right in physical_pairs},
         drawn_circuits=[],
-        metrics=SynthesisMetrics(
-            score=0.0,
-            tenant_homing_miles=0.0,
-            provider_homing_miles=0.0,
-            physical_miles=0.0,
-        ),
+        metrics=fixtures.no_miles(),
     )
 
 
@@ -108,12 +102,7 @@ def _mesh_synthesis(wan_pop_ids: tuple[str, ...], pairs: list[tuple[str, str]]) 
             SynthesisCircuit("backbone_mesh", left, right, (left, right), 1.0)
             for left, right in pairs
         ],
-        metrics=SynthesisMetrics(
-            score=0.0,
-            tenant_homing_miles=0.0,
-            provider_homing_miles=0.0,
-            physical_miles=0.0,
-        ),
+        metrics=fixtures.no_miles(),
     )
 
 
@@ -255,12 +244,7 @@ def _drawn_synthesis(
         homings=Homings([], []),
         fiber_segment_keys=set(),
         drawn_circuits=drawn_circuits,
-        metrics=SynthesisMetrics(
-            score=0.0,
-            tenant_homing_miles=0.0,
-            provider_homing_miles=0.0,
-            physical_miles=0.0,
-        ),
+        metrics=fixtures.no_miles(),
     )
 
 
@@ -341,7 +325,7 @@ def test_bowtie_backbone_is_not_survives_any_one_site_loss() -> None:
 _DISCONNECTED = build_synthesis(
     wan_pop_ids=("B1", "B2", "B3", "B4"),
     transit_ids=(),
-    homings=Homings([], []),
+    homing_circuits=[],
     physical_pairs=[("B1", "B2"), ("B3", "B4")],
 )
 _DISCONNECTED_SITES = [make_pop(name) for name in ("B1", "B2", "B3", "B4")]

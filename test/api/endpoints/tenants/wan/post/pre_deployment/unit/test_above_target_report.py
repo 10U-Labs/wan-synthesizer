@@ -11,7 +11,6 @@ from synthesizer.model import (
     CIRCUIT_FOR_RELIEF,
     CIRCUIT_FOR_TARGET,
     Synthesis,
-    SynthesisMetrics,
     MeshRequirements,
     SynthesisCircuit,
 )
@@ -38,12 +37,7 @@ def _above_target(*extra: SynthesisCircuit) -> list[dict[str, object]]:
         homings=Homings([], []),
         fiber_segment_keys=set(),
         drawn_circuits=[*_ASKED_FOR, *extra],
-        metrics=SynthesisMetrics(
-            score=0.0,
-            tenant_homing_miles=0.0,
-            provider_homing_miles=0.0,
-            physical_miles=0.0,
-        ),
+        metrics=fixtures.no_miles(),
     )
     report = validate_synthesis(
         [fixtures.carrier_pop(site) for site in _SITES],

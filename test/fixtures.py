@@ -54,7 +54,7 @@ _FIXTURE_STATE = "XX"
 _FIXTURE_COUNTRY = "United States"
 
 
-def _no_miles() -> SynthesisMetrics:
+def no_miles() -> SynthesisMetrics:
     return SynthesisMetrics(
         score=0.0, tenant_homing_miles=0.0, provider_homing_miles=0.0, physical_miles=0.0
     )
@@ -125,7 +125,7 @@ def meshed_backbone_synthesis(
             SynthesisCircuit("backbone_mesh", pop_ids[0], pop_ids[-1], pop_ids, 1.0)
             for pop_ids in circuits
         ],
-        metrics=_no_miles(),
+        metrics=no_miles(),
     )
 
 
@@ -161,7 +161,7 @@ def split_backbone_synthesis() -> Synthesis:
             segment_key(left, right) for left, right in SPLIT_BACKBONE_SEGMENTS
         },
         drawn_circuits=[],
-        metrics=_no_miles(),
+        metrics=no_miles(),
     )
 
 

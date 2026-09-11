@@ -427,15 +427,16 @@ _KIND_OF = {"tenant_to_backbone": "tenant", "provider_to_backbone": "provider"}
 
 
 def _homing_miles_served(synthesis: dict[str, Any], kind: str) -> float:
-    return sum(
+    miles: list[float] = [
         circuit["distance_miles"]
         for circuit in synthesis["homings"]
         if _KIND_OF[circuit["homing_kind"]] == kind
-    )
+    ]
+    return sum(miles)
 
 
 def _figure_off_its_circuits(synthesis: dict[str, Any], kind: str) -> bool:
-    published = synthesis["status"]["homing_miles"][kind]
+    published: float = synthesis["status"]["homing_miles"][kind]
     slack = (len(synthesis["homings"]) + 1) * _ROUNDED_TO / 2
     return abs(published - _homing_miles_served(synthesis, kind)) > slack
 
