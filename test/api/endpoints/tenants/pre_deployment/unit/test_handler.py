@@ -27,13 +27,13 @@ _READER: dict[str, Any] = {
     "stored": {
         "sites": [],
         "paths": [],
-        "backbone-nodes": [{"id": "P"}],
+        "wan-pops": [{"id": "P"}],
         "tenant-nodes": [],
         "provider-nodes": [],
     },
     "serve_event": {
         "pathParameters": {"tenant": "f-35"},
-        "path": "/x/tenants/f-35/backbone-nodes",
+        "path": "/x/tenants/f-35/wan-pops",
     },
     "serve_expect": [{"id": "P"}],
     "unknown_event": {
@@ -199,10 +199,10 @@ def test_tenant_put_persists_the_forced_homes_document(monkeypatch: pytest.Monke
     assert _stored_put(monkeypatch, "forced-homes", homes) == homes
 
 
-def test_tenant_put_persists_the_degree_exempt_backbone_nodes_document(
+def test_tenant_put_persists_the_degree_exempt_wan_pops_document(
         monkeypatch: pytest.MonkeyPatch) -> None:
     exempt = ["San Jose, CA"]
-    assert _stored_put(monkeypatch, "degree-exempt-backbone-nodes", exempt) == exempt
+    assert _stored_put(monkeypatch, "degree-exempt-wan-pops", exempt) == exempt
 
 
 def test_tenant_rejects_a_malformed_site_input(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -230,7 +230,7 @@ def test_tenant_put_does_not_trigger_a_build(monkeypatch: pytest.MonkeyPatch) ->
     module = _tenant(monkeypatch)
     invocations: list[dict[str, Any]] = []
     with patch("boto3.client", side_effect=write_clients({}, invocations)):
-        module.lambda_handler(_tenant_put("forced-backbone-nodes", []), None)
+        module.lambda_handler(_tenant_put("forced-wan-pops", []), None)
     assert not invocations
 
 

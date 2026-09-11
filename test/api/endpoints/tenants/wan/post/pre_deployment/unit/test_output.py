@@ -21,7 +21,7 @@ ARTIFACTS = fixtures.ring_artifacts()
 
 def _synthesis_with_homed_demand(source: str) -> Synthesis:
     return Synthesis(
-        backbone_ids=(),
+        wan_pop_ids=(),
         transit_ids=(),
         homing_circuits=[HomingCircuit(source, "b", 1.0)],
         fiber_segment_keys=set(),
@@ -49,14 +49,14 @@ def test_synthesis_payload_sites_carry_location() -> None:
     )
 
 
-def test_synthesis_payload_summary_reports_backbone_count() -> None:
+def test_synthesis_payload_summary_reports_wan_pop_count() -> None:
     summary = synthesis_payload(ARTIFACTS)["summary"]
-    assert summary["backbone_count"] == len(ARTIFACTS.synthesis.backbone_ids)
+    assert summary["wan_pop_count"] == len(ARTIFACTS.synthesis.wan_pop_ids)
 
 
-def test_synthesis_payload_summary_lists_backbone_node_names() -> None:
+def test_synthesis_payload_summary_lists_wan_pop_names() -> None:
     summary = synthesis_payload(ARTIFACTS)["summary"]
-    assert len(summary["backbone_nodes"]) == len(ARTIFACTS.synthesis.backbone_ids)
+    assert len(summary["wan_pops"]) == len(ARTIFACTS.synthesis.wan_pop_ids)
 
 
 def test_synthesis_payload_summary_publishes_the_floor_under_the_fiber_it_ordered() -> None:

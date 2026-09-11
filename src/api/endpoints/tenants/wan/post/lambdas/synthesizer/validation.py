@@ -20,7 +20,7 @@ from synthesizer.graphs import (
 )
 
 
-def node_mesh_target(site: str, targets: MeshRequirements) -> int:
+def wan_pop_mesh_target(site: str, targets: MeshRequirements) -> int:
     ceilings = targets.ceilings
     if ceilings is None or site not in ceilings:
         return targets.number_of_diverse_circuits
@@ -28,18 +28,18 @@ def node_mesh_target(site: str, targets: MeshRequirements) -> int:
 
 
 def backbone_mesh_deficient(
-    backbone_ids: tuple[str, ...],
-    backbone_degrees: dict[str, int],
+    wan_pop_ids: tuple[str, ...],
+    wan_pop_degrees: dict[str, int],
     sites_by_id: dict[str, Site],
     targets: MeshRequirements,
 ) -> list[dict[str, object]]:
-    if len(backbone_ids) <= targets.number_of_diverse_circuits:
+    if len(wan_pop_ids) <= targets.number_of_diverse_circuits:
         return []
     return [
-        {"id": backbone_id, "name": sites_by_id[backbone_id].name, "degree": degree}
-        for backbone_id, degree in sorted(backbone_degrees.items())
-        if degree < node_mesh_target(backbone_id, targets)
-        and backbone_id not in targets.degree_exempt
+        {"id": wan_pop_id, "name": sites_by_id[wan_pop_id].name, "degree": degree}
+        for wan_pop_id, degree in sorted(wan_pop_degrees.items())
+        if degree < wan_pop_mesh_target(wan_pop_id, targets)
+        and wan_pop_id not in targets.degree_exempt
     ]
 
 
@@ -52,7 +52,7 @@ def synthesis_site_pairs(synthesis: Synthesis) -> set[tuple[str, str]]:
     return pairs
 
 def included_site_ids(synthesis: Synthesis) -> set[str]:
-    ids = set(synthesis.backbone_ids) | set(synthesis.transit_ids)
+    ids = set(synthesis.wan_pop_ids) | set(synthesis.transit_ids)
     ids.update(site_id for key in synthesis.fiber_segment_keys for site_id in key)
     ids.update(homing_circuit.source for homing_circuit in synthesis.homing_circuits)
     ids.update(homing_circuit.target for homing_circuit in synthesis.homing_circuits)
@@ -88,7 +88,7 @@ def backbone_mesh_fiber_segments(synthesis: Synthesis) -> set[tuple[str, str]]:
 def _backbone_mesh_survives(
     synthesis: Synthesis, is_resilient: Callable[[set[str], set[tuple[str, str]]], bool]
 ) -> bool:
-    ids = set(synthesis.backbone_ids)
+    ids = set(synthesis.wan_pop_ids)
     if len(ids) < 2:
         return True
     segments = backbone_mesh_fiber_segments(synthesis)
@@ -170,21 +170,21 @@ def backbone_mesh_independence_deficient(
 ) -> list[dict[str, object]]:
     return [
         {
-            "id": backbone_id,
-            "name": sites_by_id[backbone_id].name,
+            "id": wan_pop_id,
+            "name": sites_by_id[wan_pop_id].name,
             "independent_degree": degree,
         }
-        for backbone_id, degree in sorted(
+        for wan_pop_id, degree in sorted(
             (site, diverse_circuit_count(synthesis.drawn_circuits, site))
-            for site in synthesis.backbone_ids
+            for site in synthesis.wan_pop_ids
         )
-        if degree < node_mesh_target(backbone_id, targets)
-        and backbone_id not in targets.degree_exempt
+        if degree < wan_pop_mesh_target(wan_pop_id, targets)
+        and wan_pop_id not in targets.degree_exempt
     ]
 
 
 def _ceilings_where(
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     ceilings: Mapping[str, int] | None,
     keep: Callable[[int], bool],
 ) -> list[tuple[str, int]]:
@@ -192,43 +192,43 @@ def _ceilings_where(
         return []
     return [
         (site, ceilings[site])
-        for site in sorted(backbone_ids)
+        for site in sorted(wan_pop_ids)
         if site in ceilings and keep(ceilings[site])
     ]
 
 
 def _ceiling_rows(
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     sites_by_id: dict[str, Site],
     ceilings: Mapping[str, int] | None,
     keep: Callable[[int], bool],
 ) -> list[dict[str, object]]:
     return [
         {"id": site, "name": sites_by_id[site].name, "ceiling": ceiling}
-        for site, ceiling in _ceilings_where(backbone_ids, ceilings, keep)
+        for site, ceiling in _ceilings_where(wan_pop_ids, ceilings, keep)
     ]
 
 
 def diverse_circuit_ceilings_reported(
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     sites_by_id: dict[str, Site],
     targets: MeshRequirements,
 ) -> list[dict[str, object]]:
     return [
-        dict(row, target=node_mesh_target(str(row["id"]), targets))
+        dict(row, target=wan_pop_mesh_target(str(row["id"]), targets))
         for row in _ceiling_rows(
-            backbone_ids, sites_by_id, targets.ceilings, lambda _ceiling: True
+            wan_pop_ids, sites_by_id, targets.ceilings, lambda _ceiling: True
         )
     ]
 
 
-def ceiling_limited_nodes(
-    backbone_ids: tuple[str, ...],
+def ceiling_limited_wan_pops(
+    wan_pop_ids: tuple[str, ...],
     sites_by_id: dict[str, Site],
     targets: MeshRequirements,
 ) -> list[dict[str, object]]:
     return _ceiling_rows(
-        backbone_ids, sites_by_id, targets.ceilings,
+        wan_pop_ids, sites_by_id, targets.ceilings,
         lambda value: value < targets.number_of_diverse_circuits,
     )
 
@@ -262,14 +262,14 @@ def unrequested_mesh_circuits(synthesis: Synthesis, site: str) -> list[dict[str,
     return sorted(unrequested, key=lambda item: (str(item["peer"]), str(item["reason"])))
 
 
-def above_target_nodes(
+def above_target_wan_pops(
     synthesis: Synthesis,
     sites_by_id: dict[str, Site],
     targets: MeshRequirements,
 ) -> list[dict[str, object]]:
     asked_for = targets.number_of_diverse_circuits
     rows: list[dict[str, object]] = []
-    for site in sorted(synthesis.backbone_ids):
+    for site in sorted(synthesis.wan_pop_ids):
         circuits = mesh_circuits_out_of(synthesis, site)
         if len(circuits) <= asked_for:
             continue
@@ -294,9 +294,9 @@ def neighbor_degrees(
             neighbors[right].add(left)
     return {site_id: len(value) for site_id, value in neighbors.items()}
 
-def backbone_names_by_group(sites: list[Site], synthesis: Synthesis) -> list[list[str]]:
+def wan_pop_names_by_group(sites: list[Site], synthesis: Synthesis) -> list[list[str]]:
     names = {site.id: site.name for site in sites}
-    seated = set(synthesis.backbone_ids)
+    seated = set(synthesis.wan_pop_ids)
     return [
         [names[site_id] for site_id in group if site_id in seated]
         for group in connected_components(
@@ -317,9 +317,9 @@ def validate_synthesis(
     degrees = neighbor_degrees(ids, pairs)
     articulations = articulation_points(ids, pairs) if len(components) == 1 else set()
     missing_redundancy = sites_below_homing_degree(synthesis, homing_degree)
-    backbone_degrees = neighbor_degrees(set(synthesis.backbone_ids), backbone_mesh_pairs(synthesis))
+    wan_pop_degrees = neighbor_degrees(set(synthesis.wan_pop_ids), backbone_mesh_pairs(synthesis))
     mesh_deficient = backbone_mesh_deficient(
-        synthesis.backbone_ids, backbone_degrees, sites_by_id, targets
+        synthesis.wan_pop_ids, wan_pop_degrees, sites_by_id, targets
     )
     independence_deficient = backbone_mesh_independence_deficient(
         synthesis, sites_by_id, targets
@@ -350,16 +350,16 @@ def validate_synthesis(
         "backbone_meets_independent_mesh_link_target": not independence_deficient,
         "backbone_mesh_independence_deficient": independence_deficient,
         "backbone_degree_exempt": [
-            {"id": backbone_id, "name": sites_by_id[backbone_id].name}
-            for backbone_id in sorted(set(synthesis.backbone_ids) & targets.degree_exempt)
+            {"id": wan_pop_id, "name": sites_by_id[wan_pop_id].name}
+            for wan_pop_id in sorted(set(synthesis.wan_pop_ids) & targets.degree_exempt)
         ],
         "backbone_diverse_circuits_ceilings": diverse_circuit_ceilings_reported(
-            synthesis.backbone_ids, sites_by_id, targets
+            synthesis.wan_pop_ids, sites_by_id, targets
         ),
-        "backbone_diverse_circuits_ceiling_limited": ceiling_limited_nodes(
-            synthesis.backbone_ids, sites_by_id, targets
+        "backbone_diverse_circuits_ceiling_limited": ceiling_limited_wan_pops(
+            synthesis.wan_pop_ids, sites_by_id, targets
         ),
-        "backbone_diverse_circuits_above_target": above_target_nodes(
+        "backbone_diverse_circuits_above_target": above_target_wan_pops(
             synthesis, sites_by_id, targets
         ),
         "backbone_mesh_survives_any_one_link_loss":

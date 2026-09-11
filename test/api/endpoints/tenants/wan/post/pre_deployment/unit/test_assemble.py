@@ -13,9 +13,9 @@ from fixtures import (
 from synthesizer.model import HomingCircuit, SynthesisInputs, ForcedCircuits
 from synthesizer.assemble import (
     assign_homes,
-    backbone_physically_biconnectable,
-    build_synthesis_for_backbone,
-    forced_backbone_resilience_error,
+    wan_pops_physically_biconnectable,
+    build_synthesis_for_wan_pops,
+    forced_wan_pop_resilience_error,
 )
 
 pop = fixtures.carrier_pop
@@ -37,7 +37,7 @@ def _homing_counts(homing_circuits: list[HomingCircuit]) -> dict[str, int]:
     return counts
 
 
-def test_assign_homes_homes_a_demand_site_to_two_backbone_nodes() -> None:
+def test_assign_homes_homes_a_demand_site_to_two_wan_pops() -> None:
     result = assign_homes(("c1", "c2"), _dual_inputs(), search_plan([]))
     assert _homing_counts(result or []) == {"s": 2}
 
@@ -72,10 +72,10 @@ def test_assign_homes_leads_with_a_forced_home() -> None:
 def test_build_synthesis_returns_none_without_homing() -> None:
     inputs = _dual_inputs()
     plan = search_plan([], homing_degree=2)
-    assert build_synthesis_for_backbone(("c1",), inputs, plan) is None
+    assert build_synthesis_for_wan_pops(("c1",), inputs, plan) is None
 
 
-def test_build_synthesis_returns_none_when_nodes_are_not_meshed() -> None:
+def test_build_synthesis_returns_none_when_wan_pops_are_not_meshed() -> None:
     fiber = physical(
         {
             ("c1", "g1"): 1.0, ("c2", "g1"): 1.0, ("c1", "g2"): 1.0, ("c2", "g2"): 1.0,
@@ -85,12 +85,12 @@ def test_build_synthesis_returns_none_when_nodes_are_not_meshed() -> None:
     inputs = synthesis_inputs_from_fiber(
         ["c1", "c2", "c3", "g1", "g2", "z"], fiber, {"c1", "c2", "c3"}, [access("s")]
     )
-    assert build_synthesis_for_backbone(("c1", "c2", "c3"), inputs, search_plan([])) is None
+    assert build_synthesis_for_wan_pops(("c1", "c2", "c3"), inputs, search_plan([])) is None
 
 
 def test_build_synthesis_builds_a_full_synthesis() -> None:
-    synthesis = build_synthesis_for_backbone(("c1", "c2"), _dual_inputs(), search_plan([]))
-    assert set(synthesis.backbone_ids if synthesis else ()) == {"c1", "c2"}
+    synthesis = build_synthesis_for_wan_pops(("c1", "c2"), _dual_inputs(), search_plan([]))
+    assert set(synthesis.wan_pop_ids if synthesis else ()) == {"c1", "c2"}
 
 
 def _two_pocket_inputs() -> SynthesisInputs:
@@ -102,27 +102,27 @@ def _bowtie_inputs() -> SynthesisInputs:
 
 
 def test_physically_biconnectable_within_one_block() -> None:
-    assert backbone_physically_biconnectable(("a", "b"), _two_pocket_inputs()) is True
+    assert wan_pops_physically_biconnectable(("a", "b"), _two_pocket_inputs()) is True
 
 
 def test_not_physically_biconnectable_across_a_bridge() -> None:
-    assert backbone_physically_biconnectable(("a", "d"), _two_pocket_inputs()) is False
+    assert wan_pops_physically_biconnectable(("a", "d"), _two_pocket_inputs()) is False
 
 
 def test_not_physically_biconnectable_across_a_cut_city() -> None:
-    assert backbone_physically_biconnectable(("a", "d"), _bowtie_inputs()) is False
+    assert wan_pops_physically_biconnectable(("a", "d"), _bowtie_inputs()) is False
 
 
 def test_physically_biconnectable_within_one_bowtie_lobe() -> None:
-    assert backbone_physically_biconnectable(("a", "b"), _bowtie_inputs()) is True
+    assert wan_pops_physically_biconnectable(("a", "b"), _bowtie_inputs()) is True
 
 
-def test_not_biconnectable_with_no_backbone_nodes() -> None:
-    assert backbone_physically_biconnectable((), _bowtie_inputs()) is False
+def test_not_biconnectable_with_no_wan_pops() -> None:
+    assert wan_pops_physically_biconnectable((), _bowtie_inputs()) is False
 
 
-def test_forced_resilience_error_for_forced_nodes_split_across_pockets() -> None:
-    assert forced_backbone_resilience_error(
+def test_forced_resilience_error_for_forced_wan_pops_split_across_pockets() -> None:
+    assert forced_wan_pop_resilience_error(
         frozenset({"a", "d"}), _two_pocket_inputs(), 2
     ) is not None
 
@@ -132,15 +132,15 @@ def _triangle_inputs() -> SynthesisInputs:
 
 
 def test_forced_resilience_error_for_a_pocket_too_small_for_the_floor() -> None:
-    assert forced_backbone_resilience_error(frozenset({"a"}), _two_pocket_inputs(), 5) is not None
+    assert forced_wan_pop_resilience_error(frozenset({"a"}), _two_pocket_inputs(), 5) is not None
 
 
 def test_forced_resilience_error_none_for_a_healthy_forced_node() -> None:
-    assert forced_backbone_resilience_error(frozenset({"a"}), _triangle_inputs(), 2) is None
+    assert forced_wan_pop_resilience_error(frozenset({"a"}), _triangle_inputs(), 2) is None
 
 
-def test_forced_resilience_error_none_without_forced_nodes() -> None:
-    assert forced_backbone_resilience_error(frozenset(), _triangle_inputs(), 2) is None
+def test_forced_resilience_error_none_without_forced_wan_pops() -> None:
+    assert forced_wan_pop_resilience_error(frozenset(), _triangle_inputs(), 2) is None
 
 
 DUAL_FIBER = physical(

@@ -12,12 +12,12 @@ def _payload() -> dict[str, Any]:
     return synthesis_payload(fixtures.ring_artifacts())
 
 
-def _synthesis(backbone_ids: tuple[str, ...], transit_ids: tuple[str, ...]) -> Synthesis:
-    return Synthesis(backbone_ids, transit_ids, [], set(), [], SynthesisMetrics(0.0, 0.0, 0.0))
+def _synthesis(wan_pop_ids: tuple[str, ...], transit_ids: tuple[str, ...]) -> Synthesis:
+    return Synthesis(wan_pop_ids, transit_ids, [], set(), [], SynthesisMetrics(0.0, 0.0, 0.0))
 
 
-def test_site_role_backbone_for_selected_pop() -> None:
-    assert gc.site_role(fixtures.carrier_pop("a"), _synthesis(("a",), ())) == "backbone"
+def test_site_role_wan_pop_for_selected_pop() -> None:
+    assert gc.site_role(fixtures.carrier_pop("a"), _synthesis(("a",), ())) == "wan_pop"
 
 
 def test_site_role_transit_for_routing_only_pop() -> None:
@@ -46,8 +46,8 @@ def test_paths_combines_access_and_carrier_fiber() -> None:
     assert gc.paths(payload) == payload["access_paths"] + payload["fiber_segments"]
 
 
-def test_backbone_nodes_are_all_tier_backbone() -> None:
-    assert all(site["tier_role"] == "backbone" for site in gc.backbone_nodes(_payload()))
+def test_wan_pops_are_all_tier_wan_pop() -> None:
+    assert all(site["tier_role"] == "wan_pop" for site in gc.wan_pops(_payload()))
 
 
 def test_tenant_nodes_are_all_tier_tenant() -> None:

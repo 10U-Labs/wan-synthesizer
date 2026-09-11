@@ -231,13 +231,13 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/backbone-nodes": {
+    "/wan-synthesizer/tenants/{tenant}/wan-pops": {
       "get": {
-        "summary": "A tenant WAN's backbone tier.",
+        "summary": "A tenant WAN's seated WAN PoPs.",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The backbone nodes." } },
+        "responses": { "200": { "description": "The WAN PoPs." } },
         "x-amazon-apigateway-integration": {
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
@@ -365,17 +365,17 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/forced-backbone-nodes": {
+    "/wan-synthesizer/tenants/{tenant}/forced-wan-pops": {
       "get": {
-        "summary": "A tenant's forced backbone nodes (input).",
+        "summary": "A tenant's forced WAN PoPs (input).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The forced backbone nodes." } },
+        "responses": { "200": { "description": "The forced WAN PoPs." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       },
       "put": {
-        "summary": "Replace a tenant's forced backbone nodes (stores only).",
+        "summary": "Replace a tenant's forced WAN PoPs (stores only).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The forced backbone nodes were replaced." } },
+        "responses": { "200": { "description": "The forced WAN PoPs were replaced." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
@@ -407,31 +407,31 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/prohibited-backbone-nodes": {
+    "/wan-synthesizer/tenants/{tenant}/prohibited-wan-pops": {
       "get": {
-        "summary": "A tenant's prohibited backbone nodes (input).",
+        "summary": "A tenant's prohibited WAN PoPs (input).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The prohibited backbone nodes." } },
+        "responses": { "200": { "description": "The prohibited WAN PoPs." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       },
       "put": {
-        "summary": "Replace a tenant's prohibited backbone nodes (stores only).",
+        "summary": "Replace a tenant's prohibited WAN PoPs (stores only).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The prohibited backbone nodes were replaced." } },
+        "responses": { "200": { "description": "The prohibited WAN PoPs were replaced." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/degree-exempt-backbone-nodes": {
+    "/wan-synthesizer/tenants/{tenant}/degree-exempt-wan-pops": {
       "get": {
-        "summary": "A tenant's degree-exempt backbone nodes (input).",
+        "summary": "A tenant's degree-exempt WAN PoPs (input).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The degree-exempt backbone nodes." } },
+        "responses": { "200": { "description": "The degree-exempt WAN PoPs." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       },
       "put": {
-        "summary": "Replace a tenant's degree-exempt backbone nodes (stores only).",
+        "summary": "Replace a tenant's degree-exempt WAN PoPs (stores only).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The degree-exempt backbone nodes were replaced." } },
+        "responses": { "200": { "description": "The degree-exempt WAN PoPs were replaced." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
@@ -449,17 +449,17 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/backbone-node-count": {
+    "/wan-synthesizer/tenants/{tenant}/wan-pop-count": {
       "get": {
-        "summary": "A tenant's backbone node count, min and max (input).",
+        "summary": "A tenant's WAN PoP count, min and max (input).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The backbone node count." } },
+        "responses": { "200": { "description": "The WAN PoP count." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       },
       "put": {
-        "summary": "Replace a tenant's backbone node count (stores only).",
+        "summary": "Replace a tenant's WAN PoP count (stores only).",
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The backbone node count was replaced." } },
+        "responses": { "200": { "description": "The WAN PoP count was replaced." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },

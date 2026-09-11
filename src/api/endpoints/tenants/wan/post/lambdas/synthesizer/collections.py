@@ -10,8 +10,8 @@ from synthesizer.model import Synthesis, is_carrier_pop
 def site_role(site: Site, synthesis: Synthesis) -> str:
     if not is_carrier_pop(site):
         return "provider" if site.kind == PROVIDER_KIND else "tenant"
-    if site.id in synthesis.backbone_ids:
-        return "backbone"
+    if site.id in synthesis.wan_pop_ids:
+        return "wan_pop"
     if site.id in synthesis.transit_ids:
         return "transit"
     return "unused"
@@ -39,8 +39,8 @@ def _tier(payload: dict[str, Any], tier_role: str) -> list[dict[str, Any]]:
     return [site for site in payload["sites"] if site["tier_role"] == tier_role]
 
 
-def backbone_nodes(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    return _tier(payload, "backbone")
+def wan_pops(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    return _tier(payload, "wan_pop")
 
 
 def tenant_nodes(payload: dict[str, Any]) -> list[dict[str, Any]]:

@@ -18,7 +18,7 @@ from synthesizer.coverage import (
     coverage_report,
     coverage_worst_haul,
     hauls,
-    grow_backbone_for_coverage,
+    grow_wan_pops_for_coverage,
 )
 
 pop = fixtures.carrier_pop
@@ -37,25 +37,25 @@ def _wired_to_base(names: tuple[str, ...]) -> dict[tuple[str, str], FiberSegment
 
 def test_hauls_report_each_site_by_its_nearest_node() -> None:
     pops = {
-        "node_w": pop("node_w", 40.0, -100.0),
-        "node_e": pop("node_e", 40.0, -80.0),
+        "pop_w": pop("pop_w", 40.0, -100.0),
+        "pop_e": pop("pop_e", 40.0, -80.0),
         "near": access("near", 40.0, -99.0),
         "far": access("far", 40.0, -90.0),
     }
     expected = [
-        haversine_miles(pops["near"], pops["node_w"]),
-        haversine_miles(pops["far"], pops["node_w"]),
+        haversine_miles(pops["near"], pops["pop_w"]),
+        haversine_miles(pops["far"], pops["pop_w"]),
     ]
-    result = hauls(("node_w", "node_e"), [pops["near"], pops["far"]], pops)
+    result = hauls(("pop_w", "pop_e"), [pops["near"], pops["far"]], pops)
     assert result == pytest.approx(expected)
 
 
 def test_the_coverage_profile_ignores_exempt_sites() -> None:
-    pops = {"node": pop("node", 40.0, -100.0)}
+    pops = {"pop": pop("pop", 40.0, -100.0)}
     near = access("near", 40.0, -99.0)
     far = replace(access("far", 10.0, -160.0), exempt_from_distance_constraint=True)
-    assert coverage_haul_profile(("node",), [near, far], pops) == pytest.approx(
-        (haversine_miles(near, pops["node"]),)
+    assert coverage_haul_profile(("pop",), [near, far], pops) == pytest.approx(
+        (haversine_miles(near, pops["pop"]),)
     )
 
 
@@ -158,13 +158,13 @@ def _grown(candidates: list[str], target_miles: int) -> tuple[str, ...]:
     )
     plan = search_plan(candidates)
     params = SynthesisParams(
-        min_backbone_count=2, tuning=Tuning(backbone_coverage_target_miles=target_miles)
+        min_wan_pop_count=2, tuning=Tuning(backbone_coverage_target_miles=target_miles)
     )
-    grown = grow_backbone_for_coverage(
+    grown = grow_wan_pops_for_coverage(
         ("b1", "b2"), inputs, plan, params,
         {carrier.id: carrier for carrier in inputs.carrier_pops},
     )
-    return tuple(sorted(grown.backbone_ids))
+    return tuple(sorted(grown.wan_pop_ids))
 
 
 def test_growth_continues_when_the_two_worst_sites_are_a_hub_apart_each() -> None:

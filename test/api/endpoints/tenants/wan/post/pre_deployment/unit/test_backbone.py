@@ -9,7 +9,7 @@ from synthesizer.model import (
     SynthesisCircuit,
 )
 from synthesizer.backbone import (
-    BackboneConstraints,
+    WanPopConstraints,
     BackboneMesh,
     _needed,
     backbone_mesh,
@@ -41,7 +41,7 @@ def _distances(
 def _drawn(
     sites: tuple[str, ...],
     fiber: dict[tuple[str, str], FiberSegment],
-    constraints: BackboneConstraints,
+    constraints: WanPopConstraints,
 ) -> BackboneMesh:
     return backbone_mesh(sites, _distances(fiber), fiber, constraints)
 
@@ -49,7 +49,7 @@ def _drawn(
 def _selected(
     fiber: dict[tuple[str, str], FiberSegment],
     sites: tuple[str, ...],
-    constraints: BackboneConstraints,
+    constraints: WanPopConstraints,
 ) -> frozenset[tuple[str, str]]:
     return select_fiber(FiberInputs(
         sites, fiber, constraints.number_of_diverse_circuits,
@@ -57,8 +57,8 @@ def _selected(
     )).segments
 
 
-def _asking(asked_for: int = 2) -> BackboneConstraints:
-    return BackboneConstraints(number_of_diverse_circuits=asked_for, seat_cap=4)
+def _asking(asked_for: int = 2) -> WanPopConstraints:
+    return WanPopConstraints(number_of_diverse_circuits=asked_for, seat_cap=4)
 
 
 def _pairs(mesh: BackboneMesh) -> set[tuple[str, str]]:
@@ -94,7 +94,7 @@ _SQUARE_FIBER = physical({
     ("w", "x"): 100.0, ("x", "y"): 100.0, ("y", "z"): 100.0, ("z", "w"): 100.0,
     ("w", "y"): 250.0, ("x", "z"): 250.0,
 })
-_TWO_DIVERSE_CIRCUITS = BackboneConstraints(number_of_diverse_circuits=2, seat_cap=4)
+_TWO_DIVERSE_CIRCUITS = WanPopConstraints(number_of_diverse_circuits=2, seat_cap=4)
 _SQUARE = _drawn(_SQUARE_SITES, _SQUARE_FIBER, _TWO_DIVERSE_CIRCUITS)
 
 
@@ -141,7 +141,7 @@ _EGRESS_FIBER = physical({
     ("hub", "m"): 10.0, ("m", "p"): 10.0, ("m", "q"): 10.0,
     ("hub", "n"): 11.0, ("n", "q"): 11.0, ("p", "q"): 10.0,
 })
-_EGRESS = _drawn(_EGRESS_SITES, _EGRESS_FIBER, BackboneConstraints(
+_EGRESS = _drawn(_EGRESS_SITES, _EGRESS_FIBER, WanPopConstraints(
     number_of_diverse_circuits=2, seat_cap=3,
 ))
 
@@ -232,7 +232,7 @@ def test_a_tenant_that_asked_for_one_circuit_is_not_given_a_circuit_round_anythi
     ] == []
 
 
-_OFFERED_TERMS = BackboneConstraints(number_of_diverse_circuits=2, seat_cap=2)
+_OFFERED_TERMS = WanPopConstraints(number_of_diverse_circuits=2, seat_cap=2)
 _OFFERED_MESH = _drawn(
     fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_FIBER, _OFFERED_TERMS
 )
@@ -252,13 +252,13 @@ def test_a_site_is_drawn_over_fiber_one_carrier_could_offer_it() -> None:
     )
 
 
-_PRUNED = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
+_PRUNED = _drawn(_SQUARE_SITES, _SQUARE_FIBER, WanPopConstraints(
     removed_pairs=frozenset({segment_key("w", "x")}), number_of_diverse_circuits=2, seat_cap=4,
 ))
-_PINNED_CHORD = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
+_PINNED_CHORD = _drawn(_SQUARE_SITES, _SQUARE_FIBER, WanPopConstraints(
     number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
 ))
-_PINNED_SEGMENT = _drawn(_SQUARE_SITES, _SQUARE_FIBER, BackboneConstraints(
+_PINNED_SEGMENT = _drawn(_SQUARE_SITES, _SQUARE_FIBER, WanPopConstraints(
     number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "x")}), seat_cap=4,
 ))
 
@@ -288,7 +288,7 @@ def test_a_pin_over_fiber_the_synthesis_would_have_selected_anyway_is_still_a_pi
 
 
 _ISLANDS = physical({("a", "b"): 1.0, ("c", "d"): 1.0})
-_ISLAND_PIN = _drawn(("a", "c"), _ISLANDS, BackboneConstraints(
+_ISLAND_PIN = _drawn(("a", "c"), _ISLANDS, WanPopConstraints(
     forced_pairs=frozenset({segment_key("a", "c")}),
 ))
 
@@ -303,7 +303,7 @@ def test_a_backbone_the_fiber_never_joins_is_floored_at_nothing() -> None:
 
 def test_a_site_the_fiber_does_not_carry_costs_the_others_nothing() -> None:
     fiber = physical({("a", "b"): 1.0})
-    mesh = _drawn(("a", "b", "zed"), fiber, BackboneConstraints(number_of_diverse_circuits=1))
+    mesh = _drawn(("a", "b", "zed"), fiber, WanPopConstraints(number_of_diverse_circuits=1))
     assert _pairs(mesh) == {segment_key("a", "b")}
 
 
@@ -367,7 +367,7 @@ _WHOLE_SQUARE = fixtures.carrier_fiber_segments({
     ("w", "z"): (100.0, ("zayo",)),
     ("z", "y"): (100.0, ("zayo",)),
 })
-_PIN_WY = BackboneConstraints(
+_PIN_WY = WanPopConstraints(
     number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
 )
 

@@ -23,10 +23,10 @@ def _site(name: str, latitude: float, exempt: bool) -> dict[str, Any]:
 
 
 def _synthesis(*demand: dict[str, Any]) -> dict[str, Any]:
-    return {"backbone": [_SOUTH, _NORTH], "demand": list(demand)}
+    return {"wan_pops": [_SOUTH, _NORTH], "demand": list(demand)}
 
 
-def test_the_worst_haul_is_the_farthest_site_from_the_node_nearest_it() -> None:
+def test_the_worst_haul_is_the_farthest_site_from_the_wan_pop_nearest_it() -> None:
     synthesis = _synthesis(
         _site("near", 41.0, False), _site("far", 43.0, False), _site("oconus", 10.0, True)
     )

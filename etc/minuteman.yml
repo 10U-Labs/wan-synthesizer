@@ -2,19 +2,19 @@
 backbone:
   coverage_target_miles: 1200
   forced:
-    nodes:
+    wan_pops:
       - Ashburn, VA
       - Cheyenne, WY
       - Great Falls, MT
       - Minot, ND
       - Salt Lake City, UT
     paths: []
-  node_count:
+  wan_pop_count:
     max: 6
     min: 3
   number_of_diverse_circuits: 2
   prohibited:
-    nodes: []
+    wan_pops: []
     paths: []
   promote_high_degree_convergences: false
 homing:
@@ -26,6 +26,6 @@ inputs:
   providers: data/providers/providers.csv
 label: Minuteman
 settings:
-  backbone_search_memory_share: 0.6
-  bytes_per_backbone_combination: 160
+  wan_pop_search_memory_share: 0.6
+  bytes_per_wan_pop_combination: 160
   compass_sector_count: 8

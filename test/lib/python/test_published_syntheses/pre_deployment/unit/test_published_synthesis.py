@@ -17,10 +17,10 @@ from test_published_syntheses import published_synthesis
 _CONFIG: dict[str, Any] = {
     "backbone": {
         "coverage_target_miles": 200,
-        "node_count": {"max": 6},
+        "wan_pop_count": {"max": 6},
         "number_of_diverse_circuits": 2,
         "forced": {
-            "nodes": ["Ashburn, VA"],
+            "wan_pops": ["Ashburn, VA"],
             "paths": [{"source": "Ashburn, VA", "target": "New York, NY"}],
         },
     },
@@ -55,7 +55,7 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
         monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(urllib.request, "urlopen", _answering({
         "tenants/daf/wan": _SUCCEEDED,
-        "tenants/daf/backbone-nodes": [_NODE],
+        "tenants/daf/wan-pops": [_NODE],
         "tenants/daf/backbone-links": [_CIRCUIT],
         "tenants/daf/tenant-nodes": [_SITE],
         "tenants/daf/provider-nodes": [_REGION],
@@ -70,7 +70,7 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
         "forced_paths": [{"source": "Ashburn, VA", "target": "New York, NY"}],
         "status": _SUCCEEDED,
         "lower_bound_miles": 1250.0,
-        "backbone": [_NODE],
+        "wan_pops": [_NODE],
         "demand": [_SITE, _REGION],
         "links": [_CIRCUIT],
         "paths": [_SEGMENT],
@@ -84,7 +84,7 @@ def test_a_tenant_whose_build_has_not_published_is_read_with_no_network(
     }))
     synthesis = published_synthesis(DEFAULT_API, "daf", _CONFIG)
     assert [
-        synthesis["backbone"], synthesis["demand"], synthesis["links"], synthesis["paths"]
+        synthesis["wan_pops"], synthesis["demand"], synthesis["links"], synthesis["paths"]
     ] == [[], [], [], []]
 
 

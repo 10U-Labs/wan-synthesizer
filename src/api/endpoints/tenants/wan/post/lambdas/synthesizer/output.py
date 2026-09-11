@@ -36,11 +36,11 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
         "objective": (
             "Two-tier WAN synthesis: demand sites (tenant sites and provider regions) home "
             "to a meshed backbone of selected Carrier PoPs over the physical Carrier "
-            "graph, with at least three strong backbone nodes and extra ones added "
+            "graph, with at least three strong WAN PoPs and extra ones added "
             "where they bring demand closer."
         ),
         "summary": {
-            "backbone_count": len(synthesis.backbone_ids),
+            "wan_pop_count": len(synthesis.wan_pop_ids),
             "transit_count": len(synthesis.transit_ids),
             "demand_site_count": included_demand_count(sites, synthesis),
             "access_path_count": len(synthesis.homing_circuits),
@@ -54,8 +54,8 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
                 synthesis.metrics.access_miles + synthesis.metrics.physical_miles, 3
             ),
             "score": round(synthesis.metrics.score, 3),
-            "backbone_nodes": [
-                sites_by_id[site_id].name for site_id in synthesis.backbone_ids
+            "wan_pops": [
+                sites_by_id[site_id].name for site_id in synthesis.wan_pop_ids
             ],
         },
         "validation": validation,

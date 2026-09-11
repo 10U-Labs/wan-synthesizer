@@ -15,7 +15,7 @@ _SEGMENTS = {
     for left, right in combinations(range(len(_SITES)), 2)
 }
 ARTIFACTS = fixtures.synthesis_over_segments(
-    _SITES, _SEGMENTS, _ASKED_FOR, min_backbone_count=2
+    _SITES, _SEGMENTS, _ASKED_FOR, min_wan_pop_count=2
 )
 _MESH = fixtures.mesh_circuits(ARTIFACTS)
 
@@ -35,7 +35,7 @@ def test_every_circuit_answers_a_sites_own_requirement_or_holds_the_wan_whole() 
 
 
 def test_no_circuit_in_the_synthesis_could_be_taken_back_out() -> None:
-    assert _needed(_MESH, ARTIFACTS.synthesis.backbone_ids, _ASKED_FOR) == _MESH
+    assert _needed(_MESH, ARTIFACTS.synthesis.wan_pop_ids, _ASKED_FOR) == _MESH
 
 
 def test_no_site_is_reported_above_the_number_with_nothing_to_blame() -> None:

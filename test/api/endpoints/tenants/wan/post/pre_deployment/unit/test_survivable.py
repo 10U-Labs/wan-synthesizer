@@ -11,7 +11,7 @@ from synthesizer.survivable import (
     FiberSelection,
     _EVERY_WAY_OUT,
     _Requirement,
-    _asked_of_every_node,
+    _asked_of_every_wan_pop,
     _carried,
     _held,
     _shortfalls,
@@ -28,31 +28,31 @@ _SLACK = 1e-6
 
 def _asking(
     fiber: dict[tuple[str, str], FiberSegment],
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     seat_cap: int | None = None,
     number_of_diverse_circuits: int = _DIVERSE_CIRCUITS,
 ) -> FiberInputs:
     return FiberInputs(
-        backbone_ids, fiber, number_of_diverse_circuits, seat_cap, adjacency_by_carrier(fiber),
+        wan_pop_ids, fiber, number_of_diverse_circuits, seat_cap, adjacency_by_carrier(fiber),
     )
 
 
 def _selected(
     fiber: dict[tuple[str, str], FiberSegment],
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     seat_cap: int | None = None,
     number_of_diverse_circuits: int = _DIVERSE_CIRCUITS,
 ) -> FiberSelection:
-    return select_fiber(_asking(fiber, backbone_ids, seat_cap, number_of_diverse_circuits))
+    return select_fiber(_asking(fiber, wan_pop_ids, seat_cap, number_of_diverse_circuits))
 
 
 def _owed(
     fiber: dict[tuple[str, str], FiberSegment],
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     site: str,
     seat_cap: int | None = None,
 ) -> int:
-    inputs = _asking(fiber, backbone_ids, seat_cap)
+    inputs = _asking(fiber, wan_pop_ids, seat_cap)
     miles_by_key = _whole(inputs)
     return sum(
         row.required
@@ -136,7 +136,7 @@ _PAIR_PRICED = physical({
 _PAIR_PRICED_SELECTION = _selected(_PAIR_PRICED, ("a", "b", "e"))
 
 
-def test_no_fiber_is_selected_for_a_circuit_no_backbone_node_is_owed() -> None:
+def test_no_fiber_is_selected_for_a_circuit_no_wan_pop_is_owed() -> None:
     assert _PAIR_PRICED_SELECTION.segments == frozenset({("a", "b"), ("b", "e")})
 
 
@@ -295,7 +295,7 @@ def test_a_search_that_runs_long_enough_buys_the_shortest_synthesis_there_is() -
 
 def test_the_fiber_a_long_search_settles_on_meets_every_requirement_asked_of_it() -> None:
     assert not _shortfalls(
-        _asked_of_every_node(_writing(_MANY_PASS_INPUTS, _MANY_PASS_FIBER, _EVERY_WAY_OUT)),
+        _asked_of_every_wan_pop(_writing(_MANY_PASS_INPUTS, _MANY_PASS_FIBER, _EVERY_WAY_OUT)),
         _held(_MANY_PASS_FIBER, _MANY_PASS_SELECTION.segments),
     )
 
@@ -344,7 +344,7 @@ def test_the_floor_prices_the_fiber_the_rest_of_the_wan_already_needs() -> None:
     )
 
 
-def test_no_fiber_is_selected_for_the_carrier_of_a_nodes_shortest_circuit_alone() -> None:
+def test_no_fiber_is_selected_for_the_carrier_of_a_wan_pops_shortest_circuit_alone() -> None:
     assert not _ALREADY_NEEDED_SELECTION.segments & fixtures.THE_SHORTEST_CREDIT_ALONE
 
 

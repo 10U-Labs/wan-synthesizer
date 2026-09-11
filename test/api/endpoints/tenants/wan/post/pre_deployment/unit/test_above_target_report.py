@@ -32,7 +32,7 @@ _ASKED_FOR = [
 
 def _above_target(*extra: SynthesisCircuit) -> list[dict[str, object]]:
     synthesis = Synthesis(
-        backbone_ids=_SITES,
+        wan_pop_ids=_SITES,
         transit_ids=(),
         homing_circuits=[],
         fiber_segment_keys=set(),

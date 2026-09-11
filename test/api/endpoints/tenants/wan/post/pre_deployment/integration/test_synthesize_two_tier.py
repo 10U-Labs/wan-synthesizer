@@ -16,14 +16,14 @@ from synthesizer.synthesize import convergence_promotion_ids
 from synthesizer.validation import backbone_mesh_pairs, diverse_circuit_count
 
 ARTIFACTS = fixtures.ring_artifacts()
-FORCED = fixtures.forced_backbone_artifacts("P3")
-FORCED_ROADM = fixtures.forced_roadm_backbone_artifacts("P3")
-PROHIBITED = fixtures.prohibited_backbone_artifacts("P4")
+FORCED = fixtures.forced_wan_pop_artifacts("P3")
+FORCED_ROADM = fixtures.forced_roadm_wan_pop_artifacts("P3")
+PROHIBITED = fixtures.prohibited_wan_pop_artifacts("P4")
 
 _RING_BACKBONE = ("P0", "P1", "P2", "P3", "P4", "P5")
 _MESHED_RING = SynthesisParams(
-    min_backbone_count=2,
-    forced_backbone_names=_RING_BACKBONE,
+    min_wan_pop_count=2,
+    forced_wan_pop_names=_RING_BACKBONE,
     tuning=Tuning(backbone_number_of_diverse_circuits=2),
 )
 FORCED_BACKBONE_CIRCUIT = fixtures.forced_circuit_artifacts(
@@ -73,23 +73,23 @@ def test_a_forced_home_is_honored_in_the_finished_synthesis() -> None:
 
 
 def test_forced_pop_is_placed_in_the_backbone() -> None:
-    assert "P3" in FORCED.synthesis.backbone_ids
+    assert "P3" in FORCED.synthesis.wan_pop_ids
 
 
 def test_forced_roadm_is_seated_in_the_backbone() -> None:
-    assert "P3" in FORCED_ROADM.synthesis.backbone_ids
+    assert "P3" in FORCED_ROADM.synthesis.wan_pop_ids
 
 
 def test_prohibited_pop_is_kept_off_the_backbone() -> None:
-    assert "P4" not in PROHIBITED.synthesis.backbone_ids
+    assert "P4" not in PROHIBITED.synthesis.wan_pop_ids
 
 
-def test_honors_the_backbone_count_minimum() -> None:
-    assert len(ARTIFACTS.synthesis.backbone_ids) >= 2
+def test_honors_the_wan_pop_count_minimum() -> None:
+    assert len(ARTIFACTS.synthesis.wan_pop_ids) >= 2
 
 
-def test_degree_one_spur_is_not_a_backbone_node() -> None:
-    assert "P6" not in ARTIFACTS.synthesis.backbone_ids
+def test_degree_one_spur_is_not_a_wan_pop() -> None:
+    assert "P6" not in ARTIFACTS.synthesis.wan_pop_ids
 
 
 def test_backbone_meets_the_mesh_link_target() -> None:
@@ -104,7 +104,7 @@ def test_backbone_survives_any_single_city() -> None:
     assert ARTIFACTS.validation["backbone_mesh_survives_any_one_site_loss"] is True
 
 
-def test_every_meshed_ring_node_holds_its_circuits_independently() -> None:
+def test_every_meshed_ring_wan_pop_holds_its_circuits_independently() -> None:
     assert UNFORCED_RING.validation["backbone_meets_independent_mesh_link_target"] is True
 
 
@@ -117,7 +117,7 @@ def test_a_degree_the_ring_cannot_carry_is_lowered_rather_than_refused() -> None
     assert _RING_AT_THREE.validation["backbone_meets_independent_mesh_link_target"] is True
 
 
-def test_the_ring_reports_every_node_whose_target_it_lowered() -> None:
+def test_the_ring_reports_every_wan_pop_whose_target_it_lowered() -> None:
     lowered = _RING_AT_THREE.validation["backbone_diverse_circuits_ceiling_limited"]
     assert [entry["id"] for entry in lowered] == list(_RING_BACKBONE)
 
@@ -135,9 +135,9 @@ def _chorded_synthesis(exempt: tuple[str, ...] = ()) -> SynthesisArtifacts:
         fixtures.carrier_pop(name, *fixtures.RING_COORDS[name]) for name in _CHORDED_BACKBONE
     ]
     params = SynthesisParams(
-        min_backbone_count=2,
-        forced_backbone_names=_CHORDED_BACKBONE,
-        degree_exempt_backbone_names=exempt,
+        min_wan_pop_count=2,
+        forced_wan_pop_names=_CHORDED_BACKBONE,
+        degree_exempt_wan_pop_names=exempt,
         tuning=Tuning(backbone_number_of_diverse_circuits=3),
     )
     return run_synthesis(sites, fixtures.fiber_segments_from(_CHORDED_PAIRS), params)
@@ -157,13 +157,13 @@ def test_the_chorded_ring_names_the_spur_whose_target_it_lowered() -> None:
     ]
 
 
-def test_a_chorded_node_ends_above_the_number_because_a_peer_asked() -> None:
+def test_a_chorded_wan_pop_ends_above_the_number_because_a_peer_asked() -> None:
     assert max(
         diverse_circuit_count(CHORDED.synthesis.drawn_circuits, site) for site in _CHORDED_BACKBONE
     ) > 3
 
 
-def test_the_chorded_ring_names_the_nodes_holding_more_than_was_asked() -> None:
+def test_the_chorded_ring_names_the_wan_pops_holding_more_than_was_asked() -> None:
     above = CHORDED.validation["backbone_diverse_circuits_above_target"]
     assert above != []
 
@@ -172,7 +172,7 @@ def test_every_circuit_past_the_number_is_attributed_to_a_peer() -> None:
     assert fixtures.reasons_past_the_number(CHORDED.validation) == {"peer_target"}
 
 
-def test_no_chorded_node_finishes_below_what_its_own_fiber_allows() -> None:
+def test_no_chorded_wan_pop_finishes_below_what_its_own_fiber_allows() -> None:
     ceilings = CHORDED.validation["backbone_diverse_circuits_ceiling_limited"]
     capped = {str(entry["id"]): int(str(entry["ceiling"])) for entry in ceilings}
     assert [
@@ -204,7 +204,7 @@ def _forced_off_net_artifacts() -> SynthesisArtifacts:
 
 def test_forced_off_net_site_is_seated_in_the_backbone() -> None:
     synthesis = _forced_off_net_artifacts().synthesis
-    assert any(site_id.startswith("offnet_") for site_id in synthesis.backbone_ids)
+    assert any(site_id.startswith("offnet_") for site_id in synthesis.wan_pop_ids)
 
 
 def test_off_net_synthesis_validates_connected() -> None:
@@ -216,7 +216,7 @@ CONVERGENCE_HUB = fixtures.convergence_hub_artifacts()
 
 
 def test_promoted_convergence_hub_is_seated_in_the_backbone() -> None:
-    assert "hub_dc" in CONVERGENCE_HUB.synthesis.backbone_ids
+    assert "hub_dc" in CONVERGENCE_HUB.synthesis.wan_pop_ids
 
 
 def test_promoted_convergence_synthesis_validates_connected() -> None:

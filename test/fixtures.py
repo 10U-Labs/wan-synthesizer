@@ -98,16 +98,16 @@ def ring_fiber_segments(distance: float = 100.0) -> dict[tuple[str, str], FiberS
     return fiber
 
 
-SHARED_TRANSIT_BACKBONE = ("a", "b", "c")
+SHARED_TRANSIT_WAN_POPS = ("a", "b", "c")
 SHARED_TRANSIT_CIRCUITS = [("a", "x", "b"), ("a", "x", "c"), ("b", "c")]
 DIVERSE_TRANSIT_CIRCUITS = [("a", "x", "b"), ("a", "y", "c"), ("b", "c")]
 
 
 def meshed_backbone_synthesis(
-    circuits: list[tuple[str, ...]], backbone_ids: tuple[str, ...]
+    circuits: list[tuple[str, ...]], wan_pop_ids: tuple[str, ...]
 ) -> Synthesis:
     return Synthesis(
-        backbone_ids=backbone_ids,
+        wan_pop_ids=wan_pop_ids,
         transit_ids=(),
         homing_circuits=[],
         fiber_segment_keys={
@@ -122,7 +122,7 @@ def meshed_backbone_synthesis(
 
 
 SHORT_OF_THREE_CITIES = "abcd"
-SHORT_OF_THREE_BACKBONE = ("a", "b", "c", "d")
+SHORT_OF_THREE_WAN_POPS = ("a", "b", "c", "d")
 SHORT_OF_THREE_CIRCUITS: list[tuple[str, ...]] = [
     ("a", "b"), ("a", "c"), ("b", "c"), ("b", "d"), ("c", "d"),
 ]
@@ -139,14 +139,14 @@ SPLIT_AT_TRANSIT_SEGMENTS = {
 }
 
 
-SPLIT_BACKBONE = ("a", "b", "c", "d")
+SPLIT_WAN_POPS = ("a", "b", "c", "d")
 SPLIT_BACKBONE_CITIES = "abcdt"
 SPLIT_BACKBONE_SEGMENTS = {("a", "t"): 50.0, ("t", "b"): 50.0, ("c", "d"): 100.0}
 
 
 def split_backbone_synthesis() -> Synthesis:
     return Synthesis(
-        backbone_ids=SPLIT_BACKBONE,
+        wan_pop_ids=SPLIT_WAN_POPS,
         transit_ids=(),
         homing_circuits=[],
         fiber_segment_keys={
@@ -203,14 +203,14 @@ def carrier_fiber_segments(
 
 
 def ring_params() -> SynthesisParams:
-    return SynthesisParams(min_backbone_count=2)
+    return SynthesisParams(min_wan_pop_count=2)
 
 
 def forced_off_net_case() -> tuple[Site, SynthesisParams]:
     site = off_net_site("Dulles Hub", 40.5, -100.0)
     params = SynthesisParams(
-        min_backbone_count=2,
-        forced_backbone_names=("Dulles Hub",),
+        min_wan_pop_count=2,
+        forced_wan_pop_names=("Dulles Hub",),
     )
     return site, params
 
@@ -232,7 +232,7 @@ def run_synthesis(
     sites, fiber_segments, overrides = apply_role_overrides(sites, fiber_segments, params)
     synthesis = synthesize_two_tier(sites, fiber_segments, params, overrides)
     sites, fiber_segments, synthesis, validation = finalize(
-        sites, fiber_segments, synthesis, params, overrides.degree_exempt_backbone_ids
+        sites, fiber_segments, synthesis, params, overrides.degree_exempt_wan_pop_ids
     )
     return SynthesisArtifacts(sites, fiber_segments, synthesis, validation)
 
@@ -258,12 +258,12 @@ def synthesis_over_segments(
     segments: dict[tuple[str, str], float],
     number_of_diverse_circuits: int,
     transit_ids: tuple[str, ...] = (),
-    min_backbone_count: int | None = None,
+    min_wan_pop_count: int | None = None,
     homing_degree: int = 2,
 ) -> SynthesisArtifacts:
     return synthesis_over_fiber(
         site_ids, fiber_segments_from(segments), number_of_diverse_circuits,
-        transit_ids, min_backbone_count, homing_degree,
+        transit_ids, min_wan_pop_count, homing_degree,
     )
 
 
@@ -283,11 +283,11 @@ def synthesis_over_fiber(
     fiber: dict[tuple[str, str], FiberSegment],
     number_of_diverse_circuits: int,
     transit_ids: tuple[str, ...] = (),
-    min_backbone_count: int | None = None,
+    min_wan_pop_count: int | None = None,
     homing_degree: int = 2,
 ) -> SynthesisArtifacts:
     cities = site_ids + transit_ids
-    fewest = len(site_ids) if min_backbone_count is None else min_backbone_count
+    fewest = len(site_ids) if min_wan_pop_count is None else min_wan_pop_count
     return run_synthesis(
         [
             carrier_pop(city, 38.0, -115.0 + 2.0 * index)
@@ -295,9 +295,9 @@ def synthesis_over_fiber(
         ],
         fiber,
         SynthesisParams(
-            min_backbone_count=fewest,
-            max_backbone_count=len(site_ids),
-            forced_backbone_names=site_ids,
+            min_wan_pop_count=fewest,
+            max_wan_pop_count=len(site_ids),
+            forced_wan_pop_names=site_ids,
             promote_high_degree_convergences=False,
             tuning=Tuning(
                 backbone_number_of_diverse_circuits=number_of_diverse_circuits,
@@ -333,33 +333,33 @@ def _forced_artifacts(
     )
     synthesis = synthesize_two_tier(sites, fiber_segments, params, overrides)
     sites, fiber_segments, synthesis, validation = finalize(
-        sites, fiber_segments, synthesis, params, overrides.degree_exempt_backbone_ids
+        sites, fiber_segments, synthesis, params, overrides.degree_exempt_wan_pop_ids
     )
     return SynthesisArtifacts(sites, fiber_segments, synthesis, validation)
 
 
-def forced_backbone_artifacts(name: str) -> SynthesisArtifacts:
+def forced_wan_pop_artifacts(name: str) -> SynthesisArtifacts:
     return _forced_artifacts(
         SynthesisParams(
-            min_backbone_count=2,
-            forced_backbone_names=(name,),
+            min_wan_pop_count=2,
+            forced_wan_pop_names=(name,),
         )
     )
 
 
-def forced_roadm_backbone_artifacts(name: str) -> SynthesisArtifacts:
+def forced_roadm_wan_pop_artifacts(name: str) -> SynthesisArtifacts:
     params = SynthesisParams(
-        min_backbone_count=2,
-        forced_backbone_names=(name,),
+        min_wan_pop_count=2,
+        forced_wan_pop_names=(name,),
     )
     return _forced_artifacts(params, ring_inputs_with_roadm(name))
 
 
-def prohibited_backbone_artifacts(name: str) -> SynthesisArtifacts:
+def prohibited_wan_pop_artifacts(name: str) -> SynthesisArtifacts:
     return _forced_artifacts(
         SynthesisParams(
-            min_backbone_count=2,
-            exclusions=RoleExclusions(prohibited_backbone_names=(name,)),
+            min_wan_pop_count=2,
+            exclusions=RoleExclusions(prohibited_wan_pop_names=(name,)),
         )
     )
 
@@ -396,14 +396,14 @@ def convergence_hub_inputs() -> RingInputs:
 
 
 def convergence_hub_artifacts(
-    max_backbone_count: int | None = None,
+    max_wan_pop_count: int | None = None,
     promote_convergences: bool = True,
 ) -> SynthesisArtifacts:
     sites, fiber = convergence_hub_inputs()
     params = SynthesisParams(
-        min_backbone_count=2,
-        max_backbone_count=max_backbone_count,
-        forced_backbone_names=_HUB_CORNERS,
+        min_wan_pop_count=2,
+        max_wan_pop_count=max_wan_pop_count,
+        forced_wan_pop_names=_HUB_CORNERS,
         promote_high_degree_convergences=promote_convergences,
     )
     sites, fiber, overrides = apply_role_overrides(sites, fiber, params)
@@ -426,7 +426,7 @@ def synthesis_inputs_from_fiber(
         access_sites=access_sites if access_sites is not None else [],
         carrier_pops=pops,
         fiber_segments=fiber_segments,
-        eligible_backbone_ids=eligible,
+        eligible_wan_pop_ids=eligible,
         adjacency=adjacency,
         all_distances=distances,
         all_predecessors=predecessors,
@@ -578,11 +578,11 @@ def shared_hub_peer_artifacts(asked_for: int = 2) -> SynthesisArtifacts:
         shared_hub_peer_sites(),
         SHARED_HUB_PEER_FIBER,
         SynthesisParams(
-            min_backbone_count=len(SHARED_HUB_PEER_SITES),
-            max_backbone_count=len(SHARED_HUB_PEER_SITES),
-            forced_backbone_names=SHARED_HUB_PEER_SITES,
+            min_wan_pop_count=len(SHARED_HUB_PEER_SITES),
+            max_wan_pop_count=len(SHARED_HUB_PEER_SITES),
+            forced_wan_pop_names=SHARED_HUB_PEER_SITES,
             exclusions=RoleExclusions(
-                prohibited_backbone_names=shared_hub_peer_transit_names()
+                prohibited_wan_pop_names=shared_hub_peer_transit_names()
             ),
             promote_high_degree_convergences=False,
             tuning=Tuning(backbone_number_of_diverse_circuits=asked_for),

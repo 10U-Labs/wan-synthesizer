@@ -7,7 +7,7 @@ import pytest
 import fixtures
 from synthesizer.input_graph import Site
 from synthesizer.strength import (
-    backbone_strength,
+    wan_pop_strength,
     diverse_circuit_bounds,
     segment_bearing,
     segment_sectors,
@@ -63,7 +63,7 @@ _FUNNEL_BOUNDS = diverse_circuit_bounds(set(fixtures.FUNNEL_ELIGIBLE), _FUNNEL_I
 
 def _funnel_strength(site: str) -> float:
     pop_by_id = {pop.id: pop for pop in _FUNNEL_INPUTS.carrier_pops}
-    return backbone_strength(site, _FUNNEL_INPUTS, pop_by_id, _FUNNEL_BOUNDS, 8)
+    return wan_pop_strength(site, _FUNNEL_INPUTS, pop_by_id, _FUNNEL_BOUNDS, 8)
 
 
 def test_the_funnelled_site_has_the_most_fiber_segments() -> None:

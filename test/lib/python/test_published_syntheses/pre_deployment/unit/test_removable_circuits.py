@@ -21,7 +21,7 @@ def _published_network(
     return {
         "number_of_diverse_circuits": 2,
         "forced_paths": [{"source": source, "target": target} for source, target in forced],
-        "backbone": [{"id": city, "name": city} for city in seated],
+        "wan_pops": [{"id": city, "name": city} for city in seated],
         "links": drawn,
     }
 

@@ -21,7 +21,7 @@ def _config(data: dict[str, Any]) -> AppConfig:
     synthesis = data.get("synthesis", {})
     if isinstance(synthesis, dict):
         merged["synthesis"] = {
-            "promote_high_degree_convergences_to_backbone_nodes": True,
+            "promote_high_degree_convergences_to_wan_pops": True,
             **synthesis,
         }
     return config_from_data(merged)
@@ -31,16 +31,16 @@ def default_config() -> AppConfig:
     return _config({})
 
 
-def test_default_min_backbone_count() -> None:
-    assert default_config().params.min_backbone_count == 3
+def test_default_min_wan_pop_count() -> None:
+    assert default_config().params.min_wan_pop_count == 3
 
 
-def test_default_has_no_forced_backbone() -> None:
-    assert len(default_config().params.forced_backbone_names) == 0
+def test_default_has_no_forced_wan_pops() -> None:
+    assert len(default_config().params.forced_wan_pop_names) == 0
 
 
-def test_default_max_backbone_count_is_none() -> None:
-    assert default_config().params.max_backbone_count is None
+def test_default_max_wan_pop_count_is_none() -> None:
+    assert default_config().params.max_wan_pop_count is None
 
 
 def test_default_label_is_empty() -> None:
@@ -51,12 +51,12 @@ def test_reads_label() -> None:
     assert _config({"label": "Minuteman"}).label == "Minuteman"
 
 
-def test_reads_min_backbone_count() -> None:
-    assert _config({"synthesis": {"min_backbone_count": 5}}).params.min_backbone_count == 5
+def test_reads_min_wan_pop_count() -> None:
+    assert _config({"synthesis": {"min_wan_pop_count": 5}}).params.min_wan_pop_count == 5
 
 
-def test_reads_max_backbone_count() -> None:
-    assert _config({"synthesis": {"max_backbone_count": 7}}).params.max_backbone_count == 7
+def test_reads_max_wan_pop_count() -> None:
+    assert _config({"synthesis": {"max_wan_pop_count": 7}}).params.max_wan_pop_count == 7
 
 
 def test_default_homing_degree() -> None:
@@ -83,7 +83,7 @@ def test_the_old_mesh_degree_key_is_refused() -> None:
     with pytest.raises(ValueError, match="backbone_number_of_diverse_circuits"):
         config_from_data({
             "synthesis": {
-                    "promote_high_degree_convergences_to_backbone_nodes": True,
+                    "promote_high_degree_convergences_to_wan_pops": True,
             },
             "tuning": {
                 "backbone_mesh_degree": 3,
@@ -93,25 +93,25 @@ def test_the_old_mesh_degree_key_is_refused() -> None:
         })
 
 
-def test_reads_forced_backbone() -> None:
+def test_reads_forced_wan_pops() -> None:
     assert _config(
-        {"synthesis": {"forced_backbone": ["Atlanta, GA"]}}
-    ).params.forced_backbone_names == ("Atlanta, GA",)
+        {"synthesis": {"forced_wan_pops": ["Atlanta, GA"]}}
+    ).params.forced_wan_pop_names == ("Atlanta, GA",)
 
 
-def test_reads_degree_exempt_backbone() -> None:
+def test_reads_degree_exempt_wan_pops() -> None:
     assert _config(
-        {"synthesis": {"degree_exempt_backbone": ["San Jose, CA"]}}
-    ).params.degree_exempt_backbone_names == ("San Jose, CA",)
+        {"synthesis": {"degree_exempt_wan_pops": ["San Jose, CA"]}}
+    ).params.degree_exempt_wan_pop_names == ("San Jose, CA",)
 
 
-def test_default_exempts_no_backbone_node_from_the_degree() -> None:
-    assert len(default_config().params.degree_exempt_backbone_names) == 0
+def test_default_exempts_no_wan_pop_from_the_degree() -> None:
+    assert len(default_config().params.degree_exempt_wan_pop_names) == 0
 
 
-def test_degree_exempt_backbone_must_be_a_list() -> None:
+def test_degree_exempt_wan_pops_must_be_a_list() -> None:
     with pytest.raises(ValueError):
-        _config({"synthesis": {"degree_exempt_backbone": "San Jose, CA"}})
+        _config({"synthesis": {"degree_exempt_wan_pops": "San Jose, CA"}})
 
 
 def test_default_has_no_forced_paths() -> None:
@@ -179,25 +179,25 @@ def test_reads_excluded_paths() -> None:
     )
 
 
-def test_default_has_no_prohibited_backbone() -> None:
-    assert len(default_config().params.exclusions.prohibited_backbone_names) == 0
+def test_default_has_no_prohibited_wan_pops() -> None:
+    assert len(default_config().params.exclusions.prohibited_wan_pop_names) == 0
 
 
 def test_reads_promote_high_degree_convergences_true() -> None:
     assert _config(
-        {"synthesis": {"promote_high_degree_convergences_to_backbone_nodes": True}}
+        {"synthesis": {"promote_high_degree_convergences_to_wan_pops": True}}
     ).params.promote_high_degree_convergences is True
 
 
 def test_reads_promote_high_degree_convergences_false() -> None:
     assert _config(
-        {"synthesis": {"promote_high_degree_convergences_to_backbone_nodes": False}}
+        {"synthesis": {"promote_high_degree_convergences_to_wan_pops": False}}
     ).params.promote_high_degree_convergences is False
 
 
 def test_promote_high_degree_convergences_must_be_a_boolean() -> None:
     with pytest.raises(ValueError):
-        _config({"synthesis": {"promote_high_degree_convergences_to_backbone_nodes": "yes"}})
+        _config({"synthesis": {"promote_high_degree_convergences_to_wan_pops": "yes"}})
 
 
 def test_promote_high_degree_convergences_is_required() -> None:
@@ -205,17 +205,17 @@ def test_promote_high_degree_convergences_is_required() -> None:
         config_from_data({"tuning": _REQUIRED_TUNING, "synthesis": {}})
 
 
-def test_reads_prohibited_backbone() -> None:
-    synthesis = {"prohibited_backbone": ["Denver, CO", "Boise, ID"]}
-    assert _config({"synthesis": synthesis}).params.exclusions.prohibited_backbone_names == (
+def test_reads_prohibited_wan_pops() -> None:
+    synthesis = {"prohibited_wan_pops": ["Denver, CO", "Boise, ID"]}
+    assert _config({"synthesis": synthesis}).params.exclusions.prohibited_wan_pop_names == (
         "Denver, CO",
         "Boise, ID",
     )
 
 
-def test_prohibited_backbone_must_be_a_list_of_strings() -> None:
+def test_prohibited_wan_pops_must_be_a_list_of_strings() -> None:
     with pytest.raises(ValueError):
-        _config({"synthesis": {"prohibited_backbone": "Denver, CO"}})
+        _config({"synthesis": {"prohibited_wan_pops": "Denver, CO"}})
 
 
 def test_reads_settings_compass_sector_count() -> None:
@@ -229,15 +229,15 @@ def test_reads_tuning_coverage_target() -> None:
     ).params.tuning.backbone_coverage_target_miles == 250
 
 
-def test_reads_settings_backbone_search_memory_share() -> None:
+def test_reads_settings_wan_pop_search_memory_share() -> None:
     assert _config(
-        {"settings": {"backbone_search_memory_share": 0.3}}
+        {"settings": {"wan_pop_search_memory_share": 0.3}}
     ).params.tuning.search_memory_budget.memory_share == 0.3
 
 
 def test_reads_settings_bytes_per_combination() -> None:
     assert _config(
-        {"settings": {"bytes_per_backbone_combination": 200}}
+        {"settings": {"bytes_per_wan_pop_combination": 200}}
     ).params.tuning.search_memory_budget.bytes_per_combination == 200
 
 
@@ -250,12 +250,12 @@ def test_rejects_a_compass_sector_count_that_is_not_a_positive_integer(
 
 @pytest.mark.parametrize("value", [1.5, 0, 0.0, -0.1, True, "half"])
 def test_rejects_a_memory_share_outside_zero_to_one(value: object) -> None:
-    with pytest.raises(ValueError, match="backbone_search_memory_share"):
-        _config({"settings": {"backbone_search_memory_share": value}})
+    with pytest.raises(ValueError, match="wan_pop_search_memory_share"):
+        _config({"settings": {"wan_pop_search_memory_share": value}})
 
 
 def test_accepts_a_memory_share_of_exactly_one() -> None:
-    parsed = _config({"settings": {"backbone_search_memory_share": 1}})
+    parsed = _config({"settings": {"wan_pop_search_memory_share": 1}})
     budget = parsed.params.tuning.search_memory_budget
     assert budget.memory_share == 1.0
 
@@ -304,7 +304,7 @@ def test_missing_coverage_target_is_rejected() -> None:
             {
                 "tuning": {"backbone_number_of_diverse_circuits": 3, "homing_degree": 2},
                 "synthesis": {
-                    "promote_high_degree_convergences_to_backbone_nodes": True
+                    "promote_high_degree_convergences_to_wan_pops": True
                 },
             }
         )
@@ -323,7 +323,7 @@ def test_a_config_naming_no_backup_path_multiple_loads() -> None:
                 "homing_degree": 2,
                 "backbone_coverage_target_miles": 600,
             },
-            "synthesis": {"promote_high_degree_convergences_to_backbone_nodes": True},
+            "synthesis": {"promote_high_degree_convergences_to_wan_pops": True},
         }
     ).params.tuning.backbone_number_of_diverse_circuits == 3
 
@@ -338,19 +338,19 @@ def test_section_must_be_a_mapping() -> None:
         _config({"synthesis": "not a mapping"})
 
 
-def test_forced_backbone_must_be_a_list() -> None:
+def test_forced_wan_pops_must_be_a_list() -> None:
     with pytest.raises(ValueError):
-        _config({"synthesis": {"forced_backbone": "Atlanta, GA"}})
+        _config({"synthesis": {"forced_wan_pops": "Atlanta, GA"}})
 
 
 def _parts(**overrides: Any) -> dict[str, Any]:
     parts: dict[str, Any] = {
-        "forced-backbone-nodes": [],
+        "forced-wan-pops": [],
         "forced-paths": [],
         "forced-homes": [],
-        "prohibited-backbone-nodes": [],
+        "prohibited-wan-pops": [],
         "prohibited-paths": [],
-        "backbone-node-count": {"min": 3, "max": 5},
+        "wan-pop-count": {"min": 3, "max": 5},
         "backbone-number-of-diverse-circuits": {"degree": 3},
         "homing-degree": {"degree": 2},
         "convergence-promotion": {"promote": True},
@@ -362,15 +362,15 @@ def _parts(**overrides: Any) -> dict[str, Any]:
 
 
 def test_app_config_from_parts_folds_settings_into_tuning() -> None:
-    parts = _parts(settings={"backbone_search_memory_share": 0.25})
+    parts = _parts(settings={"wan_pop_search_memory_share": 0.25})
     budget = app_config_from_parts(parts).params.tuning.search_memory_budget
     assert budget.memory_share == 0.25
 
 
 def test_app_config_from_parts_reads_every_dial_from_settings() -> None:
     parts = _parts(settings={
-        "compass_sector_count": 4, "backbone_search_memory_share": 0.25,
-        "bytes_per_backbone_combination": 320,
+        "compass_sector_count": 4, "wan_pop_search_memory_share": 0.25,
+        "bytes_per_wan_pop_combination": 320,
     })
     budget = app_config_from_parts(parts).params.tuning.search_memory_budget
     assert (budget.memory_share, budget.bytes_per_combination) == (0.25, 320)
@@ -401,25 +401,25 @@ def test_app_config_from_parts_reads_a_plain_label() -> None:
     assert app_config_from_parts(_parts(label="Bare")).label == "Bare"
 
 
-def test_app_config_from_parts_reads_backbone_node_count() -> None:
+def test_app_config_from_parts_reads_wan_pop_count() -> None:
     params = app_config_from_parts(_parts()).params
-    assert (params.min_backbone_count, params.max_backbone_count) == (3, 5)
+    assert (params.min_wan_pop_count, params.max_wan_pop_count) == (3, 5)
 
 
-def test_app_config_from_parts_reads_forced_backbone() -> None:
-    parts = _parts(**{"forced-backbone-nodes": ["Denver, CO"]})
-    assert app_config_from_parts(parts).params.forced_backbone_names == ("Denver, CO",)
+def test_app_config_from_parts_reads_forced_wan_pops() -> None:
+    parts = _parts(**{"forced-wan-pops": ["Denver, CO"]})
+    assert app_config_from_parts(parts).params.forced_wan_pop_names == ("Denver, CO",)
 
 
-def test_app_config_from_parts_reads_the_degree_exempt_nodes() -> None:
-    parts = _parts(**{"degree-exempt-backbone-nodes": ["San Jose, CA"]})
-    exempt = app_config_from_parts(parts).params.degree_exempt_backbone_names
+def test_app_config_from_parts_reads_the_degree_exempt_wan_pops() -> None:
+    parts = _parts(**{"degree-exempt-wan-pops": ["San Jose, CA"]})
+    exempt = app_config_from_parts(parts).params.degree_exempt_wan_pop_names
     assert exempt == ("San Jose, CA",)
 
 
 def test_app_config_from_parts_exempts_nobody_without_the_document() -> None:
     params = app_config_from_parts(_parts()).params
-    assert len(params.degree_exempt_backbone_names) == 0
+    assert len(params.degree_exempt_wan_pop_names) == 0
 
 
 def test_app_config_from_parts_requires_each_degree() -> None:
@@ -458,16 +458,16 @@ def test_app_config_from_parts_rejects_a_non_integer_degree() -> None:
 
 def test_app_config_from_parts_defaults_count_when_absent() -> None:
     parts = _parts()
-    parts["backbone-node-count"] = {}
+    parts["wan-pop-count"] = {}
     params = app_config_from_parts(parts).params
-    assert (params.min_backbone_count, params.max_backbone_count) == (3, None)
+    assert (params.min_wan_pop_count, params.max_wan_pop_count) == (3, None)
 
 
 def test_app_config_from_parts_reads_only_min_when_max_absent() -> None:
     parts = _parts()
-    parts["backbone-node-count"] = {"min": 4}
+    parts["wan-pop-count"] = {"min": 4}
     params = app_config_from_parts(parts).params
-    assert (params.min_backbone_count, params.max_backbone_count) == (4, None)
+    assert (params.min_wan_pop_count, params.max_wan_pop_count) == (4, None)
 
 
 def test_app_config_from_parts_reads_convergence_promotion() -> None:

@@ -42,17 +42,17 @@ backbone:
   degree_exempt:
     - Nellis, NV
   forced:
-    nodes:
+    wan_pops:
       - Luke, AZ
     paths:
       - source: Luke, AZ
         target: Nellis, NV
-  node_count:
+  wan_pop_count:
     max: 3
     min: 3
   number_of_diverse_circuits: 2
   prohibited:
-    nodes:
+    wan_pops:
       - Link, TX
     paths:
       - source: Luke, AZ
@@ -474,18 +474,18 @@ def test_push_tenants_puts_the_backbone_number_of_diverse_circuits_resource(
     assert bodies["tenants/f-35/backbone-number-of-diverse-circuits"] == {"degree": 2}
 
 
-def test_push_tenants_puts_the_backbone_node_count_resource(
+def test_push_tenants_puts_the_wan_pop_count_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/backbone-node-count"] == {"max": 3, "min": 3}
+    assert bodies["tenants/f-35/wan-pop-count"] == {"max": 3, "min": 3}
 
 
-def test_push_tenants_puts_the_forced_backbone_nodes_resource(
+def test_push_tenants_puts_the_forced_wan_pops_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/forced-backbone-nodes"] == ["Luke, AZ"]
+    assert bodies["tenants/f-35/forced-wan-pops"] == ["Luke, AZ"]
 
 
 def test_push_tenants_puts_the_forced_paths_resource(
@@ -504,11 +504,11 @@ def test_push_tenants_puts_the_forced_homes_resource(
         {"source": "Kirtland, NM", "target": "Nellis, NV"}]
 
 
-def test_push_tenants_puts_the_prohibited_backbone_nodes_resource(
+def test_push_tenants_puts_the_prohibited_wan_pops_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/prohibited-backbone-nodes"] == ["Link, TX"]
+    assert bodies["tenants/f-35/prohibited-wan-pops"] == ["Link, TX"]
 
 
 def test_push_tenants_puts_the_prohibited_paths_resource(
@@ -565,11 +565,11 @@ def test_push_tenants_refuses_an_off_net_seat_a_carrier_already_serves(
         push_tenants("http://api")
 
 
-def test_push_tenants_puts_the_degree_exempt_backbone_nodes_resource(
+def test_push_tenants_puts_the_degree_exempt_wan_pops_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/degree-exempt-backbone-nodes"] == ["Nellis, NV"]
+    assert bodies["tenants/f-35/degree-exempt-wan-pops"] == ["Nellis, NV"]
 
 
 def test_push_tenants_puts_an_empty_degree_exempt_document_when_absent(
@@ -578,7 +578,7 @@ def test_push_tenants_puts_an_empty_degree_exempt_document_when_absent(
     bodies = _pushed_bodies(
         tmp_path, monkeypatch, put_recorder,
         _TENANT_YML.replace("  degree_exempt:\n    - Nellis, NV\n", ""))
-    assert bodies["tenants/f-35/degree-exempt-backbone-nodes"] == []
+    assert bodies["tenants/f-35/degree-exempt-wan-pops"] == []
 
 
 def test_push_tenants_uses_empty_off_net_when_absent(

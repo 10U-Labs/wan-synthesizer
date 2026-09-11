@@ -18,7 +18,7 @@ def _circuits_per_pair() -> dict[tuple[str, str], int]:
 
 
 def test_the_backbone_is_the_four_sites() -> None:
-    assert sorted(ARTIFACTS.synthesis.backbone_ids) == ["a", "b", "c", "d"]
+    assert sorted(ARTIFACTS.synthesis.wan_pop_ids) == ["a", "b", "c", "d"]
 
 
 def test_no_pair_of_sites_is_joined_more_than_once() -> None:
@@ -42,4 +42,4 @@ def test_the_fiber_survives_the_loss_of_any_one_city() -> None:
 
 
 def test_no_circuit_the_synthesis_holds_could_be_taken_back_out() -> None:
-    assert _needed(_MESH, ARTIFACTS.synthesis.backbone_ids, _ASKED_FOR) == _MESH
+    assert _needed(_MESH, ARTIFACTS.synthesis.wan_pop_ids, _ASKED_FOR) == _MESH

@@ -9,7 +9,7 @@ import seed
 from seed import DEFAULT_API, _get
 from test_published_syntheses import (
     FIBER,
-    backbone_groups,
+    wan_pop_groups,
     cut_cities,
     offered_diverse_circuits,
     ordered_fiber_miles,
@@ -61,7 +61,7 @@ def _circuits_clear_of_a_capped_seat(synthesis: dict[str, Any]) -> list[dict[str
 
 
 def _published_cities(synthesis: dict[str, Any]) -> set[str]:
-    return {site["name"] for site in synthesis["backbone"]}
+    return {site["name"] for site in synthesis["wan_pops"]}
 
 
 _SPLIT_REFUSAL = "splits the WAN at: "
@@ -73,7 +73,7 @@ def _refused_for_a_split(status: dict[str, Any]) -> bool:
 
 def _still_serves_a_wan(tenant: str) -> bool:
     try:
-        _get(DEFAULT_API, f"tenants/{tenant}/backbone-nodes")
+        _get(DEFAULT_API, f"tenants/{tenant}/wan-pops")
     except HTTPError:
         return False
     return True
@@ -117,7 +117,7 @@ def test_every_published_network_is_one_network(
     split = {
         synthesis["tenant"]: groups
         for synthesis in published_syntheses
-        if len(groups := backbone_groups(synthesis)) > 1
+        if len(groups := wan_pop_groups(synthesis)) > 1
     }
     assert split == {}
 
@@ -165,10 +165,10 @@ def test_the_reported_worst_haul_is_the_one_the_published_network_delivers(
 def test_no_synthesis_stopped_short_of_its_target_with_a_seat_left_to_spend(
         published_syntheses: list[dict[str, Any]]) -> None:
     gave_up_early = [
-        (synthesis["tenant"], len(synthesis["backbone"]), synthesis["seat_cap"])
+        (synthesis["tenant"], len(synthesis["wan_pops"]), synthesis["seat_cap"])
         for synthesis in published_syntheses
         if not synthesis["status"]["coverage"]["met"]
-        and len(synthesis["backbone"]) < synthesis["seat_cap"]
+        and len(synthesis["wan_pops"]) < synthesis["seat_cap"]
     ]
     assert gave_up_early == []
 

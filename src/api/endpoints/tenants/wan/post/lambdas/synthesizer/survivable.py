@@ -28,7 +28,7 @@ _Bucket = TypeVar("_Bucket", str, tuple[str, str])
 
 @dataclass(frozen=True)
 class FiberInputs:
-    backbone_ids: tuple[str, ...]
+    wan_pop_ids: tuple[str, ...]
     fiber_segments: Mapping[tuple[str, str], FiberSegment]
     number_of_diverse_circuits: int = 3
     seat_cap: int | None = None
@@ -210,7 +210,7 @@ def _across_the_carriers(
 
 
 def _diverse_circuit_rows(site: str, writing: _Writing) -> _DiverseCircuits:
-    peers = frozenset(writing.inputs.backbone_ids) - {site}
+    peers = frozenset(writing.inputs.wan_pop_ids) - {site}
     spared = frozenset({site}) if writing.per_peer == 1 else frozenset({site}) | peers
     capacity = writing.credited[site]
     peer_fiber = _peer_fiber(site, writing, capacity)
@@ -236,7 +236,7 @@ def _diverse_circuit_rows(site: str, writing: _Writing) -> _DiverseCircuits:
 def _seats_the_carriers_can_give_two_circuits(writing: _Writing) -> list[str]:
     return [
         site
-        for site in sorted(writing.inputs.backbone_ids)
+        for site in sorted(writing.inputs.wan_pop_ids)
         if sum(writing.credited[site].values()) >= _CIRCUITS_SHARING_NO_POP
     ]
 
@@ -272,11 +272,11 @@ def _writing(
         _fiber_by_carrier(inputs, fiber),
         {segment: 1.0 for segment in fiber},
         circuits_per_peer(
-            inputs.seat_cap, len(inputs.backbone_ids), inputs.number_of_diverse_circuits
+            inputs.seat_cap, len(inputs.wan_pop_ids), inputs.number_of_diverse_circuits
         ),
         diverse_circuits_by_carrier_and_peer(
             CircuitProofInputs(
-                inputs.backbone_ids,
+                inputs.wan_pop_ids,
                 build_adjacency(dict(inputs.fiber_segments)),
                 inputs.number_of_diverse_circuits,
                 inputs.seat_cap,
@@ -290,8 +290,8 @@ def _writing(
     )
 
 
-def _asked_of_every_node(writing: _Writing) -> list[_Requirement]:
-    owed_rows = [_diverse_circuit_rows(site, writing) for site in writing.inputs.backbone_ids]
+def _asked_of_every_wan_pop(writing: _Writing) -> list[_Requirement]:
+    owed_rows = [_diverse_circuit_rows(site, writing) for site in writing.inputs.wan_pop_ids]
     return [
         row
         for owed in owed_rows
@@ -392,7 +392,7 @@ def _floor_under_every_requirement(
     writing = _writing(inputs, fiber, inputs.number_of_diverse_circuits)
     return _tighten(
         _search_over(fiber, order),
-        _asked_of_every_node(writing) + _two_circuits_sharing_no_pop(writing),
+        _asked_of_every_wan_pop(writing) + _two_circuits_sharing_no_pop(writing),
     ).miles
 
 
@@ -402,7 +402,7 @@ def select_fiber(inputs: FiberInputs) -> FiberSelection:
     }
     if not fiber:
         return FiberSelection(frozenset(), 0.0)
-    requirements = _asked_of_every_node(_writing(inputs, fiber, _EVERY_WAY_OUT))
+    requirements = _asked_of_every_wan_pop(_writing(inputs, fiber, _EVERY_WAY_OUT))
     order = sorted(fiber)
     search = _search_over(fiber, order)
     while True:

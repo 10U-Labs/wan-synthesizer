@@ -26,11 +26,11 @@ def _add_capacity(residual: _Residual, costs: _Costs, arc: _NewArc) -> None:
 
 def _unit_site_network(
     site: str,
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     adjacency: dict[str, list[tuple[str, float]]],
     per_peer: int = 1,
 ) -> tuple[_Residual, _Costs, list[_Arc]]:
-    peers = {peer for peer in backbone_ids if peer != site and peer in adjacency}
+    peers = {peer for peer in wan_pop_ids if peer != site and peer in adjacency}
     termini_only = per_peer > 1
     new_arcs: list[_NewArc] = [
         (("in", city), ("out", city), 0.0, 1)
@@ -148,11 +148,11 @@ def _miles_along(
 
 def _proved_circuits(
     site: str,
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     adjacency: dict[str, list[tuple[str, float]]],
     per_peer: int = 1,
 ) -> list[tuple[str, ...]]:
-    residual, costs, arcs = _unit_site_network(site, backbone_ids, adjacency, per_peer)
+    residual, costs, arcs = _unit_site_network(site, wan_pop_ids, adjacency, per_peer)
     source: _Node = ("out", site)
     potential: dict[_Node, float] = {end: 0.0 for end in (source, *residual)}
     while True:
@@ -166,7 +166,7 @@ def _proved_circuits(
 
 @dataclass(frozen=True)
 class CircuitProofInputs:
-    backbone_ids: tuple[str, ...]
+    wan_pop_ids: tuple[str, ...]
     adjacency: dict[str, list[tuple[str, float]]]
     circuits_wanted: int = 1
     seat_cap: int | None = None
@@ -188,7 +188,7 @@ def _no_city_twice(
     per_peer: int,
     shared: frozenset[tuple[str, str]],
 ) -> list[tuple[str, ...]]:
-    peers = {peer for peer in inputs.backbone_ids if peer != site}
+    peers = {peer for peer in inputs.wan_pop_ids if peer != site}
     termini_only = per_peer > 1
     spent: set[str] = set()
     ends: dict[str, int] = {}
@@ -227,7 +227,7 @@ def diverse_circuits(site: str, inputs: CircuitProofInputs) -> list[tuple[str, .
 
 def _peers_over_land(site: str, inputs: CircuitProofInputs) -> frozenset[str]:
     joined = reachable_over(inputs.terrestrial).get(site, frozenset())
-    return joined & frozenset(peer for peer in inputs.backbone_ids if peer != site)
+    return joined & frozenset(peer for peer in inputs.wan_pop_ids if peer != site)
 
 
 def _over_land(
@@ -257,14 +257,14 @@ def _circuits_over_each_carrier(
         return {
             "": _proved_circuits(
                 site,
-                inputs.backbone_ids,
+                inputs.wan_pop_ids,
                 _over_land(site, inputs, inputs.adjacency),
                 per_peer,
             )
         }
     return {
         carrier: _proved_circuits(
-            site, inputs.backbone_ids, _over_land(site, inputs, adjacency), per_peer
+            site, inputs.wan_pop_ids, _over_land(site, inputs, adjacency), per_peer
         )
         for carrier, adjacency in sorted(inputs.fiber_by_carrier.items())
         if site in adjacency
@@ -273,7 +273,7 @@ def _circuits_over_each_carrier(
 
 def _per_peer(inputs: CircuitProofInputs) -> int:
     return circuits_per_peer(
-        inputs.seat_cap, len(inputs.backbone_ids), inputs.circuits_wanted
+        inputs.seat_cap, len(inputs.wan_pop_ids), inputs.circuits_wanted
     )
 
 
@@ -369,7 +369,7 @@ def _credited_across_the_wan(
 ) -> dict[str, list[tuple[str, tuple[str, ...]]]]:
     kept = {
         site: _credited(site, inputs, per_peer, frozenset(), most)
-        for site in inputs.backbone_ids
+        for site in inputs.wan_pop_ids
     }
     settled = False
     while not settled:
@@ -406,6 +406,6 @@ def diverse_circuit_ceiling(site: str, inputs: CircuitProofInputs) -> int:
 def diverse_circuit_ceilings(inputs: CircuitProofInputs) -> dict[str, int]:
     return {
         site: diverse_circuit_ceiling(site, inputs)
-        for site in inputs.backbone_ids
+        for site in inputs.wan_pop_ids
         if site in inputs.adjacency
     }

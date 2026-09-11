@@ -10,7 +10,7 @@ from synthesizer.output import synthesis_payload
 
 _SEATED_RING = replace(
     fixtures.ring_params(),
-    forced_backbone_names=("P0", "P1", "P2", "P3", "P4", "P5"),
+    forced_wan_pop_names=("P0", "P1", "P2", "P3", "P4", "P5"),
     tuning=Tuning(backbone_number_of_diverse_circuits=2),
 )
 _PAYLOAD = synthesis_payload(
@@ -19,15 +19,15 @@ _PAYLOAD = synthesis_payload(
     )
 )
 
-_NODE_FIELDS = ("id", "name", "kind", "coords")
-_SITE_FIELDS = (*_NODE_FIELDS, "exempt_from_distance_constraint")
+_WAN_POP_FIELDS = ("id", "name", "kind", "coords")
+_SITE_FIELDS = (*_WAN_POP_FIELDS, "exempt_from_distance_constraint")
 _LINK_FIELDS = ("source_id", "target_id", "distance_miles", "path")
 _PATH_FIELDS = ("source_id", "target_id", "distance_miles", "link_kind")
 
 
 def _subjects() -> list[tuple[str, list[dict[str, Any]], tuple[str, ...]]]:
     return [
-        ("backbone-nodes", published.backbone_nodes(_PAYLOAD), _NODE_FIELDS),
+        ("wan-pops", published.wan_pops(_PAYLOAD), _WAN_POP_FIELDS),
         ("tenant-nodes", published.tenant_nodes(_PAYLOAD), _SITE_FIELDS),
         ("backbone-links", published.backbone_links(_PAYLOAD), _LINK_FIELDS),
         ("paths", published.paths(_PAYLOAD), _PATH_FIELDS),

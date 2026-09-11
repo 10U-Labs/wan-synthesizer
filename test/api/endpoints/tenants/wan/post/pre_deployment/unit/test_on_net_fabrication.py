@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import fixtures
 from synthesizer.on_net_fabrication import (
-    FabricatedOnNetNodes,
-    fabricate_missing_on_net_nodes,
+    FabricatedOnNetPops,
+    fabricate_missing_on_net_pops,
 )
 from synthesizer.model import is_carrier_pop
 from synthesizer.input_graph import Site
@@ -11,9 +11,9 @@ from synthesizer.input_graph import Site
 def _fabricate(
     *extra: Site,
     forced: frozenset[str] = frozenset(),
-) -> FabricatedOnNetNodes:
+) -> FabricatedOnNetPops:
     sites = [*fixtures.carrier_pops_in_a_column(), *extra]
-    return fabricate_missing_on_net_nodes(sites, {}, forced)
+    return fabricate_missing_on_net_pops(sites, {}, forced)
 
 
 def test_fabricates_a_forced_twin() -> None:
@@ -59,7 +59,7 @@ def test_collapses_colocated_sites() -> None:
 
 
 def test_demand_only_when_too_few_carrier_pops() -> None:
-    result = fabricate_missing_on_net_nodes(
+    result = fabricate_missing_on_net_pops(
         [fixtures.carrier_pop("P0", 0.0, 0.0), fixtures.access_site("luke", 0.0, 0.5)],
         {},
         frozenset({"luke"}),

@@ -12,12 +12,12 @@ _SEGMENTS = {
 _TRANSIT = ("north", "south")
 ARTIFACTS = fixtures.synthesis_over_segments(
     _SITES, _SEGMENTS, _ASKED_FOR, _TRANSIT,
-    min_backbone_count=1, homing_degree=1,
+    min_wan_pop_count=1, homing_degree=1,
 )
 
 
 def test_the_backbone_is_the_one_site() -> None:
-    assert ARTIFACTS.synthesis.backbone_ids == ("a",)
+    assert ARTIFACTS.synthesis.wan_pop_ids == ("a",)
 
 
 def test_no_backbone_mesh_circuit_is_drawn() -> None:

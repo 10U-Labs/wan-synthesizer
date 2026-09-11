@@ -12,16 +12,16 @@ def test_run_synthesis_is_connected() -> None:
     assert artifacts.validation["connected"] is True
 
 
-def test_run_synthesis_honors_a_forced_backbone_pop() -> None:
+def test_run_synthesis_honors_a_forced_wan_pop() -> None:
     synthesis = run_synthesis(
         fixtures.ring_sites(),
         fixtures.ring_fiber_segments(),
         SynthesisParams(
-            min_backbone_count=2,
-            forced_backbone_names=("P3",),
+            min_wan_pop_count=2,
+            forced_wan_pop_names=("P3",),
         ),
     ).synthesis
-    assert "P3" in synthesis.backbone_ids
+    assert "P3" in synthesis.wan_pop_ids
 
 
 def test_run_synthesis_seats_a_forced_off_net_site_as_backbone() -> None:
@@ -30,9 +30,9 @@ def test_run_synthesis_seats_a_forced_off_net_site_as_backbone() -> None:
         fixtures.ring_sites(),
         fixtures.ring_fiber_segments(),
         SynthesisParams(
-            min_backbone_count=2,
-            forced_backbone_names=("Dulles Hub",),
+            min_wan_pop_count=2,
+            forced_wan_pop_names=("Dulles Hub",),
         ),
         off_net_sites=[site],
     ).synthesis
-    assert any(site_id.startswith("offnet_") for site_id in synthesis.backbone_ids)
+    assert any(site_id.startswith("offnet_") for site_id in synthesis.wan_pop_ids)

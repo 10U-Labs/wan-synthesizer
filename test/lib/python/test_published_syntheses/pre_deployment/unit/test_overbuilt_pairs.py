@@ -18,7 +18,7 @@ def _synthesis(circuits: list[dict[str, Any]], allowed: int = 2) -> dict[str, An
     sites = sorted({circuit[end] for circuit in circuits for end in ("source_id", "target_id")})
     return {
         "number_of_diverse_circuits": allowed,
-        "backbone": [{"id": site, "name": site} for site in sites],
+        "wan_pops": [{"id": site, "name": site} for site in sites],
         "links": circuits,
     }
 

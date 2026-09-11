@@ -257,7 +257,7 @@ def _cities_and_adjacency() -> tuple[dict[str, str], dict[str, list[tuple[str, f
 
 
 def _pinned_cities(backbone: dict[str, Any]) -> list[str]:
-    return list((backbone.get("forced") or {}).get("nodes") or [])
+    return list((backbone.get("forced") or {}).get("wan_pops") or [])
 
 
 def _exempt_cities(backbone: dict[str, Any]) -> list[str]:
@@ -285,7 +285,7 @@ def _ceiling_bounds(
             if city_id is None or _path_endpoints(city_id, pinned) < 1:
                 continue
             bound = diverse_circuit_ceiling(city_id, CircuitProofInputs(
-                pinned, adjacency, asked, backbone["node_count"]["max"]
+                pinned, adjacency, asked, backbone["wan_pop_count"]["max"]
             ))
             bounds.append((tenant, city, bound, asked))
     return bounds
@@ -346,7 +346,7 @@ def _seat_shortfalls() -> list[tuple[str, int, int]]:
     carriers, _segments = _merged_carriers()
     shortfalls: list[tuple[str, int, int]] = []
     for tenant, config in sorted(_tenant_configs().items()):
-        cap = config["backbone"]["node_count"]["max"]
+        cap = config["backbone"]["wan_pop_count"]["max"]
         needed = _seats_for_coverage(config, carriers)
         if cap < needed:
             shortfalls.append((tenant, cap, needed))

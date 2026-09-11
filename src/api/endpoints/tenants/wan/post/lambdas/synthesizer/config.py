@@ -74,8 +74,8 @@ def _operator_circuits(synthesis: dict[str, Any]) -> OperatorCircuits:
 
 
 SETTINGS_KEYS = frozenset({
-    "backbone_search_memory_share",
-    "bytes_per_backbone_combination",
+    "wan_pop_search_memory_share",
+    "bytes_per_wan_pop_combination",
     "compass_sector_count",
 })
 
@@ -97,12 +97,12 @@ def _sector_count(settings: dict[str, Any], default: int) -> int:
 
 
 def _memory_share(settings: dict[str, Any], default: float) -> float:
-    value = settings.get("backbone_search_memory_share", default)
+    value = settings.get("wan_pop_search_memory_share", default)
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError("settings key 'backbone_search_memory_share' must be a number")
+        raise ValueError("settings key 'wan_pop_search_memory_share' must be a number")
     if not 0.0 < value <= 1.0:
         raise ValueError(
-            "settings key 'backbone_search_memory_share' must be above 0 and at most 1"
+            "settings key 'wan_pop_search_memory_share' must be above 0 and at most 1"
         )
     return float(value)
 
@@ -122,7 +122,7 @@ def _tuning(tuning: dict[str, Any], settings: dict[str, Any]) -> Tuning:
         search_memory_budget=SearchMemoryBudget(
             memory_share=_memory_share(settings, base.search_memory_budget.memory_share),
             bytes_per_combination=settings.get(
-                "bytes_per_backbone_combination", base.search_memory_budget.bytes_per_combination
+                "bytes_per_wan_pop_combination", base.search_memory_budget.bytes_per_combination
             ),
         ),
     )
@@ -133,16 +133,16 @@ def _params(
 ) -> SynthesisParams:
     base = SynthesisParams()
     return SynthesisParams(
-        min_backbone_count=synthesis.get("min_backbone_count", base.min_backbone_count),
-        max_backbone_count=synthesis.get("max_backbone_count", base.max_backbone_count),
-        forced_backbone_names=_str_list(synthesis, "forced_backbone", []),
-        degree_exempt_backbone_names=_str_list(synthesis, "degree_exempt_backbone", []),
+        min_wan_pop_count=synthesis.get("min_wan_pop_count", base.min_wan_pop_count),
+        max_wan_pop_count=synthesis.get("max_wan_pop_count", base.max_wan_pop_count),
+        forced_wan_pop_names=_str_list(synthesis, "forced_wan_pops", []),
+        degree_exempt_wan_pop_names=_str_list(synthesis, "degree_exempt_wan_pops", []),
         exclusions=RoleExclusions(
-            prohibited_backbone_names=_str_list(synthesis, "prohibited_backbone", []),
+            prohibited_wan_pop_names=_str_list(synthesis, "prohibited_wan_pops", []),
         ),
         tuning=_tuning(tuning, settings),
         promote_high_degree_convergences=_required_bool(
-            synthesis, "promote_high_degree_convergences_to_backbone_nodes"
+            synthesis, "promote_high_degree_convergences_to_wan_pops"
         ),
     )
 
@@ -169,22 +169,22 @@ def _degree(parts: dict[str, Any], resource: str) -> int:
 
 
 def app_config_from_parts(parts: dict[str, Any]) -> AppConfig:
-    count = _mapping(parts, "backbone-node-count")
+    count = _mapping(parts, "wan-pop-count")
     synthesis: dict[str, Any] = {
-        "forced_backbone": parts.get("forced-backbone-nodes", []),
-        "degree_exempt_backbone": parts.get("degree-exempt-backbone-nodes", []),
-        "prohibited_backbone": parts.get("prohibited-backbone-nodes", []),
+        "forced_wan_pops": parts.get("forced-wan-pops", []),
+        "degree_exempt_wan_pops": parts.get("degree-exempt-wan-pops", []),
+        "prohibited_wan_pops": parts.get("prohibited-wan-pops", []),
         "forced_paths": parts.get("forced-paths", []),
         "forced_homes": parts.get("forced-homes", []),
         "excluded_paths": parts.get("prohibited-paths", []),
     }
     promotion = _mapping(parts, "convergence-promotion")
     if "promote" in promotion:
-        synthesis["promote_high_degree_convergences_to_backbone_nodes"] = promotion["promote"]
+        synthesis["promote_high_degree_convergences_to_wan_pops"] = promotion["promote"]
     if "min" in count:
-        synthesis["min_backbone_count"] = count["min"]
+        synthesis["min_wan_pop_count"] = count["min"]
     if "max" in count:
-        synthesis["max_backbone_count"] = count["max"]
+        synthesis["max_wan_pop_count"] = count["max"]
     tuning = {
         **_mapping(parts, "knobs"),
         "backbone_number_of_diverse_circuits": _degree(

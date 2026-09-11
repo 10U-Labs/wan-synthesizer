@@ -183,14 +183,14 @@ def push_tenants(api: str) -> list[str]:
         _put(api, f"tenants/{tid}/locations", locations)
         _put(api, f"tenants/{tid}/provider-regions", regions)
         _put(api, f"tenants/{tid}/off-net", off_net)
-        _put(api, f"tenants/{tid}/forced-backbone-nodes", forced.get("nodes", []))
+        _put(api, f"tenants/{tid}/forced-wan-pops", forced.get("wan_pops", []))
         _put(api, f"tenants/{tid}/forced-paths", forced.get("paths", []))
         _put(api, f"tenants/{tid}/forced-homes", homes)
-        _put(api, f"tenants/{tid}/prohibited-backbone-nodes", prohibited.get("nodes", []))
+        _put(api, f"tenants/{tid}/prohibited-wan-pops", prohibited.get("wan_pops", []))
         _put(api, f"tenants/{tid}/prohibited-paths", prohibited.get("paths", []))
-        _put(api, f"tenants/{tid}/degree-exempt-backbone-nodes",
+        _put(api, f"tenants/{tid}/degree-exempt-wan-pops",
              backbone.get("degree_exempt", []))
-        _put(api, f"tenants/{tid}/backbone-node-count", backbone.get("node_count", {}))
+        _put(api, f"tenants/{tid}/wan-pop-count", backbone.get("wan_pop_count", {}))
         _put(api, f"tenants/{tid}/backbone-number-of-diverse-circuits",
              _degree_doc(backbone["number_of_diverse_circuits"]))
         _put(api, f"tenants/{tid}/homing-degree",

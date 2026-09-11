@@ -16,7 +16,7 @@ _MESH = fixtures.mesh_circuits(ARTIFACTS)
 
 
 def test_the_backbone_is_the_two_sites() -> None:
-    assert sorted(ARTIFACTS.synthesis.backbone_ids) == ["a", "b"]
+    assert sorted(ARTIFACTS.synthesis.wan_pop_ids) == ["a", "b"]
 
 
 def test_the_pair_is_drawn_with_the_circuits_the_tenant_asked_for() -> None:

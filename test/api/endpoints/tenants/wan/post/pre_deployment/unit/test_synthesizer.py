@@ -34,7 +34,7 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         operator_circuits=OperatorCircuits(),
     )
     payload = {
-        "sites": [{"id": "P", "tier_role": "backbone"}],
+        "sites": [{"id": "P", "tier_role": "wan_pop"}],
         "access_paths": [],
         "fiber_segments": [],
         "drawn_paths": [{"purpose": "backbone_mesh", "source_name": "P", "target_name": "Q"}],
@@ -50,7 +50,7 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     )
     monkeypatch.setattr(module, "synthesize_two_tier", lambda *_a: object())
     synthesis = SimpleNamespace(
-        backbone_ids=("P",),
+        wan_pop_ids=("P",),
         metrics=SimpleNamespace(backbone_lower_bound_miles=1250.0),
     )
     validation = {
@@ -89,8 +89,8 @@ def _run(module: Any, monkeypatch: pytest.MonkeyPatch, fail: bool = False) -> di
     return objects
 
 
-def test_reads_the_degree_exempt_backbone_nodes(synthesizer: Any) -> None:
-    assert "degree-exempt-backbone-nodes" in synthesizer.CONFIG_RESOURCES
+def test_reads_the_degree_exempt_wan_pops(synthesizer: Any) -> None:
+    assert "degree-exempt-wan-pops" in synthesizer.CONFIG_RESOURCES
 
 
 def test_publishes_the_wan_on_success(synthesizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -239,7 +239,7 @@ def _run_over_a_published_wan(module: Any, monkeypatch: pytest.MonkeyPatch) -> d
 
     monkeypatch.setattr(module, "synthesize_two_tier", _raise)
     objects = _inputs(module)
-    objects["tenants/f-35/wan.json"] = b'{"backbone-nodes": []}'
+    objects["tenants/f-35/wan.json"] = b'{"wan-pops": []}'
     with patch("boto3.client", return_value=fake_s3(objects)):
         module.lambda_handler({"tenant": "f-35"}, None)
     return objects

@@ -5,23 +5,23 @@ from synthesizer.model import ForcedCircuits
 
 
 def _pairs_within(
-    backbone_set: set[str], pairs: frozenset[tuple[str, str]]
+    wan_pop_set: set[str], pairs: frozenset[tuple[str, str]]
 ) -> frozenset[tuple[str, str]]:
     return frozenset(
-        pair for pair in pairs if pair[0] in backbone_set and pair[1] in backbone_set
+        pair for pair in pairs if pair[0] in wan_pop_set and pair[1] in wan_pop_set
     )
 
 
 def removed_backbone_pairs(
-    backbone_set: set[str], circuits: ForcedCircuits
+    wan_pop_set: set[str], circuits: ForcedCircuits
 ) -> frozenset[tuple[str, str]]:
-    return _pairs_within(backbone_set, circuits.removed_backbone)
+    return _pairs_within(wan_pop_set, circuits.removed_backbone)
 
 
 def forced_backbone_pairs(
-    backbone_set: set[str], circuits: ForcedCircuits
+    wan_pop_set: set[str], circuits: ForcedCircuits
 ) -> frozenset[tuple[str, str]]:
-    return _pairs_within(backbone_set, circuits.backbone)
+    return _pairs_within(wan_pop_set, circuits.backbone)
 
 
 def apply_forced_homes(
@@ -31,7 +31,7 @@ def apply_forced_homes(
     pop_by_id: dict[str, Site],
     homes: int,
 ) -> list[str]:
-    required = [backbone for homed, backbone in sorted(circuits.homes) if homed == site.id]
+    required = [wan_pop for homed, wan_pop in sorted(circuits.homes) if homed == site.id]
     if not required:
         return completed
     nearest = sorted(

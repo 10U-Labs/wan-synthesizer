@@ -26,8 +26,8 @@ def test_dual_home_realizes_a_forced_off_net_site() -> None:
 def test_dual_home_fabricates_a_forced_on_net_location() -> None:
     luke = fixtures.access_site("Luke", 40.5, -100.0)
     params = SynthesisParams(
-        min_backbone_count=2,
-        forced_backbone_names=("Luke",),
+        min_wan_pop_count=2,
+        forced_wan_pop_names=("Luke",),
     )
     homed_sites, _fiber = dual_home(
         [*fixtures.ring_sites(), luke], fixtures.ring_fiber_segments(), params, []
@@ -64,9 +64,9 @@ def _finalize_short_of_three(degree_exempt: frozenset[str] = frozenset()) -> Val
         list(fixtures.carrier_pops_by_id(fixtures.SHORT_OF_THREE_CITIES).values()),
         {},
         fixtures.meshed_backbone_synthesis(
-            fixtures.SHORT_OF_THREE_CIRCUITS, fixtures.SHORT_OF_THREE_BACKBONE
+            fixtures.SHORT_OF_THREE_CIRCUITS, fixtures.SHORT_OF_THREE_WAN_POPS
         ),
-        SynthesisParams(min_backbone_count=2),
+        SynthesisParams(min_wan_pop_count=2),
         degree_exempt,
     )
     return validation
@@ -77,11 +77,11 @@ def test_finalize_refuses_a_synthesis_short_of_the_configured_number_of_diverse_
         _finalize_short_of_three()
 
 
-def test_finalize_holds_a_node_to_the_ceiling_of_the_merged_carriers_it_is_given() -> None:
+def test_finalize_holds_a_wan_pop_to_the_ceiling_of_the_merged_carriers_it_is_given() -> None:
     synthesis = fixtures.meshed_backbone_synthesis(
-        fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
+        fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_WAN_POPS
     )
-    params = SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_CIRCUITS)
+    params = SynthesisParams(min_wan_pop_count=2, tuning=_TWO_DIVERSE_CIRCUITS)
     fiber = fixtures.fiber_segments_from({
         ("a", "x"): 1.0, ("x", "b"): 1.0, ("x", "c"): 1.0, ("b", "c"): 1.0,
     })
@@ -97,7 +97,7 @@ def test_finalize_accepts_a_synthesis_whose_only_shortfall_is_exempt() -> None:
     ] is True
 
 
-def test_finalize_reports_the_exempt_node_it_accepted() -> None:
+def test_finalize_reports_the_exempt_wan_pop_it_accepted() -> None:
     assert _finalize_short_of_three(frozenset({"a", "d"}))["backbone_degree_exempt"] == [
         {"id": "a", "name": "a"}, {"id": "d", "name": "d"}
     ]
@@ -108,7 +108,7 @@ def _finalize_split_backbone() -> None:
         list(fixtures.carrier_pops_by_id(fixtures.SPLIT_BACKBONE_CITIES).values()),
         fixtures.fiber_segments_from(fixtures.SPLIT_BACKBONE_SEGMENTS),
         fixtures.split_backbone_synthesis(),
-        SynthesisParams(min_backbone_count=2),
+        SynthesisParams(min_wan_pop_count=2),
     )
 
 
@@ -127,9 +127,9 @@ def _finalize_split_at_transit() -> None:
         list(fixtures.carrier_pops_by_id(fixtures.SPLIT_AT_TRANSIT_CITIES).values()),
         fixtures.fiber_segments_from(fixtures.SPLIT_AT_TRANSIT_SEGMENTS),
         fixtures.meshed_backbone_synthesis(
-            fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_BACKBONE
+            fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_WAN_POPS
         ),
-        SynthesisParams(min_backbone_count=2, tuning=_TWO_DIVERSE_CIRCUITS),
+        SynthesisParams(min_wan_pop_count=2, tuning=_TWO_DIVERSE_CIRCUITS),
     )
 
 
@@ -151,5 +151,5 @@ def _split_refusal() -> str:
     return ""
 
 
-def test_a_split_wan_is_refused_ahead_of_a_node_short_of_its_diverse_circuits() -> None:
+def test_a_split_wan_is_refused_ahead_of_a_wan_pop_short_of_its_diverse_circuits() -> None:
     assert "independently failing" not in _split_refusal()

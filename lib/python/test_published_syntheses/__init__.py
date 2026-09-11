@@ -14,7 +14,7 @@ FIBER = "carrier_physical"
 
 UNFINISHED = frozenset({"creating", "synthesizing"})
 
-COLLECTIONS = ("backbone-nodes", "backbone-links", "tenant-nodes", "provider-nodes", "paths")
+COLLECTIONS = ("wan-pops", "backbone-links", "tenant-nodes", "provider-nodes", "paths")
 
 
 def request_paths(tenant: str) -> list[str]:
@@ -41,12 +41,12 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "tenant": tenant,
         "target_miles": backbone["coverage_target_miles"],
         "number_of_diverse_circuits": backbone["number_of_diverse_circuits"],
-        "seat_cap": backbone["node_count"]["max"],
-        "forced": backbone.get("forced", {}).get("nodes", []),
+        "seat_cap": backbone["wan_pop_count"]["max"],
+        "forced": backbone.get("forced", {}).get("wan_pops", []),
         "forced_paths": backbone.get("forced", {}).get("paths", []),
         "status": state,
         "lower_bound_miles": state.get("backbone_lower_bound_miles"),
-        "backbone": published.get("backbone-nodes", []),
+        "wan_pops": published.get("wan-pops", []),
         "demand": published.get("tenant-nodes", []) + published.get("provider-nodes", []),
         "links": published.get("backbone-links", []),
         "paths": published.get("paths", []),
@@ -63,9 +63,9 @@ def site_from_row(row: dict[str, Any]) -> Site:
 
 
 def worst_haul(synthesis: dict[str, Any]) -> float:
-    backbone_sites = [site_from_row(row) for row in synthesis["backbone"]]
+    wan_pop_sites = [site_from_row(row) for row in synthesis["wan_pops"]]
     hauls: list[float] = [
-        min(haversine_miles(site_from_row(row), site) for site in backbone_sites)
+        min(haversine_miles(site_from_row(row), site) for site in wan_pop_sites)
         for row in synthesis["demand"]
         if not row["exempt_from_distance_constraint"]
     ]
@@ -111,7 +111,7 @@ def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
     for drawn_circuit in synthesis["links"]:
         pair = tuple(sorted((drawn_circuit["source_id"], drawn_circuit["target_id"])))
         drawn.setdefault(pair, []).append(drawn_circuit)
-    names = {row["id"]: row["name"] for row in synthesis["backbone"]}
+    names = {row["id"]: row["name"] for row in synthesis["wan_pops"]}
     asked = synthesis["number_of_diverse_circuits"]
     apart = pieces_without_each(synthesis["links"])
     overbuilt: list[tuple[str, int]] = []
@@ -212,7 +212,7 @@ def _cities_the_circuits_cross(circuits: list[dict[str, Any]]) -> dict[str, set[
 
 
 def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
-    names = {row["id"]: row["name"] for row in synthesis["backbone"]}
+    names = {row["id"]: row["name"] for row in synthesis["wan_pops"]}
     sites = list(names)
     asked = synthesis["number_of_diverse_circuits"]
     pinned = {
@@ -250,11 +250,11 @@ def _published_fiber(synthesis: dict[str, Any]) -> dict[str, dict[str, float]]:
     return fiber
 
 
-def backbone_groups(synthesis: dict[str, Any]) -> list[list[str]]:
+def wan_pop_groups(synthesis: dict[str, Any]) -> list[list[str]]:
     fiber = _published_fiber(synthesis)
-    joined: dict[str, set[str]] = {row["id"]: set() for row in synthesis["backbone"]}
+    joined: dict[str, set[str]] = {row["id"]: set() for row in synthesis["wan_pops"]}
     joined |= {city: set(neighbors) for city, neighbors in fiber.items()}
-    unplaced = {row["id"] for row in synthesis["backbone"]}
+    unplaced = {row["id"] for row in synthesis["wan_pops"]}
     groups: list[list[str]] = []
     while unplaced:
         reached = _reached(joined, min(unplaced))

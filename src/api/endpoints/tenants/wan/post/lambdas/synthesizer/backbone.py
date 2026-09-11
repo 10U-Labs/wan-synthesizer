@@ -38,7 +38,7 @@ def miles_along(
 
 
 @dataclass(frozen=True)
-class BackboneConstraints:
+class WanPopConstraints:
     removed_pairs: frozenset[tuple[str, str]] = frozenset()
     number_of_diverse_circuits: int = 3
     forced_pairs: frozenset[tuple[str, str]] = frozenset()
@@ -53,12 +53,12 @@ class BackboneMesh:
 
 @dataclass(frozen=True)
 class _DrawnFiber:
-    backbone_ids: tuple[str, ...]
+    wan_pop_ids: tuple[str, ...]
     distances: dict[str, dict[str, float]]
     selected: dict[tuple[str, str], FiberSegment]
     selected_by_carrier: dict[str, dict[str, list[tuple[str, float]]]]
     whole: dict[tuple[str, str], FiberSegment]
-    constraints: BackboneConstraints
+    constraints: WanPopConstraints
 
 
 def _fiber_of(circuits: list[SynthesisCircuit]) -> tuple[set[str], set[tuple[str, str]]]:
@@ -68,23 +68,23 @@ def _fiber_of(circuits: list[SynthesisCircuit]) -> tuple[set[str], set[tuple[str
     return {city for segment in segments for city in segment}, segments
 
 
-def _one_network(circuits: list[SynthesisCircuit], backbone_ids: tuple[str, ...]) -> bool:
+def _one_network(circuits: list[SynthesisCircuit], wan_pop_ids: tuple[str, ...]) -> bool:
     cities, segments = _fiber_of(circuits)
-    return len(connected_components(cities | set(backbone_ids), segments)) == 1
+    return len(connected_components(cities | set(wan_pop_ids), segments)) == 1
 
 
 def _cut_cities(
-    circuits: list[SynthesisCircuit], backbone_ids: tuple[str, ...]
+    circuits: list[SynthesisCircuit], wan_pop_ids: tuple[str, ...]
 ) -> set[str]:
     cities, segments = _fiber_of(circuits)
-    return articulation_points(cities | set(backbone_ids), segments)
+    return articulation_points(cities | set(wan_pop_ids), segments)
 
 
 def _pieces_without_each(
-    circuits: list[SynthesisCircuit], backbone_ids: tuple[str, ...]
+    circuits: list[SynthesisCircuit], wan_pop_ids: tuple[str, ...]
 ) -> dict[str, int]:
     cities, segments = _fiber_of(circuits)
-    sites = cities | set(backbone_ids)
+    sites = cities | set(wan_pop_ids)
     return {
         lost: len(connected_components(sites - {lost}, segments))
         for lost in sorted(sites)
@@ -130,7 +130,7 @@ def _proved_over(
     constraints = drawn.constraints
     peers = tuple(
         peer
-        for peer in drawn.backbone_ids
+        for peer in drawn.wan_pop_ids
         if peer == site or segment_key(site, peer) not in constraints.removed_pairs
     )
     return sorted(
@@ -151,7 +151,7 @@ def _laid(drawn: _DrawnFiber, pinned: list[SynthesisCircuit]) -> list[SynthesisC
         min(drawn_circuit.pop_ids, drawn_circuit.pop_ids[::-1]): drawn_circuit
         for drawn_circuit in pinned
     }
-    for site in sorted(drawn.backbone_ids):
+    for site in sorted(drawn.wan_pop_ids):
         for pop_ids in _diverse_circuits_of(site, drawn):
             key = min(pop_ids, pop_ids[::-1])
             held = laid.get(key)
@@ -172,14 +172,14 @@ def _pairs_across(
     city: str, circuits: list[SynthesisCircuit], drawn: _DrawnFiber
 ) -> list[tuple[str, str]]:
     cities, segments = _fiber_of(circuits)
-    sites = cities | set(drawn.backbone_ids)
+    sites = cities | set(drawn.wan_pop_ids)
     apart = {
         site: index
         for index, piece in enumerate(connected_components(sites - {city}, segments))
         for site in piece
     }
     sides: dict[int, list[str]] = {}
-    for site in sorted(set(drawn.backbone_ids) - {city}):
+    for site in sorted(set(drawn.wan_pop_ids) - {city}):
         sides.setdefault(apart[site], []).append(site)
     split = sorted({apart[near] for near in undirected_adjacency(sites, segments)[city]})
     pairs = [
@@ -229,7 +229,7 @@ def _relieved(circuits: list[SynthesisCircuit], drawn: _DrawnFiber) -> list[Synt
         return relieved
     beyond_help: set[str] = set()
     while True:
-        cut = sorted(_cut_cities(relieved, drawn.backbone_ids) - beyond_help)
+        cut = sorted(_cut_cities(relieved, drawn.wan_pop_ids) - beyond_help)
         if not cut:
             return relieved
         added = _circuit_around(cut[0], relieved, drawn)
@@ -240,11 +240,11 @@ def _relieved(circuits: list[SynthesisCircuit], drawn: _DrawnFiber) -> list[Synt
 
 
 def _needed(
-    circuits: list[SynthesisCircuit], backbone_ids: tuple[str, ...], target: int
+    circuits: list[SynthesisCircuit], wan_pop_ids: tuple[str, ...], target: int
 ) -> list[SynthesisCircuit]:
     kept = list(circuits)
-    held = {site: min(target, diverse_circuit_count(kept, site)) for site in backbone_ids}
-    apart = _pieces_without_each(kept, backbone_ids)
+    held = {site: min(target, diverse_circuit_count(kept, site)) for site in wan_pop_ids}
+    apart = _pieces_without_each(kept, wan_pop_ids)
     for spare in sorted(
         circuits, key=lambda drawn_circuit: (-drawn_circuit.distance_miles, drawn_circuit.pop_ids)
     ):
@@ -252,14 +252,14 @@ def _needed(
             continue
         left = [drawn_circuit for drawn_circuit in kept if drawn_circuit is not spare]
         if any(
-            min(target, diverse_circuit_count(left, site)) < held[site] for site in backbone_ids
+            min(target, diverse_circuit_count(left, site)) < held[site] for site in wan_pop_ids
         ):
             continue
-        if not _one_network(left, backbone_ids):
+        if not _one_network(left, wan_pop_ids):
             continue
         if any(
             pieces > apart[lost]
-            for lost, pieces in _pieces_without_each(left, backbone_ids).items()
+            for lost, pieces in _pieces_without_each(left, wan_pop_ids).items()
         ):
             continue
         kept = left
@@ -267,13 +267,13 @@ def _needed(
 
 
 def _selected_fiber(
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     fiber_segments: dict[tuple[str, str], FiberSegment],
-    constraints: BackboneConstraints,
+    constraints: WanPopConstraints,
     by_carrier: dict[str, dict[str, list[tuple[str, float]]]],
 ) -> tuple[frozenset[tuple[str, str]], float, list[SynthesisCircuit]]:
     selection = select_fiber(FiberInputs(
-        backbone_ids, fiber_segments,
+        wan_pop_ids, fiber_segments,
         constraints.number_of_diverse_circuits, constraints.seat_cap,
         by_carrier,
     ))
@@ -289,21 +289,21 @@ def _selected_fiber(
 
 
 def backbone_mesh(
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     all_distances: dict[str, dict[str, float]],
     fiber_segments: dict[tuple[str, str], FiberSegment],
-    constraints: BackboneConstraints = BackboneConstraints(),
+    constraints: WanPopConstraints = WanPopConstraints(),
 ) -> BackboneMesh:
     whole_by_carrier = adjacency_by_carrier(fiber_segments)
     segments, floor, pinned = _selected_fiber(
-        backbone_ids, fiber_segments, constraints, whole_by_carrier
+        wan_pop_ids, fiber_segments, constraints, whole_by_carrier
     )
     selected = {segment: fiber_segments[segment] for segment in sorted(segments)}
     drawn = _DrawnFiber(
-        backbone_ids, all_distances, selected, adjacency_by_carrier(selected),
+        wan_pop_ids, all_distances, selected, adjacency_by_carrier(selected),
         fiber_segments, constraints,
     )
     laid = _relieved(_laid(drawn, pinned), drawn)
     return BackboneMesh(
-        _needed(laid, backbone_ids, constraints.number_of_diverse_circuits), floor
+        _needed(laid, wan_pop_ids, constraints.number_of_diverse_circuits), floor
     )

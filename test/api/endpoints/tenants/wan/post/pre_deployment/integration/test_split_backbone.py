@@ -51,19 +51,19 @@ def _fiber_rows() -> list[dict[str, Any]]:
 
 
 _NAMES_NOBODY = (
-    "forced-backbone-nodes",
+    "forced-wan-pops",
     "forced-paths",
     "forced-homes",
-    "prohibited-backbone-nodes",
+    "prohibited-wan-pops",
     "prohibited-paths",
-    "degree-exempt-backbone-nodes",
+    "degree-exempt-wan-pops",
 )
 
 
 def _config_documents() -> dict[str, Any]:
     return {
         **{resource: [] for resource in _NAMES_NOBODY},
-        "backbone-node-count": {"min": 2, "max": 6},
+        "wan-pop-count": {"min": 2, "max": 6},
         "backbone-number-of-diverse-circuits": {"degree": 2},
         "homing-degree": {"degree": 2},
         "convergence-promotion": {"promote": False},
@@ -96,7 +96,7 @@ def _synthesis_over_every_segment(
     sites: list[Site], fiber_segments: dict[tuple[str, str], FiberSegment], *_rest: Any
 ) -> Synthesis:
     return Synthesis(
-        backbone_ids=tuple(
+        wan_pop_ids=tuple(
             sorted(site.id for site in sites if is_carrier_pop(site))
         ),
         transit_ids=(),

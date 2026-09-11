@@ -4,11 +4,11 @@ from synthesizer.ceiling import CircuitProofInputs, diverse_circuit_ceilings
 from synthesizer.graphs import adjacency_by_carrier, build_adjacency
 from synthesizer.input_graph import FiberSegment, Site
 from synthesizer.model import Synthesis, SynthesisParams, MeshRequirements, ValidationReport
-from synthesizer.on_net_fabrication import fabricate_missing_on_net_nodes
+from synthesizer.on_net_fabrication import fabricate_missing_on_net_pops
 from synthesizer.offnet import realize_off_net_sites
 from synthesizer.validation import (
-    backbone_names_by_group,
-    node_mesh_target,
+    wan_pop_names_by_group,
+    wan_pop_mesh_target,
     validate_synthesis,
 )
 
@@ -19,16 +19,16 @@ def dual_home(
     params: SynthesisParams,
     off_net_sites: list[Site],
 ) -> tuple[list[Site], dict[tuple[str, str], FiberSegment]]:
-    forced_backbone = frozenset(params.forced_backbone_names)
-    fabricated = fabricate_missing_on_net_nodes(
-        sites, fiber_segments, forced_backbone
+    forced_wan_pops = frozenset(params.forced_wan_pop_names)
+    fabricated = fabricate_missing_on_net_pops(
+        sites, fiber_segments, forced_wan_pops
     )
     sites, fiber_segments = fabricated.sites, fabricated.fiber_segments
     off_net = realize_off_net_sites(
         sites,
         fiber_segments,
         off_net_sites,
-        forced_backbone,
+        forced_wan_pops,
     )
     return off_net.sites, off_net.fiber_segments
 
@@ -50,10 +50,10 @@ def finalize(
         number_of_diverse_circuits=params.tuning.backbone_number_of_diverse_circuits,
         degree_exempt=degree_exempt,
         ceilings=diverse_circuit_ceilings(CircuitProofInputs(
-            synthesis.backbone_ids,
+            synthesis.wan_pop_ids,
             adjacency,
             params.tuning.backbone_number_of_diverse_circuits,
-            params.max_backbone_count,
+            params.max_wan_pop_count,
             adjacency_by_carrier(fiber_segments),
             terrestrial,
         )),
@@ -63,7 +63,7 @@ def finalize(
     )
     if not validation["connected"]:
         groups = "; ".join(
-            ", ".join(names) for names in backbone_names_by_group(sites, synthesis)
+            ", ".join(names) for names in wan_pop_names_by_group(sites, synthesis)
         )
         raise ValueError(
             f"Synthesis falls into {validation['component_count']} groups "
@@ -77,7 +77,7 @@ def finalize(
     if deficient:
         shortfalls = ", ".join(
             f"{entry['name']} ({entry['independent_degree']} of "
-            f"{node_mesh_target(str(entry['id']), targets)})"
+            f"{wan_pop_mesh_target(str(entry['id']), targets)})"
             for entry in deficient
         )
         raise ValueError(

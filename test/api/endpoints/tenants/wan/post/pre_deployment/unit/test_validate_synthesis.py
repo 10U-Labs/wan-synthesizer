@@ -18,13 +18,13 @@ def make_pop(site_id: str) -> Site:
 
 
 def build_synthesis(
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     transit_ids: tuple[str, ...],
     homing_circuits: list[HomingCircuit],
     physical_pairs: list[tuple[str, str]],
 ) -> Synthesis:
     return Synthesis(
-        backbone_ids=backbone_ids,
+        wan_pop_ids=wan_pop_ids,
         transit_ids=transit_ids,
         homing_circuits=homing_circuits,
         fiber_segment_keys={segment_key(left, right) for left, right in physical_pairs},
@@ -34,13 +34,13 @@ def build_synthesis(
 
 
 GOOD = build_synthesis(
-    backbone_ids=("B1", "B2"),
+    wan_pop_ids=("B1", "B2"),
     transit_ids=("X", "Y"),
     homing_circuits=[HomingCircuit("A", "B1", 1.0), HomingCircuit("A", "B2", 1.0)],
     physical_pairs=[("X", "B1"), ("Y", "B2"), ("B1", "B2")],
 )
 SINGLE_HOMED = build_synthesis(
-    backbone_ids=("B1", "B2"),
+    wan_pop_ids=("B1", "B2"),
     transit_ids=(),
     homing_circuits=[HomingCircuit("A", "B1", 1.0)],
     physical_pairs=[("B1", "B2")],
@@ -59,14 +59,14 @@ def test_good_synthesis_has_no_missing_redundancy() -> None:
     assert not sites_below_homing_degree(GOOD, 2)
 
 
-def test_backbone_mesh_survives_any_one_link_loss_with_fewer_than_two_nodes() -> None:
+def test_backbone_mesh_survives_any_one_link_loss_with_fewer_than_two_wan_pops() -> None:
     synthesis = build_synthesis(("B1",), (), [], [])
     report = validate_synthesis([make_pop("B1")], synthesis)
     assert report["backbone_mesh_survives_any_one_link_loss"] is True
 
 
 TRIPLE_HOMED = build_synthesis(
-    backbone_ids=("B1", "B2", "B3"),
+    wan_pop_ids=("B1", "B2", "B3"),
     transit_ids=(),
     homing_circuits=[HomingCircuit("s", target, 1.0) for target in ("B1", "B2", "B3")],
     physical_pairs=[("B1", "B2")],
@@ -92,9 +92,9 @@ def test_missing_redundancy_names_the_failing_demand_site() -> None:
     assert sites_below_homing_degree(SINGLE_HOMED, 2) == ["A"]
 
 
-def _mesh_synthesis(backbone_ids: tuple[str, ...], pairs: list[tuple[str, str]]) -> Synthesis:
+def _mesh_synthesis(wan_pop_ids: tuple[str, ...], pairs: list[tuple[str, str]]) -> Synthesis:
     return Synthesis(
-        backbone_ids=backbone_ids,
+        wan_pop_ids=wan_pop_ids,
         transit_ids=(),
         homing_circuits=[],
         fiber_segment_keys={segment_key(left, right) for left, right in pairs},
@@ -107,15 +107,15 @@ def _mesh_synthesis(backbone_ids: tuple[str, ...], pairs: list[tuple[str, str]])
 
 
 def _mesh_report(
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     pairs: list[tuple[str, str]],
     backbone_number_of_diverse_circuits: int = 3,
     degree_exempt: frozenset[str] = frozenset(),
     ceilings: dict[str, int] | None = None,
 ) -> ValidationReport:
     return validate_synthesis(
-        [make_pop(name) for name in backbone_ids],
-        _mesh_synthesis(backbone_ids, pairs),
+        [make_pop(name) for name in wan_pop_ids],
+        _mesh_synthesis(wan_pop_ids, pairs),
         targets=MeshRequirements(backbone_number_of_diverse_circuits, degree_exempt, ceilings),
     )
 
@@ -146,33 +146,33 @@ def test_number_of_diverse_circuits_is_configurable() -> None:
     ] is True
 
 
-def test_backbone_below_the_target_names_the_deficient_nodes() -> None:
+def test_backbone_below_the_target_names_the_deficient_wan_pops() -> None:
     report = _mesh_report(*_DEFICIENT)
     assert {item["id"] for item in report["backbone_diverse_circuits_deficient"]} == {
         "C3", "C4", "C5"
     }
 
 
-def test_exempting_every_short_node_satisfies_the_mesh_rule() -> None:
+def test_exempting_every_short_wan_pop_satisfies_the_mesh_rule() -> None:
     report = _mesh_report(*_DEFICIENT, degree_exempt=frozenset({"C3", "C4", "C5"}))
     assert report["backbone_meets_mesh_link_target"] is True
 
 
-def test_exempting_one_short_node_leaves_the_others_reported() -> None:
+def test_exempting_one_short_wan_pop_leaves_the_others_reported() -> None:
     report = _mesh_report(*_DEFICIENT, degree_exempt=frozenset({"C3"}))
     assert {item["id"] for item in report["backbone_diverse_circuits_deficient"]} == {"C4", "C5"}
 
 
-def test_the_report_names_the_exempt_nodes() -> None:
+def test_the_report_names_the_exempt_wan_pops() -> None:
     report = _mesh_report(*_DEFICIENT, degree_exempt=frozenset({"C3"}))
     assert report["backbone_degree_exempt"] == [{"id": "C3", "name": "C3"}]
 
 
-def test_the_report_names_no_exempt_node_by_default() -> None:
+def test_the_report_names_no_exempt_wan_pop_by_default() -> None:
     assert _mesh_report(*_HEALTHY)["backbone_degree_exempt"] == []
 
 
-def test_the_report_names_a_node_whose_target_the_tool_lowered() -> None:
+def test_the_report_names_a_wan_pop_whose_target_the_tool_lowered() -> None:
     report = _mesh_report(*_DEFICIENT, ceilings={"C3": 2})
     assert report["backbone_diverse_circuits_ceiling_limited"] == [
         {"id": "C3", "name": "C3", "ceiling": 2}
@@ -183,7 +183,7 @@ def test_the_report_lowers_nobody_when_the_fiber_meets_the_degree() -> None:
     assert _mesh_report(*_HEALTHY)["backbone_diverse_circuits_ceiling_limited"] == []
 
 
-def test_the_report_gives_every_measured_node_its_count_and_its_target() -> None:
+def test_the_report_gives_every_measured_wan_pop_its_count_and_its_target() -> None:
     report = _mesh_report(*_DEFICIENT, ceilings={"C3": 2, "C4": 4})
     assert report["backbone_diverse_circuits_ceilings"] == [
         {"id": "C3", "name": "C3", "ceiling": 2, "target": 2},
@@ -191,7 +191,7 @@ def test_the_report_gives_every_measured_node_its_count_and_its_target() -> None
     ]
 
 
-def test_the_report_measures_no_node_the_merged_carriers_said_nothing_about() -> None:
+def test_the_report_measures_no_wan_pop_the_merged_carriers_said_nothing_about() -> None:
     report = _mesh_report(*_DEFICIENT, ceilings={"C3": 2})
     assert [entry["id"] for entry in report["backbone_diverse_circuits_ceilings"]] == ["C3"]
 
@@ -202,8 +202,8 @@ def test_small_backbone_is_exempt_from_the_mesh_rule() -> None:
 
 def _independence_report(circuits: list[tuple[str, ...]]) -> ValidationReport:
     return validate_synthesis(
-        [make_pop(name) for name in (*fixtures.SHARED_TRANSIT_BACKBONE, "x", "y")],
-        fixtures.meshed_backbone_synthesis(circuits, fixtures.SHARED_TRANSIT_BACKBONE),
+        [make_pop(name) for name in (*fixtures.SHARED_TRANSIT_WAN_POPS, "x", "y")],
+        fixtures.meshed_backbone_synthesis(circuits, fixtures.SHARED_TRANSIT_WAN_POPS),
         targets=MeshRequirements(2),
     )
 
@@ -214,7 +214,7 @@ def test_shared_transit_fails_the_independent_mesh_target() -> None:
     ] is False
 
 
-def test_shared_transit_names_the_node_that_falls_short() -> None:
+def test_shared_transit_names_the_wan_pop_that_falls_short() -> None:
     report = _independence_report(fixtures.SHARED_TRANSIT_CIRCUITS)
     assert {item["id"] for item in report["backbone_mesh_independence_deficient"]} == {"a"}
 
@@ -236,10 +236,10 @@ def test_bridged_backbone_is_not_survives_any_one_link_loss() -> None:
 
 
 def _drawn_synthesis(
-    backbone_ids: tuple[str, ...], drawn_circuits: list[SynthesisCircuit]
+    wan_pop_ids: tuple[str, ...], drawn_circuits: list[SynthesisCircuit]
 ) -> Synthesis:
     return Synthesis(
-        backbone_ids=backbone_ids,
+        wan_pop_ids=wan_pop_ids,
         transit_ids=(),
         homing_circuits=[],
         fiber_segment_keys=set(),
@@ -276,7 +276,7 @@ def test_segment_disjoint_circuits_are_survives_any_one_link_loss() -> None:
     assert report["backbone_mesh_survives_any_one_link_loss"] is True
 
 
-def test_backbone_mesh_survives_any_one_site_loss_with_fewer_than_two_nodes() -> None:
+def test_backbone_mesh_survives_any_one_site_loss_with_fewer_than_two_wan_pops() -> None:
     synthesis = build_synthesis(("B1",), (), [], [])
     report = validate_synthesis([make_pop("B1")], synthesis)
     assert report["backbone_mesh_survives_any_one_site_loss"] is True
@@ -292,7 +292,7 @@ def test_chain_backbone_is_not_survives_any_one_site_loss() -> None:
     assert report["backbone_mesh_survives_any_one_site_loss"] is False
 
 
-def test_an_undrawn_backbone_node_is_not_survives_any_one_site_loss() -> None:
+def test_an_undrawn_wan_pop_is_not_survives_any_one_site_loss() -> None:
     synthesis = _mesh_synthesis(("C1", "C2", "C3"), [("C1", "C2")])
     report = validate_synthesis([make_pop(n) for n in ("C1", "C2", "C3")], synthesis)
     assert report["backbone_mesh_survives_any_one_site_loss"] is False
@@ -323,7 +323,7 @@ def test_bowtie_backbone_is_not_survives_any_one_site_loss() -> None:
 
 
 _DISCONNECTED = build_synthesis(
-    backbone_ids=("B1", "B2", "B3", "B4"),
+    wan_pop_ids=("B1", "B2", "B3", "B4"),
     transit_ids=(),
     homing_circuits=[],
     physical_pairs=[("B1", "B2"), ("B3", "B4")],
@@ -370,8 +370,8 @@ def _cut_report(
     backbone_number_of_diverse_circuits: int = 2,
 ) -> ValidationReport:
     return validate_synthesis(
-        [make_pop(name) for name in (*fixtures.SHARED_TRANSIT_BACKBONE, "x", "y")],
-        fixtures.meshed_backbone_synthesis(circuits, fixtures.SHARED_TRANSIT_BACKBONE),
+        [make_pop(name) for name in (*fixtures.SHARED_TRANSIT_WAN_POPS, "x", "y")],
+        fixtures.meshed_backbone_synthesis(circuits, fixtures.SHARED_TRANSIT_WAN_POPS),
         targets=MeshRequirements(backbone_number_of_diverse_circuits),
     )
 

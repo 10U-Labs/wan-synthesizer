@@ -10,21 +10,21 @@ const DEFAULT_MAP_ID = "daf";
 const PROVIDER_KIND = "provider region";
 const PROVIDER_STYLE = { color: "#ef6c00", radius: 5 };
 const ROLE_STYLE = {
-  backbone: { color: "#6a1b9a", radius: 8 },
+  wan_pop: { color: "#6a1b9a", radius: 8 },
   tenant: { color: "#1565c0", radius: 4 },
 };
 
 const LINK_STYLE = {
   homing: { color: ROLE_STYLE.tenant.color, weight: 1.5 },
-  backbone: { color: ROLE_STYLE.backbone.color, weight: 4.5 },
+  backbone: { color: ROLE_STYLE.wan_pop.color, weight: 4.5 },
 };
 
 const VIEW_CENTER = [39.5, -98.35];
 
-const BACKBONE_POP = "Backbone PoP";
+const WAN_POP = "WAN PoP";
 
 const LEGEND_ROWS = [
-  { swatch: "dot", color: ROLE_STYLE.backbone.color, label: BACKBONE_POP },
+  { swatch: "dot", color: ROLE_STYLE.wan_pop.color, label: WAN_POP },
   { swatch: "dot", color: PROVIDER_STYLE.color, label: "Provider region" },
   { swatch: "dot", color: ROLE_STYLE.tenant.color, label: "Location", tenant: true },
   { swatch: "line", color: LINK_STYLE.backbone.color, label: "Fiber" },
@@ -72,7 +72,7 @@ function styleFor(site) {
 }
 
 const TIER_PREFIX = {
-  backbone: BACKBONE_POP,
+  wan_pop: WAN_POP,
 };
 
 function cityOf(name) {
@@ -216,14 +216,14 @@ async function getJSON(path) {
 
 function showCounts(sites) {
   const counts = document.getElementById("counts");
-  const tally = { backbone: 0, tenant: 0, provider: 0 };
+  const tally = { wan_pop: 0, tenant: 0, provider: 0 };
   for (const site of sites) {
     if (site.included !== false && tally[site.tier_role] !== undefined) {
       tally[site.tier_role] += 1;
     }
   }
   counts.textContent =
-    `BACKBONE PoPs ${tally.backbone}`
+    `WAN PoPs ${tally.wan_pop}`
     + ` LOCATIONS ${tally.tenant}`
     + ` PROVIDER REGIONS ${tally.provider}`;
 }

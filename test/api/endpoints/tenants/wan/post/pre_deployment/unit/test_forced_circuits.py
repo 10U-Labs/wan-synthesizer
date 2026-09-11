@@ -39,7 +39,7 @@ def test_excluded_backbone_resolves_to_a_removed_pair() -> None:
     assert circuits.removed_backbone == frozenset({segment_key("P0", "P1")})
 
 
-def test_excluded_backbone_endpoint_need_not_be_forced() -> None:
+def test_excluded_wan_pop_endpoint_need_not_be_forced() -> None:
     circuits = resolve_forced_circuits(
         OperatorCircuits(removed_backbone=(NamedCircuit("P0", "P1"),)), SITES, set()
     )

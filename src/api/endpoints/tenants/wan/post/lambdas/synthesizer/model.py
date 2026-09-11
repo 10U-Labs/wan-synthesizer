@@ -38,7 +38,7 @@ class SynthesisMetrics:
 
 @dataclass
 class Synthesis:
-    backbone_ids: tuple[str, ...]
+    wan_pop_ids: tuple[str, ...]
     transit_ids: tuple[str, ...]
     homing_circuits: list[HomingCircuit]
     fiber_segment_keys: set[tuple[str, str]]
@@ -66,14 +66,14 @@ class NamedCircuit:
 
 @dataclass(frozen=True)
 class RoleExclusions:
-    prohibited_backbone_names: tuple[str, ...] = ()
+    prohibited_wan_pop_names: tuple[str, ...] = ()
 
 @dataclass(frozen=True)
 class SynthesisParams:
-    min_backbone_count: int = 3
-    max_backbone_count: int | None = None
-    forced_backbone_names: tuple[str, ...] = ()
-    degree_exempt_backbone_names: tuple[str, ...] = ()
+    min_wan_pop_count: int = 3
+    max_wan_pop_count: int | None = None
+    forced_wan_pop_names: tuple[str, ...] = ()
+    degree_exempt_wan_pop_names: tuple[str, ...] = ()
     exclusions: RoleExclusions = field(default_factory=RoleExclusions)
     promote_high_degree_convergences: bool = True
     tuning: Tuning = field(default_factory=Tuning)
@@ -89,13 +89,13 @@ class ForcedCircuits:
     backbone: frozenset[tuple[str, str]] = frozenset()
     homes: frozenset[tuple[str, str]] = frozenset()
     removed_backbone: frozenset[tuple[str, str]] = frozenset()
-    required_backbone: frozenset[str] = frozenset()
+    required_wan_pops: frozenset[str] = frozenset()
 
 @dataclass(frozen=True)
 class RoleOverrides:
-    forced_backbone_ids: frozenset[str] = frozenset()
-    prohibited_backbone_ids: frozenset[str] = frozenset()
-    degree_exempt_backbone_ids: frozenset[str] = frozenset()
+    forced_wan_pop_ids: frozenset[str] = frozenset()
+    prohibited_wan_pop_ids: frozenset[str] = frozenset()
+    degree_exempt_wan_pop_ids: frozenset[str] = frozenset()
     forced_circuits: ForcedCircuits = field(default_factory=ForcedCircuits)
 
 @dataclass(frozen=True)
@@ -103,7 +103,7 @@ class SynthesisInputs:
     access_sites: list[Site]
     carrier_pops: list[Site]
     fiber_segments: dict[tuple[str, str], FiberSegment]
-    eligible_backbone_ids: set[str]
+    eligible_wan_pop_ids: set[str]
     adjacency: dict[str, list[tuple[str, float]]]
     all_distances: dict[str, dict[str, float]]
     all_predecessors: dict[str, dict[str, str]]

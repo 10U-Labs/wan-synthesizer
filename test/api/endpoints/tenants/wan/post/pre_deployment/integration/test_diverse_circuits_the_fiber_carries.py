@@ -23,9 +23,9 @@ def _artifacts(
         sites,
         fiber_segments,
         SynthesisParams(
-            min_backbone_count=_SEATS,
-            max_backbone_count=_SEATS,
-            exclusions=RoleExclusions(prohibited_backbone_names=transit_names),
+            min_wan_pop_count=_SEATS,
+            max_wan_pop_count=_SEATS,
+            exclusions=RoleExclusions(prohibited_wan_pop_names=transit_names),
             promote_high_degree_convergences=False,
             tuning=Tuning(backbone_number_of_diverse_circuits=2),
         ),

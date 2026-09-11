@@ -19,8 +19,8 @@ _FIBER = fixtures.fiber_segments_from({
 })
 _TARGET_MILES = 100
 _PARAMS = SynthesisParams(
-    min_backbone_count=2,
-    forced_backbone_names=("hub_a", "hub_b"),
+    min_wan_pop_count=2,
+    forced_wan_pop_names=("hub_a", "hub_b"),
     promote_high_degree_convergences=False,
     tuning=Tuning(
         backbone_number_of_diverse_circuits=2,
@@ -31,12 +31,12 @@ ARTIFACTS = fixtures.run_synthesis(_SITES, _FIBER, _PARAMS)
 
 
 def test_the_synthesis_seats_a_hub_for_each_of_the_two_far_sites() -> None:
-    assert sorted(ARTIFACTS.synthesis.backbone_ids) == ["cape", "hub_a", "hub_b", "plains"]
+    assert sorted(ARTIFACTS.synthesis.wan_pop_ids) == ["cape", "hub_a", "hub_b", "plains"]
 
 
 def test_the_delivered_synthesis_reports_its_coverage_target_met() -> None:
     delivered = coverage_report(
-        ARTIFACTS.synthesis.backbone_ids,
+        ARTIFACTS.synthesis.wan_pop_ids,
         [site for site in ARTIFACTS.sites if not is_carrier_pop(site)],
         {site.id: site for site in ARTIFACTS.sites},
         _TARGET_MILES,

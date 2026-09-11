@@ -10,7 +10,7 @@ import boto3
 from synthesizer.codec import load_merged_carriers, load_off_net, load_regions, load_sites
 from synthesizer.collections import (
     backbone_links,
-    backbone_nodes,
+    wan_pops,
     provider_nodes,
     paths,
     tenant_nodes,
@@ -34,13 +34,13 @@ from synthesizer.stages import dual_home, finalize
 logger = logging.getLogger(__name__)
 
 CONFIG_RESOURCES = (
-    "forced-backbone-nodes",
+    "forced-wan-pops",
     "forced-paths",
     "forced-homes",
-    "prohibited-backbone-nodes",
+    "prohibited-wan-pops",
     "prohibited-paths",
-    "degree-exempt-backbone-nodes",
-    "backbone-node-count",
+    "degree-exempt-wan-pops",
+    "wan-pop-count",
     "backbone-number-of-diverse-circuits",
     "homing-degree",
     "convergence-promotion",
@@ -73,7 +73,7 @@ def _delivered(
     tenant: str,
 ) -> dict[str, Any]:
     coverage: CoverageReport = coverage_report(
-        synthesis.backbone_ids,
+        synthesis.wan_pop_ids,
         [site for site in graph if not is_carrier_pop(site)],
         {site.id: site for site in graph},
         params.tuning.backbone_coverage_target_miles,
@@ -121,7 +121,7 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     synthesis = synthesize_two_tier(graph, fiber_segments, params, overrides)
     logger.info("Finalizing and validating the synthesis")
     graph, fiber_segments, synthesis, validation = finalize(
-        graph, fiber_segments, synthesis, params, overrides.degree_exempt_backbone_ids
+        graph, fiber_segments, synthesis, params, overrides.degree_exempt_wan_pop_ids
     )
     payload = synthesis_payload(
         SynthesisArtifacts(graph, fiber_segments, synthesis, validation)
@@ -130,7 +130,7 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     return {
         "sites": sites(payload),
         "paths": paths(payload),
-        "backbone-nodes": backbone_nodes(payload),
+        "wan-pops": wan_pops(payload),
         "backbone-links": backbone_links(payload),
         "tenant-nodes": tenant_nodes(payload),
         "provider-nodes": provider_nodes(payload),

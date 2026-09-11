@@ -66,7 +66,7 @@ def diverse_circuit_bounds(
     return DiverseCircuitBounds(per_site, max((*per_site.values(), 1)))
 
 
-def backbone_strength(
+def wan_pop_strength(
     pop_id: str,
     inputs: SynthesisInputs,
     pop_by_id: dict[str, Site],

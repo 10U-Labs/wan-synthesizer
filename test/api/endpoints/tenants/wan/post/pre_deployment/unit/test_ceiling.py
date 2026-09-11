@@ -42,7 +42,7 @@ _ONE_CUT = build_adjacency(physical({
 }))
 
 
-def test_a_node_behind_one_failure_point_has_a_ceiling_of_one() -> None:
+def test_a_wan_pop_behind_one_failure_point_has_a_ceiling_of_one() -> None:
     assert diverse_circuit_ceiling(
         "bos", CircuitProofInputs(("bos", "n1", "n2"), _ONE_CUT)
     ) == 1
@@ -109,12 +109,12 @@ def test_the_circuits_proved_to_one_peer_are_the_shortest_of_them() -> None:
     assert sorted(pop_ids[1] for pop_ids in circuits) == ["mid", "near"]
 
 
-def test_an_unreachable_node_has_no_ceiling_at_all() -> None:
+def test_an_unreachable_wan_pop_has_no_ceiling_at_all() -> None:
     inputs = CircuitProofInputs(("nowhere", "n1", "n2"), _ONE_CUT)
     assert diverse_circuit_ceiling("nowhere", inputs) == 0
 
 
-def test_the_ceilings_are_computed_for_every_backbone_node() -> None:
+def test_the_ceilings_are_computed_for_every_wan_pop() -> None:
     assert diverse_circuit_ceilings(CircuitProofInputs(_TWO_CUT_BACKBONE, _TWO_CUTS)) == {
         "bos": 2, "n1": 2, "n2": 2
     }
@@ -123,7 +123,7 @@ def test_the_ceilings_are_computed_for_every_backbone_node() -> None:
 _BOS_CIRCUITS = diverse_circuits("bos", CircuitProofInputs(_TWO_CUT_BACKBONE, _TWO_CUTS))
 
 
-def test_the_counted_circuits_run_from_the_node_to_distinct_peers() -> None:
+def test_the_counted_circuits_run_from_the_wan_pop_to_distinct_peers() -> None:
     assert sorted((pop_ids[0], pop_ids[-1]) for pop_ids in _BOS_CIRCUITS) == [
         ("bos", "n1"), ("bos", "n2")
     ]
@@ -285,12 +285,12 @@ def test_a_site_reachable_only_over_water_keeps_the_diverse_circuits_it_has() ->
 
 def _credit_over(
     fiber: dict[tuple[str, str], FiberSegment],
-    backbone_ids: tuple[str, ...],
+    wan_pop_ids: tuple[str, ...],
     most: int | None,
 ) -> dict[str, dict[tuple[str, str], int]]:
     return diverse_circuits_by_carrier_and_peer(
         CircuitProofInputs(
-            backbone_ids,
+            wan_pop_ids,
             build_adjacency(fiber),
             circuits_wanted=2,
             fiber_by_carrier=adjacency_by_carrier(fiber),
@@ -305,15 +305,15 @@ _ALREADY_NEEDED_CREDIT = _credit_over(
 _FLOORED_ABOVE_FIBER = fixtures.carrier_fiber_segments(fixtures.FLOORED_ABOVE_SEGMENTS)
 
 
-def test_a_nodes_ask_is_credited_to_the_carrier_of_fiber_the_wan_already_needs() -> None:
+def test_a_wan_pops_ask_is_credited_to_the_carrier_of_fiber_the_wan_already_needs() -> None:
     assert _ALREADY_NEEDED_CREDIT["f"] == {("lumen", "b"): 1}
 
 
-def test_a_node_the_wan_shares_no_fiber_with_keeps_its_shortest_circuits_carriers() -> None:
+def test_a_wan_pop_the_wan_shares_no_fiber_with_keeps_its_shortest_circuits_carriers() -> None:
     assert _ALREADY_NEEDED_CREDIT["b"] == {("zayo", "d"): 1, ("lumen", "f"): 1}
 
 
-def test_every_diverse_circuit_a_nodes_carriers_prove_is_credited_when_none_is_asked_for() -> None:
+def test_every_diverse_circuit_a_wan_pops_carriers_prove_is_credited_when_none_is_asked_for() -> None:
     assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, None)["b"] == {
         ("zayo", "e"): 1, ("cogent", "d"): 1, ("cogent", "f"): 1,
     }

@@ -19,19 +19,19 @@ from synthesizer.graphs import (
     build_adjacency,
     dijkstra,
 )
-from synthesizer.assemble import evaluate_backbone, forced_backbone_resilience_error
-from synthesizer.coverage import grow_backbone_for_coverage
+from synthesizer.assemble import evaluate_wan_pops, forced_wan_pop_resilience_error
+from synthesizer.coverage import grow_wan_pops_for_coverage
 from synthesizer.search_plan import _SearchPlan
-from synthesizer.strength import backbone_strength, diverse_circuit_bounds
+from synthesizer.strength import wan_pop_strength, diverse_circuit_bounds
 
 logger = logging.getLogger(__name__)
 
 _SEARCH_LOG_INTERVAL = 50_000
 
-CONVERGENCE_BACKBONE_DEGREE = 3
+CONVERGENCE_WAN_POP_DEGREE = 3
 
 
-def compute_eligible_backbone_ids(
+def compute_eligible_wan_pop_ids(
     carrier_pops: list[Site],
     adjacency: dict[str, list[tuple[str, float]]],
 ) -> set[str]:
@@ -44,17 +44,17 @@ def compute_eligible_backbone_ids(
 
 def convergence_promotion_ids(
     synthesis: Synthesis,
-    min_degree: int = CONVERGENCE_BACKBONE_DEGREE,
+    min_degree: int = CONVERGENCE_WAN_POP_DEGREE,
 ) -> set[str]:
     counts: dict[str, int] = {}
     for left, right in synthesis.fiber_segment_keys:
         counts[left] = counts.get(left, 0) + 1
         counts[right] = counts.get(right, 0) + 1
-    backbone = set(synthesis.backbone_ids)
+    seated = set(synthesis.wan_pop_ids)
     return {
         pop_id
         for pop_id, degree in counts.items()
-        if degree >= min_degree and pop_id not in backbone
+        if degree >= min_degree and pop_id not in seated
     }
 
 
@@ -84,61 +84,61 @@ def validate_pop_graph(
         raise ValueError(f"Carrier PoPs with no fiber segment: {names}")
 
 
-def backbone_set_strength(backbone_ids: tuple[str, ...], plan: _SearchPlan) -> float:
-    return sum(plan.strength_by_id[backbone_id] for backbone_id in backbone_ids)
+def wan_pop_set_strength(wan_pop_ids: tuple[str, ...], plan: _SearchPlan) -> float:
+    return sum(plan.strength_by_id[wan_pop_id] for wan_pop_id in wan_pop_ids)
 
 
-def free_backbone_candidates(plan: _SearchPlan) -> list[str]:
+def free_wan_pop_candidates(plan: _SearchPlan) -> list[str]:
     return [
-        pop_id for pop_id in plan.backbone_candidates if pop_id not in plan.required_backbone
+        pop_id for pop_id in plan.wan_pop_candidates if pop_id not in plan.required_wan_pops
     ]
 
 
-def backbone_combination_count(plan: _SearchPlan, size: int) -> int:
-    required = len(plan.required_backbone)
+def wan_pop_combination_count(plan: _SearchPlan, size: int) -> int:
+    required = len(plan.required_wan_pops)
     if required > size:
         return 0
-    return math.comb(len(free_backbone_candidates(plan)), size - required)
+    return math.comb(len(free_wan_pop_candidates(plan)), size - required)
 
 
-def backbone_combinations(plan: _SearchPlan, size: int) -> list[tuple[str, ...]]:
-    required = tuple(sorted(plan.required_backbone))
+def wan_pop_combinations(plan: _SearchPlan, size: int) -> list[tuple[str, ...]]:
+    required = tuple(sorted(plan.required_wan_pops))
     if len(required) > size:
         return []
-    free = free_backbone_candidates(plan)
+    free = free_wan_pop_candidates(plan)
     return [
         required + extra
         for extra in itertools.combinations(free, size - len(required))
     ]
 
 
-def best_backbone_at_size(
+def best_wan_pops_at_size(
     inputs: SynthesisInputs,
     plan: _SearchPlan,
     size: int,
 ) -> tuple[str, ...] | None:
     combos = sorted(
-        backbone_combinations(plan, size),
-        key=lambda combo: -backbone_set_strength(combo, plan),
+        wan_pop_combinations(plan, size),
+        key=lambda combo: -wan_pop_set_strength(combo, plan),
     )
     logger.info("Evaluating %d backbone sets of size %d, strongest first", len(combos), size)
     best_set: tuple[str, ...] | None = None
     best_key: tuple[float, float] | None = None
     best_strength = -math.inf
-    for index, backbone_set in enumerate(combos, start=1):
+    for index, wan_pop_set in enumerate(combos, start=1):
         if index % _SEARCH_LOG_INTERVAL == 0:
             logger.info("  scanned %d/%d backbone sets", index, len(combos))
-        strength = backbone_set_strength(backbone_set, plan)
+        strength = wan_pop_set_strength(wan_pop_set, plan)
         if strength < best_strength:
             logger.info("  strongest feasible backbone locked at set %d/%d", index, len(combos))
             break
-        homing_circuits = evaluate_backbone(backbone_set, inputs, plan)
+        homing_circuits = evaluate_wan_pops(wan_pop_set, inputs, plan)
         if homing_circuits is None:
             continue
         access_miles = sum(circuit.distance_miles for circuit in homing_circuits)
         key = (-strength, round(access_miles, 6))
         if best_key is None or key < best_key:
-            best_set, best_key, best_strength = backbone_set, key, strength
+            best_set, best_key, best_strength = wan_pop_set, key, strength
             logger.info(
                 "  set %d/%d: new best strength %.3f, last-mile %.0f mi",
                 index, len(combos), strength, access_miles,
@@ -165,11 +165,11 @@ def search_best_synthesis(
 ) -> Synthesis:
     limit = enumeration_limit(total_memory_bytes(), params)
     base: tuple[str, ...] | None = None
-    max_size = len(plan.backbone_candidates)
-    if params.max_backbone_count is not None:
-        max_size = min(max_size, params.max_backbone_count)
-    for size in range(params.min_backbone_count, max_size + 1):
-        sets = backbone_combination_count(plan, size)
+    max_size = len(plan.wan_pop_candidates)
+    if params.max_wan_pop_count is not None:
+        max_size = min(max_size, params.max_wan_pop_count)
+    for size in range(params.min_wan_pop_count, max_size + 1):
+        sets = wan_pop_combination_count(plan, size)
         if sets > limit:
             raise ValueError(
                 f"Enumerating {sets} backbone sets of size {size} "
@@ -178,20 +178,20 @@ def search_best_synthesis(
         if sets == 0:
             continue
         logger.info(
-            "Synthesizing %d demand sites; %d backbone, %d required; %d sets (limit %d)",
-            len(inputs.access_sites), size, len(plan.required_backbone), sets, limit,
+            "Synthesizing %d demand sites; %d WAN PoPs, %d required; %d sets (limit %d)",
+            len(inputs.access_sites), size, len(plan.required_wan_pops), sets, limit,
         )
-        base = best_backbone_at_size(inputs, plan, size)
+        base = best_wan_pops_at_size(inputs, plan, size)
         if base is not None:
-            logger.info("Feasible at %d nodes; growing for coverage", len(base))
+            logger.info("Feasible at %d WAN PoPs; growing for coverage", len(base))
             break
     if base is None:
         raise ValueError(
-            f"No feasible synthesis with at least {params.min_backbone_count} backbone nodes"
+            f"No feasible synthesis with at least {params.min_wan_pop_count} WAN PoPs"
         )
     pop_by_id = {pop.id: pop for pop in inputs.carrier_pops}
-    synthesis = grow_backbone_for_coverage(base, inputs, plan, params, pop_by_id)
-    logger.info("Selected a %d-node backbone synthesis", len(synthesis.backbone_ids))
+    synthesis = grow_wan_pops_for_coverage(base, inputs, plan, params, pop_by_id)
+    logger.info("Selected a %d-PoP backbone synthesis", len(synthesis.wan_pop_ids))
     return synthesis
 
 
@@ -207,7 +207,7 @@ def build_synthesis_inputs(
         access_sites=[site for site in sites if not is_carrier_pop(site)],
         carrier_pops=carrier_pops,
         fiber_segments=fiber_segments,
-        eligible_backbone_ids=set(),
+        eligible_wan_pop_ids=set(),
         adjacency=adjacency,
         all_distances=all_distances,
         all_predecessors=all_predecessors,
@@ -220,31 +220,31 @@ def build_search_plan(
     eligible_ids: set[str],
     overrides: RoleOverrides,
     params: SynthesisParams,
-    promoted_backbone_ids: frozenset[str] = frozenset(),
+    promoted_wan_pop_ids: frozenset[str] = frozenset(),
 ) -> _SearchPlan:
     pop_by_id = {pop.id: pop for pop in inputs.carrier_pops}
     bounds = diverse_circuit_bounds(eligible_ids, inputs.adjacency)
     strength_by_id = {
-        pop_id: backbone_strength(
+        pop_id: wan_pop_strength(
             pop_id, inputs, pop_by_id, bounds, params.tuning.compass_sector_count
         )
         for pop_id in eligible_ids
     }
-    backbone_candidates = sorted(
+    wan_pop_candidates = sorted(
         eligible_ids,
         key=lambda pop_id: (-strength_by_id[pop_id], pop_id),
     )
-    required = (overrides.forced_backbone_ids & eligible_ids) | promoted_backbone_ids
+    required = (overrides.forced_wan_pop_ids & eligible_ids) | promoted_wan_pop_ids
     forced_circuits = replace(
         overrides.forced_circuits,
-        required_backbone=frozenset(required),
+        required_wan_pops=frozenset(required),
     )
     return _SearchPlan(
-        backbone_candidates,
+        wan_pop_candidates,
         strength_by_id,
         tuning=params.tuning,
         forced_circuits=forced_circuits,
-        seat_cap=params.max_backbone_count,
+        seat_cap=params.max_wan_pop_count,
     )
 
 
@@ -255,39 +255,39 @@ def synthesize_two_tier(
     overrides: RoleOverrides | None = None,
 ) -> Synthesis:
     overrides = overrides if overrides is not None else RoleOverrides()
-    if params.min_backbone_count < 1:
+    if params.min_wan_pop_count < 1:
         raise ValueError(
-            "min_backbone_count (the minimum number of backbone nodes) must be at least 1"
+            "min_wan_pop_count (the minimum number of WAN PoPs) must be at least 1"
         )
     if (
-        params.max_backbone_count is not None
-        and params.max_backbone_count < params.min_backbone_count
+        params.max_wan_pop_count is not None
+        and params.max_wan_pop_count < params.min_wan_pop_count
     ):
-        raise ValueError("max_backbone_count must be at least min_backbone_count")
+        raise ValueError("max_wan_pop_count must be at least min_wan_pop_count")
     if (
-        params.max_backbone_count is not None
-        and len(overrides.forced_backbone_ids) > params.max_backbone_count
+        params.max_wan_pop_count is not None
+        and len(overrides.forced_wan_pop_ids) > params.max_wan_pop_count
     ):
-        raise ValueError("more backbone nodes are forced than max_backbone_count allows")
+        raise ValueError("more WAN PoPs are forced than max_wan_pop_count allows")
 
     graph = build_synthesis_inputs(sites, fiber_segments)
-    eligible_ids = compute_eligible_backbone_ids(
+    eligible_ids = compute_eligible_wan_pop_ids(
         graph.carrier_pops, graph.adjacency
     )
-    eligible_ids = eligible_ids | overrides.forced_backbone_ids
-    backbone_eligible_ids = eligible_ids - overrides.prohibited_backbone_ids
-    if len(backbone_eligible_ids) < params.min_backbone_count:
-        raise ValueError("Not enough eligible Carrier backbone PoPs (degree >= 2)")
+    eligible_ids = eligible_ids | overrides.forced_wan_pop_ids
+    eligible_wan_pop_ids = eligible_ids - overrides.prohibited_wan_pop_ids
+    if len(eligible_wan_pop_ids) < params.min_wan_pop_count:
+        raise ValueError("Not enough eligible Carrier PoPs to seat as WAN PoPs (degree >= 2)")
 
-    inputs = replace(graph, eligible_backbone_ids=backbone_eligible_ids)
-    forced_base = overrides.forced_backbone_ids & backbone_eligible_ids
+    inputs = replace(graph, eligible_wan_pop_ids=eligible_wan_pop_ids)
+    forced_base = overrides.forced_wan_pop_ids & eligible_wan_pop_ids
     promoted: frozenset[str] = frozenset()
     while True:
         plan = build_search_plan(
-            inputs, backbone_eligible_ids, overrides, params, promoted
+            inputs, eligible_wan_pop_ids, overrides, params, promoted
         )
-        forced_error = forced_backbone_resilience_error(
-            plan.required_backbone, inputs, params.min_backbone_count
+        forced_error = forced_wan_pop_resilience_error(
+            plan.required_wan_pops, inputs, params.min_wan_pop_count
         )
         if forced_error is not None:
             raise ValueError(forced_error)
@@ -300,13 +300,13 @@ def synthesize_two_tier(
             return synthesis
         grown = promoted | new
         if (
-            params.max_backbone_count is not None
-            and len(forced_base | grown) > params.max_backbone_count
+            params.max_wan_pop_count is not None
+            and len(forced_base | grown) > params.max_wan_pop_count
         ):
             logger.info(
-                "Convergence promotion stopped at the %d-node cap; %d data-center "
+                "Convergence promotion stopped at the %d-PoP cap; %d data-center "
                 "crossing(s) left as transit",
-                params.max_backbone_count, len(new),
+                params.max_wan_pop_count, len(new),
             )
             return synthesis
         logger.info("Promoting %d data-center convergence hub(s); redrawing", len(new))
