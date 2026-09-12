@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import fields
 from typing import Any
 
 import pytest
@@ -43,12 +44,8 @@ def test_default_max_wan_pop_count_is_none() -> None:
     assert default_config().params.max_wan_pop_count is None
 
 
-def test_default_label_is_empty() -> None:
-    assert default_config().label == ""
-
-
-def test_reads_label() -> None:
-    assert _config({"label": "Minuteman"}).label == "Minuteman"
+def test_config_holds_no_label() -> None:
+    assert "label" not in {held.name for held in fields(AppConfig)}
 
 
 def test_reads_min_wan_pop_count() -> None:
@@ -355,7 +352,6 @@ def _parts(**overrides: Any) -> dict[str, Any]:
         "homing-degree": {"degree": 2},
         "convergence-promotion": {"promote": True},
         "knobs": {"backbone_coverage_target_miles": 600},
-        "label": {"label": "Minuteman"},
     }
     parts.update(overrides)
     return parts
@@ -393,12 +389,9 @@ def test_app_config_from_parts_assembles_the_two_degrees() -> None:
     assert (tuning.backbone_number_of_diverse_circuits, tuning.homing_degree) == (3, 2)
 
 
-def test_app_config_from_parts_reads_the_label() -> None:
-    assert app_config_from_parts(_parts()).label == "Minuteman"
-
-
-def test_app_config_from_parts_reads_a_plain_label() -> None:
-    assert app_config_from_parts(_parts(label="Bare")).label == "Bare"
+def test_app_config_from_parts_leaves_a_label_part_unread() -> None:
+    labelled = app_config_from_parts(_parts(label={"label": "Minuteman"}))
+    assert labelled == app_config_from_parts(_parts())
 
 
 def test_app_config_from_parts_reads_wan_pop_count() -> None:

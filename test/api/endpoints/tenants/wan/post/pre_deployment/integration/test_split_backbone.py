@@ -72,7 +72,6 @@ def _config_documents() -> dict[str, Any]:
             "backbone_coverage_target_miles": 500,
         },
         "settings": {},
-        "label": {"label": "Split"},
     }
 
 

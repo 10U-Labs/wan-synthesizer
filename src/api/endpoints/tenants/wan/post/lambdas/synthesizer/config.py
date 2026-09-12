@@ -15,7 +15,6 @@ from synthesizer.model import (
 @dataclass(frozen=True)
 class AppConfig:
     params: SynthesisParams
-    label: str = ""
     operator_circuits: OperatorCircuits = field(default_factory=OperatorCircuits)
 
 
@@ -151,7 +150,6 @@ def config_from_data(data: dict[str, Any]) -> AppConfig:
     synthesis = _mapping(data, "synthesis")
     return AppConfig(
         params=_params(synthesis, _mapping(data, "tuning"), _mapping(data, "settings")),
-        label=str(data.get("label", "")),
         operator_circuits=_operator_circuits(synthesis),
     )
 
@@ -192,11 +190,8 @@ def app_config_from_parts(parts: dict[str, Any]) -> AppConfig:
         ),
         "homing_degree": _degree(parts, "homing-degree"),
     }
-    label = parts.get("label", {})
-    label_text = label.get("label", "") if isinstance(label, dict) else str(label)
     return config_from_data({
         "synthesis": synthesis,
         "tuning": tuning,
         "settings": _mapping(parts, "settings"),
-        "label": label_text,
     })

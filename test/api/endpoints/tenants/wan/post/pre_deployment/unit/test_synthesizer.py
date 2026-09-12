@@ -99,6 +99,10 @@ def test_reads_the_degree_exempt_wan_pops(synthesizer: Any) -> None:
     assert "degree-exempt-wan-pops" in synthesizer.CONFIG_RESOURCES
 
 
+def test_does_not_fetch_the_label(synthesizer: Any) -> None:
+    assert "label" not in synthesizer.CONFIG_RESOURCES
+
+
 def test_publishes_the_wan_on_success(synthesizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     objects = _run(synthesizer, monkeypatch)
     assert "tenants/f-35/wan.json" in objects
