@@ -7,26 +7,26 @@ from synthesizer.graphs import reachable_over
 
 _Node = tuple[str, str]
 _Residual = dict[_Node, dict[_Node, int]]
-_Costs = dict[_Node, dict[_Node, float]]
+_Miles = dict[_Node, dict[_Node, float]]
 _Arc = tuple[_Node, _Node, int]
 _NewArc = tuple[_Node, _Node, float, int]
 
 _SINK: _Node = ("sink", "")
 
 
-def _add_capacity(residual: _Residual, costs: _Costs, arc: _NewArc) -> None:
-    tail, head, miles, units = arc
+def _add_capacity(residual: _Residual, miles: _Miles, arc: _NewArc) -> None:
+    tail, head, distance, units = arc
     residual.setdefault(tail, {})[head] = units
     residual.setdefault(head, {}).setdefault(tail, 0)
-    costs.setdefault(tail, {})[head] = miles
-    costs.setdefault(head, {})[tail] = -miles
+    miles.setdefault(tail, {})[head] = distance
+    miles.setdefault(head, {})[tail] = -distance
 
 
 def _unit_site_network(
     site: str,
     wan_pop_ids: tuple[str, ...],
     adjacency: dict[str, list[tuple[str, float]]],
-) -> tuple[_Residual, _Costs, list[_Arc]]:
+) -> tuple[_Residual, _Miles, list[_Arc]]:
     peers = {peer for peer in wan_pop_ids if peer != site and peer in adjacency}
     new_arcs: list[_NewArc] = [
         (("in", city), ("out", city), 0.0, 1)
@@ -42,15 +42,15 @@ def _unit_site_network(
         (("in", peer), _SINK, 0.0, len(adjacency[peer])) for peer in sorted(peers)
     ]
     residual: _Residual = {}
-    costs: _Costs = {}
+    miles: _Miles = {}
     for arc in new_arcs:
-        _add_capacity(residual, costs, arc)
-    return residual, costs, [(tail, head, units) for tail, head, _miles, units in new_arcs]
+        _add_capacity(residual, miles, arc)
+    return residual, miles, [(tail, head, units) for tail, head, _distance, units in new_arcs]
 
 
-def _cheapest_runs(
+def _shortest_runs(
     residual: _Residual,
-    costs: _Costs,
+    miles: _Miles,
     potential: dict[_Node, float],
     source: _Node,
 ) -> tuple[dict[_Node, float], dict[_Node, _Node | None]]:
@@ -66,7 +66,7 @@ def _cheapest_runs(
         for head, capacity in residual.get(tail, {}).items():
             if capacity <= 0 or head in settled:
                 continue
-            step = spent + costs[tail][head] + potential[tail] - potential[head]
+            step = spent + miles[tail][head] + potential[tail] - potential[head]
             if head not in distance or step < distance[head]:
                 distance[head] = step
                 reached[head] = tail
@@ -76,11 +76,11 @@ def _cheapest_runs(
 
 def _augmenting_path(
     residual: _Residual,
-    costs: _Costs,
+    miles: _Miles,
     potential: dict[_Node, float],
     source: _Node,
 ) -> list[_Node] | None:
-    distance, reached = _cheapest_runs(residual, costs, potential, source)
+    distance, reached = _shortest_runs(residual, miles, potential, source)
     for end, run in distance.items():
         potential[end] += run
     if _SINK not in reached:
@@ -119,11 +119,11 @@ def _proved_circuits(
     wan_pop_ids: tuple[str, ...],
     adjacency: dict[str, list[tuple[str, float]]],
 ) -> list[tuple[str, ...]]:
-    residual, costs, arcs = _unit_site_network(site, wan_pop_ids, adjacency)
+    residual, miles, arcs = _unit_site_network(site, wan_pop_ids, adjacency)
     source: _Node = ("out", site)
     potential: dict[_Node, float] = {end: 0.0 for end in (source, *residual)}
     while True:
-        path = _augmenting_path(residual, costs, potential, source)
+        path = _augmenting_path(residual, miles, potential, source)
         if path is None:
             break
         for head, tail in zip(path, path[1:]):
