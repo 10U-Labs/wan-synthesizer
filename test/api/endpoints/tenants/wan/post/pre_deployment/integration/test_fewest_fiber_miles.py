@@ -215,6 +215,27 @@ def test_every_wan_pop_on_that_synthesis_still_holds_the_diverse_circuits_it_was
     assert FLOORED_ABOVE_ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []
 
 
+NEARER_PEER_ARTIFACTS = fixtures.synthesis_over_segments(
+    fixtures.NEARER_PEER_SITES, fixtures.NEARER_PEER_SEGMENTS, fixtures.NEARER_PEER_CIRCUITS
+)
+
+
+def test_a_synthesis_asked_for_three_circuits_runs_no_fewer_miles_than_its_floor() -> None:
+    assert NEARER_PEER_ARTIFACTS.synthesis.metrics.physical_miles >= (
+        NEARER_PEER_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles - _SLACK
+    )
+
+
+def test_that_floor_is_the_fewest_miles_three_circuits_out_of_every_wan_pop_can_run_over() -> None:
+    assert round(
+        NEARER_PEER_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3
+    ) == fixtures.NEARER_PEER_MILES
+
+
+def test_every_wan_pop_on_that_synthesis_holds_the_three_diverse_circuits_it_was_owed() -> None:
+    assert NEARER_PEER_ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []
+
+
 _ON_ONE_POP_SITES = ("a", "b", "c", "d")
 _ON_ONE_POP_TRANSIT = ("p",)
 _ON_ONE_POP_SEGMENTS = {

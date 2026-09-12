@@ -300,6 +300,23 @@ def test_the_fiber_a_long_search_settles_on_meets_every_requirement_asked_of_it(
     )
 
 
+_NEARER_PEER_SELECTION = _selected(
+    fixtures.NEARER_PEER_FIBER,
+    fixtures.NEARER_PEER_SITES,
+    number_of_diverse_circuits=fixtures.NEARER_PEER_CIRCUITS,
+)
+
+
+def test_the_floor_is_stated_over_no_row_handing_a_wan_pops_ask_to_its_nearer_peers() -> None:
+    assert _NEARER_PEER_SELECTION.lower_bound_miles == pytest.approx(fixtures.NEARER_PEER_MILES)
+
+
+def test_the_fiber_selected_for_a_wan_pop_asked_for_three_circuits_runs_the_fewest_miles() -> None:
+    assert _selected_miles(_NEARER_PEER_SELECTION, fixtures.NEARER_PEER_FIBER) == pytest.approx(
+        fixtures.NEARER_PEER_MILES
+    )
+
+
 _CASES: tuple[tuple[str, FiberSelection, dict[tuple[str, str], FiberSegment]], ...] = (
     ("ring", _RING_SELECTION, _RING),
     ("ring and chord", _CHORD_SELECTION, _CHORD),
@@ -308,6 +325,7 @@ _CASES: tuple[tuple[str, FiberSelection, dict[tuple[str, str], FiberSegment]], .
     ("pair with two circuits", _TWIN_SELECTION, _TWIN_CIRCUITS),
     ("pair whose second circuit changes hands", _TWIN_SPLIT_SELECTION, _TWIN_SPLIT),
     ("twelve cities and five wan pops", _MANY_PASS_SELECTION, _MANY_PASS),
+    ("six wan pops asked for three circuits", _NEARER_PEER_SELECTION, fixtures.NEARER_PEER_FIBER),
 )
 
 

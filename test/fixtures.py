@@ -753,6 +753,17 @@ FLOORED_ABOVE_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
 }
 FLOORED_ABOVE_MILES = 84.0
 
+NEARER_PEER_SITES = ("s", "a", "b", "c", "d", "e")
+NEARER_PEER_SEGMENTS = {
+    ("s", "a"): 100.0, ("s", "b"): 100.0, ("s", "c"): 120.0, ("s", "d"): 130.0,
+    ("a", "c"): 10.0, ("a", "d"): 10.0, ("a", "e"): 10.0,
+    ("b", "c"): 10.0, ("b", "d"): 10.0, ("b", "e"): 10.0,
+    ("c", "e"): 10.0,
+}
+NEARER_PEER_FIBER = fiber_segments_from(NEARER_PEER_SEGMENTS)
+NEARER_PEER_CIRCUITS = 3
+NEARER_PEER_MILES = 400.0
+
 SHORT_AND_LONG_SITES = ("s", "t", "u")
 SHORT_AND_LONG_TRANSIT = ("far", "near")
 SHORT_AND_LONG_SEGMENTS = {
