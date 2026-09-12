@@ -26,8 +26,7 @@ and `finalize`. Read `synthesis.metrics.physical_miles`,
 `.backbone_lower_bound_miles`, and the validation keys
 `backbone_mesh_independence_deficient` and `backbone_mesh_cut_pops`.
 
-The seven tenants are two-pop, daf, dow, f-35, minuteman, ***REMOVED*** and ***REMOVED***;
-the last two publish 4,186.183 miles and nothing at all. A run costs up to a
+The five tenants are two-pop, daf, dow, f-35 and minuteman. A run costs up to a
 minute a tenant and needs `highspy`, which no Python on the machine has: make a
 venv in the session scratchpad, never under the repository, and `pip install
 highspy pyyaml` into it. Measuring is not the local verification
@@ -40,11 +39,10 @@ floor of 4,004.949, daf 9,556.587 against 12,247.290, dow 10,323.419 against
 7,003.212, each matching what `e2e-tests` read off the deployed API in run
 `34440829190` to the thousandth.
 
-Since 6c504ad3 let a circuit change hands between carriers, the seven published
+Since 6c504ad3 let a circuit change hands between carriers, the five published
 two-pop 3,884.265 against 3,884.265, daf 8,212.251 against 7,043.473, dow
 7,581.802 against 7,361.252, f-35 7,575.128 against 6,150.391, minuteman
-4,712.437 against 4,712.437, ***REMOVED*** 4,186.183 against 4,186.183 and ***REMOVED***
-nothing, matching run `34670636252` re-run against the deployed Lambda to the
+4,712.437 against 4,712.437, matching run `34670636252` re-run against the deployed Lambda to the
 thousandth. daf at 1.166 and f-35 at 1.232 failed
 `test_no_published_network_runs_more_than_a_tenth_further_than_the_floor_it_publishes`,
 which was the one red assertion in `e2e-tests` for the run of commits up to
@@ -53,20 +51,11 @@ crediting a peer every circuit that shares no PoP between and selecting the
 fiber over the rows the floor is stated over, and since then every tenant with
 a mesh runs exactly its floor: two-pop 3,884.265, daf 7,043.473, dow
 7,361.252, f-35 5,735.325 (which selects Richmond, VA where it selected New
-Orleans, LA), minuteman 4,712.437, ***REMOVED*** 4,186.183 and ***REMOVED*** nothing. Run
+Orleans, LA) and minuteman 4,712.437. Run
 `34696243921`, started by hand after 6918bbd6 deployed, read them off the
 deployed API to the thousandth and is green on every tier; the seed run a
 synthesizer push starts itself grades the WANs the previous Lambda built, per
 [seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md).
-Holding a tenant asking for one circuit to the directive, for GitHub
-issue #190, moved ***REMOVED*** alone: it publishes 8,407.716 against 8,407.716
-over two transatlantic circuits sharing no PoP, where it published
-4,186.183 over one.
-5abe05a4 pinned ***REMOVED*** at Molesworth, United Kingdom (an off-net row under
-`inputs.forced`), Stuttgart, Germany and Tampa, FL in place of Ashburn, VA,
-and it publishes 11,152.378 against 11,024.526 over four PoPs, New York, NY
-seated by the synthesizer, with ceilings New York 6, Molesworth 3, Stuttgart
-2 and Tampa 2 since 646efe89 proved circuits per pair.
 The e2e helpers in `test_delivered_syntheses.py` (`_overstated_ceilings`,
 `_credited_past_the_ceiling`, `_pairs_joined_over_land_drawn_under_water`,
 `_circuits_over_fiber_nobody_owns`) take a dict shaped like
