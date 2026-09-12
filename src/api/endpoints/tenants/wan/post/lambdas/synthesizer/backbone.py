@@ -22,7 +22,7 @@ from synthesizer.model import (
     CIRCUIT_FOR_TARGET,
     SynthesisCircuit,
 )
-from synthesizer.survivable import FiberInputs, select_fiber
+from synthesizer.survivable import CIRCUITS_SHARING_NO_POP, FiberInputs, select_fiber
 from synthesizer.validation import diverse_circuit_count
 
 
@@ -117,7 +117,7 @@ def _proved_over(
     return sorted(
         diverse_circuits(site, CircuitProofInputs(peers, build_adjacency(fiber))),
         key=lambda pop_ids: (miles_along(pop_ids, fiber), pop_ids),
-    )[: constraints.number_of_diverse_circuits]
+    )[: max(constraints.number_of_diverse_circuits, CIRCUITS_SHARING_NO_POP)]
 
 
 def _diverse_circuits_of(site: str, drawn: _DrawnFiber) -> list[tuple[str, ...]]:
@@ -196,8 +196,6 @@ def _circuit_around(
 
 def _relieved(circuits: list[SynthesisCircuit], drawn: _DrawnFiber) -> list[SynthesisCircuit]:
     relieved = list(circuits)
-    if drawn.constraints.number_of_diverse_circuits < 2:
-        return relieved
     beyond_help: set[str] = set()
     while True:
         cut = sorted(_cut_cities(relieved, drawn.wan_pop_ids) - beyond_help)

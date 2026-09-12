@@ -398,10 +398,10 @@ def test_circuits_over_diverse_transit_name_no_cut_pop() -> None:
     assert _cut_report(fixtures.DIVERSE_TRANSIT_CIRCUITS)["backbone_mesh_cut_pops"] == []
 
 
-def test_a_tenant_asking_for_one_circuit_names_no_cut_pop() -> None:
+def test_a_tenant_asking_for_one_circuit_is_named_the_cut_pop_all_the_same() -> None:
     assert _cut_report(
         fixtures.SHARED_TRANSIT_CIRCUITS, backbone_number_of_diverse_circuits=1
-    )["backbone_mesh_cut_pops"] == []
+    )["backbone_mesh_cut_pops"] == [{"id": "x", "name": "x"}]
 
 
 def test_the_wan_pop_a_stub_circuit_hangs_off_is_named_a_cut_pop() -> None:

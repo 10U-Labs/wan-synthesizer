@@ -45,8 +45,9 @@ def _owed(
     fiber: dict[tuple[str, str], FiberSegment],
     wan_pop_ids: tuple[str, ...],
     site: str,
+    number_of_diverse_circuits: int = _DIVERSE_CIRCUITS,
 ) -> int:
-    inputs = _asking(fiber, wan_pop_ids)
+    inputs = _asking(fiber, wan_pop_ids, number_of_diverse_circuits)
     return sum(
         row.required
         for row in _diverse_circuits_out_of(site, _writing(inputs, _whole(inputs)))
@@ -193,6 +194,10 @@ def test_a_site_is_owed_both_diverse_circuits_where_one_carrier_has_each() -> No
 
 def test_fiber_nobody_owns_is_owed_like_anybodys() -> None:
     assert _owed(_TWIN_CIRCUITS, ("a", "b"), "a") == 2
+
+
+def test_a_wan_pop_asked_for_one_circuit_is_owed_the_two_the_directive_requires() -> None:
+    assert _owed(_TWIN_CIRCUITS, ("a", "b"), "a", number_of_diverse_circuits=1) == 2
 
 
 def test_the_fiber_selected_carries_the_circuit_that_changes_hands() -> None:
@@ -382,8 +387,8 @@ def test_no_such_circuit_is_priced_over_fiber_that_offers_no_way_past_the_pop() 
     assert _HELD_AT_ONE_POP.lower_bound_miles == pytest.approx(60.0)
 
 
-def test_a_backbone_asked_for_one_circuit_is_priced_no_way_past_any_pop() -> None:
-    assert _PAST_THE_POP_ASKED_ONE.lower_bound_miles == pytest.approx(20.0)
+def test_a_backbone_asked_for_one_circuit_is_stated_the_circuits_that_keep_it_whole() -> None:
+    assert _PAST_THE_POP_ASKED_ONE.lower_bound_miles == pytest.approx(240.0)
 
 
 def test_the_fiber_selected_holds_the_circuit_that_keeps_one_pop_from_splitting_the_wan() -> None:
@@ -396,9 +401,9 @@ def test_the_fiber_selected_runs_the_miles_the_floor_states_for_surviving_the_po
     )
 
 
-def test_a_backbone_asked_for_one_circuit_is_selected_no_way_past_any_pop() -> None:
+def test_a_backbone_asked_for_one_circuit_is_selected_the_way_past_every_pop() -> None:
     assert _selected_miles(_PAST_THE_POP_ASKED_ONE, physical(_PAST_THE_POP)) == pytest.approx(
-        20.0
+        240.0
     )
 
 

@@ -201,7 +201,6 @@ def test_no_published_network_is_split_by_the_loss_of_one_city(
     split = {
         synthesis["tenant"]: cut_cities(synthesis["circuits"])
         for synthesis in published_syntheses
-        if synthesis["number_of_diverse_circuits"] >= 2
     }
     assert {tenant: cities for tenant, cities in split.items() if cities} == {}
 

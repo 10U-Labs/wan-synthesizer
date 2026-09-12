@@ -226,6 +226,10 @@ def test_the_hub_every_sites_shortest_circuits_cross_is_given_a_circuit_round_it
     assert _cut(_HUB) == set()
 
 
+def test_a_backbone_asked_for_one_circuit_is_given_the_circuit_round_the_hub_all_the_same() -> None:
+    assert _cut(_drawn(_HUB_SITES, _HUB_FIBER, _asking(1))) == set()
+
+
 def test_the_circuit_drawn_round_the_hub_says_the_split_is_what_put_it_there() -> None:
     assert [drawn_circuit.reason for drawn_circuit in _round_the_hub(_HUB)] == [
         CIRCUIT_FOR_RELIEF

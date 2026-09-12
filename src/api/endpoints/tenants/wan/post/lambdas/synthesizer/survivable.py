@@ -13,7 +13,7 @@ _HELD_OUTRIGHT = 0.5
 
 _TOLERANCE = 1e-6
 
-_CIRCUITS_SHARING_NO_POP = 2
+CIRCUITS_SHARING_NO_POP = 2
 
 
 @dataclass(frozen=True)
@@ -100,7 +100,7 @@ def _diverse_circuits_out_of(site: str, writing: _Writing) -> list[_Requirement]
                 site,
                 peers,
                 frozenset({site}),
-                writing.inputs.number_of_diverse_circuits,
+                max(writing.inputs.number_of_diverse_circuits, CIRCUITS_SHARING_NO_POP),
                 _over_land(site, peers, frozenset(writing.fiber), writing),
             )
         ],
@@ -109,14 +109,12 @@ def _diverse_circuits_out_of(site: str, writing: _Writing) -> list[_Requirement]
 
 
 def _two_circuits_sharing_no_pop(writing: _Writing) -> list[_Requirement]:
-    if writing.inputs.number_of_diverse_circuits < _CIRCUITS_SHARING_NO_POP:
-        return []
     asked = [
         _Requirement(
             near,
             frozenset({far}),
             frozenset({near, far}),
-            _CIRCUITS_SHARING_NO_POP,
+            CIRCUITS_SHARING_NO_POP,
             _over_land(near, frozenset({far}), frozenset(writing.fiber), writing),
         )
         for near, far in combinations(sorted(writing.inputs.wan_pop_ids), 2)

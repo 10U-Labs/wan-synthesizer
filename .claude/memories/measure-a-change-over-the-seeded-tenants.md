@@ -57,8 +57,11 @@ Orleans, LA), minuteman 4,712.437, ***REMOVED*** 4,186.183 and ***REMOVED*** not
 `34696243921`, started by hand after 6918bbd6 deployed, read them off the
 deployed API to the thousandth and is green on every tier; the seed run a
 synthesizer push starts itself grades the WANs the previous Lambda built, per
-[seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md). A
-selection or a floor that reads differently from those figures is the tip
+[seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md).
+Holding a tenant asking for one circuit to the directive, for GitHub issue
+#190, moved ***REMOVED*** alone: it publishes 8,407.716 against 8,407.716 over two
+transatlantic circuits sharing no PoP, where it published 4,186.183 over one.
+A selection or a floor that reads differently from those figures is the tip
 under test's doing.
 Repetition of a figure is also the only tell for the race in
 [seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md), so

@@ -108,11 +108,7 @@ def backbone_mesh_pieces(synthesis: Synthesis) -> list[list[str]]:
     pieces = {frozenset(piece) & wan_pops for piece in connected_components(pops, segments)}
     return sorted(sorted(piece) for piece in pieces - {frozenset[str]()})
 
-def backbone_mesh_cut_pops(
-    synthesis: Synthesis, targets: MeshRequirements
-) -> list[str]:
-    if targets.number_of_diverse_circuits < 2:
-        return []
+def backbone_mesh_cut_pops(synthesis: Synthesis) -> list[str]:
     segments = backbone_mesh_fiber_segments(synthesis)
     pops = {pop for segment in segments for pop in segment}
     return sorted(articulation_points(pops, segments))
@@ -300,7 +296,7 @@ def validate_synthesis(
     independence_deficient = backbone_mesh_independence_deficient(
         synthesis, sites_by_id, targets
     )
-    cut_pops = backbone_mesh_cut_pops(synthesis, targets)
+    cut_pops = backbone_mesh_cut_pops(synthesis)
 
     return {
         "connected": len(components) == 1,
