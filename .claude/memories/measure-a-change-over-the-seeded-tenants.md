@@ -36,16 +36,19 @@ floor of 4,004.949, daf 9,556.587 against 12,247.290, dow 10,323.419 against
 7,003.212, each matching what `e2e-tests` read off the deployed API in run
 `34440829190` to the thousandth.
 
-f-35 has since moved to 9,851.286 against a floor of 7,017.961, which is 1.40
-times the floor and fails
-`test_no_published_network_runs_more_than_a_tenth_further_than_the_floor_it_publishes`.
-That pair came back byte-identical from runs `34481718368`, `34538745937`,
-`34540870572` and `34550736476`, on four different tips, so a `seed` run that is
-red on f-35 alone and on that one assertion is the state `seed` was already in —
-not something the tip under test did. It is what GitHub issues #175, #172, #171
-and #170 are about. Repetition of a figure is also the only tell for the race in
-[seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md), so read
-which assertion failed before concluding either.
+Since 6c504ad3 let a circuit change hands between carriers, the seven publish
+two-pop 3,884.265 against 3,884.265, daf 8,212.251 against 7,043.473, dow
+7,581.802 against 7,361.252, f-35 7,575.128 against 6,150.391, minuteman
+4,712.437 against 4,712.437, ***REMOVED*** 4,186.183 against 4,186.183 and ***REMOVED***
+nothing, matching run `34670636252` re-run against the deployed Lambda to the
+thousandth. daf at 1.166 and f-35 at 1.232 fail
+`test_no_published_network_runs_more_than_a_tenth_further_than_the_floor_it_publishes`,
+which is the one red assertion in `e2e-tests` and the state `seed` is in: a
+run red on those two tenants and that one assertion alone is not something the
+tip under test did. It is what GitHub issues #175 and #172 are about.
+Repetition of a figure is also the only tell for the race in
+[seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md), so
+read which assertion failed before concluding either.
 
 This measures a change; it does not verify one. What is green is still CI's to
 say, per [ci-is-the-source-of-truth](ci-is-the-source-of-truth.md), and reading
