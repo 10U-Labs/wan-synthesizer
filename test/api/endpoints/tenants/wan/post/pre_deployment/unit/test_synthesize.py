@@ -201,7 +201,7 @@ def _synthesis(
         homings=Homings([], []),
         fiber_segment_keys=fiber_segment_keys,
         drawn_circuits=[],
-        metrics=SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
+        metrics=SynthesisMetrics(0.0, 0.0, 0.0),
     )
 
 

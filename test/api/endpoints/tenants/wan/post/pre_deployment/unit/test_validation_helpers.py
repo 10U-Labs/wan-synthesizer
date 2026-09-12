@@ -30,7 +30,7 @@ def make_synthesis(
         homings=Homings(homing_circuits or [], provider_homing_circuits or []),
         fiber_segment_keys={segment_key(a, b) for a, b in physical_pairs},
         drawn_circuits=[],
-        metrics=SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
+        metrics=SynthesisMetrics(0.0, 0.0, 0.0),
     )
 
 

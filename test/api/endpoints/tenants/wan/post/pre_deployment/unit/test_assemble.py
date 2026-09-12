@@ -213,8 +213,3 @@ def test_a_provider_region_further_out_is_not_averaged_into_the_tenant_miles() -
     assert metrics.tenant_homing_miles < metrics.provider_homing_miles
 
 
-def test_a_synthesis_scores_both_kinds_of_homing_miles_with_the_fiber() -> None:
-    metrics = _mixed_synthesis().metrics
-    assert metrics.score == (
-        metrics.tenant_homing_miles + metrics.provider_homing_miles + metrics.physical_miles
-    )

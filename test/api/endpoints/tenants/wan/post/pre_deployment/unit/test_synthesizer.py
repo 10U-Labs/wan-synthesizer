@@ -55,6 +55,7 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         wan_pop_ids=("P",),
         metrics=SimpleNamespace(
             backbone_lower_bound_miles=1250.0,
+            physical_miles=1312.75,
             tenant_homing_miles=880.5,
             provider_homing_miles=120.25,
         ),
@@ -139,6 +140,14 @@ def test_the_success_status_carries_the_target_the_synthesis_was_measured_agains
     objects = _run(synthesizer, monkeypatch)
     status = json.loads(objects["tenants/f-35/wan-status.json"])
     assert status["coverage"]["target_miles"] == 600
+
+
+def test_the_success_status_publishes_the_fiber_miles_the_wan_runs_over(
+    synthesizer: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    objects = _run(synthesizer, monkeypatch)
+    status = json.loads(objects["tenants/f-35/wan-status.json"])
+    assert status["fiber_miles"] == 1312.75
 
 
 def test_the_success_status_publishes_the_miles_run_to_the_tenants_own_sites(

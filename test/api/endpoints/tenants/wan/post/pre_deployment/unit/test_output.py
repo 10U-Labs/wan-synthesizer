@@ -28,7 +28,7 @@ def _synthesis(homings: Homings) -> Synthesis:
         homings=homings,
         fiber_segment_keys=set(),
         drawn_circuits=[],
-        metrics=SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
+        metrics=SynthesisMetrics(0.0, 0.0, 0.0),
     )
 
 
@@ -59,9 +59,12 @@ def test_the_payload_holds_only_the_collections_a_route_serves() -> None:
 def test_the_sites_the_wan_includes_are_read_once_for_every_site_published(
         monkeypatch: pytest.MonkeyPatch) -> None:
     read: list[Synthesis] = []
-    monkeypatch.setattr(
-        output, "included_site_ids", lambda synthesis: read.append(synthesis) or set()
-    )
+
+    def _reading(synthesis: Synthesis) -> set[str]:
+        read.append(synthesis)
+        return set()
+
+    monkeypatch.setattr(output, "included_site_ids", _reading)
     synthesis_payload(ARTIFACTS)
     assert len(read) == 1
 

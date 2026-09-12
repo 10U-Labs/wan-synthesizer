@@ -42,7 +42,6 @@ def finalize_synthesis(
     physical_miles = sum(
         fiber_segments[key].distance_miles for key in fiber_segment_keys
     )
-    score = tenant_homing_miles + provider_homing_miles + physical_miles
     carrier_on_circuits = {
         site_id
         for drawn_circuit in draft.drawn_circuits
@@ -56,7 +55,6 @@ def finalize_synthesis(
         fiber_segment_keys=fiber_segment_keys,
         drawn_circuits=draft.drawn_circuits,
         metrics=SynthesisMetrics(
-            score,
             tenant_homing_miles,
             provider_homing_miles,
             physical_miles,

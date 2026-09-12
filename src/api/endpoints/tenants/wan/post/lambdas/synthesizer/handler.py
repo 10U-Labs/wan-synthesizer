@@ -78,6 +78,7 @@ def _delivered(
     logger.info("Sites short of their diverse-circuit target for %s: %s", tenant, short)
     return {
         "coverage": coverage,
+        "fiber_miles": round(synthesis.metrics.physical_miles, 3),
         "backbone_lower_bound_miles": round(synthesis.metrics.backbone_lower_bound_miles, 3),
         "homing_miles": {
             "tenant": round(synthesis.metrics.tenant_homing_miles, 3),

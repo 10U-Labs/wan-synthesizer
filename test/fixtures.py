@@ -55,9 +55,7 @@ _FIXTURE_COUNTRY = "United States"
 
 
 def no_miles() -> SynthesisMetrics:
-    return SynthesisMetrics(
-        score=0.0, tenant_homing_miles=0.0, provider_homing_miles=0.0, physical_miles=0.0
-    )
+    return SynthesisMetrics(tenant_homing_miles=0.0, provider_homing_miles=0.0, physical_miles=0.0)
 
 
 def carrier_pop(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:

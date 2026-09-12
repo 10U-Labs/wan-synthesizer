@@ -51,7 +51,6 @@ class SynthesisCircuit:
 
 @dataclass
 class SynthesisMetrics:
-    score: float
     tenant_homing_miles: float
     provider_homing_miles: float
     physical_miles: float

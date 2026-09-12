@@ -15,7 +15,7 @@ def _payload() -> dict[str, Any]:
 def _synthesis(wan_pop_ids: tuple[str, ...], transit_ids: tuple[str, ...]) -> Synthesis:
     return Synthesis(
         wan_pop_ids, transit_ids, Homings([], []), set(), [],
-        SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
+        SynthesisMetrics(0.0, 0.0, 0.0),
     )
 
 
