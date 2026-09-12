@@ -300,7 +300,6 @@ def validate_synthesis(
     independence_deficient = backbone_mesh_independence_deficient(
         synthesis, sites_by_id, targets
     )
-    pieces = backbone_mesh_pieces(synthesis)
     cut_pops = backbone_mesh_cut_pops(synthesis, targets)
 
     return {
@@ -343,9 +342,10 @@ def validate_synthesis(
             backbone_mesh_survives_any_one_link_loss(synthesis),
         "backbone_mesh_survives_any_one_site_loss":
             backbone_mesh_survives_any_one_site_loss(synthesis),
-        "backbone_mesh_is_one_piece": len(pieces) <= 1,
+        "backbone_mesh_is_one_piece": len(backbone_mesh_pieces(synthesis)) <= 1,
         "backbone_mesh_pieces": [
-            [{"id": pop, "name": sites_by_id[pop].name} for pop in piece] for piece in pieces
+            [{"id": pop, "name": sites_by_id[pop].name} for pop in piece]
+            for piece in backbone_mesh_pieces(synthesis)
         ],
         "backbone_mesh_has_no_cut_pop": not cut_pops,
         "backbone_mesh_cut_pops": [
