@@ -7,8 +7,6 @@ import boto3
 _CLIENTS: dict[str, Any] = {}
 _HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
 
-_ONLY_VERSION = "null"
-
 CARRIER_FILES = frozenset({"pops.json", "fiber-segments.json"})
 PROVIDER_FILES = frozenset({"regions.json"})
 TENANT_FILES = frozenset({
@@ -60,33 +58,29 @@ def is_current(key: str) -> bool:
     return rest.rsplit("/", 1)[-1] in kept
 
 
-def _stale_keys(client: Any, bucket: str) -> list[str]:
-    stale: list[str] = []
-    token: str | None = None
-    while True:
-        page = (
-            client.list_objects_v2(Bucket=bucket, ContinuationToken=token)
-            if token
-            else client.list_objects_v2(Bucket=bucket)
-        )
+def _stale_versions(client: Any, bucket: str) -> list[tuple[str, str]]:
+    stale: list[tuple[str, str]] = []
+    for page in client.get_paginator("list_object_versions").paginate(Bucket=bucket):
         stale += [
-            item["Key"] for item in page.get("Contents", []) if not is_current(item["Key"])
+            (version["Key"], version["VersionId"])
+            for version in page.get("Versions", [])
+            if not is_current(version["Key"])
         ]
-        token = page.get("NextContinuationToken")
-        if not page.get("IsTruncated") or not token:
-            return sorted(stale)
+        stale += [(marker["Key"], marker["VersionId"]) for marker in page.get("DeleteMarkers", [])]
+    return sorted(stale)
 
 
 def _prune(client: Any) -> dict[str, Any]:
     bucket = os.environ["STORE_BUCKET"]
-    deleted = _stale_keys(client, bucket)
-    for key in deleted:
-        client.delete_object(Bucket=bucket, Key=key, VersionId=_ONLY_VERSION)
-    return {"deleted": deleted}
+    stale = _stale_versions(client, bucket)
+    for key, version in stale:
+        client.delete_object(Bucket=bucket, Key=key, VersionId=version)
+    return {"deleted": [key for key, _version in stale]}
 
 
 def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     client = _s3()
     if event.get("httpMethod") == "POST":
         return _response(200, _prune(client))
-    return _response(200, {"stale": _stale_keys(client, os.environ["STORE_BUCKET"])})
+    stale = _stale_versions(client, os.environ["STORE_BUCKET"])
+    return _response(200, {"stale": [key for key, _version in stale]})

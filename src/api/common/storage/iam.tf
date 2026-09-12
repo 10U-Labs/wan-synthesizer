@@ -30,7 +30,7 @@ resource "aws_iam_role_policy" "prune_store_list_delete" {
       },
       {
         Effect   = "Allow"
-        Action   = ["s3:ListBucket"]
+        Action   = ["s3:ListBucket", "s3:ListBucketVersions"]
         Resource = [aws_s3_bucket.store.arn]
       }
     ]

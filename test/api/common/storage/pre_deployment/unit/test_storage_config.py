@@ -119,6 +119,12 @@ def test_the_prune_role_may_delete_from_the_store(
     assert action in str(_prune_policy(storage_iam)["policy"])
 
 
+@pytest.mark.parametrize("action", ["s3:ListBucket", "s3:ListBucketVersions"])
+def test_the_prune_role_may_list_every_version_in_the_store(
+        storage_iam: dict[str, object], action: str) -> None:
+    assert action in str(_prune_policy(storage_iam)["policy"])
+
+
 @pytest.mark.parametrize("action", ["s3:PutObject", "s3:GetObject"])
 def test_the_prune_role_may_do_nothing_else_to_the_store(
         storage_iam: dict[str, object], action: str) -> None:

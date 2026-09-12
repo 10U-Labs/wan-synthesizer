@@ -45,7 +45,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 
 ### Storage
 
-- [the-store-holds-only-what-the-product-writes](the-store-holds-only-what-the-product-writes.md) — the store bucket has no working area, so a new prefix joins `_KEPT_BY_PREFIX` in the same commit as its writer or the next seed's prune deletes it
+- [the-store-holds-only-what-the-product-writes](the-store-holds-only-what-the-product-writes.md) — the store bucket has no working area, so a new prefix joins `_KEPT_BY_PREFIX` in the same commit as its writer or the next seed's prune deletes it; versioning is suspended, so every delete names `VersionId="null"` or leaves a marker the prune has to clear
 
 ### Measurement
 
