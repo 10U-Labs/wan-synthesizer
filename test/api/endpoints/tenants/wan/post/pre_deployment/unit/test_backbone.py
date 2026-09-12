@@ -18,7 +18,6 @@ from synthesizer.backbone import (
 from synthesizer.survivable import FiberInputs, select_fiber
 from synthesizer.synthesize import all_pairs_shortest
 from synthesizer.graphs import (
-    adjacency_by_carrier,
     articulation_points,
     build_adjacency,
     fiber_segments_along,
@@ -53,7 +52,7 @@ def _selected(
 ) -> frozenset[tuple[str, str]]:
     return select_fiber(FiberInputs(
         sites, fiber, constraints.number_of_diverse_circuits,
-        constraints.max_wan_pop_count, adjacency_by_carrier(fiber),
+        constraints.max_wan_pop_count,
     )).segments
 
 
@@ -192,12 +191,12 @@ def test_a_city_every_drawn_circuit_crosses_is_given_a_circuit_round_it() -> Non
     assert _cut(_TWO_LOBES) == set()
 
 
-def test_the_circuit_drawn_round_that_city_is_one_company_can_offer() -> None:
+def test_the_circuit_drawn_round_that_city_runs_over_the_fiber_that_goes_round_it() -> None:
     assert [
-        drawn_circuit.carrier
+        drawn_circuit.pop_ids
         for drawn_circuit in _TWO_LOBES.circuits
         if segment_key("b", "w") in fiber_segments_along(drawn_circuit.pop_ids)
-    ] == ["zayo"]
+    ] == [("b", "w", "c")]
 
 
 def test_the_circuit_drawn_round_that_city_says_the_split_is_what_put_it_there() -> None:
@@ -246,7 +245,7 @@ def _run_over(mesh: BackboneMesh) -> set[tuple[str, str]]:
     }
 
 
-def test_a_site_is_drawn_over_fiber_one_carrier_could_offer_it() -> None:
+def test_a_site_is_drawn_over_the_fiber_selected_for_it() -> None:
     assert _run_over(_OFFERED_MESH) <= _selected(
         fixtures.OFFERED_WAYS_FIBER, fixtures.OFFERED_WAYS_SITES, _OFFERED_TERMS
     )
@@ -358,17 +357,11 @@ def test_a_synthesis_that_never_survived_a_city_loss_is_not_held_to_surviving_on
     assert _needed(doubled, ("a", "b", "c", "d"), 1) == _CHAIN
 
 
-_SPLIT_SQUARE = fixtures.carrier_fiber_segments({
+_SQUARE_CHANGING_HANDS = fixtures.carrier_fiber_segments({
     ("w", "x"): (100.0, ("lumen",)),
     ("x", "y"): (100.0, ("zayo",)),
-    ("w", "z"): (100.0, ("lumen",)),
-    ("z", "y"): (100.0, ("zayo",)),
-})
-_WHOLE_SQUARE = fixtures.carrier_fiber_segments({
-    ("w", "x"): (100.0, ("lumen",)),
-    ("x", "y"): (100.0, ("lumen",)),
-    ("w", "z"): (100.0, ("zayo",)),
-    ("z", "y"): (100.0, ("zayo",)),
+    ("w", "z"): (150.0, ("lumen",)),
+    ("z", "y"): (150.0, ("zayo",)),
 })
 _PIN_WY = WanPopConstraints(
     number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}),
@@ -376,17 +369,8 @@ _PIN_WY = WanPopConstraints(
 )
 
 
-def test_a_pin_no_carrier_can_join_draws_no_circuit() -> None:
-    mesh = _drawn(("w", "x", "y", "z"), _SPLIT_SQUARE, _PIN_WY)
-    assert not [
-        drawn_circuit
-        for drawn_circuit in mesh.circuits
-        if drawn_circuit.reason == CIRCUIT_FOR_PIN
-    ]
-
-
-def test_a_pin_one_carrier_can_join_is_drawn_over_that_carriers_fiber() -> None:
-    mesh = _drawn(("w", "x", "y", "z"), _WHOLE_SQUARE, _PIN_WY)
+def test_a_pin_is_drawn_over_the_shortest_way_though_that_way_changes_hands() -> None:
+    mesh = _drawn(("w", "x", "y", "z"), _SQUARE_CHANGING_HANDS, _PIN_WY)
     assert [
         drawn_circuit.pop_ids
         for drawn_circuit in mesh.circuits
@@ -394,11 +378,6 @@ def test_a_pin_one_carrier_can_join_is_drawn_over_that_carriers_fiber() -> None:
     ] == [
         ("w", "x", "y"),
     ]
-
-
-def test_a_drawn_circuit_names_the_carrier_whose_fiber_it_runs_over() -> None:
-    mesh = _drawn(("w", "x", "y", "z"), _WHOLE_SQUARE, _PIN_WY)
-    assert all(drawn_circuit.carrier in ("lumen", "zayo") for drawn_circuit in mesh.circuits)
 
 
 _STUB_SITES = ("a", "f", "g", "m", "s")

@@ -5,7 +5,6 @@ import math
 import pytest
 
 from synthesizer.graphs import (
-    adjacency_by_carrier,
     articulation_points,
     biconnected_block_membership,
     bridges,
@@ -15,7 +14,7 @@ from synthesizer.graphs import (
     fiber_segments_along,
     reconstruct_path,
 )
-from synthesizer.input_graph import FiberSegment, Site, carriers_along, segment_key, haversine_miles
+from synthesizer.input_graph import Site, segment_key, haversine_miles
 
 
 def make_site(site_id: str, lat: float, lon: float) -> Site:
@@ -186,46 +185,3 @@ def test_survives_any_one_site_loss_false_for_a_chain() -> None:
 
 def test_survives_any_one_site_loss_false_when_disconnected() -> None:
     assert survives_any_one_site_loss({"a", "b", "c", "d"}, {("a", "b"), ("c", "d")}) is False
-
-
-_OWNED_FIBER = {
-    segment_key("a", "b"): FiberSegment("a", "b", 1.0, carriers=frozenset({"lumen"})),
-    segment_key("b", "c"): FiberSegment("b", "c", 1.0, carriers=frozenset({"zayo"})),
-    segment_key("a", "c"): FiberSegment("a", "c", 5.0, carriers=frozenset({"lumen", "zayo"})),
-    segment_key("c", "d"): FiberSegment("c", "d", 1.0),
-}
-
-
-def test_adjacency_by_carrier_gives_a_carrier_only_its_own_fiber() -> None:
-    assert ("c", 1.0) not in adjacency_by_carrier(_OWNED_FIBER)["lumen"]["b"]
-
-
-def test_adjacency_by_carrier_gives_every_carrier_the_fiber_nobody_owns() -> None:
-    assert all(
-        ("d", 1.0) in adjacency["c"]
-        for adjacency in adjacency_by_carrier(_OWNED_FIBER).values()
-    )
-
-
-def test_adjacency_by_carrier_names_every_carrier_with_fiber() -> None:
-    assert sorted(adjacency_by_carrier(_OWNED_FIBER)) == ["lumen", "zayo"]
-
-
-def test_adjacency_by_carrier_splits_fiber_naming_nobody_into_nothing() -> None:
-    assert adjacency_by_carrier({segment_key("c", "d"): FiberSegment("c", "d", 1.0)}) == {}
-
-
-def test_carriers_along_names_who_can_offer_a_whole_circuit() -> None:
-    assert carriers_along(("a", "b"), _OWNED_FIBER) == frozenset({"lumen"})
-
-
-def test_carriers_along_names_nobody_for_a_circuit_that_changes_hands() -> None:
-    assert carriers_along(("a", "b", "c"), _OWNED_FIBER) == frozenset()
-
-
-def test_carriers_along_lets_a_lateral_pass() -> None:
-    assert carriers_along(("a", "c", "d"), _OWNED_FIBER) == frozenset({"lumen", "zayo"})
-
-
-def test_carriers_along_names_nobody_for_a_circuit_of_laterals_only() -> None:
-    assert carriers_along(("c", "d"), _OWNED_FIBER) == frozenset()

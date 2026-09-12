@@ -122,15 +122,11 @@ function circuitsBySegment(circuits) {
 
 function circuitLabel(circuit) {
   const ends = `${cityOf(circuit.source_name)} ↔ ${cityOf(circuit.target_name)}`;
-  return `<strong>Circuit ${ends}</strong><br>${(circuit.route || []).join(" → ")}`;
+  return `<strong>Circuit ${ends}</strong>`;
 }
 
-function fiberLabel(source, target, circuits) {
-  const fiber = `Fiber ${source.name} ↔ ${target.name}`;
-  if (!circuits.length) {
-    return fiber;
-  }
-  return [fiber, ...circuits.map(circuitLabel)].join("<br>");
+function circuitsLabel(circuits) {
+  return circuits.map(circuitLabel).join("<br>");
 }
 
 function clear() {
@@ -253,7 +249,7 @@ async function render(tenantId) {
   const byId = indexById(sites);
   const crossing = circuitsBySegment(circuits);
   drawLines(fiber, byId, LINE_STYLE.fiber, (source, target) =>
-    fiberLabel(source, target, crossing.get(segmentKey(source.name, target.name)) || []));
+    circuitsLabel(crossing.get(segmentKey(source.name, target.name)) || []));
   drawLines(homings, byId, LINE_STYLE.homing, homingLabel);
   const points = drawSites(sites);
 

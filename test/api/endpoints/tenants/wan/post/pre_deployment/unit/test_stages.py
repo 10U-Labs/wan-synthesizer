@@ -104,7 +104,7 @@ def test_finalize_refuses_a_synthesis_short_of_the_configured_number_of_diverse_
         _finalize_short_of_three()
 
 
-def test_finalize_holds_a_wan_pop_to_the_ceiling_of_the_merged_carriers_it_is_given() -> None:
+def test_finalize_refuses_a_wan_pop_the_fiber_caps_below_two_circuits_as_a_split() -> None:
     synthesis = fixtures.meshed_backbone_synthesis(
         fixtures.SHARED_TRANSIT_CIRCUITS, fixtures.SHARED_TRANSIT_WAN_POPS
     )
@@ -112,10 +112,8 @@ def test_finalize_holds_a_wan_pop_to_the_ceiling_of_the_merged_carriers_it_is_gi
     fiber = fixtures.fiber_segments_from({
         ("a", "x"): 1.0, ("x", "b"): 1.0, ("x", "c"): 1.0, ("b", "c"): 1.0,
     })
-    _sites, _fiber, _synthesis, validation = finalize(
-        list(fixtures.carrier_pops_by_id("abcx").values()), fiber, synthesis, params
-    )
-    assert validation["backbone_meets_independent_mesh_link_target"] is True
+    with pytest.raises(ValueError, match="splits the WAN at: x"):
+        finalize(list(fixtures.carrier_pops_by_id("abcx").values()), fiber, synthesis, params)
 
 
 def test_finalize_accepts_a_synthesis_whose_only_shortfall_is_exempt() -> None:

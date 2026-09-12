@@ -48,7 +48,6 @@ class SynthesisCircuit:
     distance_miles: float
     reason: str = CIRCUIT_FOR_TARGET
     requested_by: tuple[str, ...] = ()
-    carrier: str = ""
 
 @dataclass
 class SynthesisMetrics:

@@ -4,7 +4,7 @@ import pytest
 
 import fixtures
 from synthesizer.ceiling import CircuitProofInputs, diverse_circuit_ceilings
-from synthesizer.graphs import adjacency_by_carrier, build_adjacency
+from synthesizer.graphs import build_adjacency
 from synthesizer.input_graph import FiberSegment
 from synthesizer.survivable import (
     FiberInputs,
@@ -32,10 +32,7 @@ def _asking(
     max_wan_pop_count: int | None = None,
     number_of_diverse_circuits: int = _DIVERSE_CIRCUITS,
 ) -> FiberInputs:
-    return FiberInputs(
-        wan_pop_ids, fiber, number_of_diverse_circuits, max_wan_pop_count,
-        adjacency_by_carrier(fiber),
-    )
+    return FiberInputs(wan_pop_ids, fiber, number_of_diverse_circuits, max_wan_pop_count)
 
 
 def _selected(
@@ -59,7 +56,7 @@ def _owed(
         row.required
         for row in _diverse_circuit_rows(
             site, _writing(inputs, miles_by_key, _EVERY_WAY_OUT)
-        ).across_the_carriers
+        ).sparing_every_peer
     )
 
 
@@ -190,26 +187,28 @@ _TWIN_OWNED = fixtures.carrier_fiber_segments({
     ("b", "q"): (1.0, ("lumen",)),
 })
 _TWIN_SPLIT_SELECTION = _selected(_TWIN_SPLIT, ("a", "b"), max_wan_pop_count=2)
-_TWIN_SPLIT_ASKED_ONE = _selected(
-    _TWIN_SPLIT, ("a", "b"), max_wan_pop_count=2, number_of_diverse_circuits=1
-)
+_CHAIN_ASKED_ONE = _selected(_CHAIN, ("a", "b", "c"), number_of_diverse_circuits=1)
 
 
-def test_a_site_is_owed_only_the_diverse_circuits_one_carrier_can_offer() -> None:
-    assert _owed(_TWIN_SPLIT, ("a", "b"), "a", max_wan_pop_count=2) == 1
+def test_a_site_is_owed_a_diverse_circuit_that_changes_hands() -> None:
+    assert _owed(_TWIN_SPLIT, ("a", "b"), "a", max_wan_pop_count=2) == 2
 
 
 def test_a_site_is_owed_both_diverse_circuits_where_one_carrier_has_each() -> None:
     assert _owed(_TWIN_OWNED, ("a", "b"), "a", max_wan_pop_count=2) == 2
 
 
-def test_fiber_nobody_owns_is_owed_to_every_carrier() -> None:
+def test_fiber_nobody_owns_is_owed_like_anybodys() -> None:
     assert _owed(_TWIN_CIRCUITS, ("a", "b"), "a", max_wan_pop_count=2) == 2
 
 
+def test_the_fiber_selected_carries_the_circuit_that_changes_hands() -> None:
+    assert _TWIN_SPLIT_SELECTION.segments == frozenset(_TWIN_SPLIT)
+
+
 def test_the_floor_is_measured_over_the_requirements_the_build_is_held_to() -> None:
-    assert _TWIN_SPLIT_SELECTION.lower_bound_miles == pytest.approx(
-        _TWIN_SPLIT_ASKED_ONE.lower_bound_miles
+    assert _CHAIN_SELECTION.lower_bound_miles == pytest.approx(
+        _CHAIN_ASKED_ONE.lower_bound_miles
     )
 
 
@@ -225,7 +224,6 @@ def _shared_transit_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, 
         build_adjacency(held),
         _DIVERSE_CIRCUITS,
         2,
-        adjacency_by_carrier(held),
     ))
 
 
@@ -252,19 +250,18 @@ def test_the_segment_the_first_answer_missed_is_selected_once_it_is_written_down
     assert ("c", "d") in _TRIANGLES_SELECTION.segments
 
 
-_OFFERED = frozenset({("a", "r"), ("b", "r")})
+_HANDED_OFF = frozenset({("a", "p"), ("b", "p"), ("a", "q"), ("b", "q")})
 
 
-def test_the_fiber_selected_is_fiber_one_carrier_can_offer_a_whole_circuit_over() -> None:
+def test_the_fiber_selected_is_the_shortest_though_every_circuit_over_it_changes_hands() -> None:
     assert _selected(
         fixtures.OFFERED_WAYS_FIBER, fixtures.OFFERED_WAYS_SITES, max_wan_pop_count=2
-    ).segments == _OFFERED
+    ).segments == _HANDED_OFF
 
 
 _DISTANT_PEER_SITES = ("hil", "sea", "syd")
 _DISTANT_PEER_SELECTION = select_fiber(FiberInputs(
     _DISTANT_PEER_SITES, fixtures.DISTANT_PEER_FIBER, _DIVERSE_CIRCUITS, None,
-    adjacency_by_carrier(fixtures.DISTANT_PEER_FIBER),
 ))
 
 
@@ -347,7 +344,7 @@ def test_the_floor_prices_the_fiber_the_rest_of_the_wan_already_needs() -> None:
     )
 
 
-def test_no_fiber_is_selected_for_the_carrier_of_a_wan_pops_shortest_circuit_alone() -> None:
+def test_no_fiber_is_selected_for_a_wan_pops_shortest_circuit_alone() -> None:
     assert not _ALREADY_NEEDED_SELECTION.segments & fixtures.THE_SHORTEST_CREDIT_ALONE
 
 
@@ -386,5 +383,5 @@ _ONE_CIRCUIT_SEAT_SELECTION = _selected(
 )
 
 
-def test_a_wan_pop_the_carriers_can_give_one_circuit_leaves_the_rest_still_priced() -> None:
-    assert _ONE_CIRCUIT_SEAT_SELECTION.lower_bound_miles == pytest.approx(245.0)
+def test_a_wan_pop_the_fiber_can_give_one_circuit_is_priced_no_way_past_any_pop() -> None:
+    assert _ONE_CIRCUIT_SEAT_SELECTION.lower_bound_miles == pytest.approx(65.0)

@@ -349,15 +349,9 @@ def _offered_over(
 
 
 def offered_diverse_circuits(
-    fiber_by_carrier: dict[str, set[frozenset[str]]],
+    fiber: set[frozenset[str]],
     city: str,
     peers: frozenset[str],
     per_peer: int,
 ) -> int:
-    return min(
-        sum(
-            _offered_over(_joined_by(pairs), city, peers, per_peer)
-            for pairs in fiber_by_carrier.values()
-        ),
-        len(peers) * per_peer,
-    )
+    return min(_offered_over(_joined_by(fiber), city, peers, per_peer), len(peers) * per_peer)

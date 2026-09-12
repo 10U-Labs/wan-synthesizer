@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from synthesizer.ceiling import CircuitProofInputs, diverse_circuit_ceilings
-from synthesizer.graphs import adjacency_by_carrier, build_adjacency
+from synthesizer.graphs import build_adjacency
 from synthesizer.input_graph import FiberSegment, Site
 from synthesizer.model import Synthesis, SynthesisParams, MeshRequirements, ValidationReport
 from synthesizer.on_net_fabrication import fabricate_missing_on_net_pops
@@ -66,7 +66,6 @@ def finalize(
             adjacency,
             params.tuning.backbone_number_of_diverse_circuits,
             params.max_wan_pop_count,
-            adjacency_by_carrier(fiber_segments),
             terrestrial,
         )),
     )

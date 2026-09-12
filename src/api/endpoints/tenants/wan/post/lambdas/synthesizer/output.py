@@ -115,7 +115,6 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
                 "target_id": drawn_circuit.target,
                 "target_name": sites_by_id[drawn_circuit.target].name,
                 "distance_miles": round(drawn_circuit.distance_miles, 3),
-                "carrier": drawn_circuit.carrier,
                 "route": [sites_by_id[site_id].name for site_id in drawn_circuit.pop_ids],
                 "reason": drawn_circuit.reason,
                 "requested_by": [

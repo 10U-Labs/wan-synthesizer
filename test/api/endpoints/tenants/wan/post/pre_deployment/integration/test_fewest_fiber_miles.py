@@ -4,7 +4,6 @@ import pytest
 
 import fixtures
 from synthesizer import linear_program
-from synthesizer.graphs import adjacency_by_carrier
 from synthesizer.model import SynthesisArtifacts
 from synthesizer.survivable import FiberInputs, select_fiber
 
@@ -85,9 +84,6 @@ _SPLIT_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = {
 SPLIT_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
     _SPLIT_SITES, _SPLIT_SEGMENTS, _ASKED_FOR, _SPLIT_TRANSIT
 )
-SPLIT_ASKED_ONE_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
-    _SPLIT_SITES, _SPLIT_SEGMENTS, 1, _SPLIT_TRANSIT
-)
 _SLACK = 1e-6
 
 
@@ -97,11 +93,14 @@ def test_no_synthesis_runs_fewer_miles_than_the_floor_it_publishes() -> None:
     )
 
 
-def test_a_site_whose_diverse_circuits_are_split_between_carriers_is_floored_at_what_it_can_buy(
-) -> None:
-    assert SPLIT_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles == pytest.approx(
-        SPLIT_ASKED_ONE_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles
-    )
+def test_a_site_whose_second_circuit_changes_hands_is_drawn_that_circuit() -> None:
+    assert ("w", "q", "x") in {
+        drawn_circuit.pop_ids for drawn_circuit in fixtures.mesh_circuits(SPLIT_ARTIFACTS)
+    }
+
+
+def test_a_site_whose_second_circuit_changes_hands_is_floored_at_both_circuits() -> None:
+    assert SPLIT_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles == pytest.approx(500.0)
 
 
 OFFERED_ARTIFACTS = fixtures.synthesis_over_owned_fiber(
@@ -116,7 +115,6 @@ def _fiber_the_selection_holds() -> frozenset[tuple[str, str]]:
     return select_fiber(FiberInputs(
         fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_FIBER,
         _ASKED_FOR, len(fixtures.OFFERED_WAYS_SITES),
-        adjacency_by_carrier(fixtures.OFFERED_WAYS_FIBER),
     )).segments
 
 
@@ -136,7 +134,6 @@ def _fiber_selected_where_two_carriers_share_a_pop() -> frozenset[tuple[str, str
     return select_fiber(FiberInputs(
         fixtures.SHARED_TRANSIT_SITES, fixtures.SHARED_TRANSIT_FIBER,
         _ASKED_FOR, len(fixtures.SHARED_TRANSIT_SITES),
-        adjacency_by_carrier(fixtures.SHARED_TRANSIT_FIBER),
     )).segments
 
 

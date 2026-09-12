@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from itertools import combinations
-from typing import TypeVar
 
 from synthesizer.ceiling import (
     CircuitProofInputs,
     circuits_per_peer,
-    diverse_circuits_by_carrier_and_peer,
+    diverse_circuits_by_peer,
 )
 from synthesizer.flow_cuts import Separation, SeparationQuestion, weakest_separation
 from synthesizer.graphs import build_adjacency, reachable_over
@@ -23,8 +22,6 @@ _EVERY_WAY_OUT: int | None = None
 
 _CIRCUITS_SHARING_NO_POP = 2
 
-_Bucket = TypeVar("_Bucket", str, tuple[str, str])
-
 
 @dataclass(frozen=True)
 class FiberInputs:
@@ -32,9 +29,6 @@ class FiberInputs:
     fiber_segments: Mapping[tuple[str, str], FiberSegment]
     number_of_diverse_circuits: int = 3
     max_wan_pop_count: int | None = None
-    fiber_by_carrier: dict[str, dict[str, list[tuple[str, float]]]] = field(
-        default_factory=dict
-    )
 
 
 @dataclass(frozen=True)
@@ -56,28 +50,18 @@ class _Requirement:
 class _Writing:
     inputs: FiberInputs
     fiber: Mapping[tuple[str, str], float]
-    by_carrier: Mapping[str, frozenset[tuple[str, str]]]
     whole: Mapping[tuple[str, str], float]
     per_peer: int
-    credited: Mapping[str, Mapping[tuple[str, str], int]]
+    credited: Mapping[str, Mapping[str, int]]
     land: frozenset[tuple[str, str]]
     land_reach: Mapping[str, frozenset[str]]
-
-
-@dataclass(frozen=True)
-class _Asked:
-    site: str
-    peers: frozenset[str]
-    spared: frozenset[str]
-    over: Mapping[str, frozenset[tuple[str, str]]]
-    capacity: Mapping[str, int]
 
 
 @dataclass(frozen=True)
 class _DiverseCircuits:
     toward_each: list[_Requirement]
     together: list[_Requirement]
-    across_the_carriers: list[_Requirement]
+    sparing_every_peer: list[_Requirement]
 
 
 @dataclass
@@ -87,22 +71,6 @@ class _Search:
     program: GrowingSegmentProgram
     written: set[tuple[tuple[int, ...], float]]
     selected: frozenset[tuple[str, str]]
-
-
-def _fiber_by_carrier(
-    inputs: FiberInputs, fiber: Mapping[tuple[str, str], float]
-) -> dict[str, frozenset[tuple[str, str]]]:
-    if not inputs.fiber_by_carrier:
-        return {"": frozenset(fiber)}
-    return {
-        carrier: frozenset(
-            segment
-            for segment in fiber
-            if not inputs.fiber_segments[segment].carriers
-            or carrier in inputs.fiber_segments[segment].carriers
-        )
-        for carrier in inputs.fiber_by_carrier
-    }
 
 
 def _question(
@@ -123,8 +91,8 @@ def _carried(requirement: _Requirement, whole: Mapping[tuple[str, str], float]) 
     return required
 
 
-def _shared_out(owed: int, capacity: Mapping[_Bucket, int]) -> dict[_Bucket, int]:
-    shares: dict[_Bucket, int] = {}
+def _shared_out(owed: int, capacity: Mapping[str, int]) -> dict[str, int]:
+    shares: dict[str, int] = {}
     left = owed
     for bucket, able in sorted(capacity.items(), key=lambda entry: (-entry[1], entry[0])):
         shares[bucket] = min(able, left)
@@ -139,19 +107,6 @@ def _lowered(
     return [row for row in carried if row.required]
 
 
-def _rows_for(asked: _Asked, writing: _Writing) -> list[_Requirement]:
-    return _lowered(
-        [
-            _Requirement(asked.site, asked.peers, asked.spared, share, asked.over[carrier])
-            for carrier, share in _shared_out(
-                writing.inputs.number_of_diverse_circuits, asked.capacity
-            ).items()
-            if share
-        ],
-        writing.whole,
-    )
-
-
 def _over_land(
     site: str,
     peers: frozenset[str],
@@ -164,35 +119,39 @@ def _over_land(
 
 
 def _peer_fiber(
-    site: str, writing: _Writing, capacity: Mapping[tuple[str, str], int]
-) -> dict[tuple[str, str], frozenset[tuple[str, str]]]:
+    site: str, writing: _Writing, capacity: Mapping[str, int]
+) -> dict[str, frozenset[tuple[str, str]]]:
     return {
-        (carrier, peer): _over_land(
-            site, frozenset({peer}), writing.by_carrier[carrier], writing
-        )
-        for carrier, peer in capacity
+        peer: _over_land(site, frozenset({peer}), frozenset(writing.fiber), writing)
+        for peer in capacity
     }
 
 
-def _asked_of_all_peers(
+def _together(
     site: str,
     spared: frozenset[str],
-    capacity: Mapping[tuple[str, str], int],
-    peer_fiber: Mapping[tuple[str, str], frozenset[tuple[str, str]]],
-) -> _Asked:
-    able: dict[str, int] = {}
-    reach: dict[str, frozenset[tuple[str, str]]] = {}
-    for (carrier, peer), proved in capacity.items():
-        able[carrier] = able.get(carrier, 0) + proved
-        reach[carrier] = reach.get(carrier, frozenset()) | peer_fiber[(carrier, peer)]
-    peers = frozenset(peer for _carrier, peer in capacity)
-    return _Asked(site, peers, spared, reach, able)
+    capacity: Mapping[str, int],
+    peer_fiber: Mapping[str, frozenset[tuple[str, str]]],
+    writing: _Writing,
+) -> list[_Requirement]:
+    return _lowered(
+        [
+            _Requirement(
+                site,
+                frozenset(capacity),
+                spared,
+                min(writing.inputs.number_of_diverse_circuits, sum(capacity.values())),
+                frozenset[tuple[str, str]]().union(*peer_fiber.values()),
+            )
+        ],
+        writing.whole,
+    )
 
 
-def _across_the_carriers(
+def _sparing_every_peer(
     site: str,
     peers: frozenset[str],
-    capacity: Mapping[tuple[str, str], int],
+    capacity: Mapping[str, int],
     writing: _Writing,
 ) -> list[_Requirement]:
     return _lowered(
@@ -216,10 +175,8 @@ def _diverse_circuit_rows(site: str, writing: _Writing) -> _DiverseCircuits:
     peer_fiber = _peer_fiber(site, writing, capacity)
     toward_each = _lowered(
         [
-            _Requirement(
-                site, frozenset({peer}), spared, share, peer_fiber[(carrier, peer)]
-            )
-            for (carrier, peer), share in _shared_out(
+            _Requirement(site, frozenset({peer}), spared, share, peer_fiber[peer])
+            for peer, share in _shared_out(
                 writing.inputs.number_of_diverse_circuits, capacity
             ).items()
             if share
@@ -228,17 +185,9 @@ def _diverse_circuit_rows(site: str, writing: _Writing) -> _DiverseCircuits:
     )
     return _DiverseCircuits(
         toward_each,
-        _rows_for(_asked_of_all_peers(site, spared, capacity, peer_fiber), writing),
-        _across_the_carriers(site, peers, capacity, writing),
+        _together(site, spared, capacity, peer_fiber, writing),
+        _sparing_every_peer(site, peers, capacity, writing),
     )
-
-
-def _wan_pops_the_carriers_can_give_two_circuits(writing: _Writing) -> list[str]:
-    return [
-        site
-        for site in sorted(writing.inputs.wan_pop_ids)
-        if sum(writing.credited[site].values()) >= _CIRCUITS_SHARING_NO_POP
-    ]
 
 
 def _two_circuits_sharing_no_pop(writing: _Writing) -> list[_Requirement]:
@@ -252,7 +201,7 @@ def _two_circuits_sharing_no_pop(writing: _Writing) -> list[_Requirement]:
             _CIRCUITS_SHARING_NO_POP,
             _over_land(near, frozenset({far}), frozenset(writing.fiber), writing),
         )
-        for near, far in combinations(_wan_pops_the_carriers_can_give_two_circuits(writing), 2)
+        for near, far in combinations(sorted(writing.inputs.wan_pop_ids), 2)
     ]
     return asked if asked == _lowered(asked, writing.whole) else []
 
@@ -269,18 +218,16 @@ def _writing(
     return _Writing(
         inputs,
         fiber,
-        _fiber_by_carrier(inputs, fiber),
         {segment: 1.0 for segment in fiber},
         circuits_per_peer(
             inputs.max_wan_pop_count, len(inputs.wan_pop_ids), inputs.number_of_diverse_circuits
         ),
-        diverse_circuits_by_carrier_and_peer(
+        diverse_circuits_by_peer(
             CircuitProofInputs(
                 inputs.wan_pop_ids,
                 build_adjacency(dict(inputs.fiber_segments)),
                 inputs.number_of_diverse_circuits,
                 inputs.max_wan_pop_count,
-                inputs.fiber_by_carrier,
                 terrestrial,
             ),
             most,
@@ -295,7 +242,7 @@ def _asked_of_every_wan_pop(writing: _Writing) -> list[_Requirement]:
     return [
         row
         for owed in owed_rows
-        for row in owed.toward_each + owed.together + owed.across_the_carriers
+        for row in owed.toward_each + owed.together + owed.sparing_every_peer
     ]
 
 

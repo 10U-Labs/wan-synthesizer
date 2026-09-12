@@ -45,19 +45,6 @@ def _tenants_outside(
     }
 
 
-def _circuits_clear_of_a_capped_wan_pop(synthesis: dict[str, Any]) -> list[dict[str, Any]]:
-    capped = {
-        entry["id"]
-        for entry in synthesis["status"]["diverse_circuits"]["ceilings"]
-        if entry["ceiling"] < 2
-    }
-    return [
-        circuit
-        for circuit in synthesis["circuits"]
-        if circuit["source_id"] not in capped and circuit["target_id"] not in capped
-    ]
-
-
 def _published_cities(synthesis: dict[str, Any]) -> set[str]:
     return {site["name"] for site in synthesis["wan_pops"]}
 
@@ -211,7 +198,7 @@ def test_no_published_network_holds_a_circuit_that_buys_nobody_a_diverse_circuit
 def test_no_published_network_is_split_by_the_loss_of_one_city(
         published_syntheses: list[dict[str, Any]]) -> None:
     split = {
-        synthesis["tenant"]: cut_cities(_circuits_clear_of_a_capped_wan_pop(synthesis))
+        synthesis["tenant"]: cut_cities(synthesis["circuits"])
         for synthesis in published_syntheses
         if synthesis["number_of_diverse_circuits"] >= 2
     }
@@ -253,26 +240,17 @@ def _city_names() -> dict[tuple[str, str], str]:
     return named
 
 
-def _fiber_by_carrier() -> dict[str, set[frozenset[str]]]:
+def _carrier_fiber() -> set[frozenset[str]]:
     named = _city_names()
-    held: dict[str, set[frozenset[str]]] = {}
+    pairs: set[frozenset[str]] = set()
     for path in sorted((seed.DATA / seed.FIBER_SEGMENTS).glob("*/*.csv")):
-        pairs: set[frozenset[str]] = set()
         with path.open(encoding="utf-8") as handle:
             for row in csv.DictReader(handle):
                 near = named.get((row["A_Municipality"], row["A_State"]))
                 far = named.get((row["Z_Municipality"], row["Z_State"]))
                 if near and far:
                     pairs.add(frozenset({near, far}))
-        held.setdefault(path.stem, set()).update(pairs)
-    return held
-
-
-def _anybodys_fiber(held: dict[str, set[frozenset[str]]]) -> set[frozenset[str]]:
-    everyone: set[frozenset[str]] = set()
-    for pairs in held.values():
-        everyone |= pairs
-    return everyone
+    return pairs
 
 
 def _hops(circuit: dict[str, Any]) -> list[frozenset[str]]:
@@ -280,53 +258,39 @@ def _hops(circuit: dict[str, Any]) -> list[frozenset[str]]:
     return [frozenset({left, right}) for left, right in zip(cities, cities[1:])]
 
 
-def _circuits_changing_hands(syntheses: list[dict[str, Any]]) -> dict[str, list[str]]:
-    held = _fiber_by_carrier()
-    anybody = _anybodys_fiber(held)
-    found: dict[str, list[str]] = {}
-    for synthesis in syntheses:
-        for circuit in synthesis["circuits"]:
-            mine = held.get(circuit.get("carrier", ""), set())
-            if any(hop in anybody and hop not in mine for hop in _hops(circuit)):
-                found.setdefault(synthesis["tenant"], []).append(
-                    f"{circuit['source_name']} to {circuit['target_name']}"
-                )
-    return found
-
-
-def _circuits_naming_no_carrier(syntheses: list[dict[str, Any]]) -> dict[str, list[str]]:
-    anybody = _anybodys_fiber(_fiber_by_carrier())
-    found: dict[str, list[str]] = {}
-    for synthesis in syntheses:
-        for circuit in synthesis["circuits"]:
-            if not circuit.get("carrier") and any(hop in anybody for hop in _hops(circuit)):
-                found.setdefault(synthesis["tenant"], []).append(
-                    f"{circuit['source_name']} to {circuit['target_name']}"
-                )
-    return found
-
-
-def test_no_published_circuit_changes_carrier_partway_along_itself(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    assert not _circuits_changing_hands(published_syntheses)
-
-
-def test_every_published_circuit_over_a_carriers_fiber_names_that_carrier(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    assert not _circuits_naming_no_carrier(published_syntheses)
-
-
-def _tenants_fiber(synthesis: dict[str, Any]) -> dict[str, set[frozenset[str]]]:
-    held = _fiber_by_carrier()
-    anybody = _anybodys_fiber(held)
-    laid = {
-        hop for circuit in synthesis["circuits"] for hop in _hops(circuit) if hop not in anybody
+def _fiber_laid_to_a_fabricated_wan_pop(synthesis: dict[str, Any]) -> set[frozenset[str]]:
+    fabricated = {row["name"] for row in synthesis["wan_pops"] if row.get("fabricated")}
+    return {
+        hop
+        for circuit in synthesis["circuits"]
+        for hop in _hops(circuit)
+        if hop & fabricated
     }
-    return {carrier: pairs | laid for carrier, pairs in held.items()}
 
 
-def _cities_with_fiber(held: dict[str, set[frozenset[str]]]) -> set[str]:
-    return {city for pair in _anybodys_fiber(held) for city in pair}
+def _tenants_fiber(synthesis: dict[str, Any]) -> set[frozenset[str]]:
+    return _carrier_fiber() | _fiber_laid_to_a_fabricated_wan_pop(synthesis)
+
+
+def _circuits_over_fiber_nobody_owns(syntheses: list[dict[str, Any]]) -> dict[str, list[str]]:
+    found: dict[str, list[str]] = {}
+    for synthesis in syntheses:
+        fiber = _tenants_fiber(synthesis)
+        for circuit in synthesis["circuits"]:
+            if any(hop not in fiber for hop in _hops(circuit)):
+                found.setdefault(synthesis["tenant"], []).append(
+                    f"{circuit['source_name']} to {circuit['target_name']}"
+                )
+    return found
+
+
+def test_every_published_circuit_runs_over_segments_each_of_which_a_carrier_owns(
+        published_syntheses: list[dict[str, Any]]) -> None:
+    assert not _circuits_over_fiber_nobody_owns(published_syntheses)
+
+
+def _cities_with_fiber(held: set[frozenset[str]]) -> set[str]:
+    return {city for pair in held for city in pair}
 
 
 def _circuits_one_peer_may_end(synthesis: dict[str, Any]) -> int:

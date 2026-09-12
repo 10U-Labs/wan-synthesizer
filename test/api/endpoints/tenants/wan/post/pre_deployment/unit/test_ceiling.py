@@ -6,9 +6,9 @@ from synthesizer.ceiling import (
     diverse_circuit_ceiling,
     diverse_circuits,
     diverse_circuit_ceilings,
-    diverse_circuits_by_carrier_and_peer,
+    diverse_circuits_by_peer,
 )
-from synthesizer.graphs import adjacency_by_carrier, build_adjacency
+from synthesizer.graphs import build_adjacency
 from synthesizer.input_graph import FiberSegment
 
 physical = fixtures.fiber_segments_from
@@ -186,16 +186,17 @@ _ONE_COMPANY_EACH = fixtures.carrier_fiber_segments({
 def _owned_proof(
     fiber: dict[tuple[str, str], FiberSegment], circuits_wanted: int = 1
 ) -> CircuitProofInputs:
-    return CircuitProofInputs(
-        ("s", "t"),
-        build_adjacency(fiber),
-        circuits_wanted=circuits_wanted,
-        fiber_by_carrier=adjacency_by_carrier(fiber),
-    )
+    return CircuitProofInputs(("s", "t"), build_adjacency(fiber), circuits_wanted=circuits_wanted)
 
 
-def test_a_circuit_that_changes_hands_is_no_diverse_circuit() -> None:
-    assert not diverse_circuits("s", _owned_proof(_CHANGES_HANDS))
+def test_a_circuit_that_changes_hands_at_a_pop_both_carriers_have_is_a_diverse_circuit() -> None:
+    assert diverse_circuits("s", _owned_proof(_CHANGES_HANDS)) == [("s", "x", "t")]
+
+
+def test_the_diverse_circuits_proved_may_each_change_hands() -> None:
+    assert sorted(diverse_circuits("s", _owned_proof(_CHANGES_HANDS, 2))) == [
+        ("s", "x", "t"), ("s", "y", "t"),
+    ]
 
 
 def test_diverse_circuits_may_come_from_different_carriers() -> None:
@@ -287,15 +288,9 @@ def _credit_over(
     fiber: dict[tuple[str, str], FiberSegment],
     wan_pop_ids: tuple[str, ...],
     most: int | None,
-) -> dict[str, dict[tuple[str, str], int]]:
-    return diverse_circuits_by_carrier_and_peer(
-        CircuitProofInputs(
-            wan_pop_ids,
-            build_adjacency(fiber),
-            circuits_wanted=2,
-            fiber_by_carrier=adjacency_by_carrier(fiber),
-        ),
-        most,
+) -> dict[str, dict[str, int]]:
+    return diverse_circuits_by_peer(
+        CircuitProofInputs(wan_pop_ids, build_adjacency(fiber), circuits_wanted=2), most
     )
 
 
@@ -305,21 +300,21 @@ _ALREADY_NEEDED_CREDIT = _credit_over(
 _FLOORED_ABOVE_FIBER = fixtures.carrier_fiber_segments(fixtures.FLOORED_ABOVE_SEGMENTS)
 
 
-def test_a_wan_pops_ask_is_credited_to_the_carrier_of_fiber_the_wan_already_needs() -> None:
-    assert _ALREADY_NEEDED_CREDIT["f"] == {("lumen", "b"): 1}
+def test_a_wan_pop_is_credited_one_circuit_toward_each_peer_its_diverse_circuits_reach() -> None:
+    assert _ALREADY_NEEDED_CREDIT["f"] == {"b": 1, "d": 1}
 
 
-def test_a_wan_pop_the_wan_shares_no_fiber_with_keeps_its_shortest_circuits_carriers() -> None:
-    assert _ALREADY_NEEDED_CREDIT["b"] == {("zayo", "d"): 1, ("lumen", "f"): 1}
+def test_a_wan_pop_is_credited_a_circuit_that_changes_hands() -> None:
+    assert _ALREADY_NEEDED_CREDIT["b"] == {"d": 1, "f": 1}
 
 
-def test_every_diverse_circuit_a_wan_pops_carriers_prove_is_credited_when_none_is_asked() -> None:
+def test_every_diverse_circuit_a_wan_pops_fiber_proves_is_credited_when_none_is_asked() -> None:
     assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, None)["b"] == {
-        ("zayo", "e"): 1, ("cogent", "d"): 1, ("cogent", "f"): 1,
+        "d": 1, "e": 1, "f": 1,
     }
 
 
-def test_the_credit_is_cut_to_the_diverse_circuits_the_tenant_asked_for() -> None:
+def test_the_credit_is_cut_to_the_shortest_diverse_circuits_the_tenant_asked_for() -> None:
     assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, 2)["b"] == {
-        ("zayo", "e"): 1, ("cogent", "d"): 1,
+        "d": 1, "e": 1,
     }

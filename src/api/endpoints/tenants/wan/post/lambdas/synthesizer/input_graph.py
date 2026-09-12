@@ -46,17 +46,6 @@ def segment_key(left: str, right: str) -> tuple[str, str]:
         raise ValueError(f"Self-loop is not a valid Carrier fiber segment: {left}")
     return (left, right) if left < right else (right, left)
 
-def carriers_along(
-    pop_ids: tuple[str, ...], fiber_segments: dict[tuple[str, str], FiberSegment]
-) -> frozenset[str]:
-    common: frozenset[str] | None = None
-    for index in range(len(pop_ids) - 1):
-        owners = fiber_segments[segment_key(pop_ids[index], pop_ids[index + 1])].carriers
-        if not owners:
-            continue
-        common = owners if common is None else common & owners
-    return common if common is not None else frozenset()
-
 def haversine_miles(a: Site, b: Site) -> float:
     lat1 = math.radians(a.lat)
     lat2 = math.radians(b.lat)

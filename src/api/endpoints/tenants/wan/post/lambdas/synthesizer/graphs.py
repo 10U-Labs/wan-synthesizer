@@ -241,18 +241,3 @@ def build_adjacency(
         neighbors.sort()
     return adjacency
 
-
-def adjacency_by_carrier(
-    fiber_segments: dict[tuple[str, str], FiberSegment],
-) -> dict[str, dict[str, list[tuple[str, float]]]]:
-    carriers = sorted({
-        carrier for segment in fiber_segments.values() for carrier in segment.carriers
-    })
-    return {
-        carrier: build_adjacency({
-            key: segment
-            for key, segment in fiber_segments.items()
-            if not segment.carriers or carrier in segment.carriers
-        })
-        for carrier in carriers
-    }

@@ -5,9 +5,8 @@ from dataclasses import dataclass, replace
 from itertools import combinations
 
 from synthesizer.ceiling import CircuitProofInputs, diverse_circuits
-from synthesizer.input_graph import FiberSegment, carriers_along, segment_key
+from synthesizer.input_graph import FiberSegment, segment_key
 from synthesizer.graphs import (
-    adjacency_by_carrier,
     articulation_points,
     build_adjacency,
     connected_components,
@@ -56,7 +55,6 @@ class _DrawnFiber:
     wan_pop_ids: tuple[str, ...]
     distances: dict[str, dict[str, float]]
     selected: dict[tuple[str, str], FiberSegment]
-    selected_by_carrier: dict[str, dict[str, list[tuple[str, float]]]]
     whole: dict[tuple[str, str], FiberSegment]
     constraints: WanPopConstraints
 
@@ -93,38 +91,22 @@ def _pieces_without_each(
 
 def _pinned_circuit(
     pair: tuple[str, str],
-    by_carrier: dict[str, dict[str, list[tuple[str, float]]]],
     fiber_segments: dict[tuple[str, str], FiberSegment],
 ) -> SynthesisCircuit | None:
     near, far = pair
-    maps = by_carrier or {"": build_adjacency(fiber_segments)}
-    drawn: list[tuple[str, ...]] = []
-    for _carrier, adjacency in sorted(maps.items()):
-        _distances, predecessors = dijkstra(adjacency, near)
-        pop_ids = reconstruct_path(near, far, predecessors)
-        if pop_ids:
-            drawn.append(pop_ids)
-    if not drawn:
+    _distances, predecessors = dijkstra(build_adjacency(fiber_segments), near)
+    pop_ids = reconstruct_path(near, far, predecessors)
+    if not pop_ids:
         return None
-    pop_ids = min(drawn, key=lambda one: (miles_along(one, fiber_segments), one))
     return SynthesisCircuit(
         "backbone_mesh", near, far, pop_ids,
         miles_along(pop_ids, fiber_segments), CIRCUIT_FOR_PIN,
-        carrier=_carrier_of(pop_ids, fiber_segments),
     )
-
-
-def _carrier_of(
-    pop_ids: tuple[str, ...], fiber_segments: dict[tuple[str, str], FiberSegment]
-) -> str:
-    owners = carriers_along(pop_ids, fiber_segments)
-    return min(owners) if owners else ""
 
 
 def _proved_over(
     site: str,
     fiber: dict[tuple[str, str], FiberSegment],
-    by_carrier: dict[str, dict[str, list[tuple[str, float]]]],
     drawn: _DrawnFiber,
 ) -> list[tuple[str, ...]]:
     constraints = drawn.constraints
@@ -136,14 +118,14 @@ def _proved_over(
     return sorted(
         diverse_circuits(site, CircuitProofInputs(
             peers, build_adjacency(fiber),
-            constraints.number_of_diverse_circuits, constraints.max_wan_pop_count, by_carrier,
+            constraints.number_of_diverse_circuits, constraints.max_wan_pop_count,
         )),
         key=lambda pop_ids: (miles_along(pop_ids, fiber), pop_ids),
     )[: constraints.number_of_diverse_circuits]
 
 
 def _diverse_circuits_of(site: str, drawn: _DrawnFiber) -> list[tuple[str, ...]]:
-    return _proved_over(site, drawn.selected, drawn.selected_by_carrier, drawn)
+    return _proved_over(site, drawn.selected, drawn)
 
 
 def _laid(drawn: _DrawnFiber, pinned: list[SynthesisCircuit]) -> list[SynthesisCircuit]:
@@ -159,7 +141,6 @@ def _laid(drawn: _DrawnFiber, pinned: list[SynthesisCircuit]) -> list[SynthesisC
                 laid[key] = SynthesisCircuit(
                     "backbone_mesh", pop_ids[0], pop_ids[-1], pop_ids,
                     miles_along(pop_ids, drawn.whole), CIRCUIT_FOR_TARGET, (site,),
-                    _carrier_of(pop_ids, drawn.whole),
                 )
             elif held.reason == CIRCUIT_FOR_TARGET and site not in held.requested_by:
                 laid[key] = replace(
@@ -206,17 +187,11 @@ def _circuit_around(
     fiber = {
         key: segment for key, segment in drawn.whole.items() if city not in key
     }
-    by_carrier = adjacency_by_carrier(fiber)
     land = _on_land(fiber)
-    land_by_carrier = adjacency_by_carrier(land)
     reach = reachable_over(build_adjacency(_on_land(drawn.whole)))
     for near, far in _pairs_across(city, circuits, drawn):
         joined = far in reach.get(near, frozenset())
-        found = _pinned_circuit(
-            (near, far),
-            land_by_carrier if joined else by_carrier,
-            land if joined else fiber,
-        )
+        found = _pinned_circuit((near, far), land if joined else fiber)
         if found is None:
             continue
         return replace(found, reason=CIRCUIT_FOR_RELIEF)
@@ -270,16 +245,13 @@ def _selected_fiber(
     wan_pop_ids: tuple[str, ...],
     fiber_segments: dict[tuple[str, str], FiberSegment],
     constraints: WanPopConstraints,
-    by_carrier: dict[str, dict[str, list[tuple[str, float]]]],
 ) -> tuple[frozenset[tuple[str, str]], float, list[SynthesisCircuit]]:
     selection = select_fiber(FiberInputs(
         wan_pop_ids, fiber_segments,
         constraints.number_of_diverse_circuits, constraints.max_wan_pop_count,
-        by_carrier,
     ))
     drawn = (
-        _pinned_circuit(pair, by_carrier, fiber_segments)
-        for pair in sorted(constraints.forced_pairs)
+        _pinned_circuit(pair, fiber_segments) for pair in sorted(constraints.forced_pairs)
     )
     pinned = [drawn_circuit for drawn_circuit in drawn if drawn_circuit is not None]
     segments = set(selection.segments)
@@ -294,15 +266,9 @@ def backbone_mesh(
     fiber_segments: dict[tuple[str, str], FiberSegment],
     constraints: WanPopConstraints = WanPopConstraints(),
 ) -> BackboneMesh:
-    whole_by_carrier = adjacency_by_carrier(fiber_segments)
-    segments, floor, pinned = _selected_fiber(
-        wan_pop_ids, fiber_segments, constraints, whole_by_carrier
-    )
+    segments, floor, pinned = _selected_fiber(wan_pop_ids, fiber_segments, constraints)
     selected = {segment: fiber_segments[segment] for segment in sorted(segments)}
-    drawn = _DrawnFiber(
-        wan_pop_ids, all_distances, selected, adjacency_by_carrier(selected),
-        fiber_segments, constraints,
-    )
+    drawn = _DrawnFiber(wan_pop_ids, all_distances, selected, fiber_segments, constraints)
     laid = _relieved(_laid(drawn, pinned), drawn)
     return BackboneMesh(
         _needed(laid, wan_pop_ids, constraints.number_of_diverse_circuits), floor
