@@ -68,6 +68,13 @@ def test_synthesizer_role_may_clear_a_refused_tenants_wan(
     assert "s3:DeleteObject" in str(policy["policy"])
 
 
+def test_synthesizer_role_may_clear_a_refused_tenants_wan_without_a_marker(
+    synth_main: dict[str, object]
+) -> None:
+    policy = _resource(synth_main, "aws_iam_role_policy", "synthesizer_s3")
+    assert "s3:DeleteObjectVersion" in str(policy["policy"])
+
+
 def test_synthesizer_log_group_retention(synth_main: dict[str, object]) -> None:
     log_group = _resource(synth_main, "aws_cloudwatch_log_group", "synthesizer")
     assert log_group["retention_in_days"] == 14

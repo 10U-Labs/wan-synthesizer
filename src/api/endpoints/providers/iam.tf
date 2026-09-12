@@ -25,7 +25,7 @@ resource "aws_iam_role_policy" "store_access" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:DeleteObjectVersion"]
         Resource = ["${data.terraform_remote_state.storage.outputs.bucket_arn}/*"]
       },
       {

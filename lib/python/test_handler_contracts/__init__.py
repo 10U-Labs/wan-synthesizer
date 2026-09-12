@@ -132,6 +132,13 @@ class SharedWriteTests:
             module.lambda_handler(self._delete_event(), None)
         assert self.CFG["key"] not in objects
 
+    def test_delete_leaves_no_delete_marker(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        module = self._handler(monkeypatch)
+        fake = fake_s3({self.CFG["key"]: b"{}"})
+        with patch("boto3.client", return_value=fake):
+            module.lambda_handler(self._delete_event(), None)
+        assert fake.list_object_versions(Bucket="test-bucket")["DeleteMarkers"] == []
+
 
 class WriterContract(SharedWriteTests):
     def _put_event(self, collection: str, body: Any) -> dict[str, Any]:

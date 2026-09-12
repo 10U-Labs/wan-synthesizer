@@ -8,6 +8,7 @@ _CLIENTS: dict[str, Any] = {}
 _HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
 _REGION_FIELDS = {"name", "municipality", "state", "country", "latitude", "longitude"}
 _KEY = "providers/regions.json"
+_ONLY_VERSION = "null"
 
 
 def _validate_rows(body: Any, required: set[str]) -> str | None:
@@ -69,6 +70,7 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     if collection != "regions":
         return _response(404, {"error": collection})
     if method == "DELETE":
-        client.delete_object(Bucket=os.environ["STORE_BUCKET"], Key=_KEY)
+        client.delete_object(
+            Bucket=os.environ["STORE_BUCKET"], Key=_KEY, VersionId=_ONLY_VERSION)
         return _response(200, {"deleted": "providers"})
     return _put(client, event)

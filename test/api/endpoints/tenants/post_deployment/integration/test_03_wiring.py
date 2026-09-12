@@ -16,3 +16,8 @@ def test_api_gateway_may_invoke_the_lambda(lambda_client: Any, function_name: st
 def test_role_grants_store_access(iam_client: Any, role_name: str) -> None:
     policy = iam_client.get_role_policy(RoleName=role_name, PolicyName="StoreAccess")
     assert "s3:GetObject" in str(policy["PolicyDocument"])
+
+
+def test_role_may_delete_a_version(iam_client: Any, role_name: str) -> None:
+    policy = iam_client.get_role_policy(RoleName=role_name, PolicyName="StoreAccess")
+    assert "s3:DeleteObjectVersion" in str(policy["PolicyDocument"])

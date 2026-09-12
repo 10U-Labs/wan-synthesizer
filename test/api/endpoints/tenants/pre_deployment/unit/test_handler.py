@@ -246,6 +246,15 @@ def test_tenant_delete_removes_every_object(monkeypatch: pytest.MonkeyPatch) -> 
     assert not objects
 
 
+def test_tenant_delete_leaves_no_delete_marker(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = _tenant(monkeypatch)
+    fake = fake_s3({"tenants/f-35/locations.json": b"[]", "tenants/f-35/wan.json": b"{}"})
+    event = {"httpMethod": "DELETE", "pathParameters": {"tenant": "f-35"}}
+    with patch("boto3.client", return_value=fake):
+        module.lambda_handler(event, None)
+    assert fake.list_object_versions(Bucket="test-bucket")["DeleteMarkers"] == []
+
+
 def test_tenant_delete_with_no_objects_succeeds(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
     event = {"httpMethod": "DELETE", "pathParameters": {"tenant": "ghost"}}

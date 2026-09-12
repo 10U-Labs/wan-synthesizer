@@ -53,8 +53,11 @@ def _write_json(client: Any, key: str, body: Any) -> None:
     )
 
 
+_ONLY_VERSION = "null"
+
+
 def _delete(client: Any, key: str) -> None:
-    client.delete_object(Bucket=os.environ["STORE_BUCKET"], Key=key)
+    client.delete_object(Bucket=os.environ["STORE_BUCKET"], Key=key, VersionId=_ONLY_VERSION)
 
 
 def _delivered(

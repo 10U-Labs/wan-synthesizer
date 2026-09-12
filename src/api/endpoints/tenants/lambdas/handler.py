@@ -6,6 +6,7 @@ import boto3
 
 _CLIENTS: dict[str, Any] = {}
 _HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+_ONLY_VERSION = "null"
 _WAN_COLLECTIONS = (
     "sites",
     "homing-circuits",
@@ -127,7 +128,7 @@ def _delete(client: Any, tenant: str) -> dict[str, Any]:
     bucket = os.environ["STORE_BUCKET"]
     listing = client.list_objects_v2(Bucket=bucket, Prefix=f"tenants/{tenant}/")
     for item in listing.get("Contents", []):
-        client.delete_object(Bucket=bucket, Key=item["Key"])
+        client.delete_object(Bucket=bucket, Key=item["Key"], VersionId=_ONLY_VERSION)
     return _response(200, {"deleted": tenant})
 
 

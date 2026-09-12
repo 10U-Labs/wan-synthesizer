@@ -15,6 +15,13 @@ def test_synthesizer_role_grants_store_access(
     assert "s3:PutObject" in str(policy["PolicyDocument"])
 
 
+def test_synthesizer_role_may_delete_a_version(
+        iam_client: Any, synthesizer_role_name: str) -> None:
+    policy = iam_client.get_role_policy(
+        RoleName=synthesizer_role_name, PolicyName="store-access")
+    assert "s3:DeleteObjectVersion" in str(policy["PolicyDocument"])
+
+
 def test_synthesizer_on_failure_targets_the_failure_handler(
         synthesizer_invoke_config: dict[str, Any], failure_handler_function_name: str) -> None:
     destination = synthesizer_invoke_config["DestinationConfig"]["OnFailure"]["Destination"]

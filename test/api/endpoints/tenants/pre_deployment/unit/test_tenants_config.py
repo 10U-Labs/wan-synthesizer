@@ -49,6 +49,11 @@ def test_store_access_policy_is_declared(tenants_iam: dict[str, object]) -> None
     assert find_resource(tenants_iam, "aws_iam_role_policy", "store_access") is not None
 
 
+def test_store_access_policy_may_delete_a_version(tenants_iam: dict[str, object]) -> None:
+    policy = _resource(tenants_iam, "aws_iam_role_policy", "store_access")
+    assert "s3:DeleteObjectVersion" in str(policy["policy"])
+
+
 def test_api_gateway_invoke_permission_is_declared(
         tenants_main: dict[str, object]) -> None:
     assert find_resource(tenants_main, "aws_lambda_permission", "api_gateway") is not None

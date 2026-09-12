@@ -6,6 +6,7 @@ import boto3
 
 _CLIENTS: dict[str, Any] = {}
 _HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+_ONLY_VERSION = "null"
 _SITE_FIELDS = {"municipality", "state", "country", "latitude", "longitude"}
 _LINK_FIELDS = {"a_municipality", "a_state", "z_municipality", "z_state", "submarine"}
 
@@ -80,7 +81,7 @@ def _delete(client: Any, carrier: str) -> dict[str, Any]:
     bucket = os.environ["STORE_BUCKET"]
     listing = client.list_objects_v2(Bucket=bucket, Prefix=f"carriers/{carrier}/")
     for item in listing.get("Contents", []):
-        client.delete_object(Bucket=bucket, Key=item["Key"])
+        client.delete_object(Bucket=bucket, Key=item["Key"], VersionId=_ONLY_VERSION)
     return _response(200, {"deleted": carrier})
 
 

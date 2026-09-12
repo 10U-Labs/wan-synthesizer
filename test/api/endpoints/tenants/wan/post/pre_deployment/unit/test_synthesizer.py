@@ -257,7 +257,9 @@ def test_logs_progress_at_info(
     assert all(word in messages for word in ("f-35", "Publishing"))
 
 
-def _run_over_a_published_wan(module: Any, monkeypatch: pytest.MonkeyPatch) -> dict[str, bytes]:
+def _refuse_over_a_published_wan(
+    module: Any, monkeypatch: pytest.MonkeyPatch
+) -> tuple[dict[str, bytes], Any]:
     _stub_pipeline(module, monkeypatch)
 
     def _raise(*_args: Any) -> Any:
@@ -266,15 +268,27 @@ def _run_over_a_published_wan(module: Any, monkeypatch: pytest.MonkeyPatch) -> d
     monkeypatch.setattr(module, "synthesize_two_tier", _raise)
     objects = _inputs(module)
     objects["tenants/f-35/wan.json"] = b'{"wan-pops": []}'
-    with patch("boto3.client", return_value=fake_s3(objects)):
+    fake = fake_s3(objects)
+    with patch("boto3.client", return_value=fake):
         module.lambda_handler({"tenant": "f-35"}, None)
-    return objects
+    return objects, fake
+
+
+def _run_over_a_published_wan(module: Any, monkeypatch: pytest.MonkeyPatch) -> dict[str, bytes]:
+    return _refuse_over_a_published_wan(module, monkeypatch)[0]
 
 
 def test_a_refused_build_clears_the_wan_it_published_before(
     synthesizer: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     assert "tenants/f-35/wan.json" not in _run_over_a_published_wan(synthesizer, monkeypatch)
+
+
+def test_a_refused_build_leaves_no_delete_marker_over_the_wan(
+    synthesizer: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _objects, fake = _refuse_over_a_published_wan(synthesizer, monkeypatch)
+    assert fake.list_object_versions(Bucket="test-bucket")["DeleteMarkers"] == []
 
 
 def test_a_refused_build_records_the_reason_it_refused(
