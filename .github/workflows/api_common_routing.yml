@@ -382,12 +382,10 @@ on:
     paths:
       - src/api/common/routing/**
       - src/www/api/openapi.json
-      - src/www/spa/**
       - lib/opentofu/common/**
       - lib/python/**
       - scripts/seed.py
       - test/api/common/routing/**
       - test/lib/python/**
-      - test/www/spa/**
       - .github/workflows/api_common_routing.yml
   workflow_dispatch: {}
