@@ -28,12 +28,13 @@ Dijkstra per pin, and `SynthesisCircuit` names no carrier because a circuit has
 none — `FiberSegment.carriers` holds the fact per segment, where it belongs. The
 per-carrier machinery (`adjacency_by_carrier`, `carriers_along`,
 `SynthesisCircuit.carrier`, the capped-WAN-PoP exemption in
-`validation.backbone_mesh_cut_pops` and the e2e grader) went with GitHub issue
-#170 on 2026-09-11, after #187 put dcn's six out-of-state landings in
-`data/pops/dcn.csv` so dcn owns its exits on the stated rule. A WAN PoP the fiber
-caps below two circuits is now refused by `stages.finalize` as a split, not
-quietly dropped from the cut-PoP check. Do not restate the one-carrier rule in a
-new test, a new issue or a new field; a circuit that changes hands at a PoP both
-carriers have is a circuit. uniti still lists sixteen segments ending at cities
-its PoP file does not carry — #187 named that the same defect and left it open.
-See [[a-way-out-of-a-site-is-a-circuit]].
+`validation.backbone_mesh_cut_pops` and the e2e grader) went with GitHub
+issue #170 on 2026-09-11, after GitHub issue #187 put dcn's six out-of-state
+landings in `data/pops/dcn.csv` so dcn owns its exits on the stated rule. A
+WAN PoP the fiber caps below two circuits is now refused by `stages.finalize`
+as a split, not quietly dropped from the cut-PoP check. Do not restate the
+one-carrier rule in a new test, a new issue or a new field; a circuit that
+changes hands at a PoP both carriers have is a circuit. uniti still lists
+sixteen segments ending at cities its PoP file does not carry, which GitHub
+issue #187 named the same defect and left open. See
+[[a-way-out-of-a-site-is-a-circuit]].
