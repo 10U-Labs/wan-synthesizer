@@ -259,9 +259,9 @@ function showSignIn(note) {
     theme: "outline",
     size: "large",
     text: "signin_with",
-    shape: "rectangular",
+    shape: "pill",
+    width: 300,
   });
-  google.accounts.id.prompt();
 }
 
 function onSignedIn(response) {
