@@ -83,3 +83,83 @@ def test_a_listing_given_outright_is_narrowed_by_prefix_too() -> None:
     client = fake_s3({}, keys=keys)
     listing = client.list_objects_v2(Bucket="store", Prefix="tenants/")
     assert listing["Contents"] == [{"Key": "tenants/daf/label.json"}]
+
+
+_NULL_VERSION = {"Key": "tenants/daf/label.json", "VersionId": "null", "IsLatest": True}
+
+
+def test_a_delete_naming_no_version_leaves_a_delete_marker() -> None:
+    client = fake_s3({"tenants/daf/label.json": b"{}"})
+    client.delete_object(Key="tenants/daf/label.json")
+    assert client.list_object_versions(Bucket="store")["DeleteMarkers"] == [_NULL_VERSION]
+
+
+def test_a_delete_naming_no_version_hides_the_key_from_get_object() -> None:
+    client = fake_s3({"tenants/daf/label.json": b"{}"})
+    client.delete_object(Key="tenants/daf/label.json")
+    with pytest.raises(NoSuchKey):
+        client.get_object(Key="tenants/daf/label.json")
+
+
+def test_a_delete_naming_no_version_hides_the_key_from_the_listing() -> None:
+    client = fake_s3({"tenants/daf/label.json": b"{}"})
+    client.delete_object(Key="tenants/daf/label.json")
+    assert client.list_objects_v2(Bucket="store")["Contents"] == []
+
+
+def test_a_delete_naming_the_null_version_leaves_no_marker() -> None:
+    client = fake_s3({"tenants/daf/label.json": b"{}"})
+    client.delete_object(Key="tenants/daf/label.json", VersionId="null")
+    assert client.list_object_versions(Bucket="store")["DeleteMarkers"] == []
+
+
+def test_a_delete_naming_the_null_version_removes_the_object() -> None:
+    objects = {"tenants/daf/label.json": b"{}"}
+    fake_s3(objects).delete_object(Key="tenants/daf/label.json", VersionId="null")
+    assert "tenants/daf/label.json" not in objects
+
+
+def test_a_delete_naming_the_null_version_clears_the_marker_over_a_key() -> None:
+    client = fake_s3({"tenants/daf/label.json": b"{}"})
+    client.delete_object(Key="tenants/daf/label.json")
+    client.delete_object(Key="tenants/daf/label.json", VersionId="null")
+    assert client.list_object_versions(Bucket="store")["DeleteMarkers"] == []
+
+
+def test_a_write_over_a_marker_clears_it() -> None:
+    client = fake_s3({"tenants/daf/label.json": b"{}"})
+    client.delete_object(Key="tenants/daf/label.json")
+    client.put_object(Key="tenants/daf/label.json", Body=b"{}")
+    assert client.list_object_versions(Bucket="store")["DeleteMarkers"] == []
+
+
+def test_the_versions_listing_is_every_object_as_its_null_version() -> None:
+    client = fake_s3({"tenants/daf/label.json": b"{}"})
+    assert client.list_object_versions(Bucket="store")["Versions"] == [_NULL_VERSION]
+
+
+def test_the_versions_listing_is_narrowed_by_prefix() -> None:
+    client = fake_s3({"carriers/lumen/pops.json": b"[]", "tenants/daf/label.json": b"{}"})
+    listing = client.list_object_versions(Bucket="store", Prefix="tenants/")
+    assert listing["Versions"] == [_NULL_VERSION]
+
+
+def test_the_markers_listing_is_narrowed_by_prefix() -> None:
+    client = fake_s3({"carriers/lumen/pops.json": b"[]", "tenants/daf/label.json": b"{}"})
+    client.delete_object(Key="carriers/lumen/pops.json")
+    client.delete_object(Key="tenants/daf/label.json")
+    listing = client.list_object_versions(Bucket="store", Prefix="tenants/")
+    assert listing["DeleteMarkers"] == [_NULL_VERSION]
+
+
+def test_the_paginator_serves_the_versions_listing_as_one_page() -> None:
+    client = fake_s3({"tenants/daf/label.json": b"{}"})
+    pages = list(client.get_paginator("list_object_versions").paginate(Bucket="store"))
+    assert [page["Versions"] for page in pages] == [[_NULL_VERSION]]
+
+
+def test_the_paginator_serves_the_markers_on_the_same_page() -> None:
+    client = fake_s3({"tenants/daf/label.json": b"{}"})
+    client.delete_object(Key="tenants/daf/label.json")
+    page = next(iter(client.get_paginator("list_object_versions").paginate(Bucket="store")))
+    assert page["DeleteMarkers"] == [_NULL_VERSION]
