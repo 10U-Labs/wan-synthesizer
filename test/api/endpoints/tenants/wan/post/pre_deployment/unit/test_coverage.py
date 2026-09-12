@@ -117,7 +117,7 @@ _FIBER_SEGMENTS = physical({
     ("b1", "b2"): 1.0, ("b2", "b3"): 1.0, ("b1", "b3"): 1.0,
     ("poor", "x"): 1.0, ("x", "b1"): 1.0, ("poor_far", "x2"): 1.0, ("x2", "b1"): 1.0,
     **{(name, base): 1.0 for name in ("rich", "rich_far") for base in ("b1", "b2", "b3")},
-    **{(name, base): 1.0 for name in ("poor", "poor_far") for base in ("b1", "b2")},
+    **{(name, "b1"): 1.0 for name in ("poor", "poor_far")},
 })
 _FIBER_ADJACENCY = build_adjacency(_FIBER_SEGMENTS)
 _FIBER_BACKBONE = ("b1", "b2", "b3")

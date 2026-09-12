@@ -196,20 +196,44 @@ def test_the_circuit_drawn_round_that_city_runs_over_the_fiber_that_goes_round_i
     ] == [("b", "w", "c")]
 
 
-def test_the_circuit_drawn_round_that_city_says_the_split_is_what_put_it_there() -> None:
+def test_the_circuit_drawn_round_that_city_is_a_diverse_circuit_of_the_sites_it_joins() -> None:
     assert [
-        drawn_circuit.reason
+        (drawn_circuit.reason, drawn_circuit.requested_by)
         for drawn_circuit in _TWO_LOBES.circuits
         if segment_key("b", "w") in fiber_segments_along(drawn_circuit.pop_ids)
-    ] == [CIRCUIT_FOR_RELIEF]
+    ] == [(CIRCUIT_FOR_TARGET, ("b", "c"))]
 
 
-def test_the_circuit_drawn_round_that_city_is_in_no_sites_own_requirement() -> None:
-    assert [
-        drawn_circuit.requested_by
-        for drawn_circuit in _TWO_LOBES.circuits
-        if segment_key("b", "w") in fiber_segments_along(drawn_circuit.pop_ids)
-    ] == [()]
+_HUB_SITES = ("a", "b", "c", "d")
+_HUB_FIBER = physical({
+    ("a", "b"): 10.0, ("c", "d"): 10.0,
+    ("a", "x"): 1.0, ("b", "x"): 1.0, ("c", "x"): 1.0, ("d", "x"): 1.0,
+    ("b", "c"): 30.0, ("d", "a"): 30.0,
+})
+_HUB = _drawn(_HUB_SITES, _HUB_FIBER, _asking())
+
+
+def _round_the_hub(mesh: BackboneMesh) -> list[SynthesisCircuit]:
+    return [
+        drawn_circuit
+        for drawn_circuit in mesh.circuits
+        if "x" not in drawn_circuit.pop_ids
+        and segment_key(drawn_circuit.source, drawn_circuit.target) in {("a", "c"), ("b", "d")}
+    ]
+
+
+def test_the_hub_every_sites_shortest_circuits_cross_is_given_a_circuit_round_it() -> None:
+    assert _cut(_HUB) == set()
+
+
+def test_the_circuit_drawn_round_the_hub_says_the_split_is_what_put_it_there() -> None:
+    assert [drawn_circuit.reason for drawn_circuit in _round_the_hub(_HUB)] == [
+        CIRCUIT_FOR_RELIEF
+    ]
+
+
+def test_the_circuit_drawn_round_the_hub_is_in_no_sites_own_requirement() -> None:
+    assert [drawn_circuit.requested_by for drawn_circuit in _round_the_hub(_HUB)] == [()]
 
 
 def test_a_city_no_fiber_goes_round_still_leaves_every_wan_pop_its_circuits() -> None:

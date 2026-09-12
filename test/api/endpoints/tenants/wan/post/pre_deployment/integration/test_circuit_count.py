@@ -4,7 +4,7 @@ from itertools import combinations
 
 import fixtures
 from synthesizer.backbone import _needed
-from synthesizer.model import CIRCUIT_FOR_RELIEF, CIRCUIT_FOR_TARGET
+from synthesizer.model import CIRCUIT_FOR_TARGET
 from synthesizer.validation import backbone_mesh_pairs
 
 _SITES = tuple(f"S{index}" for index in range(6))
@@ -28,10 +28,8 @@ def test_every_site_still_holds_the_circuits_its_tenant_asked_for() -> None:
     assert ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []
 
 
-def test_every_circuit_answers_a_sites_own_requirement_or_holds_the_wan_whole() -> None:
-    assert {drawn_circuit.reason for drawn_circuit in _MESH} == {
-        CIRCUIT_FOR_TARGET, CIRCUIT_FOR_RELIEF,
-    }
+def test_every_circuit_answers_a_sites_own_requirement() -> None:
+    assert {drawn_circuit.reason for drawn_circuit in _MESH} == {CIRCUIT_FOR_TARGET}
 
 
 def test_no_circuit_in_the_synthesis_could_be_taken_back_out() -> None:

@@ -58,7 +58,7 @@ def test_the_ceiling_counts_the_circuits_that_change_hands() -> None:
     assert {
         str(row["id"]): row["ceiling"]
         for row in ARTIFACTS.validation["backbone_diverse_circuits_ceilings"]
-    } == {"a": 2, "c": 2}
+    } == {"a": 3, "c": 3}
 
 
 def test_the_synthesis_runs_the_miles_the_handoff_saves() -> None:
