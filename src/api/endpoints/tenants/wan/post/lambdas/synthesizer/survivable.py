@@ -331,16 +331,22 @@ def _search_over(
     )
 
 
-def _floor_under_every_requirement(
+def _answered_by_every_wan(writing: _Writing) -> list[_Requirement]:
+    asked = [
+        row
+        for site in writing.inputs.wan_pop_ids
+        for row in _diverse_circuit_rows(site, writing).sparing_every_peer
+    ]
+    return asked + _two_circuits_sharing_no_pop(writing)
+
+
+def _floor_under_what_every_wan_answers(
     inputs: FiberInputs,
     fiber: Mapping[tuple[str, str], float],
     order: list[tuple[str, str]],
 ) -> float:
     writing = _writing(inputs, fiber, inputs.number_of_diverse_circuits)
-    return _tighten(
-        _search_over(fiber, order),
-        _asked_of_every_wan_pop(writing) + _two_circuits_sharing_no_pop(writing),
-    ).miles
+    return _tighten(_search_over(fiber, order), _answered_by_every_wan(writing)).miles
 
 
 def select_fiber(inputs: FiberInputs) -> FiberSelection:
@@ -360,5 +366,5 @@ def select_fiber(inputs: FiberInputs) -> FiberSelection:
         search.selected |= _round_up(search, _tighten(search, requirements))
     return FiberSelection(
         search.selected,
-        _floor_under_every_requirement(inputs, fiber, order),
+        _floor_under_what_every_wan_answers(inputs, fiber, order),
     )
