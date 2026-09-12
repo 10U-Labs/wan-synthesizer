@@ -69,7 +69,8 @@ def unnamed_identifiers(root: Path) -> list[tuple[str, str]]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = root_reading_parser(
-        "Assert every served description names only identifiers this repository still has."
+        "Assert every snake_case identifier a served description spells is one this"
+        " repository still has."
     )
     return print_annotations([
         f"::error file={OPENAPI}::{OPENAPI} describes {found},"

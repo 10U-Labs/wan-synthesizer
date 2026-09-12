@@ -3,15 +3,15 @@ concurrency:
   cancel-in-progress: true
   group: scripts
 jobs:
-  assert-description-names-what-exists:
-    name: assert-description-names-what-exists
+  assert-description-identifiers-exist:
+    name: assert-description-identifiers-exist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Assert every served description names only identifiers this repository has
+      - name: Assert every snake_case identifier a served description spells is one this repository has
         run: >-
           PYTHONPATH=lib/python:scripts
-          python3 -c 'import sys, assert_description_names_what_exists as check;
+          python3 -c 'import sys, assert_description_identifiers_exist as check;
           sys.exit(check.main())'
   assert-every-dataclass-field-is-read:
     name: assert-every-dataclass-field-is-read
@@ -194,8 +194,8 @@ jobs:
           test/scripts/ test/lib/python/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
-  test-assert-description-names-what-exists:
-    name: test-assert-description-names-what-exists
+  test-assert-description-identifiers-exist:
+    name: test-assert-description-identifiers-exist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -205,10 +205,10 @@ jobs:
         run: >-
           PYTHONPATH=.:lib/python:scripts
           python3 -m pytest
-          test/scripts/assert_description_names_what_exists/pre_deployment/unit/
+          test/scripts/assert_description_identifiers_exist/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
           --verbose --pythonwarnings=error
-          --cov=assert_description_names_what_exists
+          --cov=assert_description_identifiers_exist
           --cov-branch
           --cov-report=term-missing
           --cov-fail-under=100

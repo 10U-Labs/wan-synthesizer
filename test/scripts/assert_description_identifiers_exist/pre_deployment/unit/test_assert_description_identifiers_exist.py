@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from assert_description_names_what_exists import (
+from assert_description_identifiers_exist import (
     OPENAPI,
     descriptions,
     identifiers,
@@ -120,11 +120,11 @@ def test_a_description_naming_something_gone_is_reported(tmp_path: Path) -> None
     ) == [("max_backup_path_multiple", "the max_backup_path_multiple it was built under")]
 
 
-def test_main_answers_zero_when_every_description_names_what_exists(tmp_path: Path) -> None:
+def test_main_answers_zero_when_every_spelled_identifier_exists(tmp_path: Path) -> None:
     assert main(["--root", str(_repo(tmp_path, "the backbone_lower_bound_miles beside it"))]) == 0
 
 
-def test_main_answers_one_when_a_description_names_what_is_gone(tmp_path: Path) -> None:
+def test_main_answers_one_when_a_spelled_identifier_is_gone(tmp_path: Path) -> None:
     assert main(["--root", str(_repo(tmp_path, "the max_backup_path_multiple it held"))]) == 1
 
 

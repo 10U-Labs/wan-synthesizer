@@ -44,6 +44,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 ### Issues
 
 - [why-static-analysis-is-asked-separately](why-static-analysis-is-asked-separately.md) — a job refuses a shape everywhere at once where a tier catches one occurrence
+- [the-description-check-reads-only-identifiers](the-description-check-reads-only-identifiers.md) — `assert-description-identifiers-exist` holds a served description that spells a snake_case identifier the tree lost, and a description naming a retired field in prose is held by reading
 
 ### Measurement
 
