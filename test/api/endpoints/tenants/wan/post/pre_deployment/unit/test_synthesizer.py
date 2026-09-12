@@ -14,7 +14,7 @@ from test_module_utils import load_module_from_path
 from test_s3_store_mock import fake_s3
 from synthesizer.input_graph import Site
 from synthesizer.model import SynthesisParams, OperatorCircuits, RoleOverrides
-from synthesizer.stages import finalize
+from synthesizer.stages import DualHomed, finalize
 
 _PATH = REPO_ROOT / "src/api/endpoints/tenants/wan/post/lambdas/synthesizer/handler.py"
 
@@ -46,7 +46,7 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(module, "load_regions", lambda _p: [])
     monkeypatch.setattr(module, "load_off_net", lambda _p: [])
     monkeypatch.setattr(module, "app_config_from_parts", lambda _p: config)
-    monkeypatch.setattr(module, "dual_home", lambda *_a: (graph, {}))
+    monkeypatch.setattr(module, "dual_home", lambda *_a: DualHomed(graph, {}, frozenset()))
     monkeypatch.setattr(
         module, "apply_role_overrides", lambda *_a: (graph, {}, RoleOverrides())
     )
@@ -219,7 +219,9 @@ def _run_split_backbone(module: Any, monkeypatch: pytest.MonkeyPatch) -> dict[st
     _stub_pipeline(module, monkeypatch)
     graph = list(fixtures.carrier_pops_by_id(fixtures.SPLIT_BACKBONE_CITIES).values())
     fiber = fixtures.fiber_segments_from(fixtures.SPLIT_BACKBONE_SEGMENTS)
-    monkeypatch.setattr(module, "dual_home", lambda *_a: (graph, fiber))
+    monkeypatch.setattr(
+        module, "dual_home", lambda *_a: DualHomed(graph, fiber, frozenset())
+    )
     monkeypatch.setattr(
         module, "apply_role_overrides", lambda *_a: (graph, fiber, RoleOverrides())
     )

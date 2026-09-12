@@ -97,8 +97,6 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
         _read_json(client, "carriers/merge/pops.json"),
         _read_json(client, "carriers/merge/fiber-segments.json"),
     )
-    locations = load_sites(_read_json(client, f"tenants/{tenant}/locations.json"))
-    regions = load_regions(_read_json(client, f"tenants/{tenant}/provider-regions.json"))
     off_net = load_off_net(_read_json(client, f"tenants/{tenant}/off-net.json"))
     parts = {
         resource: _read_json(client, f"tenants/{tenant}/{resource}.json")
@@ -106,7 +104,11 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     }
     config = app_config_from_parts(parts)
     params = config.params
-    graph = carrier_pops + locations + regions
+    graph = (
+        carrier_pops
+        + load_sites(_read_json(client, f"tenants/{tenant}/locations.json"))
+        + load_regions(_read_json(client, f"tenants/{tenant}/provider-regions.json"))
+    )
     logger.info(
         "Dual-homing %d sites over %d merged carrier fiber segments",
         len(graph),
