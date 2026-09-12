@@ -23,6 +23,8 @@ metadata:
 
 Since September 2026 (issue 176) the map at `www.10ulabs.com/wan-synthesizer/` asks for a Google sign-in, and `api.10ulabs.com/wan-synthesizer` answers only a request carrying a bearer token the authorizer in `src/api/common/routing/lambdas/authorizer.py` admits. The page is static files, so the login is enforced at the API, not the page; a client-side gate alone would have left every tenant's WAN one `curl` away. The authorizer is declared in `authorizer.tf` and attached through `components.securitySchemes.bearer` and a top-level `security` in `src/www/api/openapi.json`, with `security: []` on every `options` operation because a browser sends a preflight with no token.
 
+The precedent is in `../10ulabs.com` history, not its tree: `1bf50323 Add Google authentication to simulation/soc` (December 2025, deleted in `18320684` with the SOC simulator) had the same shape — Google Sign-In in the page, the token in `sessionStorage`, the Lambda asking `tokeninfo`. It differed in taking the client ID from a GitHub secret, in checking `aud` alone with no hosted domain, and in verifying inside one handler rather than at the gateway.
+
 ## Conventions
 
 ### A Google account is admitted by its hosted domain
