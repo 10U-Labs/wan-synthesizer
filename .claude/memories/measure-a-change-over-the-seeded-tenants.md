@@ -27,8 +27,12 @@ and `finalize`. Read `synthesis.metrics.physical_miles`,
 `backbone_mesh_independence_deficient` and `backbone_mesh_cut_pops`.
 
 The seven tenants are two-pop, daf, dow, f-35, minuteman, ***REMOVED*** and ***REMOVED***;
-the last two publish 4,186.183 miles and nothing at all. A run costs a few
-seconds a tenant and needs `highspy` installed.
+the last two publish 4,186.183 miles and nothing at all. A run costs up to a
+minute a tenant and needs `highspy`, which no Python on the machine has: make a
+venv in the session scratchpad, never under the repository, and `pip install
+highspy pyyaml` into it. Measuring is not the local verification
+[ci-is-the-source-of-truth](ci-is-the-source-of-truth.md) forbids — it is how
+a claim about the synthesizer is checked before a test is written for it.
 
 On `4faba347` this returned the tenant then called two-node 4,004.949 against a
 floor of 4,004.949, daf 9,556.587 against 12,247.290, dow 10,323.419 against
