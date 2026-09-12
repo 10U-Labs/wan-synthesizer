@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 import fixtures
+import pytest
+from synthesizer import output
 from synthesizer.input_graph import FiberSegment, Site, segment_key
 from synthesizer.model import (
     HomingCircuit,
@@ -11,11 +13,7 @@ from synthesizer.model import (
     SynthesisArtifacts,
     SynthesisMetrics,
 )
-from synthesizer.output import (
-    synthesis_payload,
-    homed_site_count,
-    sorted_fiber_segments,
-)
+from synthesizer.output import synthesis_payload, sorted_fiber_segments
 
 ARTIFACTS = fixtures.ring_artifacts()
 
@@ -23,14 +21,14 @@ _TENANT_HOMING = HomingCircuit("s", "b", 1.0)
 _PROVIDER_HOMING = HomingCircuit("r", "b", 1.0)
 
 
-def _synthesis(homings: Homings, metrics: SynthesisMetrics | None = None) -> Synthesis:
+def _synthesis(homings: Homings) -> Synthesis:
     return Synthesis(
         wan_pop_ids=(),
         transit_ids=(),
         homings=homings,
         fiber_segment_keys=set(),
         drawn_circuits=[],
-        metrics=metrics or SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
+        metrics=SynthesisMetrics(0.0, 0.0, 0.0, 0.0),
     )
 
 
@@ -48,15 +46,24 @@ def _payload_for(
     return synthesis_payload(artifacts)
 
 
-def _both_kinds(metrics: SynthesisMetrics | None = None) -> dict[str, Any]:
-    return _payload_for(
-        _synthesis(Homings([_TENANT_HOMING], [_PROVIDER_HOMING]), metrics),
-        [fixtures.tenant_site("s"), fixtures.provider_region("r")],
-    )
-
-
 def test_synthesis_payload_includes_sites() -> None:
     assert "sites" in synthesis_payload(ARTIFACTS)
+
+
+def test_the_payload_holds_only_the_collections_a_route_serves() -> None:
+    assert set(synthesis_payload(ARTIFACTS)) == {
+        "sites", "homing_circuits", "fiber_segments", "drawn_circuits"
+    }
+
+
+def test_the_sites_the_wan_includes_are_read_once_for_every_site_published(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    read: list[Synthesis] = []
+    monkeypatch.setattr(
+        output, "included_site_ids", lambda synthesis: read.append(synthesis) or set()
+    )
+    synthesis_payload(ARTIFACTS)
+    assert len(read) == 1
 
 
 def test_synthesis_payload_sites_carry_location() -> None:
@@ -64,21 +71,6 @@ def test_synthesis_payload_sites_carry_location() -> None:
     assert all(
         "municipality" in site["info"] and "state" in site["info"] for site in sites
     )
-
-
-def test_synthesis_payload_summary_reports_wan_pop_count() -> None:
-    summary = synthesis_payload(ARTIFACTS)["summary"]
-    assert summary["wan_pop_count"] == len(ARTIFACTS.synthesis.wan_pop_ids)
-
-
-def test_synthesis_payload_summary_lists_wan_pop_names() -> None:
-    summary = synthesis_payload(ARTIFACTS)["summary"]
-    assert len(summary["wan_pops"]) == len(ARTIFACTS.synthesis.wan_pop_ids)
-
-
-def test_synthesis_payload_summary_publishes_the_floor_under_the_fiber_it_runs_over() -> None:
-    summary = synthesis_payload(ARTIFACTS)["summary"]
-    assert summary["backbone_lower_bound_miles"] <= summary["physical_carrier_miles"]
 
 
 def test_sorted_fiber_segments_is_sorted() -> None:
@@ -98,50 +90,6 @@ def test_a_provider_homing_circuit_is_labelled_provider_to_backbone() -> None:
         _synthesis(Homings([], [_PROVIDER_HOMING])), [fixtures.provider_region("r")]
     )
     assert payload["homing_circuits"][0]["homing_kind"] == "provider_to_backbone"
-
-
-def test_the_summary_counts_the_tenant_sites_a_wan_reaches() -> None:
-    assert _both_kinds()["summary"]["tenant_site_count"] == 1
-
-
-def test_the_summary_counts_the_provider_regions_a_wan_reaches_apart_from_them() -> None:
-    assert _both_kinds()["summary"]["provider_region_count"] == 1
-
-
-def test_the_summary_counts_the_homing_circuits_out_of_the_tenants_own_sites() -> None:
-    assert _both_kinds()["summary"]["tenant_homing_circuit_count"] == 1
-
-
-def test_the_summary_counts_the_homing_circuits_out_of_the_provider_regions() -> None:
-    assert _both_kinds()["summary"]["provider_homing_circuit_count"] == 1
-
-
-def test_the_summary_publishes_the_miles_run_to_the_tenants_own_sites() -> None:
-    metrics = SynthesisMetrics(0.0, 120.5, 40.25, 0.0)
-    assert _both_kinds(metrics)["summary"]["tenant_homing_miles"] == 120.5
-
-
-def test_the_summary_publishes_the_miles_run_to_the_provider_regions_apart_from_them() -> None:
-    metrics = SynthesisMetrics(0.0, 120.5, 40.25, 0.0)
-    assert _both_kinds(metrics)["summary"]["provider_homing_miles"] == 40.25
-
-
-def test_the_summary_totals_the_miles_of_both_kinds_with_the_fiber_run_over() -> None:
-    metrics = SynthesisMetrics(0.0, 120.5, 40.25, 9.25)
-    assert _both_kinds(metrics)["summary"]["total_synthesis_miles"] == 170.0
-
-
-def test_a_site_that_homed_is_counted_once_however_many_circuits_it_holds() -> None:
-    twice = [_TENANT_HOMING, HomingCircuit("s", "c", 2.0)]
-    assert homed_site_count(twice) == 1
-
-
-def test_a_site_that_homed_nowhere_is_counted_in_neither_kind() -> None:
-    payload = _payload_for(
-        _synthesis(Homings([_TENANT_HOMING], [])),
-        [fixtures.tenant_site("s"), fixtures.tenant_site("stranded")],
-    )
-    assert payload["summary"]["tenant_site_count"] == 1
 
 
 def _published_sites_with_a_twin() -> dict[str, dict[str, Any]]:

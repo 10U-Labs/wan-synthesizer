@@ -262,11 +262,6 @@ def test_a_whole_synthesis_splits_every_homing_mile_between_the_two_kinds() -> N
     )
 
 
-def test_a_whole_synthesis_counts_the_tenants_own_site_apart_from_the_region() -> None:
-    summary = synthesis_payload(MIXED_DEMAND)["summary"]
-    assert (summary["tenant_site_count"], summary["provider_region_count"]) == (1, 1)
-
-
 def test_a_whole_synthesis_publishes_the_regions_circuits_under_the_provider_kind() -> None:
     payload = synthesis_payload(MIXED_DEMAND)
     assert {

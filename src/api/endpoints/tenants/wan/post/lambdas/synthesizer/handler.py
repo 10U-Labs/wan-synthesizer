@@ -125,11 +125,10 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     graph, fiber_segments, synthesis, validation = finalize(
         graph, fiber_segments, synthesis, params, overrides.degree_exempt_wan_pop_ids
     )
-    payload = synthesis_payload(
-        SynthesisArtifacts(
-            graph, fiber_segments, synthesis, validation, homed.fabricated_ids
-        )
+    artifacts = SynthesisArtifacts(
+        graph, fiber_segments, synthesis, validation, homed.fabricated_ids
     )
+    payload = synthesis_payload(artifacts)
     logger.info("Publishing WAN for %s", tenant)
     return {
         "sites": published.sites(payload),
@@ -139,7 +138,7 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
         "backbone-circuits": published.backbone_circuits(payload),
         "tenant-sites": published.tenant_sites(payload),
         "provider-sites": published.provider_sites(payload),
-    }, _delivered(graph, synthesis, validation, params, tenant)
+    }, _delivered(graph, synthesis, artifacts.validation, params, tenant)
 
 
 def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import asdict
 from typing import Any
 
@@ -20,10 +19,6 @@ def sorted_fiber_segments(synthesis: Synthesis) -> list[tuple[str, str]]:
     return sorted(synthesis.fiber_segment_keys)
 
 
-def homed_site_count(homing_circuits: Iterable[HomingCircuit]) -> int:
-    return len({homing_circuit.source for homing_circuit in homing_circuits})
-
-
 def _kinded(synthesis: Synthesis) -> list[tuple[HomingCircuit, str]]:
     return sorted(
         [(homing_circuit, TENANT_HOMING) for homing_circuit in synthesis.homings.tenant]
@@ -39,46 +34,14 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
     sites = artifacts.sites
     fiber_segments = artifacts.fiber_segments
     synthesis = artifacts.synthesis
-    validation = artifacts.validation
     sites_by_id = {site.id: site for site in sites}
+    included = included_site_ids(synthesis)
     return {
-        "objective": (
-            "Two-tier WAN synthesis: demand sites (tenant sites and provider regions) home "
-            "to a meshed backbone of selected Carrier PoPs over the physical Carrier "
-            "graph, with at least three strong WAN PoPs and extra ones added "
-            "where they bring demand closer."
-        ),
-        "summary": {
-            "wan_pop_count": len(synthesis.wan_pop_ids),
-            "transit_count": len(synthesis.transit_ids),
-            "tenant_site_count": homed_site_count(synthesis.homings.tenant),
-            "provider_region_count": homed_site_count(synthesis.homings.provider),
-            "tenant_homing_circuit_count": len(synthesis.homings.tenant),
-            "provider_homing_circuit_count": len(synthesis.homings.provider),
-            "fiber_segment_count": len(synthesis.fiber_segment_keys),
-            "tenant_homing_miles": round(synthesis.metrics.tenant_homing_miles, 3),
-            "provider_homing_miles": round(synthesis.metrics.provider_homing_miles, 3),
-            "physical_carrier_miles": round(synthesis.metrics.physical_miles, 3),
-            "backbone_lower_bound_miles": round(
-                synthesis.metrics.backbone_lower_bound_miles, 3
-            ),
-            "total_synthesis_miles": round(
-                synthesis.metrics.tenant_homing_miles
-                + synthesis.metrics.provider_homing_miles
-                + synthesis.metrics.physical_miles,
-                3,
-            ),
-            "score": round(synthesis.metrics.score, 3),
-            "wan_pops": [
-                sites_by_id[site_id].name for site_id in synthesis.wan_pop_ids
-            ],
-        },
-        "validation": validation,
         "sites": [
             {
                 **asdict(site),
                 "tier_role": site_role(site, synthesis),
-                "included": site.id in included_site_ids(synthesis),
+                "included": site.id in included,
                 "fabricated": site.id in artifacts.fabricated_ids,
             }
             for site in sites
