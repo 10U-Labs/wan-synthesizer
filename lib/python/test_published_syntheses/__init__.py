@@ -47,7 +47,7 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "target_miles": backbone["coverage_target_miles"],
         "number_of_diverse_circuits": backbone["number_of_diverse_circuits"],
         "homing_degree": config["homing"]["degree"],
-        "seat_cap": backbone["wan_pop_count"]["max"],
+        "max_wan_pop_count": backbone["wan_pop_count"]["max"],
         "forced": backbone.get("forced", {}).get("wan_pops", []),
         "forced_circuits": backbone.get("forced", {}).get("circuits", []),
         "status": state,

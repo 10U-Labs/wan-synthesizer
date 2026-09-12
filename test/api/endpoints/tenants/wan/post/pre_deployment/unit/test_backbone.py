@@ -53,12 +53,12 @@ def _selected(
 ) -> frozenset[tuple[str, str]]:
     return select_fiber(FiberInputs(
         sites, fiber, constraints.number_of_diverse_circuits,
-        constraints.seat_cap, adjacency_by_carrier(fiber),
+        constraints.max_wan_pop_count, adjacency_by_carrier(fiber),
     )).segments
 
 
 def _asking(asked_for: int = 2) -> WanPopConstraints:
-    return WanPopConstraints(number_of_diverse_circuits=asked_for, seat_cap=4)
+    return WanPopConstraints(number_of_diverse_circuits=asked_for, max_wan_pop_count=4)
 
 
 def _pairs(mesh: BackboneMesh) -> set[tuple[str, str]]:
@@ -94,7 +94,7 @@ _SQUARE_FIBER = physical({
     ("w", "x"): 100.0, ("x", "y"): 100.0, ("y", "z"): 100.0, ("z", "w"): 100.0,
     ("w", "y"): 250.0, ("x", "z"): 250.0,
 })
-_TWO_DIVERSE_CIRCUITS = WanPopConstraints(number_of_diverse_circuits=2, seat_cap=4)
+_TWO_DIVERSE_CIRCUITS = WanPopConstraints(number_of_diverse_circuits=2, max_wan_pop_count=4)
 _SQUARE = _drawn(_SQUARE_SITES, _SQUARE_FIBER, _TWO_DIVERSE_CIRCUITS)
 
 
@@ -142,7 +142,7 @@ _EGRESS_FIBER = physical({
     ("hub", "n"): 11.0, ("n", "q"): 11.0, ("p", "q"): 10.0,
 })
 _EGRESS = _drawn(_EGRESS_SITES, _EGRESS_FIBER, WanPopConstraints(
-    number_of_diverse_circuits=2, seat_cap=3,
+    number_of_diverse_circuits=2, max_wan_pop_count=3,
 ))
 
 
@@ -216,7 +216,7 @@ def test_the_circuit_drawn_round_that_city_is_in_no_sites_own_requirement() -> N
     ] == [()]
 
 
-def test_a_city_no_fiber_goes_round_still_leaves_every_seat_its_circuits() -> None:
+def test_a_city_no_fiber_goes_round_still_leaves_every_wan_pop_its_circuits() -> None:
     assert {
         end
         for drawn_circuit in _BOWTIE.circuits
@@ -232,7 +232,7 @@ def test_a_tenant_that_asked_for_one_circuit_is_not_given_a_circuit_round_anythi
     ] == []
 
 
-_OFFERED_TERMS = WanPopConstraints(number_of_diverse_circuits=2, seat_cap=2)
+_OFFERED_TERMS = WanPopConstraints(number_of_diverse_circuits=2, max_wan_pop_count=2)
 _OFFERED_MESH = _drawn(
     fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_FIBER, _OFFERED_TERMS
 )
@@ -253,13 +253,16 @@ def test_a_site_is_drawn_over_fiber_one_carrier_could_offer_it() -> None:
 
 
 _PRUNED = _drawn(_SQUARE_SITES, _SQUARE_FIBER, WanPopConstraints(
-    removed_pairs=frozenset({segment_key("w", "x")}), number_of_diverse_circuits=2, seat_cap=4,
+    removed_pairs=frozenset({segment_key("w", "x")}),
+    number_of_diverse_circuits=2, max_wan_pop_count=4,
 ))
 _PINNED_CHORD = _drawn(_SQUARE_SITES, _SQUARE_FIBER, WanPopConstraints(
-    number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
+    number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}),
+    max_wan_pop_count=4,
 ))
 _PINNED_SEGMENT = _drawn(_SQUARE_SITES, _SQUARE_FIBER, WanPopConstraints(
-    number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "x")}), seat_cap=4,
+    number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "x")}),
+    max_wan_pop_count=4,
 ))
 
 
@@ -368,7 +371,8 @@ _WHOLE_SQUARE = fixtures.carrier_fiber_segments({
     ("z", "y"): (100.0, ("zayo",)),
 })
 _PIN_WY = WanPopConstraints(
-    number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}), seat_cap=4,
+    number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}),
+    max_wan_pop_count=4,
 )
 
 

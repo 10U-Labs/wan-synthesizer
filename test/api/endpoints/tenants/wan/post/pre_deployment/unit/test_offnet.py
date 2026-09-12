@@ -3,25 +3,25 @@ from __future__ import annotations
 import pytest
 
 import fixtures
-from synthesizer.offnet import SeatedOffNetSites, realize_off_net_sites
+from synthesizer.offnet import RealizedOffNetSites, realize_off_net_sites
 from synthesizer.model import is_carrier_pop
 from synthesizer.input_graph import Site
 
 def _realize(
     *sites: Site,
     forced: frozenset[str] = frozenset(),
-) -> SeatedOffNetSites:
+) -> RealizedOffNetSites:
     return realize_off_net_sites(fixtures.carrier_pops_in_a_column(), {}, list(sites), forced)
 
 
-def test_realize_seats_a_forced_site() -> None:
+def test_realize_gives_a_forced_site_a_twin() -> None:
     result = _realize(fixtures.off_net_site("dulles", 0.0, 0.5), forced=frozenset({"dulles"}))
-    assert len(result.seat_ids) == 1
+    assert len(result.off_net_ids) == 1
 
 
-def test_seated_twin_id_carries_the_off_net_prefix() -> None:
+def test_the_realized_twin_id_carries_the_off_net_prefix() -> None:
     result = _realize(fixtures.off_net_site("dulles", 0.0, 0.5), forced=frozenset({"dulles"}))
-    assert next(iter(result.seat_ids)).startswith("offnet_")
+    assert next(iter(result.off_net_ids)).startswith("offnet_")
 
 
 def test_realize_adds_local_fiber_segments() -> None:
@@ -29,15 +29,15 @@ def test_realize_adds_local_fiber_segments() -> None:
     assert len(result.fiber_segments) == 3
 
 
-def test_seated_twin_is_a_carrier_pop() -> None:
+def test_the_realized_twin_is_a_carrier_pop() -> None:
     result = _realize(fixtures.off_net_site("dulles", 0.0, 0.5), forced=frozenset({"dulles"}))
-    seat_id = next(iter(result.seat_ids))
-    assert is_carrier_pop(next(v for v in result.sites if v.id == seat_id)) is True
+    off_net_id = next(iter(result.off_net_ids))
+    assert is_carrier_pop(next(v for v in result.sites if v.id == off_net_id)) is True
 
 
 def test_realize_ignores_unforced_sites() -> None:
     result = _realize(fixtures.off_net_site("dulles", 0.0, 0.5))
-    assert result.seat_ids == frozenset()
+    assert result.off_net_ids == frozenset()
 
 
 def test_isolated_forced_site_raises() -> None:

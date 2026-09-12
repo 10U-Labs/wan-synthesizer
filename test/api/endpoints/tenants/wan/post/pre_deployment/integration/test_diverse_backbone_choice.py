@@ -15,7 +15,7 @@ ARTIFACTS = fixtures.run_synthesis(
 )
 
 
-def test_the_synthesis_seats_two_wan_pop_sites() -> None:
+def test_the_synthesis_selects_two_wan_pop_sites() -> None:
     assert len(ARTIFACTS.synthesis.wan_pop_ids) == 2
 
 
@@ -24,5 +24,5 @@ def test_the_backbone_holds_the_site_whose_fiber_carries_the_most_circuits() -> 
 
 
 def test_the_backbone_leaves_one_of_the_funnelled_sites_out() -> None:
-    seated = set(ARTIFACTS.synthesis.wan_pop_ids)
-    assert not {"funnel", "second_funnel"} <= seated
+    selected = set(ARTIFACTS.synthesis.wan_pop_ids)
+    assert not {"funnel", "second_funnel"} <= selected

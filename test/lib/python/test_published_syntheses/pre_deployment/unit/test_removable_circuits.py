@@ -17,11 +17,11 @@ def _published_network(
         }
         for cities in crossings
     ]
-    seated = sorted({end for cities in crossings for end in (cities[0], cities[-1])})
+    selected = sorted({end for cities in crossings for end in (cities[0], cities[-1])})
     return {
         "number_of_diverse_circuits": 2,
         "forced_circuits": [{"source": source, "target": target} for source, target in forced],
-        "wan_pops": [{"id": city, "name": city} for city in seated],
+        "wan_pops": [{"id": city, "name": city} for city in selected],
         "circuits": drawn,
     }
 
@@ -104,7 +104,7 @@ def test_a_circuit_whose_removal_would_leave_a_city_splitting_the_fiber_is_kept(
     assert not removable_circuits(_published_network(_TWO_LOOPS))
 
 
-def test_a_second_circuit_to_a_seat_behind_one_city_is_kept_though_it_is_not_diverse() -> None:
+def test_a_second_circuit_to_a_wan_pop_behind_one_city_is_kept_though_it_is_not_diverse() -> None:
     assert not removable_circuits(_published_network(_SQUARE + _HOMED_TWICE))
 
 

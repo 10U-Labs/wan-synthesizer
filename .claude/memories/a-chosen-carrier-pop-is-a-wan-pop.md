@@ -73,7 +73,7 @@ between them.
 `seat` was also a second **noun** for a `wan_pop`, and it pointed at the wrong
 object. A seat reads as a slot inside a facility, which is the resolution
 [a-site-is-a-named-place-not-a-building](a-site-is-a-named-place-not-a-building.md)
-says this program does not model. A capped seat was never the WAN being sold one
+says this program does not model. A capped WAN PoP was never the WAN being sold one
 slot in a Minot facility; it is the merged carriers' fiber out of the *city* of
 Minot carrying one diverse circuit.
 
@@ -84,17 +84,27 @@ GitHub issue #147 established a directive word has to: the prime directive read
 issue #161 settled when `/tenant-nodes` and `/provider-nodes` became
 `/tenant-sites` and `/provider-regions`.
 
-**The code has not moved yet.** `seat` still stands some 80 times — `seat_cap`
-through `search_plan`, `backbone`, `survivable`, `ceiling` and
-`test_published_syntheses`, the nouns `validation.capped_seats`,
-`circuits_clear_of_a_capped_seat` and
-`survivable._seats_the_carriers_can_give_two_circuits`, the verbs at
+**The code has moved.** GitHub issue #186 closed this on 2026-09-11 and `seat`
+now appears nowhere outside the city of Seattle. The knob `seat_cap` took the
+published name it is assigned from, `max_wan_pop_count`, through `search_plan`,
+`backbone`, `survivable`, `ceiling` and `test_published_syntheses`; the nouns
+became `validation.capped_wan_pops`, `circuits_clear_of_a_capped_wan_pop` and
+`survivable._wan_pops_the_carriers_can_give_two_circuits`; the verbs at
 `synthesize.py:59`, `synthesize.py:290`, `validation.py:299` and
-`coverage.py:152`, and `offnet.SeatedOffNetSites`. So the repository contradicts
-its own directive until that lands, which is GitHub issue #186 and it is open.
-No published resource name is involved — the five hits in `openapi.json` are
-prose inside `summary` and `description` — so it is a read-and-rename commit
-rather than a re-seed.
+`coverage.py:152` became *select*; and `offnet.SeatedOffNetSites` became
+`RealizedOffNetSites` carrying `off_net_ids`, taking its shape from the sibling
+`on_net_fabrication.FabricatedOnNetPops` and its `on_net_ids` that
+`stages.dual_home` calls beside it. Off-net prose took `codec.OFF_NET_KIND`'s word
+*site* rather than *select*, because building a local-fiber twin is not the
+selection the directive names.
+
+No published resource name moved — the five hits in `openapi.json` were prose
+inside `summary` and `description` — so it was a read-and-rename commit rather
+than a re-seed. One test name was written rather than substituted:
+`test_no_synthesis_stopped_short_of_its_target_with_a_seat_left_to_spend` was
+built on the countable-slot sense, and it is now
+`test_no_synthesis_missed_its_coverage_target_below_the_wan_pops_it_was_allowed`,
+which is what it asserts.
 
 ### Where backbone survives
 

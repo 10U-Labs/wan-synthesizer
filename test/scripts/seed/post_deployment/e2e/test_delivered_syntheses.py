@@ -45,7 +45,7 @@ def _tenants_outside(
     }
 
 
-def _circuits_clear_of_a_capped_seat(synthesis: dict[str, Any]) -> list[dict[str, Any]]:
+def _circuits_clear_of_a_capped_wan_pop(synthesis: dict[str, Any]) -> list[dict[str, Any]]:
     capped = {
         entry["id"]
         for entry in synthesis["status"]["diverse_circuits"]["ceilings"]
@@ -140,14 +140,14 @@ def test_every_report_is_measured_against_the_target_its_tenant_declares(
     assert reported == declared
 
 
-def test_every_city_a_tenant_pins_is_seated_in_its_published_backbone(
+def test_every_city_a_tenant_pins_is_selected_into_its_published_backbone(
         published_syntheses: list[dict[str, Any]]) -> None:
-    unseated = {
+    unselected = {
         synthesis["tenant"]: sorted(set(synthesis["forced"]) - _published_cities(synthesis))
         for synthesis in published_syntheses
         if not set(synthesis["forced"]) <= _published_cities(synthesis)
     }
-    assert unseated == {}
+    assert unselected == {}
 
 
 def test_the_reported_worst_haul_is_the_one_the_published_network_delivers(
@@ -160,13 +160,13 @@ def test_the_reported_worst_haul_is_the_one_the_published_network_delivers(
     assert mismeasured == []
 
 
-def test_no_synthesis_stopped_short_of_its_target_with_a_seat_left_to_spend(
+def test_no_synthesis_missed_its_coverage_target_below_the_wan_pops_it_was_allowed(
         published_syntheses: list[dict[str, Any]]) -> None:
     gave_up_early = [
-        (synthesis["tenant"], len(synthesis["wan_pops"]), synthesis["seat_cap"])
+        (synthesis["tenant"], len(synthesis["wan_pops"]), synthesis["max_wan_pop_count"])
         for synthesis in published_syntheses
         if not synthesis["status"]["coverage"]["met"]
-        and len(synthesis["wan_pops"]) < synthesis["seat_cap"]
+        and len(synthesis["wan_pops"]) < synthesis["max_wan_pop_count"]
     ]
     assert gave_up_early == []
 
@@ -211,7 +211,7 @@ def test_no_published_network_holds_a_circuit_that_buys_nobody_a_diverse_circuit
 def test_no_published_network_is_split_by_the_loss_of_one_city(
         published_syntheses: list[dict[str, Any]]) -> None:
     split = {
-        synthesis["tenant"]: cut_cities(_circuits_clear_of_a_capped_seat(synthesis))
+        synthesis["tenant"]: cut_cities(_circuits_clear_of_a_capped_wan_pop(synthesis))
         for synthesis in published_syntheses
         if synthesis["number_of_diverse_circuits"] >= 2
     }
@@ -330,7 +330,7 @@ def _cities_with_fiber(held: dict[str, set[frozenset[str]]]) -> set[str]:
 
 
 def _circuits_one_peer_may_end(synthesis: dict[str, Any]) -> int:
-    peers = synthesis["seat_cap"] - 1
+    peers = synthesis["max_wan_pop_count"] - 1
     asked = synthesis["number_of_diverse_circuits"]
     return max(1, -(-asked // peers)) if peers > 0 else 1
 

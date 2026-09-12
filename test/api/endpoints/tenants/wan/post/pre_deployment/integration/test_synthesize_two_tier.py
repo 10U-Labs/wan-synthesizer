@@ -87,7 +87,7 @@ def test_forced_pop_is_placed_in_the_backbone() -> None:
     assert "P3" in FORCED.synthesis.wan_pop_ids
 
 
-def test_forced_roadm_is_seated_in_the_backbone() -> None:
+def test_forced_roadm_is_selected_into_the_backbone() -> None:
     assert "P3" in FORCED_ROADM.synthesis.wan_pop_ids
 
 
@@ -213,7 +213,7 @@ def _forced_off_net_artifacts() -> SynthesisArtifacts:
     )
 
 
-def test_forced_off_net_site_is_seated_in_the_backbone() -> None:
+def test_forced_off_net_site_is_selected_into_the_backbone() -> None:
     synthesis = _forced_off_net_artifacts().synthesis
     assert any(site_id.startswith("offnet_") for site_id in synthesis.wan_pop_ids)
 
@@ -226,7 +226,7 @@ def test_off_net_synthesis_validates_connected() -> None:
 CONVERGENCE_HUB = fixtures.convergence_hub_artifacts()
 
 
-def test_promoted_convergence_hub_is_seated_in_the_backbone() -> None:
+def test_promoted_convergence_hub_is_selected_into_the_backbone() -> None:
     assert "hub_dc" in CONVERGENCE_HUB.synthesis.wan_pop_ids
 
 

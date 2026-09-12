@@ -30,7 +30,7 @@ _PARAMS = SynthesisParams(
 ARTIFACTS = fixtures.run_synthesis(_SITES, _FIBER, _PARAMS)
 
 
-def test_the_synthesis_seats_a_hub_for_each_of_the_two_far_sites() -> None:
+def test_the_synthesis_selects_a_hub_for_each_of_the_two_far_sites() -> None:
     assert sorted(ARTIFACTS.synthesis.wan_pop_ids) == ["cape", "hub_a", "hub_b", "plains"]
 
 

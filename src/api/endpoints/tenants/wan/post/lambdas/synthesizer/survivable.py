@@ -31,7 +31,7 @@ class FiberInputs:
     wan_pop_ids: tuple[str, ...]
     fiber_segments: Mapping[tuple[str, str], FiberSegment]
     number_of_diverse_circuits: int = 3
-    seat_cap: int | None = None
+    max_wan_pop_count: int | None = None
     fiber_by_carrier: dict[str, dict[str, list[tuple[str, float]]]] = field(
         default_factory=dict
     )
@@ -233,7 +233,7 @@ def _diverse_circuit_rows(site: str, writing: _Writing) -> _DiverseCircuits:
     )
 
 
-def _seats_the_carriers_can_give_two_circuits(writing: _Writing) -> list[str]:
+def _wan_pops_the_carriers_can_give_two_circuits(writing: _Writing) -> list[str]:
     return [
         site
         for site in sorted(writing.inputs.wan_pop_ids)
@@ -252,7 +252,7 @@ def _two_circuits_sharing_no_pop(writing: _Writing) -> list[_Requirement]:
             _CIRCUITS_SHARING_NO_POP,
             _over_land(near, frozenset({far}), frozenset(writing.fiber), writing),
         )
-        for near, far in combinations(_seats_the_carriers_can_give_two_circuits(writing), 2)
+        for near, far in combinations(_wan_pops_the_carriers_can_give_two_circuits(writing), 2)
     ]
     return asked if asked == _lowered(asked, writing.whole) else []
 
@@ -272,14 +272,14 @@ def _writing(
         _fiber_by_carrier(inputs, fiber),
         {segment: 1.0 for segment in fiber},
         circuits_per_peer(
-            inputs.seat_cap, len(inputs.wan_pop_ids), inputs.number_of_diverse_circuits
+            inputs.max_wan_pop_count, len(inputs.wan_pop_ids), inputs.number_of_diverse_circuits
         ),
         diverse_circuits_by_carrier_and_peer(
             CircuitProofInputs(
                 inputs.wan_pop_ids,
                 build_adjacency(dict(inputs.fiber_segments)),
                 inputs.number_of_diverse_circuits,
-                inputs.seat_cap,
+                inputs.max_wan_pop_count,
                 inputs.fiber_by_carrier,
                 terrestrial,
             ),

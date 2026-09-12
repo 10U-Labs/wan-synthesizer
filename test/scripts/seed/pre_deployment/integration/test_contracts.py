@@ -183,7 +183,7 @@ def _declared_off_net_paths() -> set[str]:
     return paths
 
 
-def test_no_declared_off_net_seat_is_a_city_a_carrier_already_serves() -> None:
+def test_no_declared_off_net_site_is_a_city_a_carrier_already_serves() -> None:
     carriers = _carrier_cities()
     overlapping = sorted(
         city
@@ -319,7 +319,7 @@ def _demand(config: dict[str, Any]) -> list[Site]:
     return [site for site in sites if not site.exempt_from_distance_constraint]
 
 
-def _seats_for_coverage(config: dict[str, Any], carriers: list[Site]) -> int:
+def _wan_pops_for_coverage(config: dict[str, Any], carriers: list[Site]) -> int:
     target = config["backbone"]["coverage_target_miles"]
     sites = _demand(config)
     reach = {
@@ -332,26 +332,26 @@ def _seats_for_coverage(config: dict[str, Any], carriers: list[Site]) -> int:
     unserved = {site.id for site in sites}
     for city in pinned:
         unserved -= reach.get(city, set())
-    seats = len(pinned)
+    wan_pops = len(pinned)
     while unserved:
         best = max(reach.values(), key=lambda served: len(served & unserved))
         if not best & unserved:
             break
         unserved -= best
-        seats += 1
-    return seats
+        wan_pops += 1
+    return wan_pops
 
 
-def _seat_shortfalls() -> list[tuple[str, int, int]]:
+def _wan_pop_shortfalls() -> list[tuple[str, int, int]]:
     carriers, _segments = _merged_carriers()
     shortfalls: list[tuple[str, int, int]] = []
     for tenant, config in sorted(_tenant_configs().items()):
         cap = config["backbone"]["wan_pop_count"]["max"]
-        needed = _seats_for_coverage(config, carriers)
+        needed = _wan_pops_for_coverage(config, carriers)
         if cap < needed:
             shortfalls.append((tenant, cap, needed))
     return shortfalls
 
 
 def test_no_tenant_caps_its_backbone_below_the_coverage_target_it_asks_for() -> None:
-    assert not _seat_shortfalls()
+    assert not _wan_pop_shortfalls()

@@ -404,13 +404,13 @@ def test_a_tenant_asking_for_one_circuit_names_no_cut_pop() -> None:
     )["backbone_mesh_cut_pops"] == []
 
 
-def test_the_seat_a_stub_circuit_hangs_off_is_named_a_cut_pop() -> None:
+def test_the_wan_pop_a_stub_circuit_hangs_off_is_named_a_cut_pop() -> None:
     assert _mesh_report(*_STUB_SEAT, backbone_number_of_diverse_circuits=2)[
         "backbone_mesh_cut_pops"
     ] == [{"id": "C1", "name": "C1"}]
 
 
-def test_a_stub_circuit_ending_at_a_capped_seat_names_no_cut_pop() -> None:
+def test_a_stub_circuit_ending_at_a_capped_wan_pop_names_no_cut_pop() -> None:
     assert _mesh_report(
         *_STUB_SEAT, backbone_number_of_diverse_circuits=2, ceilings={"C6": 1}
     )["backbone_mesh_cut_pops"] == []

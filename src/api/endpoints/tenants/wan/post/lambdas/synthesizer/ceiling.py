@@ -169,15 +169,17 @@ class CircuitProofInputs:
     wan_pop_ids: tuple[str, ...]
     adjacency: dict[str, list[tuple[str, float]]]
     circuits_wanted: int = 1
-    seat_cap: int | None = None
+    max_wan_pop_count: int | None = None
     fiber_by_carrier: dict[str, dict[str, list[tuple[str, float]]]] = field(
         default_factory=dict
     )
     terrestrial: dict[str, list[tuple[str, float]]] = field(default_factory=dict)
 
 
-def circuits_per_peer(seat_cap: int | None, seats: int, circuits_wanted: int) -> int:
-    peers = (seat_cap if seat_cap is not None else seats) - 1
+def circuits_per_peer(
+    max_wan_pop_count: int | None, wan_pop_count: int, circuits_wanted: int
+) -> int:
+    peers = (max_wan_pop_count if max_wan_pop_count is not None else wan_pop_count) - 1
     return max(1, -(-circuits_wanted // peers)) if peers > 0 else 1
 
 
@@ -276,7 +278,7 @@ def _circuits_over_each_carrier(
 
 def _per_peer(inputs: CircuitProofInputs) -> int:
     return circuits_per_peer(
-        inputs.seat_cap, len(inputs.wan_pop_ids), inputs.circuits_wanted
+        inputs.max_wan_pop_count, len(inputs.wan_pop_ids), inputs.circuits_wanted
     )
 
 

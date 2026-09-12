@@ -127,20 +127,20 @@ _NEITHER_COVERS: list[tuple[tuple[float, ...], str]] = [
 ]
 
 
-def _seated(improving: list[tuple[tuple[float, ...], str]]) -> str:
+def _selected(improving: list[tuple[tuple[float, ...], str]]) -> str:
     return best_coverage_candidate(improving, _FIBER_BACKBONE, _FIBER_ADJACENCY, 50.0)
 
 
-def test_the_better_connected_of_two_covering_candidates_is_seated() -> None:
-    assert _seated(_BOTH_COVER) == "rich"
+def test_the_better_connected_of_two_covering_candidates_is_selected() -> None:
+    assert _selected(_BOTH_COVER) == "rich"
 
 
 def test_a_candidates_segments_are_not_counted_as_diverse_circuits() -> None:
     assert candidate_mesh_ceiling("poor", _FIBER_BACKBONE, _FIBER_ADJACENCY) == 2
 
 
-def test_the_nearest_candidate_is_seated_when_none_satisfies_the_target() -> None:
-    assert _seated(_NEITHER_COVERS) == "poor_far"
+def test_the_nearest_candidate_is_selected_when_none_satisfies_the_target() -> None:
+    assert _selected(_NEITHER_COVERS) == "poor_far"
 
 
 _GROWTH_COORDS = {

@@ -24,7 +24,7 @@ def test_run_synthesis_honors_a_forced_wan_pop() -> None:
     assert "P3" in synthesis.wan_pop_ids
 
 
-def test_run_synthesis_seats_a_forced_off_net_site_as_backbone() -> None:
+def test_run_synthesis_selects_a_forced_off_net_site_as_a_wan_pop() -> None:
     site = fixtures.off_net_site("Dulles Hub", 40.5, -100.0)
     synthesis = run_synthesis(
         fixtures.ring_sites(),

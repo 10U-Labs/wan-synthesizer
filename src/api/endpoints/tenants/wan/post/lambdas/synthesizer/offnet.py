@@ -17,10 +17,10 @@ OFF_NET_SEGMENT_NOTE = "synthetic off-net local-fiber link"
 
 
 @dataclass(frozen=True)
-class SeatedOffNetSites:
+class RealizedOffNetSites:
     sites: list[Site]
     fiber_segments: dict[tuple[str, str], FiberSegment]
-    seat_ids: frozenset[str]
+    off_net_ids: frozenset[str]
 
 
 def realize_off_net_sites(
@@ -28,13 +28,13 @@ def realize_off_net_sites(
     fiber_segments: dict[tuple[str, str], FiberSegment],
     off_net_roster: list[Site],
     forced_names: frozenset[str],
-) -> SeatedOffNetSites:
+) -> RealizedOffNetSites:
     carrier_pops = [site for site in sites if is_carrier_pop(site)]
     carrier_names = {pop.name for pop in carrier_pops}
     used_ids = {site.id for site in sites}
     augmented_sites = list(sites)
     augmented_fiber_segments = dict(fiber_segments)
-    seat_ids: set[str] = set()
+    off_net_ids: set[str] = set()
     for site in sorted(off_net_roster, key=lambda site: site.id):
         if site.name not in forced_names:
             continue
@@ -50,10 +50,11 @@ def realize_off_net_sites(
         if built is None:
             raise ValueError(
                 f"off-net site {site.name} has fewer than {LOCAL_FIBER_MIN_HOMING_DEGREE} "
-                f"carrier PoPs within {LOCAL_FIBER_RADIUS_MILES:.0f} mi; cannot seat it"
+                f"carrier PoPs within {LOCAL_FIBER_RADIUS_MILES:.0f} mi; "
+                "cannot select it as a WAN PoP"
             )
         used_ids.add(twin_id)
         augmented_sites.append(built[0])
         augmented_fiber_segments.update(built[1])
-        seat_ids.add(twin_id)
-    return SeatedOffNetSites(augmented_sites, augmented_fiber_segments, frozenset(seat_ids))
+        off_net_ids.add(twin_id)
+    return RealizedOffNetSites(augmented_sites, augmented_fiber_segments, frozenset(off_net_ids))

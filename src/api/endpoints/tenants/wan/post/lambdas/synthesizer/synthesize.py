@@ -56,11 +56,11 @@ def convergence_promotion_ids(
     for left, right in synthesis.fiber_segment_keys:
         counts[left] = counts.get(left, 0) + 1
         counts[right] = counts.get(right, 0) + 1
-    seated = set(synthesis.wan_pop_ids)
+    selected = set(synthesis.wan_pop_ids)
     return {
         pop_id
         for pop_id, degree in counts.items()
-        if degree >= min_degree and pop_id not in seated
+        if degree >= min_degree and pop_id not in selected
     }
 
 
@@ -254,7 +254,7 @@ def build_search_plan(
         strength_by_id,
         tuning=params.tuning,
         forced_circuits=forced_circuits,
-        seat_cap=params.max_wan_pop_count,
+        max_wan_pop_count=params.max_wan_pop_count,
     )
 
 
@@ -287,7 +287,7 @@ def synthesize_two_tier(
     eligible_ids = eligible_ids | overrides.forced_wan_pop_ids
     eligible_wan_pop_ids = eligible_ids - overrides.prohibited_wan_pop_ids
     if len(eligible_wan_pop_ids) < params.min_wan_pop_count:
-        raise ValueError("Not enough eligible Carrier PoPs to seat as WAN PoPs (degree >= 2)")
+        raise ValueError("Not enough eligible Carrier PoPs to select as WAN PoPs (degree >= 2)")
 
     inputs = replace(graph, eligible_wan_pop_ids=eligible_wan_pop_ids)
     forced_base = overrides.forced_wan_pop_ids & eligible_wan_pop_ids

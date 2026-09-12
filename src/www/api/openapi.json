@@ -247,7 +247,7 @@
     },
     "/wan-synthesizer/tenants/{tenant}/wan-pops": {
       "get": {
-        "summary": "A tenant WAN's seated WAN PoPs.",
+        "summary": "A tenant WAN's selected WAN PoPs.",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -355,11 +355,11 @@
     },
     "/wan-synthesizer/tenants/{tenant}/off-net": {
       "get": {
-        "summary": "A tenant's off-net candidate seats (input).",
+        "summary": "A tenant's off-net candidate sites (input).",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The off-net seats." } },
+        "responses": { "200": { "description": "The off-net sites." } },
         "x-amazon-apigateway-integration": {
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
@@ -367,11 +367,11 @@
         }
       },
       "put": {
-        "summary": "Replace a tenant's off-net seats (stores only).",
+        "summary": "Replace a tenant's off-net sites (stores only).",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The off-net seats were replaced." } },
+        "responses": { "200": { "description": "The off-net sites were replaced." } },
         "x-amazon-apigateway-integration": {
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",

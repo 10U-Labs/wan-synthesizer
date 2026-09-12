@@ -84,9 +84,9 @@ def test_a_site_with_one_peer_is_still_held_to_one_circuit_when_one_is_asked() -
     assert diverse_circuit_ceiling("s", inputs) == 1
 
 
-def test_a_site_seated_below_the_seats_its_config_allows_takes_one_circuit_to_a_peer() -> None:
+def test_a_site_selected_below_the_wan_pops_its_config_allows_takes_one_circuit() -> None:
     assert diverse_circuit_ceiling(
-        "s", CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=2, seat_cap=6)
+        "s", CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=2, max_wan_pop_count=6)
     ) == 1
 
 

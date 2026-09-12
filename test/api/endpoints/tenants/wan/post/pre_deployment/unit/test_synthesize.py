@@ -63,7 +63,7 @@ def test_min_wan_pop_count_below_one_is_rejected() -> None:
         )
 
 
-def test_a_tenant_asking_for_one_wan_pop_is_seated_the_one_it_forced() -> None:
+def test_a_tenant_asking_for_one_wan_pop_gets_the_one_it_forced() -> None:
     synthesis = synthesize_two_tier(
         TRIANGLE_SITES, TRIANGLE, _ONE_NODE,
         RoleOverrides(forced_wan_pop_ids=frozenset({"a"})),
@@ -124,7 +124,7 @@ def test_min_wan_pop_count_is_the_floor_when_feasible() -> None:
     assert len(synthesis.wan_pop_ids) == 3
 
 
-def test_backbone_grows_past_the_floor_to_seat_more_forced_wan_pops() -> None:
+def test_backbone_grows_past_the_floor_to_select_more_forced_wan_pops() -> None:
     synthesis = synthesize_two_tier(
         fixtures.ring_sites(), fixtures.ring_fiber_segments(),
         SynthesisParams(min_wan_pop_count=2),
@@ -217,7 +217,7 @@ def test_convergence_skips_a_two_line_crossing() -> None:
     assert convergence_promotion_ids(synthesis) == set()
 
 
-def test_convergence_excludes_a_seated_wan_pop() -> None:
+def test_convergence_excludes_a_selected_wan_pop() -> None:
     keys = {segment_key("b1", n) for n in ("b2", "x", "y")}
     synthesis = _synthesis(("b1", "b2"), keys)
     assert convergence_promotion_ids(synthesis) == set()
@@ -260,8 +260,8 @@ def test_best_wan_pops_at_size_selects_strongest_then_least_last_mile(
     strength: dict[str, float],
 ) -> None:
     plan = search_plan(["a", "b", "c", "d"], strength=strength)
-    seats = best_wan_pops_at_size(_mesh_inputs(), plan, 2)
-    assert set(seats or ()) == {"a", "b"}
+    selected = best_wan_pops_at_size(_mesh_inputs(), plan, 2)
+    assert set(selected or ()) == {"a", "b"}
 
 
 def test_best_wan_pops_at_size_returns_none_when_nothing_feasible() -> None:
@@ -390,7 +390,7 @@ def test_a_search_that_grows_past_the_floor_still_selects_its_fiber_once(
     assert _fiber_selections(monkeypatch, 300) == 1
 
 
-def test_a_search_that_seats_nothing_past_the_floor_selects_its_fiber_once(
+def test_a_search_that_adds_no_wan_pop_past_the_floor_selects_its_fiber_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     assert _fiber_selections(monkeypatch, 100_000) == 1
@@ -411,8 +411,8 @@ def test_search_grows_past_the_floor_to_cover_far_demand() -> None:
         min_wan_pop_count=2,
         tuning=Tuning(backbone_coverage_target_miles=300),
     )
-    seated = set(search_best_synthesis(inputs, params, plan).wan_pop_ids)
-    assert seated == {"cc1", "cc2", "cw", "ce"}
+    selected = set(search_best_synthesis(inputs, params, plan).wan_pop_ids)
+    assert selected == {"cc1", "cc2", "cw", "ce"}
 
 
 def test_exempt_demand_does_not_drive_coverage_growth() -> None:
@@ -430,8 +430,8 @@ def test_search_exhausts_its_candidates_under_an_unreachable_target() -> None:
         min_wan_pop_count=2,
         tuning=Tuning(backbone_coverage_target_miles=1),
     )
-    seated = set(search_best_synthesis(inputs, params, plan).wan_pop_ids)
-    assert seated == {"cc1", "cc2", "cw", "ce"}
+    selected = set(search_best_synthesis(inputs, params, plan).wan_pop_ids)
+    assert selected == {"cc1", "cc2", "cw", "ce"}
 
 
 def test_max_wan_pop_count_caps_coverage_growth() -> None:

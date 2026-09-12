@@ -5,7 +5,7 @@ from typing import Any
 from test_published_syntheses import wan_pop_groups
 
 
-def _seat(site_id: str) -> dict[str, Any]:
+def _wan_pop(site_id: str) -> dict[str, Any]:
     return {"id": site_id}
 
 
@@ -18,24 +18,27 @@ _JOINED = [
     _segment("hub", "east"),
 ]
 _SPLIT: dict[str, Any] = {
-    "wan_pops": [_seat("west"), _seat("east"), _seat("hub"), _seat("salt"), _seat("lake")],
+    "wan_pops": [
+        _wan_pop("west"), _wan_pop("east"), _wan_pop("hub"),
+        _wan_pop("salt"), _wan_pop("lake"),
+    ],
     "fiber": [*_JOINED, _segment("salt", "lake")],
 }
 
 
-def test_a_network_whose_fiber_joins_every_seat_is_one_group() -> None:
+def test_a_network_whose_fiber_joins_every_wan_pop_is_one_group() -> None:
     assert wan_pop_groups({"wan_pops": _SPLIT["wan_pops"][:3], "fiber": _JOINED}) == [
         ["east", "hub", "west"]
     ]
 
 
-def test_seats_the_fiber_leaves_in_two_groups_come_back_as_two_lists() -> None:
+def test_wan_pops_the_fiber_leaves_in_two_groups_come_back_as_two_lists() -> None:
     assert wan_pop_groups(_SPLIT) == [["east", "hub", "west"], ["lake", "salt"]]
 
 
-def test_a_seat_no_fiber_touches_at_all_is_a_group_of_one() -> None:
+def test_a_wan_pop_no_fiber_touches_at_all_is_a_group_of_one() -> None:
     assert wan_pop_groups({
-        "wan_pops": [*_SPLIT["wan_pops"][:3], _seat("alone")],
+        "wan_pops": [*_SPLIT["wan_pops"][:3], _wan_pop("alone")],
         "fiber": _JOINED,
     }) == [["alone"], ["east", "hub", "west"]]
 

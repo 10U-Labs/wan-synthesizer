@@ -69,7 +69,7 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
         "target_miles": 200,
         "number_of_diverse_circuits": 2,
         "homing_degree": 2,
-        "seat_cap": 6,
+        "max_wan_pop_count": 6,
         "forced": ["Ashburn, VA"],
         "forced_circuits": [{"source": "Ashburn, VA", "target": "New York, NY"}],
         "status": _SUCCEEDED,

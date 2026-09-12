@@ -95,10 +95,10 @@ def _fiberless_carrier(data: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         data / "pops" / "lumen.csv", "Municipality,State", "Reston,VA")
 
 
-def _off_net_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *seats: str) -> str:
+def _off_net_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *sites: str) -> str:
     _one_carrier(tmp_path / "data", monkeypatch)
     monkeypatch.setattr(seed, "REPO_ROOT", tmp_path)
-    _write_csv(tmp_path / "offnet" / "off.csv", "Municipality,State", *seats)
+    _write_csv(tmp_path / "offnet" / "off.csv", "Municipality,State", *sites)
     return "offnet/off.csv"
 
 
@@ -238,34 +238,34 @@ def test_carrier_cities_is_empty_without_any_carrier_file(
     assert _carrier_cities() == set()
 
 
-def test_off_net_rows_returns_every_seat_no_carrier_serves(
+def test_off_net_rows_returns_every_site_no_carrier_serves(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     path = _off_net_file(tmp_path, monkeypatch, "Dulles,VA", "Laurel,MT")
     assert len(_off_net_rows(path)) == 2
 
 
-def test_off_net_rows_refuses_a_seat_a_carrier_already_serves(
+def test_off_net_rows_refuses_a_site_a_carrier_already_serves(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     path = _off_net_file(tmp_path, monkeypatch, "Reston,VA")
     with pytest.raises(ValueError, match="Reston, VA"):
         _off_net_rows(path)
 
 
-def test_off_net_rows_names_every_on_net_seat_it_refuses(
+def test_off_net_rows_names_every_on_net_site_it_refuses(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     path = _off_net_file(tmp_path, monkeypatch, "Reston,VA", "Denver,CO")
     with pytest.raises(ValueError, match="Denver, CO; Reston, VA"):
         _off_net_rows(path)
 
 
-def test_off_net_rows_refuses_a_seat_spelled_in_another_case(
+def test_off_net_rows_refuses_a_site_spelled_in_another_case(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     path = _off_net_file(tmp_path, monkeypatch, "reston,va")
     with pytest.raises(ValueError, match="reston, va"):
         _off_net_rows(path)
 
 
-def test_off_net_rows_accepts_a_seat_only_a_fiberless_carrier_has_a_point_in(
+def test_off_net_rows_accepts_a_site_only_a_fiberless_carrier_has_a_point_in(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _fiberless_carrier(tmp_path / "data", monkeypatch)
     monkeypatch.setattr(seed, "REPO_ROOT", tmp_path)
@@ -273,7 +273,7 @@ def test_off_net_rows_accepts_a_seat_only_a_fiberless_carrier_has_a_point_in(
     assert len(_off_net_rows("offnet/off.csv")) == 1
 
 
-def test_off_net_rows_keeps_a_seat_whose_state_differs(
+def test_off_net_rows_keeps_a_site_whose_state_differs(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     path = _off_net_file(tmp_path, monkeypatch, "Reston,TX")
     assert _off_net_rows(path) == [{"municipality": "Reston", "state": "TX"}]
@@ -557,7 +557,7 @@ def test_push_tenants_reads_off_net_when_present(
 
 
 @pytest.mark.usefixtures("put_recorder")
-def test_push_tenants_refuses_an_off_net_seat_a_carrier_already_serves(
+def test_push_tenants_refuses_an_off_net_site_a_carrier_already_serves(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _one_tenant(tmp_path, monkeypatch, _TENANT_YML)
     _write_csv(tmp_path / "offnet" / "off.csv", "Municipality,State", "Reston,VA")

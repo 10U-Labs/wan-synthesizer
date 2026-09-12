@@ -63,7 +63,7 @@ def test_that_synthesis_orders_exactly_the_floor_it_publishes_rather_than_twice_
     )
 
 
-def test_every_seat_on_that_synthesis_holds_the_two_diverse_circuits_it_was_owed() -> None:
+def test_every_wan_pop_on_that_synthesis_holds_the_two_diverse_circuits_it_was_owed() -> None:
     assert MANY_PASS_ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []
 
 
@@ -214,7 +214,7 @@ def test_that_floor_is_the_fewest_miles_the_diverse_circuits_it_grades_can_run_o
     ) == fixtures.FLOORED_ABOVE_MILES
 
 
-def test_every_seat_on_that_synthesis_still_holds_the_diverse_circuits_it_was_owed() -> None:
+def test_every_wan_pop_on_that_synthesis_still_holds_the_diverse_circuits_it_was_owed() -> None:
     assert FLOORED_ABOVE_ARTIFACTS.validation["backbone_mesh_independence_deficient"] == []
 
 

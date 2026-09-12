@@ -101,16 +101,16 @@ def backbone_mesh_survives_any_one_link_loss(synthesis: Synthesis) -> bool:
 def backbone_mesh_survives_any_one_site_loss(synthesis: Synthesis) -> bool:
     return _backbone_mesh_survives(synthesis, survives_any_one_site_loss)
 
-def capped_seats(targets: MeshRequirements) -> frozenset[str]:
+def capped_wan_pops(targets: MeshRequirements) -> frozenset[str]:
     ceilings = targets.ceilings
     if ceilings is None:
         return frozenset()
     return frozenset(site for site, ceiling in ceilings.items() if ceiling < 2)
 
-def circuits_clear_of_a_capped_seat(
+def circuits_clear_of_a_capped_wan_pop(
     synthesis: Synthesis, targets: MeshRequirements
 ) -> list[SynthesisCircuit]:
-    capped = capped_seats(targets)
+    capped = capped_wan_pops(targets)
     return [
         drawn_circuit
         for drawn_circuit in synthesis.drawn_circuits
@@ -124,7 +124,7 @@ def backbone_mesh_cut_pops(
     if targets.number_of_diverse_circuits < 2:
         return []
     segments: set[tuple[str, str]] = set()
-    for drawn_circuit in circuits_clear_of_a_capped_seat(synthesis, targets):
+    for drawn_circuit in circuits_clear_of_a_capped_wan_pop(synthesis, targets):
         segments |= fiber_segments_along(drawn_circuit.pop_ids)
     pops = {pop for segment in segments for pop in segment}
     if len(connected_components(pops, segments)) != 1:
@@ -296,9 +296,9 @@ def neighbor_degrees(
 
 def wan_pop_names_by_group(sites: list[Site], synthesis: Synthesis) -> list[list[str]]:
     names = {site.id: site.name for site in sites}
-    seated = set(synthesis.wan_pop_ids)
+    selected = set(synthesis.wan_pop_ids)
     return [
-        [names[site_id] for site_id in group if site_id in seated]
+        [names[site_id] for site_id in group if site_id in selected]
         for group in connected_components(
             included_site_ids(synthesis), synthesis_site_pairs(synthesis)
         )

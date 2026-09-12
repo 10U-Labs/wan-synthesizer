@@ -149,7 +149,9 @@ def grow_wan_pops_for_coverage(
         )
         wan_pop_ids = tuple(sorted((*wan_pop_ids, best_id)))
         free.remove(best_id)
-        logger.info("Seated WAN PoP %s for coverage; now %d of them", best_id, len(wan_pop_ids))
+        logger.info(
+            "Selected WAN PoP %s for coverage; now %d of them", best_id, len(wan_pop_ids)
+        )
     grown = build_synthesis_for_wan_pops(wan_pop_ids, inputs, plan)
     assert grown is not None
     return grown
