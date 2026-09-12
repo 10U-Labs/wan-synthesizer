@@ -5,15 +5,12 @@ backbone:
     circuits: []
     wan_pops:
       - Ashburn, VA
+      - Atlanta, GA
       - Cheyenne, WY
+      - Dallas, TX
       - Great Falls, MT
-      - Hillsboro, OR
-      - Los Angeles, CA
       - Minot, ND
-      - New York, NY
       - Salt Lake City, UT
-      - San Jose, CA
-      - Seattle, WA
   number_of_diverse_circuits: 2
   prohibited:
     circuits: []
