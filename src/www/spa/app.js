@@ -255,7 +255,12 @@ function showSignIn(note) {
   });
   const button = document.getElementById("google-button");
   button.replaceChildren();
-  google.accounts.id.renderButton(button, { theme: "outline", size: "large" });
+  google.accounts.id.renderButton(button, {
+    theme: "outline",
+    size: "large",
+    text: "signin_with",
+    shape: "rectangular",
+  });
   google.accounts.id.prompt();
 }
 
