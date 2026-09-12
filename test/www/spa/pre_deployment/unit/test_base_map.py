@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import cast
 from urllib.parse import urlsplit
 
 from repo_utils import REPO_ROOT
@@ -58,7 +59,8 @@ def test_the_map_draws_no_tile_layer() -> None:
 
 def test_the_page_ships_the_countries_before_the_map_draws_them() -> None:
     page = _page("index.html")
-    assert 0 < page.find(f'<script src="vendor/{COUNTRIES.name}"></script>') < page.find('<script src="app.js">')
+    countries = page.find(f'<script src="vendor/{COUNTRIES.name}"></script>')
+    assert 0 < countries < page.find('<script src="app.js">')
 
 
 def test_the_map_draws_the_shipped_countries() -> None:
@@ -70,5 +72,4 @@ def test_the_shipped_countries_are_a_feature_collection() -> None:
 
 
 def test_the_shipped_countries_cover_the_world() -> None:
-    features = _shipped_countries()["features"]
-    assert isinstance(features, list) and len(features) == 177
+    assert len(cast("list[object]", _shipped_countries()["features"])) == 177
