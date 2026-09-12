@@ -15,6 +15,7 @@ metadata:
 - [Overview](#overview)
 - [Conventions](#conventions)
   - [A Google account is admitted by its hosted domain](#a-google-account-is-admitted-by-its-hosted-domain)
+  - [The page opens on the sign-in screen and nothing else](#the-page-opens-on-the-sign-in-screen-and-nothing-else)
   - [CI presents the key the routing stack generated](#ci-presents-the-key-the-routing-stack-generated)
   - [A route the map fetches answers a preflight](#a-route-the-map-fetches-answers-a-preflight)
   - [Nothing here is a Cognito pool or a Lambda layer](#nothing-here-is-a-cognito-pool-or-a-lambda-layer)
@@ -30,6 +31,10 @@ The precedent is in `../10ulabs.com` history, not its tree: `1bf50323 Add Google
 ### A Google account is admitted by its hosted domain
 
 The 10ulabs.com mail is hosted on Google Workspace, so the accounts that exist are `@10ulabs.com` Google accounts and no user store is kept here. The page uses Google Identity Services with the OAuth client `846587722064-qjou8en4tk96n12ii3rgnpjshnbqovok.apps.googleusercontent.com` (created in Google Cloud Console with `https://www.10ulabs.com` as an authorized JavaScript origin; a second one would need the same). The authorizer sends the ID token to `oauth2.googleapis.com/tokeninfo`, which vouches for the signature, and then holds the claims to that client (`aud`), a Google issuer, a verified address, and `hd == 10ulabs.com`. A token that fails the first three is a 401; an account off the domain is a 403 (`Deny`), so the page can tell the user which happened. `app.js` and `authorizer.tf` both spell the client and the domain, and `test/www/spa/pre_deployment/unit/test_login.py` fails when they disagree.
+
+### The page opens on the sign-in screen and nothing else
+
+`index.html` opens on `#sign-in` and keeps the header and map inside `<div id="app" hidden>` until `showApp()` reveals them after a credential arrives, as the SOC simulator did; the first cut drew the map under a translucent card and was sent back. The screen is a centred white card over a dark ground with two glows, the Google button rendered as a 300px pill, and no One Tap `prompt()`, which put a bubble beside the card. The name Google shows in its chooser is the OAuth consent screen's *App name* in the Cloud project numbered `846587722064` (Google Auth Platform → Branding), not anything in this tree; it said "SoC Simulator" until renamed. `test_login.py` holds `#sign-in` to being visible and `#map` and `#tenants` to a hidden ancestor.
 
 ### CI presents the key the routing stack generated
 

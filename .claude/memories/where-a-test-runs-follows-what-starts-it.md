@@ -15,6 +15,7 @@ metadata:
   - [A test about an API behaviour or its deployment runs in that endpoint workflow](#a-test-about-an-api-behaviour-or-its-deployment-runs-in-that-endpoint-workflow)
   - [A test over shared machinery runs in every workflow that imports it](#a-test-over-shared-machinery-runs-in-every-workflow-that-imports-it)
   - [The consequence that is accepted](#the-consequence-that-is-accepted)
+  - [A test in two workflows needs no cross-listed paths](#a-test-in-two-workflows-needs-no-cross-listed-paths)
   - [The directory and the workflow are separate questions](#the-directory-and-the-workflow-are-separate-questions)
 
 ## Overview
@@ -34,6 +35,10 @@ A test is worth nothing in a workflow the change it guards does not trigger. So 
 ### A test over shared machinery runs in every workflow that imports it
 
 The nine modules in `lib/python/` have no workflow of their own and no single consumer, so the rule above picks out no one workflow. The import that decides it is the transitive one: `test_handler_contracts` imports `test_module_utils` and `test_s3_store_mock`, and `test_fixtures.aws` and `test_terraform_drift` import `test_terraform_config`, which imports `repo_utils` — so a defect in `test_module_utils` breaks workflows whose test files never name it.
+
+### A test in two workflows needs no cross-listed paths
+
+`test/www/spa/pre_deployment/unit/test_login.py` holds `app.js` to `authorizer.tf`, so it runs in `www_spa.yml` and in the routing `unit-tests` job. That is already every push that can break it; adding `src/www/spa/**` to the routing workflow's `paths` on top made a style change apply the routing stack, and was taken out in `f457a791`. List a directory under a workflow's `paths` only when a change there breaks something that workflow alone runs.
 
 ### The consequence that is accepted
 
