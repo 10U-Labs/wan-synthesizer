@@ -248,12 +248,12 @@ def test_a_city_no_fiber_goes_round_still_leaves_every_wan_pop_its_circuits() ->
     } == set(_LOBE_SITES)
 
 
-def test_a_tenant_that_asked_for_one_circuit_is_not_given_a_circuit_round_anything() -> None:
+def test_a_tenant_that_asked_for_one_circuit_is_given_the_circuit_round_the_city_too() -> None:
     assert [
         drawn_circuit.pop_ids
         for drawn_circuit in _ONE_WAY_OUT_LOBES.circuits
         if segment_key("b", "w") in fiber_segments_along(drawn_circuit.pop_ids)
-    ] == []
+    ] == [("b", "w", "c")]
 
 
 _OFFERED_MESH = _drawn(

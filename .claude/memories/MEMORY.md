@@ -9,6 +9,7 @@
   - [Commits](#commits)
   - [Issues](#issues)
   - [Measurement](#measurement)
+  - [Memories](#memories)
   - [Storage](#storage)
   - [Tests](#tests)
   - [Third-party code](#third-party-code)
@@ -44,13 +45,17 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 
 - [why-static-analysis-is-asked-separately](why-static-analysis-is-asked-separately.md) — a job refuses a shape everywhere at once where a tier catches one occurrence
 
-### Storage
-
-- [the-store-holds-only-what-the-product-writes](the-store-holds-only-what-the-product-writes.md) — the store bucket has no working area, so a new prefix joins `_KEPT_BY_PREFIX` in the same commit as its writer or the next seed's prune deletes it; versioning is suspended, so every delete names `VersionId="null"` or leaves a marker the prune has to clear
-
 ### Measurement
 
 - [measure-a-change-over-the-seeded-tenants](measure-a-change-over-the-seeded-tenants.md) — every tenant's miles and floor are reproducible from `data/` and `etc/` with no deploy, which is where a commit message's before/after table comes from
+
+### Memories
+
+- [a-memory-line-never-opens-with-an-issue-number](a-memory-line-never-opens-with-an-issue-number.md) — markdownlint reads a line opening with `#N` as a heading missing its space, so wrap a memory until no line starts with a hash
+
+### Storage
+
+- [the-store-holds-only-what-the-product-writes](the-store-holds-only-what-the-product-writes.md) — the store bucket has no working area, so a new prefix joins `_KEPT_BY_PREFIX` in the same commit as its writer or the next seed's prune deletes it; versioning is suspended, so every delete names `VersionId="null"` or leaves a marker the prune has to clear
 
 ### Tests
 
