@@ -49,7 +49,11 @@ thousandth. daf at 1.166 and f-35 at 1.232 fail
 `test_no_published_network_runs_more_than_a_tenth_further_than_the_floor_it_publishes`,
 which is the one red assertion in `e2e-tests` and the state `seed` is in: a
 run red on those two tenants and that one assertion alone is not something the
-tip under test did. It is what GitHub issues #175 and #172 are about.
+tip under test did. It is what GitHub issue #175 is about. 20a1a0ab took the
+`toward_each` and `together` rows out of the floor and moved none of the seven
+figures, matching run `34692416229` re-run against the deployed Lambda: every
+tenant with a mesh asks for two circuits, and those rows only lift a floor
+above the miles run where a WAN PoP is asked for three.
 Repetition of a figure is also the only tell for the race in
 [seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md), so
 read which assertion failed before concluding either.
