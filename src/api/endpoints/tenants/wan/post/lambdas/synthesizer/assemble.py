@@ -176,7 +176,6 @@ def synthesis_circuits(
         removed_backbone_pairs(wan_pop_set, plan.forced_circuits),
         number_of_diverse_circuits=plan.tuning.backbone_number_of_diverse_circuits,
         forced_pairs=forced_backbone_pairs(wan_pop_set, plan.forced_circuits),
-        max_wan_pop_count=plan.max_wan_pop_count,
     )
     return backbone_mesh(wan_pop_ids, inputs.all_distances, fiber_segments, constraints)
 

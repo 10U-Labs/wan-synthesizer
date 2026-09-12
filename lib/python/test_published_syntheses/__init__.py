@@ -285,19 +285,17 @@ def _joined_by(pairs: set[frozenset[str]]) -> dict[str, set[str]]:
 
 
 def _capacity(
-    joined: dict[str, set[str]], city: str, peers: frozenset[str], per_peer: int
+    joined: dict[str, set[str]], city: str, peers: frozenset[str]
 ) -> dict[str, dict[str, int]]:
-    plenty = len(peers) * per_peer + 1
     left: dict[str, dict[str, int]] = {
-        _ARRIVING + place: {_LEAVING + place: plenty if place in peers else 1}
+        _ARRIVING + place: (
+            {_SINK: len(joined[place])} if place in peers else {_LEAVING + place: 1}
+        )
         for place in joined
         if place != city
     }
     for place, neighbours in joined.items():
         left[_LEAVING + place] = {_ARRIVING + neighbour: 1 for neighbour in neighbours}
-    for peer in peers:
-        if peer in joined:
-            left[_LEAVING + peer][_SINK] = per_peer
     left[_SINK] = {}
     for tail, heads in list(left.items()):
         for head in heads:
@@ -321,10 +319,8 @@ def _walk_to_a_peer(
     return None
 
 
-def _offered_over(
-    joined: dict[str, set[str]], city: str, peers: frozenset[str], per_peer: int
-) -> int:
-    left = _capacity(joined, city, peers, per_peer)
+def _offered_over(joined: dict[str, set[str]], city: str, peers: frozenset[str]) -> int:
+    left = _capacity(joined, city, peers)
     source = _LEAVING + city
     if source not in left:
         return 0
@@ -343,9 +339,6 @@ def _offered_over(
 
 
 def offered_diverse_circuits(
-    fiber: set[frozenset[str]],
-    city: str,
-    peers: frozenset[str],
-    per_peer: int,
+    fiber: set[frozenset[str]], city: str, peers: frozenset[str]
 ) -> int:
-    return min(_offered_over(_joined_by(fiber), city, peers, per_peer), len(peers) * per_peer)
+    return _offered_over(_joined_by(fiber), city, peers)

@@ -6,7 +6,6 @@ from synthesizer.ceiling import (
     diverse_circuit_ceiling,
     diverse_circuits,
     diverse_circuit_ceilings,
-    diverse_circuits_by_peer,
 )
 from synthesizer.graphs import build_adjacency
 from synthesizer.input_graph import FiberSegment
@@ -54,40 +53,26 @@ _TWIN_CIRCUITS = build_adjacency(physical({
 }))
 
 
-def test_two_circuits_to_one_peer_count_once() -> None:
+def test_two_circuits_to_one_peer_sharing_no_pop_between_count_twice() -> None:
     assert diverse_circuit_ceiling(
         "s", CircuitProofInputs(("s", "t", "u"), _TWIN_CIRCUITS)
-    ) == 1
+    ) == 2
 
 
 _ONE_PEER = ("s", "t")
 
 
-def test_a_site_with_one_peer_holds_the_circuits_it_was_asked_for() -> None:
-    inputs = CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=2)
-    assert diverse_circuit_ceiling("s", inputs) == 2
+def test_a_site_with_one_peer_holds_both_circuits_its_fiber_carries() -> None:
+    assert diverse_circuit_ceiling("s", CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS)) == 2
 
 
 def test_the_circuits_to_one_peer_share_no_city_but_that_peer() -> None:
     inner = [
         city
-        for pop_ids in diverse_circuits(
-            "s", CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=2)
-        )
+        for pop_ids in diverse_circuits("s", CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS))
         for city in pop_ids[1:-1]
     ]
     assert sorted(inner) == sorted(set(inner))
-
-
-def test_a_site_with_one_peer_is_still_held_to_one_circuit_when_one_is_asked() -> None:
-    inputs = CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=1)
-    assert diverse_circuit_ceiling("s", inputs) == 1
-
-
-def test_a_site_selected_below_the_wan_pops_its_config_allows_takes_one_circuit() -> None:
-    assert diverse_circuit_ceiling(
-        "s", CircuitProofInputs(_ONE_PEER, _TWIN_CIRCUITS, circuits_wanted=2, max_wan_pop_count=6)
-    ) == 1
 
 
 _THREE_CIRCUITS = build_adjacency(physical({
@@ -97,16 +82,17 @@ _THREE_CIRCUITS = build_adjacency(physical({
 }))
 
 
-def test_no_more_circuits_to_one_peer_are_proved_than_were_asked_for() -> None:
-    inputs = CircuitProofInputs(_ONE_PEER, _THREE_CIRCUITS, circuits_wanted=2)
-    assert diverse_circuit_ceiling("s", inputs) == 2
+def test_every_circuit_to_one_peer_the_fiber_carries_is_proved() -> None:
+    assert diverse_circuit_ceiling("s", CircuitProofInputs(_ONE_PEER, _THREE_CIRCUITS)) == 3
 
 
-def test_the_circuits_proved_to_one_peer_are_the_shortest_of_them() -> None:
-    circuits = diverse_circuits(
-        "s", CircuitProofInputs(_ONE_PEER, _THREE_CIRCUITS, circuits_wanted=2)
-    )
-    assert sorted(pop_ids[1] for pop_ids in circuits) == ["mid", "near"]
+_TWO_WAYS_TO_ONE_PEER = build_adjacency(physical(fixtures.TWO_WAYS_TO_ONE_PEER_SEGMENTS))
+
+
+def test_the_ceiling_credits_a_wan_pop_what_the_grader_credits_it_over_the_same_fiber() -> None:
+    assert diverse_circuit_ceiling(
+        "a", CircuitProofInputs(fixtures.TWO_WAYS_TO_ONE_PEER_WAN_POPS, _TWO_WAYS_TO_ONE_PEER)
+    ) == fixtures.two_ways_to_one_peer_credited() == 2
 
 
 def test_an_unreachable_wan_pop_has_no_ceiling_at_all() -> None:
@@ -142,18 +128,18 @@ _EXPRESS_SEGMENTS = build_adjacency(physical({
 _EXPRESS_BACKBONE = ("eug", "hil", "sea")
 
 
-def test_the_circuits_proved_are_the_shortest_set_of_that_size() -> None:
-    assert sum(
+def test_the_two_shortest_circuits_proved_are_the_shortest_pair_there_is() -> None:
+    assert sorted(
         _miles_along(pop_ids, _EXPRESS_SEGMENTS)
         for pop_ids in diverse_circuits(
             "sea", CircuitProofInputs(_EXPRESS_BACKBONE, _EXPRESS_SEGMENTS)
         )
-    ) == 4.0
+    )[:2] == [2.0, 2.0]
 
 
-def test_taking_the_shortest_set_costs_the_site_none_of_its_circuits() -> None:
+def test_a_second_circuit_to_each_peer_is_proved_however_far_it_runs() -> None:
     inputs = CircuitProofInputs(_EXPRESS_BACKBONE, _EXPRESS_SEGMENTS)
-    assert diverse_circuit_ceiling("sea", inputs) == 2
+    assert diverse_circuit_ceiling("sea", inputs) == 4
 
 
 _PACIFIC_ADJACENCY = build_adjacency(physical({
@@ -183,32 +169,26 @@ _ONE_COMPANY_EACH = fixtures.carrier_fiber_segments({
 })
 
 
-def _owned_proof(
-    fiber: dict[tuple[str, str], FiberSegment], circuits_wanted: int = 1
-) -> CircuitProofInputs:
-    return CircuitProofInputs(("s", "t"), build_adjacency(fiber), circuits_wanted=circuits_wanted)
-
-
-def test_a_circuit_that_changes_hands_at_a_pop_both_carriers_have_is_a_diverse_circuit() -> None:
-    assert diverse_circuits("s", _owned_proof(_CHANGES_HANDS)) == [("s", "x", "t")]
+def _owned_proof(fiber: dict[tuple[str, str], FiberSegment]) -> CircuitProofInputs:
+    return CircuitProofInputs(("s", "t"), build_adjacency(fiber))
 
 
 def test_the_diverse_circuits_proved_may_each_change_hands() -> None:
-    assert sorted(diverse_circuits("s", _owned_proof(_CHANGES_HANDS, 2))) == [
+    assert sorted(diverse_circuits("s", _owned_proof(_CHANGES_HANDS))) == [
         ("s", "x", "t"), ("s", "y", "t"),
     ]
 
 
 def test_diverse_circuits_may_come_from_different_carriers() -> None:
-    assert sorted(diverse_circuits("s", _owned_proof(_ONE_COMPANY_EACH, 2))) == [
+    assert sorted(diverse_circuits("s", _owned_proof(_ONE_COMPANY_EACH))) == [
         ("s", "x", "t"), ("s", "y", "t"),
     ]
 
 
 def test_the_same_fiber_joins_the_pair_when_nobody_owns_it() -> None:
-    assert diverse_circuits("s", CircuitProofInputs(("s", "t"), build_adjacency(
+    assert sorted(diverse_circuits("s", CircuitProofInputs(("s", "t"), build_adjacency(
         physical({("s", "x"): 1.0, ("x", "t"): 1.0, ("s", "y"): 1.0, ("y", "t"): 1.0}),
-    ))) == [("s", "x", "t")]
+    )))) == [("s", "x", "t"), ("s", "y", "t")]
 
 
 _BOTH_HAVE_IT = fixtures.carrier_fiber_segments({("s", "t"): (1.0, ("lumen", "zayo"))})
@@ -226,10 +206,6 @@ def test_a_circuit_both_carriers_have_is_drawn_once() -> None:
 
 def test_a_circuit_standing_on_a_city_already_spent_is_not_drawn() -> None:
     assert diverse_circuits("s", _owned_proof(_SHARE_A_CITY)) == [("s", "x", "t")]
-
-
-def test_one_peer_takes_one_circuit_however_many_carriers_offer_one() -> None:
-    assert diverse_circuits("s", _owned_proof(_ONE_COMPANY_EACH)) == [("s", "x", "t")]
 
 
 _UNDER_WATER = fixtures.fiber_segments_under_water(
@@ -256,7 +232,6 @@ def test_a_circuit_under_water_is_no_diverse_circuit_where_the_site_has_one_over
         CircuitProofInputs(
             _UNDER_WATER_BACKBONE,
             build_adjacency(_UNDER_WATER),
-            circuits_wanted=2,
             terrestrial=_on_land(_UNDER_WATER),
         ),
     ) == [("sea", "pdx", "hil")]
@@ -278,43 +253,24 @@ def test_a_site_reachable_only_over_water_keeps_the_diverse_circuits_it_has() ->
         CircuitProofInputs(
             _ISLAND_BACKBONE,
             build_adjacency(_ISLAND),
-            circuits_wanted=2,
             terrestrial=_on_land(_ISLAND),
         ),
     )) == [("syd", "hil"), ("syd", "sea")]
 
 
-def _credit_over(
-    fiber: dict[tuple[str, str], FiberSegment],
-    wan_pop_ids: tuple[str, ...],
-    most: int | None,
-) -> dict[str, dict[str, int]]:
-    return diverse_circuits_by_peer(
-        CircuitProofInputs(wan_pop_ids, build_adjacency(fiber), circuits_wanted=2), most
-    )
-
-
-_ALREADY_NEEDED_CREDIT = _credit_over(
-    fixtures.ALREADY_NEEDED_FIBER, fixtures.ALREADY_NEEDED_SITES, None
+_ALREADY_NEEDED_PROOF = CircuitProofInputs(
+    fixtures.ALREADY_NEEDED_SITES, build_adjacency(fixtures.ALREADY_NEEDED_FIBER)
 )
-_FLOORED_ABOVE_FIBER = fixtures.carrier_fiber_segments(fixtures.FLOORED_ABOVE_SEGMENTS)
 
 
-def test_a_wan_pop_is_credited_one_circuit_toward_each_peer_its_diverse_circuits_reach() -> None:
-    assert _ALREADY_NEEDED_CREDIT["f"] == {"b": 1, "d": 1}
+def test_a_wan_pop_is_proved_a_circuit_that_changes_hands() -> None:
+    assert sorted(diverse_circuits("b", _ALREADY_NEEDED_PROOF)) == [
+        ("b", "c", "d"), ("b", "e", "f"),
+    ]
 
 
-def test_a_wan_pop_is_credited_a_circuit_that_changes_hands() -> None:
-    assert _ALREADY_NEEDED_CREDIT["b"] == {"d": 1, "f": 1}
-
-
-def test_every_diverse_circuit_a_wan_pops_fiber_proves_is_credited_when_none_is_asked() -> None:
-    assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, None)["b"] == {
-        "d": 1, "e": 1, "f": 1,
-    }
-
-
-def test_the_credit_is_cut_to_the_shortest_diverse_circuits_the_tenant_asked_for() -> None:
-    assert _credit_over(_FLOORED_ABOVE_FIBER, fixtures.FLOORED_ABOVE_SITES, 2)["b"] == {
-        "d": 1, "e": 1,
-    }
+def test_every_diverse_circuit_a_wan_pops_fiber_carries_is_proved() -> None:
+    assert diverse_circuit_ceiling("b", CircuitProofInputs(
+        fixtures.FLOORED_ABOVE_SITES,
+        build_adjacency(fixtures.carrier_fiber_segments(fixtures.FLOORED_ABOVE_SEGMENTS)),
+    )) == 3

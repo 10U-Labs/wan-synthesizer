@@ -49,7 +49,7 @@ def _residual_network(question: SeparationQuestion) -> _Residual:
         _add_arc(residual, ("out", left), _half(right, "in", spared), share)
         _add_arc(residual, ("out", right), _half(left, "in", spared), share)
     for peer in sorted(question.peers & cities):
-        _add_arc(residual, ("out", peer), _SINK, math.inf)
+        _add_arc(residual, _half(peer, "in", spared), _SINK, math.inf)
     return residual
 
 

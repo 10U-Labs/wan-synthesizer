@@ -11,7 +11,6 @@ class _SearchPlan:
     strength_by_id: dict[str, float]
     tuning: Tuning = field(default_factory=Tuning)
     forced_circuits: ForcedCircuits = field(default_factory=ForcedCircuits)
-    max_wan_pop_count: int | None = None
 
     @property
     def required_wan_pops(self) -> frozenset[str]:

@@ -10,6 +10,7 @@ from seed import DEFAULT_API, _get
 from test_published_syntheses import (
     wan_pop_groups,
     cut_cities,
+    diverse_circuit_count,
     offered_diverse_circuits,
     fiber_miles_run_over,
     overbuilt_pairs,
@@ -293,26 +294,17 @@ def _cities_with_fiber(held: set[frozenset[str]]) -> set[str]:
     return {city for pair in held for city in pair}
 
 
-def _circuits_one_peer_may_end(synthesis: dict[str, Any]) -> int:
-    peers = synthesis["max_wan_pop_count"] - 1
-    asked = synthesis["number_of_diverse_circuits"]
-    return max(1, -(-asked // peers)) if peers > 0 else 1
-
-
 def _overstated_ceilings(syntheses: list[dict[str, Any]]) -> dict[str, list[str]]:
     found: dict[str, list[str]] = {}
     for synthesis in syntheses:
         held = _tenants_fiber(synthesis)
         reached = _cities_with_fiber(held)
         cities = _published_cities(synthesis)
-        per_peer = _circuits_one_peer_may_end(synthesis)
         for entry in synthesis["status"].get("diverse_circuits", {}).get("ceilings", []):
             city = str(entry["name"])
             if city not in reached:
                 continue
-            offered = offered_diverse_circuits(
-                held, city, frozenset(cities - {city}), per_peer
-            )
+            offered = offered_diverse_circuits(held, city, frozenset(cities - {city}))
             if int(entry["ceiling"]) > offered:
                 found.setdefault(synthesis["tenant"], []).append(
                     f"{city} at {entry['ceiling']} against {offered}"
@@ -323,6 +315,30 @@ def _overstated_ceilings(syntheses: list[dict[str, Any]]) -> dict[str, list[str]
 def test_no_published_networks_ceiling_is_higher_than_the_circuits_its_carriers_can_offer(
         published_syntheses: list[dict[str, Any]]) -> None:
     assert not _overstated_ceilings(published_syntheses)
+
+
+def _credited_past_the_ceiling(synthesis: dict[str, Any]) -> list[str]:
+    names = {row["id"]: row["name"] for row in synthesis["wan_pops"]}
+    ceilings = {
+        str(entry["name"]): int(entry["ceiling"])
+        for entry in synthesis["status"].get("diverse_circuits", {}).get("ceilings", [])
+    }
+    return [
+        f"{name} credited {credited} against a ceiling of {ceilings[name]}"
+        for site, name in sorted(names.items(), key=lambda pair: pair[1])
+        if name in ceilings
+        and (credited := diverse_circuit_count(synthesis["circuits"], site, names))
+        > ceilings[name]
+    ]
+
+
+def test_no_published_wan_pop_is_credited_more_diverse_circuits_than_its_ceiling(
+        published_syntheses: list[dict[str, Any]]) -> None:
+    assert {
+        synthesis["tenant"]: _credited_past_the_ceiling(synthesis)
+        for synthesis in published_syntheses
+        if _credited_past_the_ceiling(synthesis)
+    } == {}
 
 
 def _submarine_pairs(synthesis: dict[str, Any]) -> set[frozenset[str]]:

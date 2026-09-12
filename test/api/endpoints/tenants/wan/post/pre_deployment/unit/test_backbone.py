@@ -51,13 +51,12 @@ def _selected(
     constraints: WanPopConstraints,
 ) -> frozenset[tuple[str, str]]:
     return select_fiber(FiberInputs(
-        sites, fiber, constraints.number_of_diverse_circuits,
-        constraints.max_wan_pop_count,
+        sites, fiber, constraints.number_of_diverse_circuits
     )).segments
 
 
 def _asking(asked_for: int = 2) -> WanPopConstraints:
-    return WanPopConstraints(number_of_diverse_circuits=asked_for, max_wan_pop_count=4)
+    return WanPopConstraints(number_of_diverse_circuits=asked_for)
 
 
 def _pairs(mesh: BackboneMesh) -> set[tuple[str, str]]:
@@ -93,7 +92,7 @@ _SQUARE_FIBER = physical({
     ("w", "x"): 100.0, ("x", "y"): 100.0, ("y", "z"): 100.0, ("z", "w"): 100.0,
     ("w", "y"): 250.0, ("x", "z"): 250.0,
 })
-_TWO_DIVERSE_CIRCUITS = WanPopConstraints(number_of_diverse_circuits=2, max_wan_pop_count=4)
+_TWO_DIVERSE_CIRCUITS = WanPopConstraints(number_of_diverse_circuits=2)
 _SQUARE = _drawn(_SQUARE_SITES, _SQUARE_FIBER, _TWO_DIVERSE_CIRCUITS)
 
 
@@ -140,9 +139,7 @@ _EGRESS_FIBER = physical({
     ("hub", "m"): 10.0, ("m", "p"): 10.0, ("m", "q"): 10.0,
     ("hub", "n"): 11.0, ("n", "q"): 11.0, ("p", "q"): 10.0,
 })
-_EGRESS = _drawn(_EGRESS_SITES, _EGRESS_FIBER, WanPopConstraints(
-    number_of_diverse_circuits=2, max_wan_pop_count=3,
-))
+_EGRESS = _drawn(_EGRESS_SITES, _EGRESS_FIBER, _TWO_DIVERSE_CIRCUITS)
 
 
 def test_the_longer_circuit_round_a_shared_city_is_the_one_drawn() -> None:
@@ -231,9 +228,8 @@ def test_a_tenant_that_asked_for_one_circuit_is_not_given_a_circuit_round_anythi
     ] == []
 
 
-_OFFERED_TERMS = WanPopConstraints(number_of_diverse_circuits=2, max_wan_pop_count=2)
 _OFFERED_MESH = _drawn(
-    fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_FIBER, _OFFERED_TERMS
+    fixtures.OFFERED_WAYS_SITES, fixtures.OFFERED_WAYS_FIBER, _TWO_DIVERSE_CIRCUITS
 )
 
 
@@ -247,21 +243,18 @@ def _run_over(mesh: BackboneMesh) -> set[tuple[str, str]]:
 
 def test_a_site_is_drawn_over_the_fiber_selected_for_it() -> None:
     assert _run_over(_OFFERED_MESH) <= _selected(
-        fixtures.OFFERED_WAYS_FIBER, fixtures.OFFERED_WAYS_SITES, _OFFERED_TERMS
+        fixtures.OFFERED_WAYS_FIBER, fixtures.OFFERED_WAYS_SITES, _TWO_DIVERSE_CIRCUITS
     )
 
 
 _PRUNED = _drawn(_SQUARE_SITES, _SQUARE_FIBER, WanPopConstraints(
-    removed_pairs=frozenset({segment_key("w", "x")}),
-    number_of_diverse_circuits=2, max_wan_pop_count=4,
+    removed_pairs=frozenset({segment_key("w", "x")}), number_of_diverse_circuits=2,
 ))
 _PINNED_CHORD = _drawn(_SQUARE_SITES, _SQUARE_FIBER, WanPopConstraints(
     number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}),
-    max_wan_pop_count=4,
 ))
 _PINNED_SEGMENT = _drawn(_SQUARE_SITES, _SQUARE_FIBER, WanPopConstraints(
     number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "x")}),
-    max_wan_pop_count=4,
 ))
 
 
@@ -365,7 +358,6 @@ _SQUARE_CHANGING_HANDS = fixtures.carrier_fiber_segments({
 })
 _PIN_WY = WanPopConstraints(
     number_of_diverse_circuits=2, forced_pairs=frozenset({segment_key("w", "y")}),
-    max_wan_pop_count=4,
 )
 
 

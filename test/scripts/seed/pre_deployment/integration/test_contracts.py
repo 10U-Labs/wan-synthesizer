@@ -284,9 +284,7 @@ def _ceiling_bounds(
             city_id = by_name.get(city)
             if city_id is None or _path_endpoints(city_id, pinned) < 1:
                 continue
-            bound = diverse_circuit_ceiling(city_id, CircuitProofInputs(
-                pinned, adjacency, asked, backbone["wan_pop_count"]["max"]
-            ))
+            bound = diverse_circuit_ceiling(city_id, CircuitProofInputs(pinned, adjacency))
             bounds.append((tenant, city, bound, asked))
     return bounds
 

@@ -30,7 +30,7 @@ from synthesizer.search_plan import _SearchPlan
 from synthesizer.synthesize import all_pairs_shortest, synthesize_two_tier
 from synthesizer.overrides import apply_role_overrides
 from synthesizer.stages import dual_home, finalize
-from synthesizer.validation import validate_synthesis
+from synthesizer.validation import diverse_circuit_count, validate_synthesis
 
 RING_COORDS = {
     "P0": (40.0, -100.0),
@@ -755,6 +755,22 @@ NEARER_PEER_SEGMENTS = {
 NEARER_PEER_FIBER = fiber_segments_from(NEARER_PEER_SEGMENTS)
 NEARER_PEER_CIRCUITS = 3
 NEARER_PEER_MILES = 400.0
+
+TWO_WAYS_TO_ONE_PEER_SEGMENTS = {
+    ("a", "p"): 1.0, ("b", "p"): 1.0, ("a", "q"): 1.0, ("b", "q"): 1.0, ("b", "c"): 1.0,
+}
+TWO_WAYS_TO_ONE_PEER_WAN_POPS = ("a", "b", "c")
+TWO_WAYS_TO_ONE_PEER_CIRCUITS: list[tuple[str, ...]] = [("a", "p", "b"), ("a", "q", "b")]
+
+
+def two_ways_to_one_peer_credited() -> int:
+    return diverse_circuit_count(
+        meshed_backbone_synthesis(
+            TWO_WAYS_TO_ONE_PEER_CIRCUITS, TWO_WAYS_TO_ONE_PEER_WAN_POPS
+        ).drawn_circuits,
+        "a",
+    )
+
 
 SHORT_AND_LONG_SITES = ("s", "t", "u")
 SHORT_AND_LONG_TRANSIT = ("far", "near")

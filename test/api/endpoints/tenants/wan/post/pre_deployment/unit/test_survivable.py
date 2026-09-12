@@ -9,13 +9,12 @@ from synthesizer.input_graph import FiberSegment
 from synthesizer.survivable import (
     FiberInputs,
     FiberSelection,
-    _EVERY_WAY_OUT,
     _Requirement,
-    _asked_of_every_wan_pop,
+    _answered_by_every_wan,
     _carried,
     _held,
     _shortfalls,
-    _diverse_circuit_rows,
+    _diverse_circuits_out_of,
     _writing,
     select_fiber,
 )
@@ -29,34 +28,28 @@ _SLACK = 1e-6
 def _asking(
     fiber: dict[tuple[str, str], FiberSegment],
     wan_pop_ids: tuple[str, ...],
-    max_wan_pop_count: int | None = None,
     number_of_diverse_circuits: int = _DIVERSE_CIRCUITS,
 ) -> FiberInputs:
-    return FiberInputs(wan_pop_ids, fiber, number_of_diverse_circuits, max_wan_pop_count)
+    return FiberInputs(wan_pop_ids, fiber, number_of_diverse_circuits)
 
 
 def _selected(
     fiber: dict[tuple[str, str], FiberSegment],
     wan_pop_ids: tuple[str, ...],
-    max_wan_pop_count: int | None = None,
     number_of_diverse_circuits: int = _DIVERSE_CIRCUITS,
 ) -> FiberSelection:
-    return select_fiber(_asking(fiber, wan_pop_ids, max_wan_pop_count, number_of_diverse_circuits))
+    return select_fiber(_asking(fiber, wan_pop_ids, number_of_diverse_circuits))
 
 
 def _owed(
     fiber: dict[tuple[str, str], FiberSegment],
     wan_pop_ids: tuple[str, ...],
     site: str,
-    max_wan_pop_count: int | None = None,
 ) -> int:
-    inputs = _asking(fiber, wan_pop_ids, max_wan_pop_count)
-    miles_by_key = _whole(inputs)
+    inputs = _asking(fiber, wan_pop_ids)
     return sum(
         row.required
-        for row in _diverse_circuit_rows(
-            site, _writing(inputs, miles_by_key, _EVERY_WAY_OUT)
-        ).sparing_every_peer
+        for row in _diverse_circuits_out_of(site, _writing(inputs, _whole(inputs)))
     )
 
 
@@ -134,12 +127,12 @@ _PAIR_PRICED = physical({
 _PAIR_PRICED_SELECTION = _selected(_PAIR_PRICED, ("a", "b", "e"))
 
 
-def test_no_fiber_is_selected_for_a_circuit_no_wan_pop_is_owed() -> None:
-    assert _PAIR_PRICED_SELECTION.segments == frozenset({("a", "b"), ("b", "e")})
+def test_the_fiber_selected_carries_both_circuits_to_a_wan_pops_only_reachable_peer() -> None:
+    assert _PAIR_PRICED_SELECTION.segments == frozenset(_PAIR_PRICED)
 
 
-def test_the_floor_prices_the_diverse_circuits_owed_and_nothing_between_a_pair() -> None:
-    assert _PAIR_PRICED_SELECTION.lower_bound_miles == pytest.approx(42.0)
+def test_the_floor_states_both_circuits_to_a_wan_pops_only_reachable_peer() -> None:
+    assert _PAIR_PRICED_SELECTION.lower_bound_miles == pytest.approx(170.0)
 
 
 _ASKED_TWO_OVER_ONE = _Requirement(
@@ -157,7 +150,7 @@ _UNDER_WATER_PAIRS = {
 _UNDER_WATER_ONLY = fixtures.fiber_segments_under_water(
     _UNDER_WATER_PAIRS, set(_UNDER_WATER_PAIRS)
 )
-_UNDER_WATER_ONLY_SELECTION = _selected(_UNDER_WATER_ONLY, ("a", "b"), max_wan_pop_count=2)
+_UNDER_WATER_ONLY_SELECTION = _selected(_UNDER_WATER_ONLY, ("a", "b"))
 
 
 def test_submarine_fiber_is_selected_where_a_peer_is_reachable_no_other_way() -> None:
@@ -167,7 +160,7 @@ def test_submarine_fiber_is_selected_where_a_peer_is_reachable_no_other_way() ->
 _TWIN_CIRCUITS = physical({
     ("a", "p"): 1.0, ("b", "p"): 1.0, ("a", "q"): 1.0, ("b", "q"): 1.0,
 })
-_TWIN_SELECTION = _selected(_TWIN_CIRCUITS, ("a", "b"), max_wan_pop_count=2)
+_TWIN_SELECTION = _selected(_TWIN_CIRCUITS, ("a", "b"))
 
 
 def test_a_pair_allowed_two_circuits_between_them_is_given_both() -> None:
@@ -186,20 +179,20 @@ _TWIN_OWNED = fixtures.carrier_fiber_segments({
     ("a", "q"): (1.0, ("lumen",)),
     ("b", "q"): (1.0, ("lumen",)),
 })
-_TWIN_SPLIT_SELECTION = _selected(_TWIN_SPLIT, ("a", "b"), max_wan_pop_count=2)
+_TWIN_SPLIT_SELECTION = _selected(_TWIN_SPLIT, ("a", "b"))
 _CHAIN_ASKED_ONE = _selected(_CHAIN, ("a", "b", "c"), number_of_diverse_circuits=1)
 
 
 def test_a_site_is_owed_a_diverse_circuit_that_changes_hands() -> None:
-    assert _owed(_TWIN_SPLIT, ("a", "b"), "a", max_wan_pop_count=2) == 2
+    assert _owed(_TWIN_SPLIT, ("a", "b"), "a") == 2
 
 
 def test_a_site_is_owed_both_diverse_circuits_where_one_carrier_has_each() -> None:
-    assert _owed(_TWIN_OWNED, ("a", "b"), "a", max_wan_pop_count=2) == 2
+    assert _owed(_TWIN_OWNED, ("a", "b"), "a") == 2
 
 
 def test_fiber_nobody_owns_is_owed_like_anybodys() -> None:
-    assert _owed(_TWIN_CIRCUITS, ("a", "b"), "a", max_wan_pop_count=2) == 2
+    assert _owed(_TWIN_CIRCUITS, ("a", "b"), "a") == 2
 
 
 def test_the_fiber_selected_carries_the_circuit_that_changes_hands() -> None:
@@ -213,17 +206,14 @@ def test_the_floor_is_measured_over_the_requirements_the_build_is_held_to() -> N
 
 
 _SHARED_TRANSIT_SELECTION = _selected(
-    fixtures.SHARED_TRANSIT_FIBER, fixtures.SHARED_TRANSIT_SITES, max_wan_pop_count=2
+    fixtures.SHARED_TRANSIT_FIBER, fixtures.SHARED_TRANSIT_SITES
 )
 
 
 def _shared_transit_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, int]:
     held = {segment: fixtures.SHARED_TRANSIT_FIBER[segment] for segment in segments}
     return diverse_circuit_ceilings(CircuitProofInputs(
-        fixtures.SHARED_TRANSIT_SITES,
-        build_adjacency(held),
-        _DIVERSE_CIRCUITS,
-        2,
+        fixtures.SHARED_TRANSIT_SITES, build_adjacency(held)
     ))
 
 
@@ -246,8 +236,8 @@ _TRIANGLE_SITES = ("a", "b", "c", "d", "e", "f")
 _TRIANGLES_SELECTION = _selected(_TWO_TRIANGLES, _TRIANGLE_SITES)
 
 
-def test_the_segment_the_first_answer_missed_is_selected_once_it_is_written_down() -> None:
-    assert ("c", "d") in _TRIANGLES_SELECTION.segments
+def test_no_fiber_is_selected_for_a_pair_the_whole_fiber_cannot_join_twice() -> None:
+    assert ("c", "d") not in _TRIANGLES_SELECTION.segments
 
 
 _HANDED_OFF = frozenset({("a", "p"), ("b", "p"), ("a", "q"), ("b", "q")})
@@ -255,14 +245,12 @@ _HANDED_OFF = frozenset({("a", "p"), ("b", "p"), ("a", "q"), ("b", "q")})
 
 def test_the_fiber_selected_is_the_shortest_though_every_circuit_over_it_changes_hands() -> None:
     assert _selected(
-        fixtures.OFFERED_WAYS_FIBER, fixtures.OFFERED_WAYS_SITES, max_wan_pop_count=2
+        fixtures.OFFERED_WAYS_FIBER, fixtures.OFFERED_WAYS_SITES
     ).segments == _HANDED_OFF
 
 
 _DISTANT_PEER_SITES = ("hil", "sea", "syd")
-_DISTANT_PEER_SELECTION = select_fiber(FiberInputs(
-    _DISTANT_PEER_SITES, fixtures.DISTANT_PEER_FIBER, _DIVERSE_CIRCUITS, None,
-))
+_DISTANT_PEER_SELECTION = _selected(fixtures.DISTANT_PEER_FIBER, _DISTANT_PEER_SITES)
 
 
 def _distant_peer_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, int]:
@@ -271,14 +259,13 @@ def _distant_peer_ceilings(segments: frozenset[tuple[str, str]]) -> dict[str, in
         build_adjacency({
             segment: fixtures.DISTANT_PEER_FIBER[segment] for segment in segments
         }),
-        _DIVERSE_CIRCUITS,
     ))
 
 
-def test_the_fiber_selected_for_a_site_carries_every_diverse_circuit_its_fiber_carries() -> None:
-    assert _distant_peer_ceilings(_DISTANT_PEER_SELECTION.segments) == _distant_peer_ceilings(
-        frozenset(fixtures.DISTANT_PEER_FIBER)
-    ) == {"hil": 2, "sea": 2, "syd": 2}
+def test_the_fiber_selected_for_a_site_carries_the_diverse_circuits_it_asked_for() -> None:
+    assert _distant_peer_ceilings(_DISTANT_PEER_SELECTION.segments) == {
+        "hil": 2, "sea": 2, "syd": 2,
+    }
 
 
 _MANY_PASS = physical(fixtures.MANY_PASS_SEGMENTS)
@@ -295,7 +282,7 @@ def test_a_search_that_runs_long_enough_buys_the_shortest_synthesis_there_is() -
 
 def test_the_fiber_a_long_search_settles_on_meets_every_requirement_asked_of_it() -> None:
     assert not _shortfalls(
-        _asked_of_every_wan_pop(_writing(_MANY_PASS_INPUTS, _MANY_PASS_FIBER, _EVERY_WAY_OUT)),
+        _answered_by_every_wan(_writing(_MANY_PASS_INPUTS, _MANY_PASS_FIBER)),
         _held(_MANY_PASS_FIBER, _MANY_PASS_SELECTION.segments),
     )
 
@@ -334,6 +321,14 @@ def test_no_selection_is_floored_above_the_fiber_it_actually_holds() -> None:
         name
         for name, selection, fiber in _CASES
         if selection.lower_bound_miles > _selected_miles(selection, fiber) + _SLACK
+    ] == []
+
+
+def test_every_selection_runs_the_miles_of_the_floor_stated_under_it() -> None:
+    assert [
+        name
+        for name, selection, fiber in _CASES
+        if abs(selection.lower_bound_miles - _selected_miles(selection, fiber)) > _SLACK
     ] == []
 
 
@@ -391,8 +386,20 @@ def test_a_backbone_asked_for_one_circuit_is_priced_no_way_past_any_pop() -> Non
     assert _PAST_THE_POP_ASKED_ONE.lower_bound_miles == pytest.approx(20.0)
 
 
-def test_the_fiber_selected_holds_none_of_the_circuits_only_a_lost_pop_calls_for() -> None:
-    assert _PAST_THE_POP_SELECTION.segments == frozenset(physical(_ON_ONE_POP))
+def test_the_fiber_selected_holds_the_circuit_that_keeps_one_pop_from_splitting_the_wan() -> None:
+    assert ("a", "c") in _PAST_THE_POP_SELECTION.segments
+
+
+def test_the_fiber_selected_runs_the_miles_the_floor_states_for_surviving_the_pop() -> None:
+    assert _selected_miles(_PAST_THE_POP_SELECTION, physical(_PAST_THE_POP)) == pytest.approx(
+        240.0
+    )
+
+
+def test_a_backbone_asked_for_one_circuit_is_selected_no_way_past_any_pop() -> None:
+    assert _selected_miles(_PAST_THE_POP_ASKED_ONE, physical(_PAST_THE_POP)) == pytest.approx(
+        20.0
+    )
 
 
 _ONE_CIRCUIT_SEAT = {**_PAST_THE_POP, ("d", "m"): 5.0}
@@ -403,3 +410,16 @@ _ONE_CIRCUIT_SEAT_SELECTION = _selected(
 
 def test_a_wan_pop_the_fiber_can_give_one_circuit_is_priced_no_way_past_any_pop() -> None:
     assert _ONE_CIRCUIT_SEAT_SELECTION.lower_bound_miles == pytest.approx(55.0)
+
+
+_TWO_WAYS_TO_ONE_PEER = physical(fixtures.TWO_WAYS_TO_ONE_PEER_SEGMENTS)
+_TWO_WAYS_SELECTION = _selected(_TWO_WAYS_TO_ONE_PEER, fixtures.TWO_WAYS_TO_ONE_PEER_WAN_POPS)
+
+
+def test_the_fiber_selected_carries_as_many_ways_out_as_the_grader_credits() -> None:
+    assert diverse_circuit_ceilings(CircuitProofInputs(
+        fixtures.TWO_WAYS_TO_ONE_PEER_WAN_POPS,
+        build_adjacency({
+            segment: _TWO_WAYS_TO_ONE_PEER[segment] for segment in _TWO_WAYS_SELECTION.segments
+        }),
+    ))["a"] == fixtures.two_ways_to_one_peer_credited() == 2

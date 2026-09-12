@@ -37,6 +37,8 @@ _ELSEWHERE = _whole(("y", "z"))
 
 _ROUND_ONE_CITY = _whole(("a", "x"), ("a", "p"), ("p", "x"), ("b", "x"), ("c", "x"))
 
+_TWO_WAYS_TO_ONE_PEER = _whole(("a", "p"), ("p", "b"), ("a", "q"), ("q", "b"), ("b", "c"))
+
 
 def test_fiber_already_carrying_what_was_asked_reports_no_separation() -> None:
     assert _asked(_DIRECT, 1) is None
@@ -72,3 +74,13 @@ def test_sparing_that_city_leaves_the_same_fiber_carrying_both_diverse_circuits(
 
 def test_a_peer_the_fiber_does_not_carry_is_left_out_of_the_count() -> None:
     assert _asked(_DIRECT, 1, peers=frozenset({"nowhere"})) == _NOTHING_TO_SELECT
+
+
+def test_two_circuits_ending_at_one_peer_carry_two_ways_out() -> None:
+    assert _asked(_TWO_WAYS_TO_ONE_PEER, 2, peers=_TWO_PEERS) is None
+
+
+def test_a_circuit_ending_at_a_peer_and_one_crossing_it_carry_one_way_out() -> None:
+    assert _asked(_whole(("a", "p"), ("p", "b"), ("b", "c")), 2, peers=_TWO_PEERS) == Separation(
+        frozenset(), frozenset({("a", "p")})
+    )

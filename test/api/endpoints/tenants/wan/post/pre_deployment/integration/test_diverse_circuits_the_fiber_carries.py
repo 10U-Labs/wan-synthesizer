@@ -119,3 +119,44 @@ def test_the_ring_synthesis_holds_every_site_to_the_two_circuits_its_fiber_carri
     express: SynthesisArtifacts,
 ) -> None:
     assert express.validation["backbone_mesh_independence_deficient"] == []
+
+
+_TWO_WAYS_SITES = ("a", "b")
+_TWO_WAYS_TRANSIT = ("p", "q")
+_TWO_WAYS_FIBER = fixtures.fiber_segments_from({
+    ("a", "p"): 1.0, ("p", "b"): 1.0, ("a", "q"): 1.0, ("q", "b"): 1.0,
+})
+_WAN_POPS_THE_CONFIG_ALLOWS = 6
+
+
+@pytest.fixture(name="two_ways_to_one_peer", scope="module")
+def _two_ways_to_one_peer() -> SynthesisArtifacts:
+    return fixtures.run_synthesis(
+        [
+            fixtures.carrier_pop(city, 38.0, -115.0 + 2.0 * index)
+            for index, city in enumerate(_TWO_WAYS_SITES + _TWO_WAYS_TRANSIT)
+        ],
+        _TWO_WAYS_FIBER,
+        SynthesisParams(
+            min_wan_pop_count=len(_TWO_WAYS_SITES),
+            max_wan_pop_count=_WAN_POPS_THE_CONFIG_ALLOWS,
+            forced_wan_pop_names=_TWO_WAYS_SITES,
+            exclusions=RoleExclusions(prohibited_wan_pop_names=_TWO_WAYS_TRANSIT),
+            promote_high_degree_convergences=False,
+            tuning=Tuning(backbone_number_of_diverse_circuits=2),
+        ),
+    )
+
+
+def test_a_pair_selected_below_the_count_its_config_allows_is_credited_both_circuits(
+    two_ways_to_one_peer: SynthesisArtifacts,
+) -> None:
+    assert two_ways_to_one_peer.validation["backbone_diverse_circuits_ceiling_limited"] == []
+
+
+def test_that_pair_is_drawn_both_circuits_sharing_no_pop_between(
+    two_ways_to_one_peer: SynthesisArtifacts,
+) -> None:
+    assert sorted(
+        drawn_circuit.pop_ids for drawn_circuit in fixtures.mesh_circuits(two_ways_to_one_peer)
+    ) == [("a", "p", "b"), ("a", "q", "b")]

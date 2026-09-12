@@ -41,7 +41,6 @@ class WanPopConstraints:
     removed_pairs: frozenset[tuple[str, str]] = frozenset()
     number_of_diverse_circuits: int = 3
     forced_pairs: frozenset[tuple[str, str]] = frozenset()
-    max_wan_pop_count: int | None = None
 
 
 @dataclass(frozen=True)
@@ -116,10 +115,7 @@ def _proved_over(
         if peer == site or segment_key(site, peer) not in constraints.removed_pairs
     )
     return sorted(
-        diverse_circuits(site, CircuitProofInputs(
-            peers, build_adjacency(fiber),
-            constraints.number_of_diverse_circuits, constraints.max_wan_pop_count,
-        )),
+        diverse_circuits(site, CircuitProofInputs(peers, build_adjacency(fiber))),
         key=lambda pop_ids: (miles_along(pop_ids, fiber), pop_ids),
     )[: constraints.number_of_diverse_circuits]
 
@@ -247,8 +243,7 @@ def _selected_fiber(
     constraints: WanPopConstraints,
 ) -> tuple[frozenset[tuple[str, str]], float, list[SynthesisCircuit]]:
     selection = select_fiber(FiberInputs(
-        wan_pop_ids, fiber_segments,
-        constraints.number_of_diverse_circuits, constraints.max_wan_pop_count,
+        wan_pop_ids, fiber_segments, constraints.number_of_diverse_circuits
     ))
     drawn = (
         _pinned_circuit(pair, fiber_segments) for pair in sorted(constraints.forced_pairs)

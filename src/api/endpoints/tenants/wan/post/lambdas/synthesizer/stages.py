@@ -58,11 +58,7 @@ def finalize(
         number_of_diverse_circuits=params.tuning.backbone_number_of_diverse_circuits,
         degree_exempt=degree_exempt,
         ceilings=diverse_circuit_ceilings(CircuitProofInputs(
-            synthesis.wan_pop_ids,
-            adjacency,
-            params.tuning.backbone_number_of_diverse_circuits,
-            params.max_wan_pop_count,
-            terrestrial,
+            synthesis.wan_pop_ids, adjacency, terrestrial
         )),
     )
     validation = validate_synthesis(

@@ -254,7 +254,6 @@ def build_search_plan(
         strength_by_id,
         tuning=params.tuning,
         forced_circuits=forced_circuits,
-        max_wan_pop_count=params.max_wan_pop_count,
     )
 
 
