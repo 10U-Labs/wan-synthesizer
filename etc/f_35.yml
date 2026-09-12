@@ -5,8 +5,6 @@ backbone:
     circuits: []
     wan_pops:
       - Ashburn, VA
-      - Hillsboro, OR
-      - Seattle, WA
   number_of_diverse_circuits: 2
   prohibited:
     circuits: []
