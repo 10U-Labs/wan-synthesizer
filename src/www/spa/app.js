@@ -237,7 +237,14 @@ function storeToken(token) {
 
 let idToken = storedToken();
 
+function showApp() {
+  document.getElementById("sign-in").hidden = true;
+  document.getElementById("app").hidden = false;
+  map.invalidateSize();
+}
+
 function showSignIn(note) {
+  document.getElementById("app").hidden = true;
   document.getElementById("sign-in-note").textContent = note;
   document.getElementById("sign-in").hidden = false;
   google.accounts.id.initialize({
@@ -255,7 +262,7 @@ function showSignIn(note) {
 function onSignedIn(response) {
   idToken = response.credential;
   storeToken(idToken);
-  document.getElementById("sign-in").hidden = true;
+  showApp();
   start().catch((error) => {
     console.error(error);
   });
@@ -359,6 +366,7 @@ async function start() {
 
 function init() {
   if (idToken) {
+    showApp();
     return start();
   }
   showSignIn(SIGN_IN_NOTES.first);

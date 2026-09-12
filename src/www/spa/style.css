@@ -42,6 +42,10 @@ body {
   color: #fff;
 }
 
+#app {
+  height: 100%;
+}
+
 #map {
   height: calc(100% - 2.6rem);
   width: 100%;
@@ -84,7 +88,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(31, 41, 51, 0.8);
+  background: #1f2933;
   z-index: 1000;
 }
 
