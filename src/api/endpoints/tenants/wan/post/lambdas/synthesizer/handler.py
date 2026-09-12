@@ -121,7 +121,9 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
         graph, fiber_segments, synthesis, params, overrides.degree_exempt_wan_pop_ids
     )
     payload = synthesis_payload(
-        SynthesisArtifacts(graph, fiber_segments, synthesis, validation)
+        SynthesisArtifacts(
+            graph, fiber_segments, synthesis, validation, homed.fabricated_ids
+        )
     )
     logger.info("Publishing WAN for %s", tenant)
     return {

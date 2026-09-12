@@ -34,10 +34,16 @@ def _synthesis(homings: Homings, metrics: SynthesisMetrics | None = None) -> Syn
     )
 
 
-def _payload_for(synthesis: Synthesis, sites: list[Site]) -> dict[str, Any]:
+def _payload_for(
+    synthesis: Synthesis, sites: list[Site], fabricated_ids: frozenset[str] = frozenset()
+) -> dict[str, Any]:
     fiber = {segment_key("b", "x"): FiberSegment("b", "x", 1.0)}
     artifacts = SynthesisArtifacts(
-        [*sites, fixtures.carrier_pop("b")], fiber, synthesis, ARTIFACTS.validation
+        [*sites, fixtures.carrier_pop("b")],
+        fiber,
+        synthesis,
+        ARTIFACTS.validation,
+        fabricated_ids,
     )
     return synthesis_payload(artifacts)
 
@@ -136,3 +142,24 @@ def test_a_site_that_homed_nowhere_is_counted_in_neither_kind() -> None:
         [fixtures.tenant_site("s"), fixtures.tenant_site("stranded")],
     )
     assert payload["summary"]["tenant_site_count"] == 1
+
+
+def _published_sites_with_a_twin() -> dict[str, dict[str, Any]]:
+    payload = _payload_for(
+        _synthesis(Homings([], [])),
+        [fixtures.carrier_pop("fac_s")],
+        frozenset({"fac_s"}),
+    )
+    return {site["id"]: site for site in payload["sites"]}
+
+
+def test_a_site_the_synthesizer_fabricated_says_so() -> None:
+    assert _published_sites_with_a_twin()["fac_s"]["fabricated"] is True
+
+
+def test_a_carrier_pop_says_it_was_not_fabricated() -> None:
+    assert _published_sites_with_a_twin()["b"]["fabricated"] is False
+
+
+def test_every_published_site_says_whether_it_was_fabricated() -> None:
+    assert all("fabricated" in site for site in synthesis_payload(ARTIFACTS)["sites"])

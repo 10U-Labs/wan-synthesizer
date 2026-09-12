@@ -79,6 +79,7 @@ def synthesis_payload(artifacts: SynthesisArtifacts) -> dict[str, Any]:
                 **asdict(site),
                 "tier_role": site_role(site, synthesis),
                 "included": site.id in included_site_ids(synthesis),
+                "fabricated": site.id in artifacts.fabricated_ids,
             }
             for site in sites
         ],

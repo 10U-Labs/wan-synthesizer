@@ -166,6 +166,7 @@ class SynthesisArtifacts:
     fiber_segments: dict[tuple[str, str], FiberSegment]
     synthesis: Synthesis
     validation: ValidationReport
+    fabricated_ids: frozenset[str]
 
 KIND_POP = "PoP"
 KIND_ROADM = "ROADM"

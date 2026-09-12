@@ -237,13 +237,16 @@ def run_synthesis(
     off_net_sites: list[Site] | None = None,
 ) -> SynthesisArtifacts:
     homed = dual_home(sites, fiber_segments, params, off_net_sites or [])
-    sites, fiber_segments = homed.sites, homed.fiber_segments
-    sites, fiber_segments, overrides = apply_role_overrides(sites, fiber_segments, params)
+    sites, fiber_segments, overrides = apply_role_overrides(
+        homed.sites, homed.fiber_segments, params
+    )
     synthesis = synthesize_two_tier(sites, fiber_segments, params, overrides)
     sites, fiber_segments, synthesis, validation = finalize(
         sites, fiber_segments, synthesis, params, overrides.degree_exempt_wan_pop_ids
     )
-    return SynthesisArtifacts(sites, fiber_segments, synthesis, validation)
+    return SynthesisArtifacts(
+        sites, fiber_segments, synthesis, validation, homed.fabricated_ids
+    )
 
 
 def mesh_circuits(artifacts: SynthesisArtifacts) -> list[SynthesisCircuit]:
@@ -319,7 +322,9 @@ def synthesis_over_fiber(
 def ring_artifacts() -> SynthesisArtifacts:
     sites, fiber = _ring_inputs()
     synthesis = synthesize_two_tier(sites, fiber, ring_params())
-    return SynthesisArtifacts(sites, fiber, synthesis, validate_synthesis(sites, synthesis))
+    return SynthesisArtifacts(
+        sites, fiber, synthesis, validate_synthesis(sites, synthesis), frozenset()
+    )
 
 
 def ring_inputs_with_roadm(roadm_id: str) -> RingInputs:
@@ -344,7 +349,7 @@ def _forced_artifacts(
     sites, fiber_segments, synthesis, validation = finalize(
         sites, fiber_segments, synthesis, params, overrides.degree_exempt_wan_pop_ids
     )
-    return SynthesisArtifacts(sites, fiber_segments, synthesis, validation)
+    return SynthesisArtifacts(sites, fiber_segments, synthesis, validation, frozenset())
 
 
 def forced_wan_pop_artifacts(name: str) -> SynthesisArtifacts:
@@ -417,7 +422,9 @@ def convergence_hub_artifacts(
     )
     sites, fiber, overrides = apply_role_overrides(sites, fiber, params)
     synthesis = synthesize_two_tier(sites, fiber, params, overrides)
-    return SynthesisArtifacts(sites, fiber, synthesis, validate_synthesis(sites, synthesis))
+    return SynthesisArtifacts(
+        sites, fiber, synthesis, validate_synthesis(sites, synthesis), frozenset()
+    )
 
 
 def synthesis_inputs_from_fiber(

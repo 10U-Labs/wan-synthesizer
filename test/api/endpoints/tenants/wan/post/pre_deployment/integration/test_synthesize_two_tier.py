@@ -223,6 +223,23 @@ def test_off_net_synthesis_validates_connected() -> None:
     assert artifacts.validation["connected"] is True
 
 
+def test_the_off_net_twin_is_published_as_fabricated() -> None:
+    assert [
+        site["fabricated"]
+        for site in synthesis_payload(_forced_off_net_artifacts())["sites"]
+        if site["id"].startswith("offnet_")
+    ] == [True]
+
+
+def test_no_carrier_pop_of_the_ring_is_published_as_fabricated() -> None:
+    ring = {site.id for site in fixtures.ring_sites()}
+    assert not any(
+        site["fabricated"]
+        for site in synthesis_payload(_forced_off_net_artifacts())["sites"]
+        if site["id"] in ring
+    )
+
+
 CONVERGENCE_HUB = fixtures.convergence_hub_artifacts()
 
 
