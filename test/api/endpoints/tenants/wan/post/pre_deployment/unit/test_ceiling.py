@@ -258,6 +258,28 @@ def test_a_site_reachable_only_over_water_keeps_the_diverse_circuits_it_has() ->
     )) == [("syd", "hil"), ("syd", "sea")]
 
 
+_TWO_SHORES = fixtures.fiber_segments_under_water(
+    {
+        ("nyc", "phl"): 10.0, ("phl", "tpa"): 10.0,
+        ("nyc", "atl"): 10.0, ("atl", "tpa"): 10.0,
+        ("nyc", "lon"): 3000.0, ("lon", "mol"): 10.0,
+    },
+    {("nyc", "lon")},
+)
+_TWO_SHORES_BACKBONE = ("mol", "nyc", "tpa")
+
+
+def test_a_site_joined_over_land_to_one_peer_is_proved_a_crossing_to_another() -> None:
+    assert sorted(diverse_circuits(
+        "nyc",
+        CircuitProofInputs(
+            _TWO_SHORES_BACKBONE,
+            build_adjacency(_TWO_SHORES),
+            terrestrial=_on_land(_TWO_SHORES),
+        ),
+    )) == [("nyc", "atl", "tpa"), ("nyc", "lon", "mol"), ("nyc", "phl", "tpa")]
+
+
 _ALREADY_NEEDED_PROOF = CircuitProofInputs(
     fixtures.ALREADY_NEEDED_SITES, build_adjacency(fixtures.ALREADY_NEEDED_FIBER)
 )

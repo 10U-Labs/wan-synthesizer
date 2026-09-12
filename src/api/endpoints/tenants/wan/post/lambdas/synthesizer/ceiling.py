@@ -139,16 +139,10 @@ class CircuitProofInputs:
     terrestrial: dict[str, list[tuple[str, float]]] = field(default_factory=dict)
 
 
-def _peers_over_land(site: str, inputs: CircuitProofInputs) -> frozenset[str]:
-    joined = reachable_over(inputs.terrestrial).get(site, frozenset())
-    return joined & frozenset(peer for peer in inputs.wan_pop_ids if peer != site)
-
-
-def _over_land(
+def _without_crossings_home(
     site: str, inputs: CircuitProofInputs, adjacency: dict[str, list[tuple[str, float]]]
 ) -> dict[str, list[tuple[str, float]]]:
-    if not _peers_over_land(site, inputs):
-        return adjacency
+    home = reachable_over(inputs.terrestrial).get(site, frozenset())
     on_land = {
         city: {neighbor for neighbor, _weight in neighbors}
         for city, neighbors in inputs.terrestrial.items()
@@ -157,7 +151,7 @@ def _over_land(
         city: [
             (neighbor, weight)
             for neighbor, weight in neighbors
-            if neighbor in on_land.get(city, frozenset())
+            if neighbor not in home or neighbor in on_land.get(city, frozenset())
         ]
         for city, neighbors in adjacency.items()
     }
@@ -166,7 +160,7 @@ def _over_land(
 
 def diverse_circuits(site: str, inputs: CircuitProofInputs) -> list[tuple[str, ...]]:
     return _proved_circuits(
-        site, inputs.wan_pop_ids, _over_land(site, inputs, inputs.adjacency)
+        site, inputs.wan_pop_ids, _without_crossings_home(site, inputs, inputs.adjacency)
     )
 
 

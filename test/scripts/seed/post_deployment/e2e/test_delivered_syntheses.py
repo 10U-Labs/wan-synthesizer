@@ -7,6 +7,9 @@ from urllib.error import HTTPError
 
 import seed
 from seed import DEFAULT_API, _get
+from synthesizer.graphs import reachable_over
+from synthesizer.input_graph import Site
+from synthesizer.local_fiber import LOCAL_FIBER_HOMING_DEGREE, nearest_carrier_pops
 from test_published_syntheses import (
     wan_pop_groups,
     cut_cities,
@@ -15,6 +18,7 @@ from test_published_syntheses import (
     fiber_miles_run_over,
     overbuilt_pairs,
     removable_circuits,
+    site_from_row,
     worst_haul,
 )
 
@@ -240,10 +244,24 @@ def _city_names() -> dict[tuple[str, str], str]:
     return named
 
 
-def _carrier_fiber() -> set[frozenset[str]]:
+def _carrier_pops() -> list[Site]:
+    named = _city_names()
+    pops: dict[str, Site] = {}
+    for path in sorted((seed.DATA / "pops").glob("*.csv")):
+        with path.open(encoding="utf-8") as handle:
+            for row in csv.DictReader(handle):
+                name = named[(row["Municipality"], row["State"])]
+                pops.setdefault(
+                    name,
+                    Site(name, name, "PoP", (float(row["Latitude"]), float(row["Longitude"]))),
+                )
+    return list(pops.values())
+
+
+def _carrier_fiber(directory: str = "*") -> set[frozenset[str]]:
     named = _city_names()
     pairs: set[frozenset[str]] = set()
-    for path in sorted((seed.DATA / seed.FIBER_SEGMENTS).glob("*/*.csv")):
+    for path in sorted((seed.DATA / seed.FIBER_SEGMENTS).glob(f"{directory}/*.csv")):
         with path.open(encoding="utf-8") as handle:
             for row in csv.DictReader(handle):
                 near = named.get((row["A_Municipality"], row["A_State"]))
@@ -259,12 +277,14 @@ def _hops(circuit: dict[str, Any]) -> list[frozenset[str]]:
 
 
 def _fiber_laid_to_a_fabricated_wan_pop(synthesis: dict[str, Any]) -> set[frozenset[str]]:
-    fabricated = {row["name"] for row in synthesis["wan_pops"] if row.get("fabricated")}
+    pops = _carrier_pops()
     return {
-        hop
-        for circuit in synthesis["circuits"]
-        for hop in _hops(circuit)
-        if hop & fabricated
+        frozenset({row["name"], pop.name})
+        for row in synthesis["wan_pops"]
+        if row.get("fabricated")
+        for pop in nearest_carrier_pops(
+            site_from_row(row), pops, LOCAL_FIBER_HOMING_DEGREE, None
+        )
     }
 
 
@@ -354,31 +374,37 @@ def _runs_under_water(pops: list[str], under_water: set[frozenset[str]]) -> bool
     )
 
 
-def _circuits_each_site_holds(synthesis: dict[str, Any]) -> dict[str, list[list[str]]]:
-    held: dict[str, list[list[str]]] = {}
-    for circuit in synthesis["circuits"]:
-        for end in (circuit["route"][0], circuit["route"][-1]):
-            held.setdefault(end, []).append(circuit["route"])
-    return held
+def _shores(fiber: set[frozenset[str]]) -> dict[str, frozenset[str]]:
+    adjacency: dict[str, list[tuple[str, float]]] = {}
+    for pair in fiber:
+        if len(pair) != 2:
+            continue
+        near, far = sorted(pair)
+        adjacency.setdefault(near, []).append((far, 0.0))
+        adjacency.setdefault(far, []).append((near, 0.0))
+    return reachable_over(adjacency)
 
 
-def _sites_ashore_holding_a_crossing(synthesis: dict[str, Any]) -> list[tuple[str, ...]]:
+def _pairs_joined_over_land_drawn_under_water(
+        synthesis: dict[str, Any]) -> list[tuple[str, ...]]:
     under_water = _submarine_pairs(synthesis)
+    ashore = _shores(
+        _carrier_fiber(seed.TERRESTRIAL) | _fiber_laid_to_a_fabricated_wan_pop(synthesis)
+    )
     return [
-        (synthesis["tenant"], site, " -> ".join(pops))
-        for site, circuits in sorted(_circuits_each_site_holds(synthesis).items())
-        for pops in circuits
+        (synthesis["tenant"], f"{pops[0]} <-> {pops[-1]}", " -> ".join(pops))
+        for pops in sorted(circuit["route"] for circuit in synthesis["circuits"])
         if _runs_under_water(pops, under_water)
-        and any(not _runs_under_water(other, under_water) for other in circuits)
+        and pops[-1] in ashore.get(pops[0], frozenset())
     ]
 
 
-def test_no_published_site_with_a_circuit_over_land_is_drawn_one_under_water(
+def test_no_published_pair_joined_over_land_is_drawn_a_circuit_under_water(
         published_syntheses: list[dict[str, Any]]) -> None:
     assert [
         offender
         for synthesis in published_syntheses
-        for offender in _sites_ashore_holding_a_crossing(synthesis)
+        for offender in _pairs_joined_over_land_drawn_under_water(synthesis)
     ] == []
 
 
