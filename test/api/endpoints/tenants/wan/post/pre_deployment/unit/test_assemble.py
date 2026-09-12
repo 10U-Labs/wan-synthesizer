@@ -211,5 +211,3 @@ def test_a_synthesis_measures_the_provider_miles_over_the_provider_circuits_alon
 def test_a_provider_region_further_out_is_not_averaged_into_the_tenant_miles() -> None:
     metrics = _mixed_synthesis().metrics
     assert metrics.tenant_homing_miles < metrics.provider_homing_miles
-
-
