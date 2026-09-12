@@ -62,6 +62,16 @@ Holding a tenant asking for one circuit to the directive, for GitHub
 issue #190, moved ***REMOVED*** alone: it publishes 8,407.716 against 8,407.716
 over two transatlantic circuits sharing no PoP, where it published
 4,186.183 over one.
+5abe05a4 pinned ***REMOVED*** at Molesworth, United Kingdom (an off-net row under
+`inputs.forced`), Stuttgart, Germany and Tampa, FL in place of Ashburn, VA,
+and it publishes 11,152.378 against 11,024.526 over four PoPs, New York, NY
+seated by the synthesizer, with ceilings New York 6, Molesworth 3, Stuttgart
+2 and Tampa 2 since 646efe89 proved circuits per pair.
+The e2e helpers in `test_delivered_syntheses.py` (`_overstated_ceilings`,
+`_credited_past_the_ceiling`, `_pairs_joined_over_land_drawn_under_water`,
+`_circuits_over_fiber_nobody_owns`) take a dict shaped like
+`test_published_syntheses.published_synthesis`, so they run over a local
+synthesis the same way, with `boto3` in the venv for `handler._delivered`.
 A selection or a floor that reads differently from those figures is the tip
 under test's doing.
 Repetition of a figure is also the only tell for the race in
