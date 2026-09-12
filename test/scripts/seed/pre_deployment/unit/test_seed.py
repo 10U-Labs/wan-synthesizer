@@ -397,7 +397,19 @@ def test_post_prints_the_response_status(capsys: pytest.CaptureFixture[str]) -> 
 def test_post_json_decodes_the_json_response(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         urllib.request, "urlopen", UrlopenRecorder(body=b'{"deleted": ["csps/a.json"]}'))
-    assert _post_json("http://api", "store/prune") == {"deleted": ["csps/a.json"]}
+    assert _post_json("http://api", "store/prune", {}) == {"deleted": ["csps/a.json"]}
+
+
+def test_post_json_encodes_the_json_body(urlopen_recorder: UrlopenRecorder) -> None:
+    _post_json("http://api", "store/prune", {"written": ["a.json"]})
+    assert urlopen_recorder.requests[0].data == b'{"written": ["a.json"]}'
+
+
+@pytest.mark.usefixtures("urlopen_recorder")
+def test_put_records_the_key_it_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(seed, "WRITTEN", set())
+    _put("http://api", "tenants/t/knobs", {})
+    assert seed.WRITTEN == {"tenants/t/knobs.json"}
 
 
 def test_get_uses_the_get_method(urlopen_recorder: UrlopenRecorder) -> None:
@@ -638,11 +650,11 @@ def test_build_merged_carriers_posts_the_merge(post_recorder: CallRecorder) -> N
 
 
 def _prune_answering(
-        monkeypatch: pytest.MonkeyPatch, deleted: list[str]) -> list[tuple[str, str]]:
-    sent: list[tuple[str, str]] = []
+        monkeypatch: pytest.MonkeyPatch, deleted: list[str]) -> list[tuple[str, str, Any]]:
+    sent: list[tuple[str, str, Any]] = []
 
-    def _answer(api: str, path: str) -> dict[str, list[str]]:
-        sent.append((api, path))
+    def _answer(api: str, path: str, body: Any) -> dict[str, list[str]]:
+        sent.append((api, path, body))
         return {"deleted": deleted}
 
     monkeypatch.setattr(seed, "_post_json", _answer)
@@ -652,7 +664,14 @@ def _prune_answering(
 def test_prune_store_posts_the_prune(monkeypatch: pytest.MonkeyPatch) -> None:
     sent = _prune_answering(monkeypatch, [])
     prune_store("http://api")
-    assert sent == [("http://api", "store/prune")]
+    assert [(api, path) for api, path, _body in sent] == [("http://api", "store/prune")]
+
+
+def test_prune_store_sends_the_keys_this_run_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
+    sent = _prune_answering(monkeypatch, [])
+    monkeypatch.setattr(seed, "WRITTEN", {"tenants/t/knobs.json", "providers/regions.json"})
+    prune_store("http://api")
+    assert sent[0][2] == {"written": ["providers/regions.json", "tenants/t/knobs.json"]}
 
 
 def test_prune_store_names_every_key_that_went(
@@ -671,7 +690,7 @@ def test_prune_store_names_nothing_when_the_store_is_already_clean(
 
 def test_prune_store_survives_an_answer_it_does_not_recognise(
         monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-    monkeypatch.setattr(seed, "_post_json", lambda _api, _path: [])
+    monkeypatch.setattr(seed, "_post_json", lambda _api, _path, _body: [])
     prune_store("http://api")
     assert "deleted " not in capsys.readouterr().out
 

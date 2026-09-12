@@ -1,6 +1,6 @@
 ---
 name: seeding-races-the-routing-deploy
-description: seed can beat the deploy of anything it exercises: a new store resource fails the PUT with 403 or 404, and a synthesizer change fails nothing at all and grades WANs the old Lambda built
+description: seed can beat the deploy of anything it exercises: a new store resource fails the PUT with 403 or 404, a synthesizer change fails nothing at all and grades WANs the old Lambda built, and the prune keeps what the run wrote so a rename never races it
 metadata:
   type: project
 ---
@@ -8,6 +8,16 @@ metadata:
 # Seeding races the routing deploy
 
 Adding a new per-tenant store resource can fail the first `seed` run on the new PUT: `seed`, `api_common_routing` and `api_endpoint_tenants` are independent workflows on the same push, so seeding can beat both the route and the handler that stores it. The code says which is behind — `HTTP 403` is a route API Gateway does not define yet, `HTTP 404` is the old handler not knowing the collection. Wait for both, then `gh run rerun <run-id> --failed`. A later commit that misses `etc/`, `openapi.json` and `seed.py` will not re-trigger `seed` at all.
+
+## The prune keeps what the run wrote, so a rename never races it
+
+`prune_store` sends `store/prune` every key `_put` wrote this run, and the
+storage Lambda keeps those whatever `TENANT_FILES` it was deployed with,
+for GitHub issue #181. So a renamed tenant input written seconds earlier
+is never deleted by a storage Lambda that predates the name. What an old
+Lambda does instead is keep the old-name documents too, and the tell is
+`test_the_seeded_store_holds_nothing_the_product_no_longer_writes` going
+red once the new Lambda lands, which the next `seed` run clears.
 
 ## A synthesizer change is graded before it is deployed
 

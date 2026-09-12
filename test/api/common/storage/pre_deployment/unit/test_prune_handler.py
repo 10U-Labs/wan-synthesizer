@@ -43,6 +43,32 @@ def _prune(handler: Any, objects: dict[str, bytes]) -> Any:
     return json.loads(response["body"])
 
 
+_WRITTEN_THIS_RUN = "tenants/daf/forced-connections.json"
+
+
+def _prune_after_writing(handler: Any, objects: dict[str, bytes]) -> Any:
+    event = {"httpMethod": "POST", "body": json.dumps({"written": [_WRITTEN_THIS_RUN]})}
+    with patch("boto3.client", return_value=fake_s3(objects)):
+        response = handler.lambda_handler(event, None)
+    return json.loads(response["body"])
+
+
+def test_the_prune_keeps_a_key_its_caller_wrote_this_run(prune_handler: Any) -> None:
+    objects = _store()
+    _prune_after_writing(prune_handler, objects)
+    assert _WRITTEN_THIS_RUN in objects
+
+
+def test_the_prune_still_takes_out_what_its_caller_did_not_write(prune_handler: Any) -> None:
+    assert _prune_after_writing(prune_handler, _store())["deleted"] == sorted(
+        key for key in _STALE if key != _WRITTEN_THIS_RUN
+    )
+
+
+def test_a_prune_sent_no_body_keeps_only_what_the_lambda_lists(prune_handler: Any) -> None:
+    assert _prune(prune_handler, {_WRITTEN_THIS_RUN: b"[]"})["deleted"] == [_WRITTEN_THIS_RUN]
+
+
 def test_the_prune_deletes_every_stale_object(prune_handler: Any) -> None:
     assert _prune(prune_handler, _store())["deleted"] == sorted(_STALE)
 

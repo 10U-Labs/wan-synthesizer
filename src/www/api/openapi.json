@@ -95,6 +95,24 @@
       },
       "post": {
         "summary": "Delete every object stored under a name the product no longer writes.",
+        "requestBody": {
+          "description": "The keys the caller wrote this run, which are kept whatever this deployment writes, so a seed never loses to the deploy of the name it just wrote.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "written": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": { "200": { "description": "The keys that went." } },
         "x-amazon-apigateway-integration": {
           "uri": "${PruneHandlerArn}",

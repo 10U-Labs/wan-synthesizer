@@ -50,7 +50,9 @@ def _response(status: int, body: Any) -> dict[str, Any]:
     return {"statusCode": status, "headers": dict(_HEADERS), "body": json.dumps(body)}
 
 
-def is_current(key: str) -> bool:
+def is_current(key: str, written: frozenset[str] = frozenset()) -> bool:
+    if key in written:
+        return True
     prefix, _, rest = key.partition("/")
     kept = _KEPT_BY_PREFIX.get(prefix)
     if kept is None or not rest:
@@ -58,21 +60,28 @@ def is_current(key: str) -> bool:
     return rest.rsplit("/", 1)[-1] in kept
 
 
-def _stale_versions(client: Any, bucket: str) -> list[tuple[str, str]]:
+def _stale_versions(
+    client: Any, bucket: str, written: frozenset[str] = frozenset()
+) -> list[tuple[str, str]]:
     stale: list[tuple[str, str]] = []
     for page in client.get_paginator("list_object_versions").paginate(Bucket=bucket):
         stale += [
             (version["Key"], version["VersionId"])
             for version in page.get("Versions", [])
-            if not is_current(version["Key"])
+            if not is_current(version["Key"], written)
         ]
         stale += [(marker["Key"], marker["VersionId"]) for marker in page.get("DeleteMarkers", [])]
     return sorted(stale)
 
 
-def _prune(client: Any) -> dict[str, Any]:
+def _written(event: dict[str, Any]) -> frozenset[str]:
+    body = json.loads(event.get("body") or "{}")
+    return frozenset(body.get("written", []))
+
+
+def _prune(client: Any, written: frozenset[str]) -> dict[str, Any]:
     bucket = os.environ["STORE_BUCKET"]
-    stale = _stale_versions(client, bucket)
+    stale = _stale_versions(client, bucket, written)
     for key, version in stale:
         client.delete_object(Bucket=bucket, Key=key, VersionId=version)
     return {"deleted": [key for key, _version in stale]}
@@ -81,6 +90,6 @@ def _prune(client: Any) -> dict[str, Any]:
 def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     client = _s3()
     if event.get("httpMethod") == "POST":
-        return _response(200, _prune(client))
+        return _response(200, _prune(client, _written(event)))
     stale = _stale_versions(client, os.environ["STORE_BUCKET"])
     return _response(200, {"stale": [key for key, _version in stale]})

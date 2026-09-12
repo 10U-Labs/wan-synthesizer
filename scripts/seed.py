@@ -20,6 +20,7 @@ ETC = REPO_ROOT / "etc"
 FIBER_SEGMENTS = "fiber_segments"
 TERRESTRIAL = "terrestrial"
 SUBMARINE = "submarine"
+WRITTEN: set[str] = set()
 
 
 def _rows(path: Path) -> list[dict[str, Any]]:
@@ -107,14 +108,15 @@ def _send(api: str, path: str, method: str, body: bytes | None) -> bytes:
 
 def _put(api: str, path: str, body: Any) -> None:
     _send(api, path, "PUT", json.dumps(body).encode())
+    WRITTEN.add(f"{path}.json")
 
 
 def _post(api: str, path: str) -> None:
     _send(api, path, "POST", b"")
 
 
-def _post_json(api: str, path: str) -> Any:
-    return json.loads(_send(api, path, "POST", b""))
+def _post_json(api: str, path: str, body: Any) -> Any:
+    return json.loads(_send(api, path, "POST", json.dumps(body).encode()))
 
 
 def _get(api: str, path: str) -> Any:
@@ -216,7 +218,7 @@ def prune_tenants(api: str, tenants: list[str]) -> None:
 
 def prune_store(api: str) -> None:
     print("store: pruning collections nothing writes any more", flush=True)
-    answer = _post_json(api, "store/prune")
+    answer = _post_json(api, "store/prune", {"written": sorted(WRITTEN)})
     deleted = answer.get("deleted", []) if isinstance(answer, dict) else []
     for key in deleted:
         print(f"  deleted {key}", flush=True)
