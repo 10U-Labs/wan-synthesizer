@@ -85,7 +85,7 @@ def test_the_api_key_is_settled_without_asking_google(
         authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     recorder = _google_says(monkeypatch)
     _decide(authorizer, f"Bearer {_API_KEY}")
-    assert recorder.requests == []
+    assert not recorder.requests
 
 
 def test_a_verdict_covers_every_method_and_route_of_the_stage(authorizer: Any) -> None:
