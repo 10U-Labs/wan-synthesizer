@@ -9,13 +9,10 @@ backbone:
       - Cheyenne, WY
       - Dallas, TX
       - Great Falls, MT
-      - Hillsboro, OR
-      - Los Angeles, CA
       - Minot, ND
-      - New York, NY
+      - Molesworth, United Kingdom
       - Salt Lake City, UT
-      - San Jose, CA
-      - Seattle, WA
+      - Stuttgart, Germany
   number_of_diverse_circuits: 2
   prohibited:
     circuits: []
