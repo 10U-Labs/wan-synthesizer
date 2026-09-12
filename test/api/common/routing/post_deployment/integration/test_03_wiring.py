@@ -1,9 +1,19 @@
 from __future__ import annotations
 
 from typing import Any
-from urllib.request import urlopen
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 from seed import DEFAULT_API
+
+
+def _status(headers: dict[str, str]) -> int:
+    request = Request(f"{DEFAULT_API}/tenants", headers=headers)
+    try:
+        with urlopen(request, timeout=30) as response:
+            return int(response.status)
+    except HTTPError as refusal:
+        return int(refusal.code)
 
 
 def test_prod_stage_points_to_a_deployment(apigateway_client: Any, api_id: str) -> None:
@@ -16,7 +26,14 @@ def test_api_has_resources_beyond_root(apigateway_client: Any, api_id: str) -> N
     assert len(resources) > 1
 
 
-def test_a_request_through_cloudfront_reaches_the_gateway() -> None:
-    with urlopen(f"{DEFAULT_API}/tenants", timeout=30) as response:
-        status = response.status
-    assert status == 200
+def test_a_request_through_cloudfront_carrying_the_key_reaches_the_gateway(
+        api_key: str) -> None:
+    assert _status({"Authorization": f"Bearer {api_key}"}) == 200
+
+
+def test_a_request_carrying_nothing_is_turned_away() -> None:
+    assert _status({}) == 401
+
+
+def test_a_request_carrying_a_made_up_token_is_turned_away() -> None:
+    assert _status({"Authorization": "Bearer made-up"}) == 401

@@ -9,6 +9,9 @@ from repo_utils import REPO_ROOT
 
 COMMON_OUTPUTS_FILE: Path = REPO_ROOT / "lib" / "opentofu" / "common" / "outputs.tf"
 STORAGE_MAIN_FILE: Path = REPO_ROOT / "src" / "api" / "common" / "storage" / "main.tf"
+ROUTING_AUTHORIZER_FILE: Path = (
+    REPO_ROOT / "src" / "api" / "common" / "routing" / "authorizer.tf"
+)
 
 
 def load_tf(path: Path) -> dict[str, object]:
@@ -66,6 +69,13 @@ def store_bucket_name() -> str:
     if bucket is None:
         raise AssertionError("aws_s3_bucket.store is not declared in the storage stack")
     return str(bucket["bucket"])
+
+
+def api_key_parameter_name() -> str:
+    parameter = find_resource(load_tf(ROUTING_AUTHORIZER_FILE), "aws_ssm_parameter", "api_key")
+    if parameter is None:
+        raise AssertionError("aws_ssm_parameter.api_key is not declared in the routing stack")
+    return str(parameter["name"])
 
 
 def _string_output(name: str, fallback: str) -> str:

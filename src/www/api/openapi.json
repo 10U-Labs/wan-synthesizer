@@ -133,6 +133,7 @@
       },
       "options": {
         "summary": "CORS preflight.",
+        "security": [],
         "responses": {
           "200": {
             "description": "CORS.",
@@ -152,7 +153,7 @@
               "responseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type'"
+                "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
               }
             }
           }
@@ -219,6 +220,34 @@
           "httpMethod": "POST",
           "type": "aws_proxy"
         }
+      },
+      "options": {
+        "summary": "CORS preflight.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "CORS.",
+            "headers": {
+              "Access-Control-Allow-Origin": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Methods": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Headers": { "schema": { "type": "string" } }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": { "application/json": "{\"statusCode\": 200}" },
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
+              }
+            }
+          }
+        }
       }
     },
     "/wan-synthesizer/tenants/{tenant}/sites": {
@@ -232,6 +261,37 @@
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
           "type": "aws_proxy"
+        }
+      },
+      "options": {
+        "summary": "CORS preflight.",
+        "security": [],
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "CORS.",
+            "headers": {
+              "Access-Control-Allow-Origin": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Methods": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Headers": { "schema": { "type": "string" } }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": { "application/json": "{\"statusCode\": 200}" },
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
+              }
+            }
+          }
         }
       }
     },
@@ -247,6 +307,37 @@
           "httpMethod": "POST",
           "type": "aws_proxy"
         }
+      },
+      "options": {
+        "summary": "CORS preflight.",
+        "security": [],
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "CORS.",
+            "headers": {
+              "Access-Control-Allow-Origin": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Methods": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Headers": { "schema": { "type": "string" } }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": { "application/json": "{\"statusCode\": 200}" },
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
+              }
+            }
+          }
+        }
       }
     },
     "/wan-synthesizer/tenants/{tenant}/fiber-segments": {
@@ -260,6 +351,37 @@
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
           "type": "aws_proxy"
+        }
+      },
+      "options": {
+        "summary": "CORS preflight.",
+        "security": [],
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "CORS.",
+            "headers": {
+              "Access-Control-Allow-Origin": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Methods": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Headers": { "schema": { "type": "string" } }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": { "application/json": "{\"statusCode\": 200}" },
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
+              }
+            }
+          }
         }
       }
     },
@@ -288,6 +410,37 @@
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
           "type": "aws_proxy"
+        }
+      },
+      "options": {
+        "summary": "CORS preflight.",
+        "security": [],
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "CORS.",
+            "headers": {
+              "Access-Control-Allow-Origin": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Methods": { "schema": { "type": "string" } },
+              "Access-Control-Allow-Headers": { "schema": { "type": "string" } }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": { "application/json": "{\"statusCode\": 200}" },
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
+              }
+            }
+          }
         }
       }
     },
@@ -653,6 +806,7 @@
       },
       "options": {
         "summary": "CORS preflight.",
+        "security": [],
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -675,12 +829,38 @@
               "responseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type'"
+                "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
               }
             }
           }
         }
       }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header",
+        "description": "A Google ID token for an account on the hosted domain, or the API key the seed holds, as a bearer token.",
+        "x-amazon-apigateway-authtype": "custom",
+        "x-amazon-apigateway-authorizer": {
+          "type": "token",
+          "authorizerUri": "${AuthorizerHandlerArn}",
+          "identityValidationExpression": "^Bearer .+$",
+          "authorizerResultTtlInSeconds": 300
+        }
+      }
+    }
+  },
+  "security": [{ "bearer": [] }],
+  "x-amazon-apigateway-gateway-responses": {
+    "DEFAULT_4XX": {
+      "responseParameters": { "gatewayresponse.header.Access-Control-Allow-Origin": "'*'" }
+    },
+    "DEFAULT_5XX": {
+      "responseParameters": { "gatewayresponse.header.Access-Control-Allow-Origin": "'*'" }
     }
   }
 }

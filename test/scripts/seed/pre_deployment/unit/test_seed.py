@@ -347,6 +347,27 @@ def test_send_does_not_try_a_url_error_that_is_not_a_reset_again(
     assert _attempts_made(monkeypatch, urllib.error.URLError("Name or service not known")) == 1
 
 
+def test_send_carries_the_api_key_the_environment_holds(
+        urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(seed.API_KEY_VARIABLE, "the-seed-key")
+    _send("http://api", "tenants", "GET", None)
+    assert urlopen_recorder.requests[0].get_header("Authorization") == "Bearer the-seed-key"
+
+
+def test_send_carries_no_token_when_the_environment_holds_no_key(
+        urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv(seed.API_KEY_VARIABLE, raising=False)
+    _send("http://api", "tenants", "GET", None)
+    assert urlopen_recorder.requests[0].has_header("Authorization") is False
+
+
+def test_send_keeps_the_content_type_beside_the_key(
+        urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(seed.API_KEY_VARIABLE, "the-seed-key")
+    _send("http://api", "tenants", "PUT", b"[]")
+    assert urlopen_recorder.requests[0].get_header("Content-type") == "application/json"
+
+
 def test_put_uses_the_put_method(urlopen_recorder: UrlopenRecorder) -> None:
     _put("http://api", "carriers/lumen/pops", [{"city": "Reston"}])
     assert urlopen_recorder.requests[0].method == "PUT"

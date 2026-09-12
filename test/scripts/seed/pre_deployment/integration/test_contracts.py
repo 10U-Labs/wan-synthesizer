@@ -19,6 +19,7 @@ from synthesizer.codec import load_merged_carriers, load_regions, load_sites
 from synthesizer.graphs import build_adjacency
 from synthesizer.input_graph import FiberSegment, Site, haversine_miles
 from test_http_doubles import UrlopenRecorder
+from test_terraform_config import api_key_parameter_name
 
 _API = "http://stub"
 
@@ -135,6 +136,31 @@ def _workflows_seeding_waits_for() -> set[str]:
 
 def test_seeding_waits_for_every_workflow_that_deploys_on_the_same_commit() -> None:
     assert _workflows_seeding_waits_for() == _workflows_that_deploy()
+
+
+_JOBS_REACHING_THE_API = ("seeding", "e2e-tests")
+
+
+def _runs(job: dict[str, Any]) -> str:
+    return "\n".join(str(step.get("run", "")) for step in job["steps"])
+
+
+def test_every_job_that_reaches_the_api_reads_the_key_the_authorizer_holds() -> None:
+    jobs = _seed_workflow()["jobs"]
+    parameter = api_key_parameter_name()
+    unkeyed = [
+        name for name in _JOBS_REACHING_THE_API
+        if seed.API_KEY_VARIABLE not in _runs(jobs[name]) or parameter not in _runs(jobs[name])
+    ]
+    assert unkeyed == []
+
+
+def test_every_job_that_reaches_the_api_may_read_the_key() -> None:
+    jobs = _seed_workflow()["jobs"]
+    assert [
+        name for name in _JOBS_REACHING_THE_API
+        if jobs[name].get("permissions", {}).get("id-token") != "write"
+    ] == []
 
 
 def test_seeding_seeds_only_on_the_conclusion_the_wait_job_reports() -> None:

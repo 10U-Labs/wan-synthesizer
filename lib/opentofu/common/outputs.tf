@@ -15,13 +15,14 @@ output "state_bucket" {
 
 
 output "lambda_handler_names" {
-  description = "Deterministic Lambda function names, one per REST resource."
+  description = "Deterministic Lambda function names, one per REST resource, and the authorizer in front of them all."
   value = {
-    carriers  = "wan-synthesizer-carriers"
-    providers = "wan-synthesizer-providers"
-    tenants   = "wan-synthesizer-tenants"
-    merge     = "wan-synthesizer-merge"
-    prune     = "wan-synthesizer-prune"
-    wan       = "wan-synthesizer-wan"
+    carriers   = "wan-synthesizer-carriers"
+    providers  = "wan-synthesizer-providers"
+    tenants    = "wan-synthesizer-tenants"
+    merge      = "wan-synthesizer-merge"
+    prune      = "wan-synthesizer-prune"
+    wan        = "wan-synthesizer-wan"
+    authorizer = "wan-synthesizer-authorizer"
   }
 }

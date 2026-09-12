@@ -13,6 +13,7 @@ _CLIENT_FIXTURES = [
     ("lambda_client", "lambda"),
     ("apigateway_client", "apigateway"),
     ("logs_client", "logs"),
+    ("ssm_client", "ssm"),
 ]
 
 

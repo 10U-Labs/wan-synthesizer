@@ -22,9 +22,53 @@ jobs:
           scripts
           src
           test
+  assert-no-inline-directives:
+    name: assert-no-inline-directives
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-no-inline-directives
+      - name: Assert no inline directives
+        run: >-
+          assert-no-inline-directives
+          --tools pylint,mypy,yamllint
+          --verbose
+          ${{ github.workspace }}/test/www/spa
+  assert-one-assert-per-pytest:
+    name: assert-one-assert-per-pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-one-assert-per-pytest
+      - name: Assert one assert per pytest
+        run: >-
+          assert-one-assert-per-pytest
+          --verbose
+          ${{ github.workspace }}/test/www/spa
+  copy-paste-tests:
+    name: copy-paste-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: npm install -g jscpd
+      - name: Detect copy-paste in tests
+        run: >-
+          jscpd --pattern "**/*.py" --threshold 0
+          --reporters console test/www/spa/
   deploy:
     if: github.ref == 'refs/heads/main'
-    needs: [assert-no-comments, yamllint]
+    needs:
+      - assert-no-comments
+      - assert-no-inline-directives
+      - assert-one-assert-per-pytest
+      - copy-paste-tests
+      - mypy-tests
+      - pylint-tests
+      - unit-tests
+      - yamllint
     permissions:
       contents: read
       id-token: write
@@ -47,6 +91,47 @@ jobs:
               '10ulabs.com')].Id | [0]" --output text)
           aws cloudfront create-invalidation --distribution-id "$DIST" \
             --paths "/wan-synthesizer/*"
+  mypy-tests:
+    name: mypy-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install mypy pytest pyyaml 'python-hcl2<8' types-PyYAML
+      - name: Run mypy on tests
+        run: >-
+          MYPYPATH=lib/python:scripts
+          python3 -m mypy --strict --explicit-package-bases
+          --ignore-missing-imports
+          test/www/spa/
+  pylint-tests:
+    name: pylint-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install pylint pytest pyyaml 'python-hcl2<8'
+      - name: Run pylint on tests
+        run: >-
+          PYTHONPATH=.:lib/python:scripts
+          python3 -m pylint --recursive=y
+          test/www/spa/
+          --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
+          --fail-on=C,R,W --fail-under=10.0
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install pytest pyyaml 'python-hcl2<8'
+      - name: Run unit tests
+        run: >-
+          PYTHONPATH=.:lib/python:scripts
+          python3 -m pytest
+          test/www/spa/pre_deployment/unit/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
   yamllint:
     runs-on: ubuntu-latest
     steps:
@@ -90,5 +175,6 @@ name: www_spa
     branches: [main]
     paths:
       - src/www/spa/**
+      - test/www/spa/**
       - .github/workflows/www_spa.yml
   workflow_dispatch: {}

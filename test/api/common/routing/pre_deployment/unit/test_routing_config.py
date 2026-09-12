@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
-from test_terraform_config import find_resource
+import pytest
+
+from test_terraform_config import find_resource, output_values
 
 
-def _resource(routing_main: dict[str, object], resource_type: str, name: str) -> dict[str, Any]:
-    body = find_resource(routing_main, resource_type, name)
+def _resource(document: dict[str, object], resource_type: str, name: str) -> dict[str, Any]:
+    body = find_resource(document, resource_type, name)
     if body is None:
-        raise AssertionError(f"{resource_type}.{name} is not declared in main.tf")
+        raise AssertionError(f"{resource_type}.{name} is not declared")
     return body
 
 
@@ -43,3 +46,87 @@ def test_deployment_is_declared(routing_main: dict[str, object]) -> None:
 def test_common_module_is_sourced(routing_main: dict[str, object]) -> None:
     common = next(m["common"] for m in _modules(routing_main) if "common" in m)
     assert common["source"] == "../../../../lib/opentofu/common"
+
+
+def _authorizer(routing_authorizer: dict[str, object]) -> dict[str, Any]:
+    return _resource(routing_authorizer, "aws_lambda_function", "authorizer")
+
+
+def _authorizer_variables(routing_authorizer: dict[str, object]) -> dict[str, Any]:
+    variables = _authorizer(routing_authorizer)["environment"][0]["variables"]
+    return dict(variables)
+
+
+def test_the_authorizer_is_named_by_the_common_module(
+        routing_authorizer: dict[str, object]) -> None:
+    function = _authorizer(routing_authorizer)
+    assert "lambda_handler_names.authorizer" in str(function["function_name"])
+
+
+def test_the_authorizer_runs_on_python313(routing_authorizer: dict[str, object]) -> None:
+    assert _authorizer(routing_authorizer)["runtime"] == "python3.13"
+
+
+def test_the_authorizer_entrypoint_is_its_own_module(
+        routing_authorizer: dict[str, object]) -> None:
+    assert _authorizer(routing_authorizer)["handler"] == "authorizer.lambda_handler"
+
+
+@pytest.mark.parametrize("variable", ["GOOGLE_CLIENT_ID", "HOSTED_DOMAIN", "API_KEY_PARAMETER"])
+def test_the_authorizer_is_handed_its_setting(
+        routing_authorizer: dict[str, object], variable: str) -> None:
+    assert variable in _authorizer_variables(routing_authorizer)
+
+
+def test_the_authorizer_is_handed_the_parameter_the_stack_declares(
+        routing_authorizer: dict[str, object]) -> None:
+    variables = _authorizer_variables(routing_authorizer)
+    assert "aws_ssm_parameter.api_key.name" in str(variables["API_KEY_PARAMETER"])
+
+
+def test_the_hosted_domain_is_the_one_the_mail_is_hosted_on(
+        routing_authorizer: dict[str, object]) -> None:
+    assert _authorizer_variables(routing_authorizer)["HOSTED_DOMAIN"] == "10ulabs.com"
+
+
+def test_the_client_id_is_a_google_one(routing_authorizer: dict[str, object]) -> None:
+    client_id = str(_authorizer_variables(routing_authorizer)["GOOGLE_CLIENT_ID"])
+    assert client_id.endswith(".apps.googleusercontent.com")
+
+
+def test_the_api_key_is_kept_encrypted(routing_authorizer: dict[str, object]) -> None:
+    parameter = _resource(routing_authorizer, "aws_ssm_parameter", "api_key")
+    assert parameter["type"] == "SecureString"
+
+
+def test_the_api_key_is_generated_not_written_down(
+        routing_authorizer: dict[str, object]) -> None:
+    parameter = _resource(routing_authorizer, "aws_ssm_parameter", "api_key")
+    assert "random_password.api_key.result" in str(parameter["value"])
+
+
+def test_the_api_key_is_long_enough_to_be_unguessable(
+        routing_authorizer: dict[str, object]) -> None:
+    generated = _resource(routing_authorizer, "random_password", "api_key")
+    assert int(generated["length"]) >= 32
+
+
+def test_the_gateway_may_invoke_the_authorizer(routing_authorizer: dict[str, object]) -> None:
+    permission = _resource(routing_authorizer, "aws_lambda_permission", "api_gateway")
+    assert permission["principal"] == "apigateway.amazonaws.com"
+
+
+def test_the_authorizer_role_may_read_the_api_key(routing_iam: dict[str, object]) -> None:
+    policy = _resource(routing_iam, "aws_iam_role_policy", "api_key_access")
+    assert "ssm:GetParameter" in str(policy["policy"])
+
+
+def test_the_authorizer_role_may_read_nothing_but_the_api_key(
+        routing_iam: dict[str, object]) -> None:
+    policy = _resource(routing_iam, "aws_iam_role_policy", "api_key_access")
+    assert "aws_ssm_parameter.api_key.arn" in str(policy["policy"])
+
+
+def test_the_api_key_parameter_is_published_for_the_seed(routing_dir: Path) -> None:
+    outputs = output_values(routing_dir / "outputs.tf")
+    assert "aws_ssm_parameter.api_key.name" in str(outputs["api_key_parameter_name"])

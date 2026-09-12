@@ -105,9 +105,23 @@ jobs:
     needs:
       - seeding
       - test-repo-libraries
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Read the API key the authorizer admits
+        run: |
+          KEY=$(aws ssm get-parameter --name /wan-synthesizer/api-key \
+            --with-decryption --query Parameter.Value --output text)
+          echo "::add-mask::$KEY"
+          echo "WAN_SYNTHESIZER_API_KEY=$KEY" >> "$GITHUB_ENV"
       - name: Install tools
         run: pip install pytest pyyaml
       - name: Check every published network against the config that asked for it
@@ -124,7 +138,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pytest pyyaml
+        run: pip install pytest pyyaml 'python-hcl2<8'
       - name: Run integration tests against a mocked and a stubbed API
         run: >-
           PYTHONPATH=.:lib/python:scripts:test:src/api/endpoints/tenants/wan/post/lambdas
@@ -226,9 +240,23 @@ jobs:
       - unit-tests
       - wait-for-every-deploy
       - yamllint
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Read the API key the authorizer admits
+        run: |
+          KEY=$(aws ssm get-parameter --name /wan-synthesizer/api-key \
+            --with-decryption --query Parameter.Value --output text)
+          echo "::add-mask::$KEY"
+          echo "WAN_SYNTHESIZER_API_KEY=$KEY" >> "$GITHUB_ENV"
       - name: Install tools
         run: pip install pyyaml
       - name: Push the git-authored inputs to the API
@@ -398,6 +426,7 @@ on:
       - etc/**
       - lib/python/**
       - scripts/seed.py
+      - src/api/common/routing/authorizer.tf
       - src/api/common/storage/**
       - src/api/endpoints/tenants/wan/post/lambdas/**
       - src/www/api/openapi.json

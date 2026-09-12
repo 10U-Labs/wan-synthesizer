@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -14,6 +15,7 @@ import yaml
 from repo_utils import REPO_ROOT
 
 DEFAULT_API = "https://api.10ulabs.com/wan-synthesizer"
+API_KEY_VARIABLE = "WAN_SYNTHESIZER_API_KEY"
 RETRY_PAUSE_SECONDS = 1.0
 DATA = REPO_ROOT / "data"
 ETC = REPO_ROOT / "etc"
@@ -89,12 +91,17 @@ def _send_once(request: urllib.request.Request, method: str, path: str) -> bytes
         return cast("bytes", response.read())
 
 
+def _authorization() -> dict[str, str]:
+    key = os.environ.get(API_KEY_VARIABLE)
+    return {"Authorization": f"Bearer {key}"} if key else {}
+
+
 def _send(api: str, path: str, method: str, body: bytes | None) -> bytes:
     request = urllib.request.Request(
         f"{api}/{path}",
         data=body,
         method=method,
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", **_authorization()},
     )
     try:
         return _send_once(request, method, path)

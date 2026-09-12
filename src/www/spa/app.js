@@ -5,6 +5,16 @@ const TILE_ATTRIB = "© OpenStreetMap contributors";
 
 const API_BASE = "https://api.10ulabs.com/wan-synthesizer";
 
+const GOOGLE_CLIENT_ID = "846587722064-qjou8en4tk96n12ii3rgnpjshnbqovok.apps.googleusercontent.com";
+const HOSTED_DOMAIN = "10ulabs.com";
+const ID_TOKEN_KEY = "wan-synthesizer-id-token";
+
+const SIGN_IN_NOTES = {
+  first: `Sign in with a ${HOSTED_DOMAIN} account.`,
+  401: "Your sign-in has expired. Sign in again.",
+  403: `That account is not on ${HOSTED_DOMAIN}. Sign in with one that is.`,
+};
+
 const DEFAULT_MAP_ID = "daf";
 
 const PROVIDER_KIND = "provider region";
@@ -205,8 +215,68 @@ function drawLines(lines, byId, style, label) {
   }
 }
 
+function storedToken() {
+  try {
+    return sessionStorage.getItem(ID_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function storeToken(token) {
+  try {
+    if (token) {
+      sessionStorage.setItem(ID_TOKEN_KEY, token);
+    } else {
+      sessionStorage.removeItem(ID_TOKEN_KEY);
+    }
+  } catch {
+    return;
+  }
+}
+
+let idToken = storedToken();
+
+function showSignIn(note) {
+  document.getElementById("sign-in-note").textContent = note;
+  document.getElementById("sign-in").hidden = false;
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    hd: HOSTED_DOMAIN,
+    auto_select: true,
+    callback: onSignedIn,
+  });
+  const button = document.getElementById("google-button");
+  button.replaceChildren();
+  google.accounts.id.renderButton(button, { theme: "outline", size: "large" });
+  google.accounts.id.prompt();
+}
+
+function onSignedIn(response) {
+  idToken = response.credential;
+  storeToken(idToken);
+  document.getElementById("sign-in").hidden = true;
+  start().catch((error) => {
+    console.error(error);
+  });
+}
+
+function turnedAway(status) {
+  if (idToken === null) {
+    return;
+  }
+  idToken = null;
+  storeToken(null);
+  showSignIn(SIGN_IN_NOTES[status]);
+}
+
 async function getJSON(path) {
-  const response = await fetch(path);
+  const response = await fetch(path, {
+    headers: { Authorization: `Bearer ${idToken}` },
+  });
+  if (response.status === 401 || response.status === 403) {
+    turnedAway(response.status);
+  }
   if (!response.ok) {
     throw new Error(`${path} → ${response.status}`);
   }
@@ -266,8 +336,9 @@ function select(link, mapId) {
   return render(mapId);
 }
 
-async function init() {
+async function start() {
   const nav = document.getElementById("tenants");
+  nav.replaceChildren();
   const tenants = await getJSON(`${API_BASE}/tenants`);
   const entries = tenants.map(({ id, label }) => {
     const link = document.createElement("a");
@@ -284,6 +355,14 @@ async function init() {
   if (start) {
     await select(start.link, start.id);
   }
+}
+
+function init() {
+  if (idToken) {
+    return start();
+  }
+  showSignIn(SIGN_IN_NOTES.first);
+  return Promise.resolve();
 }
 
 init().catch((error) => {

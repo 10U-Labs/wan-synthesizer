@@ -35,6 +35,7 @@ jobs:
           --tools pylint,mypy,yamllint
           --verbose
           ${{ github.workspace }}/lib/python ${{ github.workspace }}/test/api/common/routing
+          ${{ github.workspace }}/test/www/spa
           ${{ github.workspace }}/test/lib/python/repo_utils
           ${{ github.workspace }}/test/lib/python/test_fixtures
           ${{ github.workspace }}/test/lib/python/test_terraform_config
@@ -64,10 +65,22 @@ jobs:
           assert-one-assert-per-pytest
           --verbose
           ${{ github.workspace }}/test/api/common/routing
+          ${{ github.workspace }}/test/www/spa
           ${{ github.workspace }}/test/lib/python/repo_utils
           ${{ github.workspace }}/test/lib/python/test_fixtures
           ${{ github.workspace }}/test/lib/python/test_terraform_config
           ${{ github.workspace }}/test/lib/python/test_terraform_drift
+  assert-python-definition-is-used:
+    name: assert-python-definition-is-used
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Assert every definition is named outside the tests
+        uses: 10U-Labs/assert-python-definition-is-used@latest
+        with:
+          search-in: lib/python scripts src
+          trees: src/api/common/routing/lambdas
+          verbose: "true"
   copy-paste-source:
     name: copy-paste-source
     runs-on: ubuntu-latest
@@ -79,6 +92,7 @@ jobs:
         run: >-
           jscpd --pattern "**/*.py" --threshold 0 --reporters console
           lib/python/
+          src/api/common/routing/lambdas/
   copy-paste-tests:
     name: copy-paste-tests
     runs-on: ubuntu-latest
@@ -90,6 +104,7 @@ jobs:
         run: >-
           jscpd --pattern "**/*.py" --threshold 0
           --reporters console test/api/common/routing/
+          test/www/spa/
           test/lib/python/repo_utils
           test/lib/python/test_fixtures
           test/lib/python/test_terraform_config
@@ -126,6 +141,7 @@ jobs:
           python3 -m mypy --strict --explicit-package-bases
           --ignore-missing-imports
           lib/python/
+          src/api/common/routing/lambdas/
   mypy-tests:
     name: mypy-tests
     runs-on: ubuntu-latest
@@ -139,6 +155,7 @@ jobs:
           python3 -m mypy --strict --explicit-package-bases
           --ignore-missing-imports
           test/api/common/routing/
+          test/www/spa/
           test/lib/python/repo_utils
           test/lib/python/test_fixtures
           test/lib/python/test_terraform_config
@@ -211,6 +228,7 @@ jobs:
           PYTHONPATH=lib/python:scripts:src/api/endpoints/tenants/wan/post/lambdas
           python3 -m pylint
           lib/python/
+          src/api/common/routing/lambdas/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
   pylint-tests:
@@ -225,6 +243,7 @@ jobs:
           PYTHONPATH=.:lib/python:scripts
           python3 -m pylint --recursive=y
           test/api/common/routing/
+          test/www/spa/
           test/lib/python/repo_utils
           test/lib/python/test_fixtures
           test/lib/python/test_terraform_config
@@ -239,6 +258,7 @@ jobs:
       - assert-no-inline-directives
       - assert-no-linter-config-files
       - assert-one-assert-per-pytest
+      - assert-python-definition-is-used
       - copy-paste-source
       - copy-paste-tests
       - lint-yaml
@@ -331,14 +351,17 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install boto3 boto3-stubs pytest 'python-hcl2<8'
-      - name: Run unit tests
+        run: pip install boto3 boto3-stubs pytest pytest-cov 'python-hcl2<8'
+      - name: Run unit tests with a 100% coverage gate over the authorizer
         run: >-
-          PYTHONPATH=.:lib/python:scripts
+          PYTHONPATH=.:lib/python:scripts:src/api/common/routing/lambdas
           python3 -m pytest
           test/api/common/routing/pre_deployment/unit/
+          test/www/spa/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
           --verbose --pythonwarnings=error
+          --cov=src/api/common/routing/lambdas --cov-branch
+          --cov-report=term-missing --cov-fail-under=100
   validate-stack:
     name: validate-stack
     runs-on: ubuntu-latest
@@ -359,10 +382,12 @@ on:
     paths:
       - src/api/common/routing/**
       - src/www/api/openapi.json
+      - src/www/spa/**
       - lib/opentofu/common/**
       - lib/python/**
       - scripts/seed.py
       - test/api/common/routing/**
       - test/lib/python/**
+      - test/www/spa/**
       - .github/workflows/api_common_routing.yml
   workflow_dispatch: {}

@@ -12,3 +12,8 @@ output "stage_name" {
   description = "Deployed stage; CloudFront's origin_path is /prod."
   value       = aws_api_gateway_stage.prod.stage_name
 }
+
+output "api_key_parameter_name" {
+  description = "The SecureString parameter holding the key the seed and the tests present as a bearer token."
+  value       = aws_ssm_parameter.api_key.name
+}

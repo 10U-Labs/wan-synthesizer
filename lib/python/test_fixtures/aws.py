@@ -52,6 +52,11 @@ def logs_client() -> Any:
     return _client("logs")
 
 
+@pytest.fixture(scope="session")
+def ssm_client() -> Any:
+    return _client("ssm")
+
+
 def get_log_group_info(client: Any, log_group_name: str) -> dict[str, object]:
     response = client.describe_log_groups(logGroupNamePrefix=log_group_name, limit=1)
     matching = [

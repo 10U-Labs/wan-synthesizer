@@ -16,12 +16,13 @@ locals {
   }
 
   openapi_spec = templatefile("${path.module}/../../../www/api/openapi.json", {
-    CarriersHandlerArn  = local.integration.carriers
-    ProvidersHandlerArn = local.integration.providers
-    TenantsHandlerArn   = local.integration.tenants
-    MergeHandlerArn     = local.integration.merge
-    PruneHandlerArn     = local.integration.prune
-    WanHandlerArn       = local.integration.wan
+    CarriersHandlerArn   = local.integration.carriers
+    ProvidersHandlerArn  = local.integration.providers
+    TenantsHandlerArn    = local.integration.tenants
+    MergeHandlerArn      = local.integration.merge
+    PruneHandlerArn      = local.integration.prune
+    WanHandlerArn        = local.integration.wan
+    AuthorizerHandlerArn = local.integration.authorizer
   })
   spec_hash = substr(md5(local.openapi_spec), 0, 8)
 }

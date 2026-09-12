@@ -7,6 +7,7 @@ from test_fixtures.aws import (
     lambda_client,
     logs_client,
     s3_client,
+    ssm_client,
     state_bucket_name,
     sts_client,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "lambda_client",
     "logs_client",
     "s3_client",
+    "ssm_client",
     "state_bucket_name",
     "sts_client",
 ]
