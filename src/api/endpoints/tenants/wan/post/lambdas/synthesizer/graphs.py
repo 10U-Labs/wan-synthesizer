@@ -240,4 +240,3 @@ def build_adjacency(
     for neighbors in adjacency.values():
         neighbors.sort()
     return adjacency
-

@@ -40,6 +40,12 @@ def test_no_more_diverse_circuits_are_counted_than_the_peers_can_end() -> None:
     assert offered_diverse_circuits(_PAIR, _BOSTON, frozenset({_ASHBURN}), 1) == 1
 
 
+def test_a_peer_no_fiber_reaches_ends_no_diverse_circuit() -> None:
+    assert offered_diverse_circuits(
+        _CHANGES_HANDS, _BOSTON, frozenset({_ASHBURN, _NEW_YORK}), 1
+    ) == 1
+
+
 def test_a_city_no_fiber_reaches_is_offered_nothing() -> None:
     assert offered_diverse_circuits(
         _CHANGES_HANDS, "Huntingdon, United Kingdom", frozenset({_ASHBURN}), 1
