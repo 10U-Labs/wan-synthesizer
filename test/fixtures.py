@@ -736,8 +736,8 @@ ALREADY_NEEDED_SEGMENTS: dict[tuple[str, str], tuple[float, tuple[str, ...]]] = 
     ("e", "f"): (16.0, ("cogent", "lumen")),
 }
 ALREADY_NEEDED_FIBER = carrier_fiber_segments(ALREADY_NEEDED_SEGMENTS)
-ALREADY_NEEDED_MILES = 103.0
-THE_SHORTEST_CREDIT_ALONE = frozenset({("c", "f")})
+ALREADY_NEEDED_MILES = 137.0
+THE_SEGMENT_ONLY_A_SECOND_CIRCUIT_NEEDS = frozenset({("c", "f")})
 
 FLOORED_ABOVE_SITES = ("b", "d", "e", "f")
 FLOORED_ABOVE_TRANSIT = ("a", "c")

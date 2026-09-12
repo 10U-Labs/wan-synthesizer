@@ -41,15 +41,6 @@ def _crossing() -> SynthesisArtifacts:
     )
 
 
-@pytest.fixture(name="under_water", scope="module")
-def _under_water() -> SynthesisArtifacts:
-    return _artifacts(
-        fixtures.crossing_sites(),
-        fixtures.CROSSING_SUBMARINE_FIBER,
-        fixtures.crossing_transit_names(),
-    )
-
-
 @pytest.fixture(name="distant_peer", scope="module")
 def _distant_peer() -> SynthesisArtifacts:
     return _artifacts(
@@ -90,10 +81,14 @@ def test_a_crossing_is_taken_where_it_is_a_sites_second_diverse_circuit(
     assert "tok" in _cities_crossed(crossing)
 
 
-def test_a_crossing_a_circuit_over_land_answers_is_not_taken(
-    under_water: SynthesisArtifacts,
+def test_a_wan_a_crossing_would_answer_but_a_circuit_over_land_holds_off_is_refused_as_split(
 ) -> None:
-    assert "tok" not in _cities_crossed(under_water)
+    with pytest.raises(ValueError, match="splits the WAN at: pdx"):
+        _artifacts(
+            fixtures.crossing_sites(),
+            fixtures.CROSSING_SUBMARINE_FIBER,
+            fixtures.crossing_transit_names(),
+        )
 
 
 def test_the_synthesis_wires_every_site_into_one_backbone(
