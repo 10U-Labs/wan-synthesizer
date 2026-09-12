@@ -9,6 +9,7 @@
   - [Commits](#commits)
   - [Issues](#issues)
   - [Measurement](#measurement)
+  - [Login](#login)
   - [Memories](#memories)
   - [Storage](#storage)
   - [Tests](#tests)
@@ -50,6 +51,10 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 ### Measurement
 
 - [measure-a-change-over-the-seeded-tenants](measure-a-change-over-the-seeded-tenants.md) — every tenant's miles and floor are reproducible from `data/` and `etc/` with no deploy, which is where a commit message's before/after table comes from
+
+### Login
+
+- [the-api-admits-a-google-account-or-the-seed-key](the-api-admits-a-google-account-or-the-seed-key.md) — every operation but a preflight sits behind the routing stack's authorizer, which admits a Google ID token for a `10ulabs.com` account or the API key CI reads from SSM as `WAN_SYNTHESIZER_API_KEY`; the SPA and `authorizer.tf` must agree on the OAuth client, and every route the map fetches needs an `options` mock
 
 ### Memories
 
