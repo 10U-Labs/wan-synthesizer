@@ -1,7 +1,8 @@
 "use strict";
 
-const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const TILE_ATTRIB = "© OpenStreetMap contributors";
+const COUNTRY_STYLE = { color: "#aab4be", weight: 0.7, fillColor: "#f4f4f1", fillOpacity: 1 };
+const COUNTRIES_ATTRIB = "Made with Natural Earth";
+const WORLD_COPIES = [-360, 0, 360];
 
 const API_BASE = "https://api.10ulabs.com/wan-synthesizer";
 
@@ -43,8 +44,15 @@ const LEGEND_ROWS = [
   { swatch: "line", color: LINE_STYLE.homing.color, label: HOMING_CIRCUIT },
 ];
 
-const map = L.map("map").setView(VIEW_CENTER, 4);
-L.tileLayer(TILE_URL, { attribution: TILE_ATTRIB, maxZoom: 19 }).addTo(map);
+const map = L.map("map", { minZoom: 2, maxZoom: 12 }).setView(VIEW_CENTER, 4);
+for (const shift of WORLD_COPIES) {
+  L.geoJSON(NE_110M_ADMIN_0_COUNTRIES, {
+    style: COUNTRY_STYLE,
+    interactive: false,
+    coordsToLatLng: ([lon, lat]) => L.latLng(lat, lon + shift),
+  }).addTo(map);
+}
+map.attributionControl.addAttribution(COUNTRIES_ATTRIB);
 
 let drawn = [];
 
