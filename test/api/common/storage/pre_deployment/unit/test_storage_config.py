@@ -21,10 +21,18 @@ def _declared(document: dict[str, object], resource_type: str, name: str) -> dic
     return body
 
 
-def _rule(storage_main: dict[str, object], rule_id: str) -> dict[str, Any]:
+def _rules(storage_main: dict[str, object]) -> list[dict[str, Any]]:
     lifecycle = _store(storage_main, "aws_s3_bucket_lifecycle_configuration")
     rules: list[dict[str, Any]] = lifecycle["rule"]
-    for rule in rules:
+    return rules
+
+
+def _rule_ids(storage_main: dict[str, object]) -> list[str]:
+    return [str(rule["id"]) for rule in _rules(storage_main)]
+
+
+def _rule(storage_main: dict[str, object], rule_id: str) -> dict[str, Any]:
+    for rule in _rules(storage_main):
         if rule["id"] == rule_id:
             return rule
     raise AssertionError(f"no lifecycle rule is declared with id {rule_id}")
@@ -61,20 +69,19 @@ def test_versioning_is_suspended(storage_main: dict[str, object]) -> None:
     assert versioning["versioning_configuration"][0]["status"] == "Suspended"
 
 
-def test_lifecycle_rule_is_enabled(storage_main: dict[str, object]) -> None:
-    assert _rule(storage_main, "expire-build-artifacts")["status"] == "Enabled"
-
-
-def test_lifecycle_rule_targets_the_builds_prefix(
+def test_expiring_delete_markers_is_the_only_lifecycle_rule(
         storage_main: dict[str, object]) -> None:
-    rule = _rule(storage_main, "expire-build-artifacts")
-    assert rule["filter"][0]["prefix"] == "builds/"
+    assert _rule_ids(storage_main) == ["expire-delete-markers"]
 
 
-def test_lifecycle_rule_expires_after_fourteen_days(
+def test_no_lifecycle_rule_is_scoped_to_an_object_prefix(
         storage_main: dict[str, object]) -> None:
-    rule = _rule(storage_main, "expire-build-artifacts")
-    assert rule["expiration"][0]["days"] == 14
+    assert [rule["id"] for rule in _rules(storage_main)
+            if _filter_of(rule).get("prefix")] == []
+
+
+def test_delete_marker_rule_is_enabled(storage_main: dict[str, object]) -> None:
+    assert _rule(storage_main, "expire-delete-markers")["status"] == "Enabled"
 
 
 def test_delete_markers_are_expired(storage_main: dict[str, object]) -> None:

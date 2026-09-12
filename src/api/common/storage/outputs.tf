@@ -1,5 +1,5 @@
 output "bucket_name" {
-  description = "Name of the product's S3 store (source data, build artifacts, published graphs)."
+  description = "Name of the product's S3 store (the carrier, provider and tenant inputs, and the WANs synthesized from them)."
   value       = aws_s3_bucket.store.id
 }
 

@@ -21,17 +21,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "store" {
   bucket = aws_s3_bucket.store.id
 
   rule {
-    id     = "expire-build-artifacts"
-    status = "Enabled"
-    filter {
-      prefix = "builds/"
-    }
-    expiration {
-      days = 14
-    }
-  }
-
-  rule {
     id     = "expire-delete-markers"
     status = "Enabled"
     filter {}

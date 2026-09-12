@@ -64,10 +64,12 @@ def test_the_store_holds_the_product_it_is_supposed_to_hold(
     assert empty == []
 
 
-def test_build_artifacts_expire_after_fourteen_days(
+def test_no_stored_object_expires_on_a_clock(
         live_lifecycle_rules: dict[str, Any]) -> None:
-    rule = live_lifecycle_rules["expire-build-artifacts"]
-    assert rule["Expiration"]["Days"] == 14
+    assert [
+        rule_id for rule_id, rule in live_lifecycle_rules.items()
+        if "Days" in rule.get("Expiration", {})
+    ] == []
 
 
 def test_delete_markers_are_expired_on_the_live_store(

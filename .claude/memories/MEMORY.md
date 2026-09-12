@@ -9,6 +9,7 @@
   - [Commits](#commits)
   - [Issues](#issues)
   - [Measurement](#measurement)
+  - [Storage](#storage)
   - [Tests](#tests)
   - [Third-party code](#third-party-code)
   - [Verification](#verification)
@@ -41,6 +42,10 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 ### Issues
 
 - [why-static-analysis-is-asked-separately](why-static-analysis-is-asked-separately.md) — a job refuses a shape everywhere at once where a tier catches one occurrence
+
+### Storage
+
+- [the-store-holds-only-what-the-product-writes](the-store-holds-only-what-the-product-writes.md) — the store bucket has no working area, so a new prefix joins `_KEPT_BY_PREFIX` in the same commit as its writer or the next seed's prune deletes it
 
 ### Measurement
 

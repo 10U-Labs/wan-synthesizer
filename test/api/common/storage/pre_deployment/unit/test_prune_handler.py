@@ -4,6 +4,8 @@ import json
 from typing import Any
 from unittest.mock import patch
 
+import pytest
+
 from test_s3_store_mock import fake_s3
 
 _CURRENT = [
@@ -15,10 +17,10 @@ _CURRENT = [
     "tenants/daf/locations.json",
     "tenants/daf/wan.json",
     "tenants/daf/wan-status.json",
-    "source/carriers/lumen.csv",
-    "builds/daf/2026-08-20/graph.json",
 ]
 _STALE = [
+    "source/carriers/lumen.csv",
+    "builds/daf/2026-08-20/graph.json",
     "carriers/lumen/vertices.json",
     "carriers/lumen/edges.json",
     "carriers/merge/edges.json",
@@ -50,15 +52,15 @@ def test_the_prune_leaves_every_current_object_where_it_is(prune_handler: Any) -
     assert sorted(objects) == sorted(_CURRENT)
 
 
-def test_the_prune_leaves_the_working_areas_alone(prune_handler: Any) -> None:
-    objects = {"source/anything.csv": b"", "builds/whatever/scratch.json": b""}
-    assert _prune(prune_handler, objects)["deleted"] == []
-
-
-def test_the_prune_takes_out_a_prefix_whose_endpoint_was_deleted(prune_handler: Any) -> None:
-    objects = {"csps/aws/vertices.json": b"", "data-centers/qts/facilities.json": b""}
-    held = sorted(objects)
-    assert _prune(prune_handler, objects)["deleted"] == held
+@pytest.mark.parametrize("key", [
+    "source/carriers/lumen.csv",
+    "builds/daf/2026-08-20/graph.json",
+    "csps/aws/vertices.json",
+    "data-centers/qts/facilities.json",
+])
+def test_the_prune_takes_out_a_prefix_the_product_does_not_write(
+        prune_handler: Any, key: str) -> None:
+    assert _prune(prune_handler, {key: b""})["deleted"] == [key]
 
 
 def test_the_prune_takes_out_a_bare_prefix_marker(prune_handler: Any) -> None:

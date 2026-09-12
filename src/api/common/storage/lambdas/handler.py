@@ -7,8 +7,6 @@ import boto3
 _CLIENTS: dict[str, Any] = {}
 _HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
 
-_WORKING_PREFIXES = ("source/", "builds/")
-
 _ONLY_VERSION = "null"
 
 CARRIER_FILES = frozenset({"pops.json", "fiber-segments.json"})
@@ -55,8 +53,6 @@ def _response(status: int, body: Any) -> dict[str, Any]:
 
 
 def is_current(key: str) -> bool:
-    if key.startswith(_WORKING_PREFIXES):
-        return True
     prefix, _, rest = key.partition("/")
     kept = _KEPT_BY_PREFIX.get(prefix)
     if kept is None or not rest:
