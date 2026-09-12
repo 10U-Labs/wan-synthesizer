@@ -236,7 +236,8 @@ def run_synthesis(
     params: SynthesisParams,
     off_net_sites: list[Site] | None = None,
 ) -> SynthesisArtifacts:
-    sites, fiber_segments = dual_home(sites, fiber_segments, params, off_net_sites or [])
+    homed = dual_home(sites, fiber_segments, params, off_net_sites or [])
+    sites, fiber_segments = homed.sites, homed.fiber_segments
     sites, fiber_segments, overrides = apply_role_overrides(sites, fiber_segments, params)
     synthesis = synthesize_two_tier(sites, fiber_segments, params, overrides)
     sites, fiber_segments, synthesis, validation = finalize(

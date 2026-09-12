@@ -2,37 +2,64 @@ from __future__ import annotations
 
 import fixtures
 import pytest
-from synthesizer.stages import dual_home, finalize
+from synthesizer.stages import DualHomed, dual_home, finalize
 from synthesizer.model import SynthesisParams, Tuning, ValidationReport
 
 _TWO_DIVERSE_CIRCUITS = Tuning(backbone_number_of_diverse_circuits=2)
 
 
 def test_dual_home_returns_a_graph_without_off_net() -> None:
-    homed_sites, homed_circuits = dual_home(
+    homed = dual_home(
         fixtures.ring_sites(), fixtures.ring_fiber_segments(), fixtures.ring_params(), []
     )
-    assert all((homed_sites, homed_circuits))
+    assert all((homed.sites, homed.fiber_segments))
 
 
-def test_dual_home_realizes_a_forced_off_net_site() -> None:
+def _homed_with_a_forced_off_net_site() -> DualHomed:
     site, params = fixtures.forced_off_net_case()
-    homed_sites, _fiber = dual_home(
-        fixtures.ring_sites(), fixtures.ring_fiber_segments(), params, [site]
-    )
-    assert any(site.id.startswith("offnet_") for site in homed_sites)
+    return dual_home(fixtures.ring_sites(), fixtures.ring_fiber_segments(), params, [site])
 
 
-def test_dual_home_fabricates_a_forced_on_net_location() -> None:
+def _homed_with_a_forced_on_net_location() -> DualHomed:
     luke = fixtures.tenant_site("Luke", 40.5, -100.0)
     params = SynthesisParams(
         min_wan_pop_count=2,
         forced_wan_pop_names=("Luke",),
     )
-    homed_sites, _fiber = dual_home(
+    return dual_home(
         [*fixtures.ring_sites(), luke], fixtures.ring_fiber_segments(), params, []
     )
-    assert any(site.id.startswith("fac_") for site in homed_sites)
+
+
+def test_dual_home_realizes_a_forced_off_net_site() -> None:
+    assert any(
+        site.id.startswith("offnet_") for site in _homed_with_a_forced_off_net_site().sites
+    )
+
+
+def test_dual_home_fabricates_a_forced_on_net_location() -> None:
+    assert any(
+        site.id.startswith("fac_") for site in _homed_with_a_forced_on_net_location().sites
+    )
+
+
+def test_dual_home_reports_the_off_net_twin_it_fabricated() -> None:
+    homed = _homed_with_a_forced_off_net_site()
+    assert {
+        site.id for site in homed.sites if site.id.startswith("offnet_")
+    } == homed.fabricated_ids
+
+
+def test_dual_home_reports_the_on_net_twin_it_fabricated() -> None:
+    homed = _homed_with_a_forced_on_net_location()
+    assert {
+        site.id for site in homed.sites if site.id.startswith("fac_")
+    } == homed.fabricated_ids
+
+
+def test_dual_home_reports_no_carrier_pop_as_fabricated() -> None:
+    homed = _homed_with_a_forced_off_net_site()
+    assert not homed.fabricated_ids & {site.id for site in fixtures.ring_sites()}
 
 
 def test_finalize_validates_a_synthesis() -> None:

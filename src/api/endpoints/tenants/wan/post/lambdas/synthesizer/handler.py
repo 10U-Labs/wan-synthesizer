@@ -109,7 +109,8 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
         len(graph),
         len(fiber_segments),
     )
-    graph, fiber_segments = dual_home(graph, fiber_segments, params, off_net)
+    homed = dual_home(graph, fiber_segments, params, off_net)
+    graph, fiber_segments = homed.sites, homed.fiber_segments
     graph, fiber_segments, overrides = apply_role_overrides(
         graph, fiber_segments, params, config.operator_circuits
     )

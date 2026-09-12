@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from synthesizer.ceiling import CircuitProofInputs, diverse_circuit_ceilings
 from synthesizer.graphs import adjacency_by_carrier, build_adjacency
 from synthesizer.input_graph import FiberSegment, Site
@@ -13,24 +15,34 @@ from synthesizer.validation import (
 )
 
 
+@dataclass(frozen=True)
+class DualHomed:
+    sites: list[Site]
+    fiber_segments: dict[tuple[str, str], FiberSegment]
+    fabricated_ids: frozenset[str]
+
+
 def dual_home(
     sites: list[Site],
     fiber_segments: dict[tuple[str, str], FiberSegment],
     params: SynthesisParams,
     off_net_sites: list[Site],
-) -> tuple[list[Site], dict[tuple[str, str], FiberSegment]]:
+) -> DualHomed:
     forced_wan_pops = frozenset(params.forced_wan_pop_names)
     fabricated = fabricate_missing_on_net_pops(
         sites, fiber_segments, forced_wan_pops
     )
-    sites, fiber_segments = fabricated.sites, fabricated.fiber_segments
     off_net = realize_off_net_sites(
-        sites,
-        fiber_segments,
+        fabricated.sites,
+        fabricated.fiber_segments,
         off_net_sites,
         forced_wan_pops,
     )
-    return off_net.sites, off_net.fiber_segments
+    return DualHomed(
+        off_net.sites,
+        off_net.fiber_segments,
+        fabricated.on_net_ids | off_net.off_net_ids,
+    )
 
 
 def finalize(
