@@ -116,6 +116,32 @@ def test_seeding_demands_a_success_from_every_check_it_waits_for() -> None:
     assert demanded == _gates_on_seeding()
 
 
+_WAIT_JOB = "wait-for-every-deploy"
+
+
+def _workflows_that_deploy() -> set[str]:
+    return {
+        path.name
+        for path in (REPO_ROOT / ".github/workflows").glob("*.yml")
+        if "reconciliation" in yaml.safe_load(path.read_text(encoding="utf-8"))["jobs"]
+    }
+
+
+def _workflows_seeding_waits_for() -> set[str]:
+    steps = _seed_workflow()["jobs"][_WAIT_JOB]["steps"]
+    waited = next(step["env"]["WORKFLOWS"] for step in steps if "env" in step)
+    return set(str(waited).split())
+
+
+def test_seeding_waits_for_every_workflow_that_deploys_on_the_same_commit() -> None:
+    assert _workflows_seeding_waits_for() == _workflows_that_deploy()
+
+
+def test_seeding_seeds_only_on_the_conclusion_the_wait_job_reports() -> None:
+    condition = _seed_workflow()["jobs"]["seeding"]["if"]
+    assert f"needs.{_WAIT_JOB}.outputs.apply == 'true'" in condition
+
+
 def _tenant_configs() -> dict[str, dict[str, Any]]:
     return {
         _slug(path.stem): yaml.safe_load(path.read_text(encoding="utf-8"))

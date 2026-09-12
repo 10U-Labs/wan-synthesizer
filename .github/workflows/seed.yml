@@ -205,6 +205,8 @@ jobs:
       && needs.pylint-tests.result == 'success'
       && needs.test-repo-libraries.result == 'success'
       && needs.unit-tests.result == 'success'
+      && needs.wait-for-every-deploy.result == 'success'
+      && needs.wait-for-every-deploy.outputs.apply == 'true'
       && needs.yamllint.result == 'success' }}
     name: seeding
     needs:
@@ -222,6 +224,7 @@ jobs:
       - pylint-tests
       - test-repo-libraries
       - unit-tests
+      - wait-for-every-deploy
       - yamllint
     runs-on: ubuntu-latest
     steps:
@@ -304,6 +307,66 @@ jobs:
           --cov-branch
           --cov-report=term-missing
           --cov-fail-under=100
+  wait-for-every-deploy:
+    if: github.ref == 'refs/heads/main'
+    name: wait-for-every-deploy
+    outputs:
+      apply: ${{ steps.deploys.outputs.apply }}
+    permissions:
+      actions: read
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          POLL_LIMIT: '180'
+          POLL_SECONDS: '20'
+          WORKFLOWS: >-
+            api_common_routing.yml
+            api_common_storage.yml
+            api_endpoint_carriers.yml
+            api_endpoint_carriers_merge.yml
+            api_endpoint_providers.yml
+            api_endpoint_tenants.yml
+            api_endpoint_tenants_wan.yml
+            api_endpoint_tenants_wan_post.yml
+        id: deploys
+        name: Wait for every deploy this commit started, so seeding runs against what it ships
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != push ]; then
+            echo "No push started this run, so no deploy runs beside it."
+            echo "apply=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          FIELDS='.workflow_runs[] | "\(.status) \(.conclusion // "")"'
+          APPLY=true
+          for WORKFLOW in $WORKFLOWS; do
+            RUNS="repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/runs"
+            POLL=0
+            while true; do
+              RUN=$(gh api "$RUNS?head_sha=$GITHUB_SHA&per_page=1" --jq "$FIELDS")
+              if [ -z "$RUN" ]; then
+                echo "This commit started no $WORKFLOW run to wait for."
+                break
+              fi
+              if [ "${RUN% *}" = completed ]; then
+                CONCLUSION=${RUN#* }
+                echo "$WORKFLOW on this commit ended $CONCLUSION."
+                if [ "$CONCLUSION" != success ]; then
+                  APPLY=false
+                fi
+                break
+              fi
+              if [ "$POLL" -ge "$POLL_LIMIT" ]; then
+                echo "::error::$WORKFLOW on this commit has not finished."
+                exit 1
+              fi
+              echo "$WORKFLOW on this commit is ${RUN% *}. Waiting."
+              sleep "$POLL_SECONDS"
+              POLL=$((POLL + 1))
+            done
+          done
+          echo "apply=$APPLY" >> "$GITHUB_OUTPUT"
   yamllint:
     name: yamllint
     runs-on: ubuntu-latest

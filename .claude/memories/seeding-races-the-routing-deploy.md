@@ -7,6 +7,12 @@ metadata:
 
 # Seeding races the routing deploy
 
+Since `wait-for-every-deploy` landed in `seed.yml`, `seeding` runs only
+after every deploy the same commit started has ended success, so neither
+race below can happen on a push; see
+[seeding-waits-for-every-deploy](seeding-waits-for-every-deploy.md). What
+follows is why that job exists and what a run without it looked like.
+
 Adding a new per-tenant store resource can fail the first `seed` run on the new PUT: `seed`, `api_common_routing` and `api_endpoint_tenants` are independent workflows on the same push, so seeding can beat both the route and the handler that stores it. The code says which is behind — `HTTP 403` is a route API Gateway does not define yet, `HTTP 404` is the old handler not knowing the collection. Wait for both, then `gh run rerun <run-id> --failed`. A later commit that misses `etc/`, `openapi.json` and `seed.py` will not re-trigger `seed` at all.
 
 ## The prune keeps what the run wrote, so a rename never races it

@@ -25,6 +25,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 ### CI workflows
 
 - [seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md) — a new per-tenant store resource can fail the first `seed` run on the new PUT, and `HTTP 403` and `HTTP 404` say which deploy is behind; a synthesizer change instead fails nothing and grades WANs the old Lambda built, where `--failed` is the wrong re-run; the prune keeps every key the run wrote, so a rename never races it
+- [seeding-waits-for-every-deploy](seeding-waits-for-every-deploy.md) — `seeding` runs after every workflow on the same commit that deploys something it talks to, through a wait job copied from `10ulabs.com`, so a seed never grades WANs the previous Lambda built
 - [seed-tests-every-push](seed-tests-every-push.md) — every push that starts `seed.yml` runs every tier, and how a new check is wired into `reconciliation` and `seeding`
 - [shared-modules-are-tested-first](shared-modules-are-tested-first.md) — `test-repo-libraries` runs every module's tests ahead of every job whose tests import them
 - [where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md) — a test runs in the workflow the change it guards arrives on
