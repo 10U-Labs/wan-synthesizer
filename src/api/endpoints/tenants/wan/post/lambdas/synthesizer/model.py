@@ -156,6 +156,8 @@ class ValidationReport(TypedDict):
     backbone_diverse_circuits_above_target: list[dict[str, object]]
     backbone_mesh_survives_any_one_link_loss: bool
     backbone_mesh_survives_any_one_site_loss: bool
+    backbone_mesh_is_one_piece: bool
+    backbone_mesh_pieces: list[list[dict[str, str]]]
     backbone_mesh_has_no_cut_pop: bool
     backbone_mesh_cut_pops: list[dict[str, str]]
 

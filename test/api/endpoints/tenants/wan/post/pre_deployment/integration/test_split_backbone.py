@@ -11,7 +11,7 @@ from repo_utils import REPO_ROOT
 from test_module_utils import load_module_from_path
 from test_s3_store_mock import fake_s3
 from synthesizer.input_graph import FiberSegment, Site
-from synthesizer.model import Homings, Synthesis, is_carrier_pop
+from synthesizer.model import Homings, Synthesis, SynthesisCircuit, is_carrier_pop
 
 _PATH = REPO_ROOT / "src/api/endpoints/tenants/wan/post/lambdas/synthesizer/handler.py"
 _TENANT = "split"
@@ -102,7 +102,10 @@ def _synthesis_over_every_segment(
         transit_ids=(),
         homings=Homings([], []),
         fiber_segment_keys=set(fiber_segments),
-        drawn_circuits=[],
+        drawn_circuits=[
+            SynthesisCircuit("backbone_mesh", left, right, (left, right), 1.0)
+            for left, right in sorted(fiber_segments)
+        ],
         metrics=fixtures.no_miles(),
     )
 
@@ -118,12 +121,12 @@ def store_fixture(monkeypatch: pytest.MonkeyPatch) -> dict[str, bytes]:
     return objects
 
 
-def test_a_synthesis_in_two_groups_publishes_no_wan(store: dict[str, bytes]) -> None:
+def test_a_wan_in_two_pieces_publishes_no_wan(store: dict[str, bytes]) -> None:
     assert f"tenants/{_TENANT}/wan.json" not in store
 
 
-def test_the_recorded_reason_names_the_groups_the_synthesis_fell_into(
+def test_the_recorded_reason_names_the_pieces_the_wan_fell_into(
     store: dict[str, bytes]
 ) -> None:
     status = json.loads(store[f"tenants/{_TENANT}/wan-status.json"])
-    assert "falls into 2 groups" in status["reason"]
+    assert "falls into 2 pieces" in status["reason"]

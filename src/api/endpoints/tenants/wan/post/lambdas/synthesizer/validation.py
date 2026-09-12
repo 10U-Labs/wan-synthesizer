@@ -101,6 +101,13 @@ def backbone_mesh_survives_any_one_link_loss(synthesis: Synthesis) -> bool:
 def backbone_mesh_survives_any_one_site_loss(synthesis: Synthesis) -> bool:
     return _backbone_mesh_survives(synthesis, survives_any_one_site_loss)
 
+def backbone_mesh_pieces(synthesis: Synthesis) -> list[list[str]]:
+    segments = backbone_mesh_fiber_segments(synthesis)
+    wan_pops = frozenset(synthesis.wan_pop_ids)
+    pops = {pop for segment in segments for pop in segment} | wan_pops
+    pieces = {frozenset(piece) & wan_pops for piece in connected_components(pops, segments)}
+    return sorted(sorted(piece) for piece in pieces - {frozenset[str]()})
+
 def backbone_mesh_cut_pops(
     synthesis: Synthesis, targets: MeshRequirements
 ) -> list[str]:
@@ -108,8 +115,6 @@ def backbone_mesh_cut_pops(
         return []
     segments = backbone_mesh_fiber_segments(synthesis)
     pops = {pop for segment in segments for pop in segment}
-    if len(connected_components(pops, segments)) != 1:
-        return []
     return sorted(articulation_points(pops, segments))
 
 def circuits_out_of(
@@ -275,16 +280,6 @@ def neighbor_degrees(
             neighbors[right].add(left)
     return {site_id: len(value) for site_id, value in neighbors.items()}
 
-def wan_pop_names_by_group(sites: list[Site], synthesis: Synthesis) -> list[list[str]]:
-    names = {site.id: site.name for site in sites}
-    selected = set(synthesis.wan_pop_ids)
-    return [
-        [names[site_id] for site_id in group if site_id in selected]
-        for group in connected_components(
-            included_site_ids(synthesis), synthesis_site_pairs(synthesis)
-        )
-    ]
-
 def validate_synthesis(
     sites: list[Site],
     synthesis: Synthesis,
@@ -305,6 +300,7 @@ def validate_synthesis(
     independence_deficient = backbone_mesh_independence_deficient(
         synthesis, sites_by_id, targets
     )
+    pieces = backbone_mesh_pieces(synthesis)
     cut_pops = backbone_mesh_cut_pops(synthesis, targets)
 
     return {
@@ -347,6 +343,10 @@ def validate_synthesis(
             backbone_mesh_survives_any_one_link_loss(synthesis),
         "backbone_mesh_survives_any_one_site_loss":
             backbone_mesh_survives_any_one_site_loss(synthesis),
+        "backbone_mesh_is_one_piece": len(pieces) <= 1,
+        "backbone_mesh_pieces": [
+            [{"id": pop, "name": sites_by_id[pop].name} for pop in piece] for piece in pieces
+        ],
         "backbone_mesh_has_no_cut_pop": not cut_pops,
         "backbone_mesh_cut_pops": [
             {"id": pop, "name": sites_by_id[pop].name} for pop in cut_pops

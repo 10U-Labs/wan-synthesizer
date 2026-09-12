@@ -416,8 +416,45 @@ def test_a_stub_circuit_ending_at_a_capped_wan_pop_still_names_the_cut_pop() -> 
     )["backbone_mesh_cut_pops"] == [{"id": "C1", "name": "C1"}]
 
 
-def test_a_backbone_mesh_that_is_not_one_piece_names_no_cut_pop() -> None:
+_IN_PIECES = (
+    ("C1", "C2", "C3", "C4", "C5"),
+    [("C1", "C2"), ("C2", "C3"), ("C4", "C5")],
+)
+
+
+def _named(*ids: str) -> list[dict[str, str]]:
+    return [{"id": site_id, "name": site_id} for site_id in ids]
+
+
+def test_a_backbone_mesh_in_pieces_names_the_wan_pops_in_each_piece() -> None:
+    assert _mesh_report(*_IN_PIECES, backbone_number_of_diverse_circuits=2)[
+        "backbone_mesh_pieces"
+    ] == [_named("C1", "C2", "C3"), _named("C4", "C5")]
+
+
+def test_a_backbone_mesh_in_pieces_is_not_one_piece() -> None:
+    assert _mesh_report(*_IN_PIECES, backbone_number_of_diverse_circuits=2)[
+        "backbone_mesh_is_one_piece"
+    ] is False
+
+
+def test_a_pop_whose_loss_cuts_a_piece_deeper_is_named_though_the_mesh_is_in_pieces() -> None:
+    assert _mesh_report(*_IN_PIECES, backbone_number_of_diverse_circuits=2)[
+        "backbone_mesh_cut_pops"
+    ] == _named("C2")
+
+
+def test_a_healthy_backbone_is_one_piece_holding_every_wan_pop() -> None:
+    assert _mesh_report(*_HEALTHY)["backbone_mesh_pieces"] == [_named(*_HEALTHY[0])]
+
+
+def test_a_wan_pop_no_circuit_reaches_is_a_piece_of_its_own() -> None:
     assert _mesh_report(
-        ("C1", "C2", "C3", "C4"), [("C1", "C2"), ("C3", "C4")],
-        backbone_number_of_diverse_circuits=2,
-    )["backbone_mesh_cut_pops"] == []
+        ("C1", "C2", "C3"), [("C1", "C2")], backbone_number_of_diverse_circuits=2,
+    )["backbone_mesh_pieces"] == [_named("C1", "C2"), _named("C3")]
+
+
+def test_a_wan_in_pieces_is_in_pieces_whatever_the_tenant_asked_for() -> None:
+    assert _mesh_report(*_IN_PIECES, backbone_number_of_diverse_circuits=1)[
+        "backbone_mesh_is_one_piece"
+    ] is False

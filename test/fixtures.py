@@ -150,19 +150,11 @@ SPLIT_AT_TRANSIT_SEGMENTS = {
 SPLIT_WAN_POPS = ("a", "b", "c", "d")
 SPLIT_BACKBONE_CITIES = "abcdt"
 SPLIT_BACKBONE_SEGMENTS = {("a", "t"): 50.0, ("t", "b"): 50.0, ("c", "d"): 100.0}
+SPLIT_BACKBONE_CIRCUITS: list[tuple[str, ...]] = [("a", "t", "b"), ("c", "d")]
 
 
 def split_backbone_synthesis() -> Synthesis:
-    return Synthesis(
-        wan_pop_ids=SPLIT_WAN_POPS,
-        transit_ids=(),
-        homings=Homings([], []),
-        fiber_segment_keys={
-            segment_key(left, right) for left, right in SPLIT_BACKBONE_SEGMENTS
-        },
-        drawn_circuits=[],
-        metrics=no_miles(),
-    )
+    return meshed_backbone_synthesis(SPLIT_BACKBONE_CIRCUITS, SPLIT_WAN_POPS)
 
 
 def carrier_pops_in_a_column() -> list[Site]:

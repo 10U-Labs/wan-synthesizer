@@ -137,14 +137,51 @@ def _finalize_split_backbone() -> None:
     )
 
 
-def test_finalize_refuses_a_synthesis_whose_sites_fall_into_more_than_one_group() -> None:
-    with pytest.raises(ValueError, match="no fiber joins"):
+def test_finalize_refuses_a_wan_whose_circuits_leave_it_in_pieces() -> None:
+    with pytest.raises(ValueError, match="no circuit joins"):
         _finalize_split_backbone()
 
 
-def test_the_refusal_says_how_many_groups_the_synthesis_fell_into() -> None:
-    with pytest.raises(ValueError, match="falls into 2 groups"):
+def test_the_refusal_says_how_many_pieces_the_wan_fell_into() -> None:
+    with pytest.raises(ValueError, match="falls into 2 pieces"):
         _finalize_split_backbone()
+
+
+def test_the_refusal_names_the_wan_pops_in_each_piece() -> None:
+    with pytest.raises(ValueError, match="no circuit joins: a, b; c, d"):
+        _finalize_split_backbone()
+
+
+_PIECES_ROUND_A_CUT_CITIES = "abcdex"
+_PIECES_ROUND_A_CUT_WAN_POPS = ("a", "b", "c", "d", "e")
+_PIECES_ROUND_A_CUT_CIRCUITS: list[tuple[str, ...]] = [
+    ("a", "x", "b"), ("a", "x", "c"), ("d", "e"),
+]
+
+
+def _pieces_round_a_cut_refusal() -> str:
+    try:
+        finalize(
+            list(fixtures.carrier_pops_by_id(_PIECES_ROUND_A_CUT_CITIES).values()),
+            fixtures.fiber_segments_from({
+                ("a", "x"): 1.0, ("x", "b"): 1.0, ("x", "c"): 1.0, ("d", "e"): 1.0,
+            }),
+            fixtures.meshed_backbone_synthesis(
+                _PIECES_ROUND_A_CUT_CIRCUITS, _PIECES_ROUND_A_CUT_WAN_POPS
+            ),
+            SynthesisParams(min_wan_pop_count=2, tuning=_TWO_DIVERSE_CIRCUITS),
+        )
+    except ValueError as refusal:
+        return str(refusal)
+    return ""
+
+
+def test_a_wan_in_pieces_is_refused_ahead_of_a_pop_whose_loss_splits_it() -> None:
+    assert "splits the WAN at" not in _pieces_round_a_cut_refusal()
+
+
+def test_a_wan_in_pieces_is_refused_as_the_pieces_it_fell_into() -> None:
+    assert "falls into 2 pieces no circuit joins: a, b, c; d, e" in _pieces_round_a_cut_refusal()
 
 
 def _finalize_split_at_transit() -> None:

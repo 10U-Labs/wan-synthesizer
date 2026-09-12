@@ -235,7 +235,7 @@ def _run_split_backbone(module: Any, monkeypatch: pytest.MonkeyPatch) -> dict[st
     return objects
 
 
-def test_records_fail_when_the_synthesis_falls_into_more_than_one_group(
+def test_records_fail_when_the_wan_falls_into_more_than_one_piece(
     synthesizer: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     objects = _run_split_backbone(synthesizer, monkeypatch)

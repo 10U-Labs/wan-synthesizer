@@ -196,15 +196,9 @@ def _cuts_deeper(
 
 
 def cut_cities(circuits: list[dict[str, Any]]) -> list[str]:
-    joined = _cities_the_circuits_cross(circuits)
-    if not _all_one_network(joined):
-        return []
+    whole = _pieces(_cities_the_circuits_cross(circuits))
     return sorted(
-        lost
-        for lost in joined
-        if not _all_one_network({
-            city: reached - {lost} for city, reached in joined.items() if city != lost
-        })
+        lost for lost, pieces in pieces_without_each(circuits).items() if pieces > whole
     )
 
 

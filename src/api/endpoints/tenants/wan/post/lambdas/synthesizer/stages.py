@@ -8,11 +8,7 @@ from synthesizer.input_graph import FiberSegment, Site
 from synthesizer.model import Synthesis, SynthesisParams, MeshRequirements, ValidationReport
 from synthesizer.on_net_fabrication import fabricate_missing_on_net_pops
 from synthesizer.offnet import realize_off_net_sites
-from synthesizer.validation import (
-    wan_pop_names_by_group,
-    wan_pop_mesh_target,
-    validate_synthesis,
-)
+from synthesizer.validation import wan_pop_mesh_target, validate_synthesis
 
 
 @dataclass(frozen=True)
@@ -72,13 +68,11 @@ def finalize(
     validation = validate_synthesis(
         sites, synthesis, params.tuning.homing_degree, targets
     )
-    if not validation["connected"]:
-        groups = "; ".join(
-            ", ".join(names) for names in wan_pop_names_by_group(sites, synthesis)
-        )
+    pieces = validation["backbone_mesh_pieces"]
+    if len(pieces) > 1:
+        named = "; ".join(", ".join(entry["name"] for entry in piece) for piece in pieces)
         raise ValueError(
-            f"Synthesis falls into {validation['component_count']} groups "
-            f"no fiber joins: {groups}"
+            f"The WAN falls into {len(pieces)} pieces no circuit joins: {named}"
         )
     cut_pops = validation["backbone_mesh_cut_pops"]
     if cut_pops:
