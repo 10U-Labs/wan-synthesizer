@@ -14,7 +14,7 @@ This is the goal. Everything else here is a means to it and is wrong wherever it
 
 ## What the directive outranks
 
-**The per-PoP ask.** A tenant asks for a number of diverse circuits out of each WAN PoP. That is an input, not the goal. Every WAN PoP can hold the circuits it was asked for and the loss of one PoP still split the WAN. Where the two disagree the directive wins, and the shortfall is a defect to report rather than a tolerance to widen.
+**The per-PoP ask.** A tenant asks for a number of diverse circuits out of each WAN PoP. That is an input, not the goal. Every WAN PoP can have as many circuits running out of it as the tenant asked for and the loss of one PoP still split the WAN. Where the two disagree the directive wins, and the shortfall is a defect to report rather than a tolerance to widen.
 
 **Every published figure.** The miles a WAN's circuits run over, the floor published beside them, and the ratio between the two are a report card on the synthesizer. None of them says whether the loss of a PoP splits the WAN. A tighter floor is never a reason to publish a WAN that splits.
 
