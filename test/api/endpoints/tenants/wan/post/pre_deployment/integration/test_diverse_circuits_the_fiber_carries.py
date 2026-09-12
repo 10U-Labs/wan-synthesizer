@@ -109,7 +109,7 @@ def test_no_site_is_asked_for_a_circuit_its_fiber_cannot_lay(
     assert distant_peer.validation["backbone_mesh_independence_deficient"] == []
 
 
-def test_the_finished_synthesis_orders_the_fewest_fiber_miles_it_can_be_wired_with(
+def test_the_finished_synthesis_runs_the_fewest_fiber_miles_it_can_be_wired_with(
     express: SynthesisArtifacts,
 ) -> None:
     assert _mesh_miles(express) == 6.0

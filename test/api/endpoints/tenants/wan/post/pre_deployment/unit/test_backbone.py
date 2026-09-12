@@ -324,7 +324,7 @@ def test_a_backbone_the_fiber_never_joins_is_floored_at_nothing() -> None:
     assert _ISLAND_PIN.lower_bound_miles == 0.0
 
 
-def test_a_site_the_fiber_does_not_carry_costs_the_others_nothing() -> None:
+def test_a_site_the_fiber_does_not_carry_leaves_the_others_their_circuits() -> None:
     fiber = physical({("a", "b"): 1.0})
     mesh = _drawn(("a", "b", "zed"), fiber, WanPopConstraints(number_of_diverse_circuits=1))
     assert _pairs(mesh) == {segment_key("a", "b")}

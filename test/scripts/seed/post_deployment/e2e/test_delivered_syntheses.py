@@ -187,7 +187,7 @@ def test_no_published_network_draws_a_pair_more_circuits_than_its_tenant_asked_f
     assert overbuilt == {}
 
 
-def test_no_published_network_holds_a_circuit_that_buys_nobody_a_diverse_circuit(
+def test_no_published_network_holds_a_circuit_that_is_nobodys_diverse_circuit(
         published_syntheses: list[dict[str, Any]]) -> None:
     spare = {
         synthesis["tenant"]: removable_circuits(synthesis)

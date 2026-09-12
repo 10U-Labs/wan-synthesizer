@@ -17,7 +17,7 @@ ARTIFACTS = fixtures.synthesis_over_segments(_SITES, _SEGMENTS, _ASKED_FOR)
 _MESH = fixtures.mesh_circuits(ARTIFACTS)
 
 
-def test_the_delivered_synthesis_orders_the_four_hundred_miles_the_ring_costs() -> None:
+def test_the_delivered_synthesis_runs_over_the_four_hundred_miles_of_the_ring() -> None:
     assert ARTIFACTS.synthesis.metrics.physical_miles == 400.0
 
 
@@ -52,11 +52,11 @@ def _many_pass_artifacts() -> SynthesisArtifacts:
 MANY_PASS_ARTIFACTS = _many_pass_artifacts()
 
 
-def test_a_synthesis_whose_search_takes_many_passes_orders_the_fewest_miles_there_are() -> None:
+def test_a_synthesis_whose_search_takes_many_passes_runs_the_fewest_miles_there_are() -> None:
     assert MANY_PASS_ARTIFACTS.synthesis.metrics.physical_miles == fixtures.MANY_PASS_MILES
 
 
-def test_that_synthesis_orders_exactly_the_floor_it_publishes_rather_than_twice_it() -> None:
+def test_that_synthesis_runs_exactly_the_floor_it_publishes_rather_than_twice_it() -> None:
     assert MANY_PASS_ARTIFACTS.synthesis.metrics.physical_miles == pytest.approx(
         MANY_PASS_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles
     )
@@ -117,7 +117,7 @@ def _fiber_the_selection_holds() -> frozenset[tuple[str, str]]:
     )).segments
 
 
-def test_the_delivered_synthesis_orders_only_fiber_selected_for_it() -> None:
+def test_the_delivered_synthesis_holds_only_fiber_selected_for_it() -> None:
     assert set(OFFERED_ARTIFACTS.synthesis.fiber_segment_keys) <= _fiber_the_selection_holds()
 
 
@@ -175,7 +175,7 @@ PAIRED_ARTIFACTS = fixtures.synthesis_over_segments(
 )
 
 
-def test_the_floor_prices_the_diverse_circuits_owed_and_the_loss_of_any_one_pop() -> None:
+def test_the_floor_is_stated_over_the_diverse_circuits_owed_and_the_loss_of_any_one_pop() -> None:
     assert round(PAIRED_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3) == 570.0
 
 
@@ -246,13 +246,13 @@ PAST_ONE_POP_ARTIFACTS = fixtures.synthesis_over_segments(
 )
 
 
-def test_the_floor_prices_the_circuit_that_keeps_one_pop_from_splitting_the_wan() -> None:
+def test_the_floor_is_stated_over_the_circuit_that_keeps_one_pop_from_splitting_the_wan() -> None:
     assert round(
         PAST_ONE_POP_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles, 3
     ) == 240.0
 
 
-def test_that_synthesis_runs_no_further_than_a_tenth_past_what_survival_costs() -> None:
+def test_that_synthesis_runs_no_further_than_a_tenth_past_what_surviving_any_pop_takes() -> None:
     assert PAST_ONE_POP_ARTIFACTS.synthesis.metrics.physical_miles <= (
         1.1 * PAST_ONE_POP_ARTIFACTS.synthesis.metrics.backbone_lower_bound_miles
     )

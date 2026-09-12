@@ -29,7 +29,7 @@ def test_the_synthesis_joins_each_site_to_the_two_peers_it_reaches() -> None:
     assert len(_MESH) == 4
 
 
-def test_the_synthesis_orders_the_fewest_fiber_miles_its_requirements_allow() -> None:
+def test_the_synthesis_runs_the_fewest_fiber_miles_its_requirements_allow() -> None:
     assert sum(drawn_circuit.distance_miles for drawn_circuit in _MESH) == 1600.0
 
 

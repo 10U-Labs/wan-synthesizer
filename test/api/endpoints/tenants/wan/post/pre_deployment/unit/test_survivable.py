@@ -79,7 +79,7 @@ _NO_FIBER = _selected(physical({}), ("a", "b"))
 _NO_SITES = _selected(physical({("a", "b"): 1.0}), ())
 
 
-def test_a_backbone_with_no_fiber_at_all_buys_nothing_and_is_floored_at_nothing() -> None:
+def test_a_backbone_with_no_fiber_at_all_holds_nothing_and_is_floored_at_nothing() -> None:
     assert _NO_FIBER == FiberSelection(frozenset(), 0.0)
 
 
@@ -120,20 +120,20 @@ def test_a_site_behind_a_single_point_of_failure_is_asked_for_what_its_fiber_can
     assert _CHAIN_SELECTION.segments == frozenset(_CHAIN)
 
 
-_PAIR_PRICED = physical({
+_ONLY_REACHABLE_PEER = physical({
     ("a", "b"): 20.0, ("b", "e"): 22.0,
     ("a", "f"): 32.0, ("b", "f"): 32.0,
     ("b", "g"): 32.0, ("e", "g"): 32.0,
 })
-_PAIR_PRICED_SELECTION = _selected(_PAIR_PRICED, ("a", "b", "e"))
+_ONLY_REACHABLE_PEER_SELECTION = _selected(_ONLY_REACHABLE_PEER, ("a", "b", "e"))
 
 
 def test_the_fiber_selected_carries_both_circuits_to_a_wan_pops_only_reachable_peer() -> None:
-    assert _PAIR_PRICED_SELECTION.segments == frozenset(_PAIR_PRICED)
+    assert _ONLY_REACHABLE_PEER_SELECTION.segments == frozenset(_ONLY_REACHABLE_PEER)
 
 
 def test_the_floor_states_both_circuits_to_a_wan_pops_only_reachable_peer() -> None:
-    assert _PAIR_PRICED_SELECTION.lower_bound_miles == pytest.approx(170.0)
+    assert _ONLY_REACHABLE_PEER_SELECTION.lower_bound_miles == pytest.approx(170.0)
 
 
 _ASKED_TWO_OVER_ONE = _Requirement(
@@ -226,7 +226,7 @@ def test_the_fiber_selected_where_two_carriers_share_a_pop_carries_both_diverse_
     assert _shared_transit_ceilings(_SHARED_TRANSIT_SELECTION.segments) == {"a": 2, "b": 2}
 
 
-def test_the_floor_prices_the_circuit_round_the_pop_two_carriers_share() -> None:
+def test_the_floor_is_stated_over_the_circuit_round_the_pop_two_carriers_share() -> None:
     assert _SHARED_TRANSIT_SELECTION.lower_bound_miles >= (
         fixtures.SHARED_TRANSIT_MILES - _SLACK
     )
@@ -279,7 +279,7 @@ _MANY_PASS_SELECTION = _selected(_MANY_PASS, fixtures.MANY_PASS_SITES)
 _MANY_PASS_FIBER = _whole(_MANY_PASS_INPUTS)
 
 
-def test_a_search_that_runs_long_enough_buys_the_shortest_synthesis_there_is() -> None:
+def test_a_search_that_runs_long_enough_selects_the_shortest_synthesis_there_is() -> None:
     assert _selected_miles(_MANY_PASS_SELECTION, _MANY_PASS) == pytest.approx(
         _MANY_PASS_SELECTION.lower_bound_miles
     )
@@ -356,7 +356,7 @@ _ALREADY_NEEDED_SELECTION = _selected(
 )
 
 
-def test_the_floor_prices_every_diverse_circuit_a_wan_pop_is_owed() -> None:
+def test_the_floor_is_stated_over_every_diverse_circuit_a_wan_pop_is_owed() -> None:
     assert _ALREADY_NEEDED_SELECTION.lower_bound_miles == pytest.approx(
         fixtures.ALREADY_NEEDED_MILES
     )
@@ -379,11 +379,11 @@ _PAST_THE_POP_ASKED_ONE = _selected(
 )
 
 
-def test_the_floor_prices_the_circuits_that_keep_one_pop_from_splitting_the_wan() -> None:
+def test_the_floor_is_stated_over_the_circuits_that_keep_one_pop_from_splitting_the_wan() -> None:
     assert _PAST_THE_POP_SELECTION.lower_bound_miles == pytest.approx(240.0)
 
 
-def test_no_such_circuit_is_priced_over_fiber_that_offers_no_way_past_the_pop() -> None:
+def test_no_such_circuit_is_stated_over_fiber_that_offers_no_way_past_the_pop() -> None:
     assert _HELD_AT_ONE_POP.lower_bound_miles == pytest.approx(60.0)
 
 
@@ -413,7 +413,7 @@ _ONE_CIRCUIT_SEAT_SELECTION = _selected(
 )
 
 
-def test_a_wan_pop_the_fiber_can_give_one_circuit_is_priced_no_way_past_any_pop() -> None:
+def test_a_wan_pop_the_fiber_can_give_one_circuit_is_stated_no_way_past_any_pop() -> None:
     assert _ONE_CIRCUIT_SEAT_SELECTION.lower_bound_miles == pytest.approx(55.0)
 
 
