@@ -26,7 +26,7 @@ def dual_home(
 ) -> DualHomed:
     forced_wan_pops = frozenset(params.forced_wan_pop_names)
     fabricated = fabricate_missing_on_net_pops(
-        sites, fiber_segments, forced_wan_pops
+        sites, fiber_segments, forced_wan_pops - {site.name for site in off_net_sites}
     )
     off_net = realize_off_net_sites(
         fabricated.sites,

@@ -57,6 +57,27 @@ def test_dual_home_reports_the_on_net_twin_it_fabricated() -> None:
     } == homed.fabricated_ids
 
 
+def _homed_with_a_forced_site_the_off_net_roster_also_lists() -> DualHomed:
+    site, params = fixtures.forced_off_net_case()
+    return dual_home(
+        [*fixtures.ring_sites(), fixtures.tenant_site(site.name, *site.coords)],
+        fixtures.ring_fiber_segments(),
+        params,
+        [site],
+    )
+
+
+def test_a_forced_site_the_off_net_roster_also_lists_is_realized_as_off_net() -> None:
+    assert [
+        site.id for site in _homed_with_a_forced_site_the_off_net_roster_also_lists().sites
+        if site.id.startswith("offnet_")
+    ] == ["offnet_Dulles Hub"]
+
+
+def test_a_forced_site_the_off_net_roster_also_lists_is_fabricated_once() -> None:
+    assert len(_homed_with_a_forced_site_the_off_net_roster_also_lists().fabricated_ids) == 1
+
+
 def test_dual_home_reports_no_carrier_pop_as_fabricated() -> None:
     homed = _homed_with_a_forced_off_net_site()
     assert not homed.fabricated_ids & {site.id for site in fixtures.ring_sites()}
