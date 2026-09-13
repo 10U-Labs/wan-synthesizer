@@ -32,13 +32,21 @@ def test_the_role_may_touch_no_object_in_the_store(live_resources: set[str]) -> 
     assert [r for r in live_resources if r.startswith(f"arn:aws:s3:::{store_bucket_name()}/")] == []
 
 
-def test_the_api_key_the_role_may_read_is_the_declared_one(
+def test_the_api_key_is_within_reach(
         live_resources: set[str], config: dict[str, object]) -> None:
-    expected = (
+    parameter = (
         f"arn:aws:ssm:{config['aws_region']}:{config['aws_account_id']}"
         f":parameter{api_key_parameter_name()}"
     )
-    assert expected in live_resources
+    assert any(fnmatch(parameter, pattern) for pattern in live_resources)
+
+
+def test_no_parameter_outside_the_product_prefix_is_within_reach(
+        live_resources: set[str]) -> None:
+    assert [
+        pattern for pattern in live_resources
+        if ":parameter/" in pattern and ":parameter/wan-synthesizer/" not in pattern
+    ] == []
 
 
 @pytest.mark.parametrize("handler", sorted(lambda_handler_names()))

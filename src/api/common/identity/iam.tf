@@ -13,7 +13,7 @@ locals {
   lambda_roles = "arn:aws:iam::${local.account}:role/${local.product}-*"
   gateway_role = "arn:aws:iam::${local.account}:role/aws-service-role/ops.apigateway.amazonaws.com/AWSServiceRoleForAPIGateway"
   rest_apis    = "arn:aws:apigateway:${local.region}::/restapis"
-  api_key      = "arn:aws:ssm:${local.region}:${local.account}:parameter/${local.product}/api-key"
+  parameters   = "arn:aws:ssm:${local.region}:${local.account}:parameter/${local.product}/*"
   self         = "arn:aws:iam::${local.account}:role/${local.role_name}"
 }
 
@@ -187,7 +187,7 @@ data "aws_iam_policy_document" "routing" {
   }
 
   statement {
-    sid = "KeepTheApiKey"
+    sid = "KeepTheProductsParameters"
     actions = [
       "ssm:PutParameter",
       "ssm:GetParameter",
@@ -196,11 +196,11 @@ data "aws_iam_policy_document" "routing" {
       "ssm:AddTagsToResource",
       "ssm:RemoveTagsFromResource",
     ]
-    resources = [local.api_key]
+    resources = [local.parameters]
   }
 
   statement {
-    sid       = "DescribeParametersToReadTheApiKeyTier"
+    sid       = "DescribeParametersToReadATier"
     actions   = ["ssm:DescribeParameters"]
     resources = ["*"]
   }
