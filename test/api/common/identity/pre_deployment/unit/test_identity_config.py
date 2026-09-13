@@ -44,14 +44,15 @@ def test_the_trust_names_the_github_provider_alone(trust_statement: dict[str, An
     }]
 
 
-def test_the_provider_is_read_by_the_github_issuer(
+def test_the_provider_is_read_by_its_arn_and_never_listed(
         identity_main: dict[str, object], blocks_of: Any, resolve: Any) -> None:
     providers = [
-        resolve(str(body["url"]))
+        resolve(str(body["arn"]))
         for block in blocks_of(identity_main, "data")
         for body in block.get("aws_iam_openid_connect_provider", {}).values()
     ]
-    assert providers == [f"https://{ISSUER}"]
+    assert providers == [
+        f"arn:aws:iam::${{module.common.aws_account_id}}:oidc-provider/{ISSUER}"]
 
 
 def test_the_trust_conditions_are_the_audience_and_the_subject(

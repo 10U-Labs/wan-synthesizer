@@ -11,7 +11,7 @@ locals {
 }
 
 data "aws_iam_openid_connect_provider" "github" {
-  url = "https://${local.issuer}"
+  arn = "arn:aws:iam::${module.common.aws_account_id}:oidc-provider/${local.issuer}"
 }
 
 data "aws_iam_policy_document" "trust" {
