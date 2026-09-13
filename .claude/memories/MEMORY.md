@@ -59,6 +59,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 
 ### Identity
 
+- [a-lambda-role-writes-its-own-log-group-alone](a-lambda-role-writes-its-own-log-group-alone.md) — no stack attaches a managed policy; every function's role holds an inline `Logs` policy on the one log group its `logging_config` names, held tree-wide by `test_lambda_roles.py` in every `test-repo-libraries` and live by each stack's wiring tests
 - [the-deploy-role-is-narrowed-by-its-own-stack](the-deploy-role-is-narrowed-by-its-own-stack.md) — `TenULabsWanSynthesizerRole` is declared in `src/api/common/identity` and applied by itself, so a missing grant is measured by dispatching every workflow and fixed forward; the trust names GitHub's immutable subject, `DescribeLogGroups` is evaluated against `log-group::log-stream:`, the OIDC provider is read by ARN, and `seed.yml` assumes `TenULabsWanSynthesizerSeedRole` (`vars.SEED_ROLE_ARN`), which the same stack grants one `ssm:GetParameter` and nothing else
 
 ### Memories

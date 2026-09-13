@@ -11,9 +11,18 @@ resource "aws_iam_role" "prune" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "prune_basic" {
-  role       = aws_iam_role.prune.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+resource "aws_iam_role_policy" "prune_logs" {
+  name = "Logs"
+  role = aws_iam_role.prune.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource = ["${aws_cloudwatch_log_group.prune.arn}:*"]
+    }]
+  })
 }
 
 resource "aws_iam_role_policy" "prune_store_list_delete" {

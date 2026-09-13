@@ -35,9 +35,18 @@ resource "aws_iam_role" "synthesizer" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "synthesizer_basic" {
-  role       = aws_iam_role.synthesizer.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+resource "aws_iam_role_policy" "synthesizer_logs" {
+  name = "Logs"
+  role = aws_iam_role.synthesizer.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource = ["${aws_cloudwatch_log_group.synthesizer.arn}:*"]
+    }]
+  })
 }
 
 resource "aws_iam_role_policy" "synthesizer_s3" {
@@ -108,9 +117,18 @@ resource "aws_iam_role" "failure_handler" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "failure_handler_basic" {
-  role       = aws_iam_role.failure_handler.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+resource "aws_iam_role_policy" "failure_handler_logs" {
+  name = "Logs"
+  role = aws_iam_role.failure_handler.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource = ["${aws_cloudwatch_log_group.failure_handler.arn}:*"]
+    }]
+  })
 }
 
 resource "aws_iam_role_policy" "failure_handler_s3" {

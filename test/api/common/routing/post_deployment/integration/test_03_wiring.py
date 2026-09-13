@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from typing import Any
+
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from seed import DEFAULT_API
+from test_fixtures.aws import log_group_arn, log_resources_of, managed_policies_of
 from test_handler_contracts import SPA_ORIGIN
 
 _ORIGIN_HEADER = "Access-Control-Allow-Origin"
@@ -58,3 +60,14 @@ def test_a_preflight_is_answered_with_the_pages_origin_alone() -> None:
 
 def test_a_refusal_the_gateway_writes_names_the_pages_origin_alone() -> None:
     assert _answer({"Origin": SPA_ORIGIN}).headers[_ORIGIN_HEADER] == SPA_ORIGIN
+
+
+def test_the_authorizers_role_attaches_no_managed_policy(
+        iam_client: Any, authorizer_config: dict[str, Any]) -> None:
+    assert not managed_policies_of(iam_client, authorizer_config)
+
+
+def test_the_authorizers_role_writes_its_own_log_group_alone(
+        iam_client: Any, logs_client: Any, authorizer_config: dict[str, Any]) -> None:
+    granted = log_resources_of(iam_client, authorizer_config)
+    assert granted == [log_group_arn(logs_client, authorizer_config)]

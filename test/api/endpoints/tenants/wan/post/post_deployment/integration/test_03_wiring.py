@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from test_fixtures.aws import log_group_arn, log_resources_of, managed_policies_of
+
 
 def test_synthesizer_assumes_its_own_role(
         synthesizer_config: dict[str, Any], synthesizer_role_name: str) -> None:
@@ -40,3 +42,25 @@ def test_failure_handler_role_grants_store_write(
     policy = iam_client.get_role_policy(
         RoleName=failure_handler_role_name, PolicyName="store-write")
     assert "s3:PutObject" in str(policy["PolicyDocument"])
+
+
+def test_the_synthesizers_role_attaches_no_managed_policy(
+        iam_client: Any, synthesizer_config: dict[str, Any]) -> None:
+    assert not managed_policies_of(iam_client, synthesizer_config)
+
+
+def test_the_synthesizers_role_writes_its_own_log_group_alone(
+        iam_client: Any, logs_client: Any, synthesizer_config: dict[str, Any]) -> None:
+    granted = log_resources_of(iam_client, synthesizer_config)
+    assert granted == [log_group_arn(logs_client, synthesizer_config)]
+
+
+def test_the_failure_handlers_role_attaches_no_managed_policy(
+        iam_client: Any, failure_handler_config: dict[str, Any]) -> None:
+    assert not managed_policies_of(iam_client, failure_handler_config)
+
+
+def test_the_failure_handlers_role_writes_its_own_log_group_alone(
+        iam_client: Any, logs_client: Any, failure_handler_config: dict[str, Any]) -> None:
+    granted = log_resources_of(iam_client, failure_handler_config)
+    assert granted == [log_group_arn(logs_client, failure_handler_config)]

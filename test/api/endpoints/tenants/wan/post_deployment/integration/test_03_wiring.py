@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from test_fixtures.aws import log_group_arn, log_resources_of, managed_policies_of
+
 
 def test_lambda_assumes_the_declared_role(
         lambda_config: dict[str, Any], role_name: str) -> None:
@@ -26,3 +28,14 @@ def test_dispatch_role_targets_the_synthesizer(iam_client: Any, role_name: str) 
 def test_dispatch_role_grants_listing_the_bucket(iam_client: Any, role_name: str) -> None:
     policy = iam_client.get_role_policy(RoleName=role_name, PolicyName="Dispatch")
     assert "s3:ListBucket" in str(policy["PolicyDocument"])
+
+
+def test_the_handlers_role_attaches_no_managed_policy(
+        iam_client: Any, lambda_config: dict[str, Any]) -> None:
+    assert not managed_policies_of(iam_client, lambda_config)
+
+
+def test_the_handlers_role_writes_its_own_log_group_alone(
+        iam_client: Any, logs_client: Any, lambda_config: dict[str, Any]) -> None:
+    granted = log_resources_of(iam_client, lambda_config)
+    assert granted == [log_group_arn(logs_client, lambda_config)]

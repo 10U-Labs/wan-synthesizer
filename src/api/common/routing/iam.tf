@@ -11,9 +11,18 @@ resource "aws_iam_role" "authorizer" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "authorizer_basic" {
-  role       = aws_iam_role.authorizer.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+resource "aws_iam_role_policy" "authorizer_logs" {
+  name = "Logs"
+  role = aws_iam_role.authorizer.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource = ["${aws_cloudwatch_log_group.authorizer.arn}:*"]
+    }]
+  })
 }
 
 resource "aws_iam_role_policy" "api_key_access" {
