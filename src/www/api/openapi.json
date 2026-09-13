@@ -23,7 +23,7 @@
         "parameters": [
           { "name": "carrier", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The carrier's sites." } },
+        "responses": { "200": { "description": "The carrier's PoPs." } },
         "x-amazon-apigateway-integration": {
           "uri": "${CarriersHandlerArn}",
           "httpMethod": "POST",
@@ -35,7 +35,7 @@
         "parameters": [
           { "name": "carrier", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The carrier's sites were replaced." } },
+        "responses": { "200": { "description": "The carrier's PoPs were replaced." } },
         "x-amazon-apigateway-integration": {
           "uri": "${CarriersHandlerArn}",
           "httpMethod": "POST",
@@ -163,7 +163,7 @@
     "/wan-synthesizer/carriers/merge/pops": {
       "get": {
         "summary": "The merged carriers' PoPs.",
-        "responses": { "200": { "description": "Merged carrier sites." } },
+        "responses": { "200": { "description": "Merged carrier PoPs." } },
         "x-amazon-apigateway-integration": {
           "uri": "${MergeHandlerArn}",
           "httpMethod": "POST",
@@ -769,7 +769,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The WAN: the state of the synthesis, which is a success only for a WAN the loss of no one PoP splits, the coverage it delivered, what each site was asked for, the fiber miles it runs over, and the fewest fiber miles the same requirements could have been met with.",
+            "description": "The WAN: the state of the synthesis, which is a success only for a WAN the loss of no one PoP splits, the coverage it delivered, what each WAN PoP was asked for, the fiber miles it runs over, and the fewest fiber miles the same requirements could have been met with.",
             "content": {
               "application/json": {
                 "schema": {
