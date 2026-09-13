@@ -18,6 +18,7 @@ from seed import (
 )
 from synthesizer.codec import load_merged_carriers, load_off_net, load_regions, load_sites
 from synthesizer.config import app_config_from_parts
+from synthesizer.input_graph import FiberSegment, Site
 from synthesizer.model import Synthesis
 from synthesizer.overrides import apply_role_overrides
 from synthesizer.stages import dual_home, finalize
@@ -55,25 +56,32 @@ def _parts(config: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _synthesized(stem: str) -> Synthesis:
-    config: dict[str, Any] = yaml.safe_load((ETC / f"{stem}.yml").read_text(encoding="utf-8"))
-    inputs = config.get("inputs", {})
+def _merged() -> tuple[list[Site], dict[tuple[str, str], FiberSegment]]:
     pops: list[dict[str, Any]] = []
     segments: list[dict[str, Any]] = []
     for carrier in _carrier_names():
         stamped_pops, stamped_segments = _stamped(carrier)
         pops += stamped_pops
         segments += stamped_segments
-    carrier_pops, fiber_segments = load_merged_carriers(pops, segments)
+    return load_merged_carriers(pops, segments)
+
+
+def _tenant_sites(inputs: dict[str, Any]) -> list[Site]:
+    return load_sites(_mapping_rows(inputs.get("locations", {}))) + load_regions(
+        _rows(REPO_ROOT / inputs["providers"]) if inputs.get("providers") else []
+    )
+
+
+def _synthesized(stem: str) -> Synthesis:
+    config: dict[str, Any] = yaml.safe_load((ETC / f"{stem}.yml").read_text(encoding="utf-8"))
+    inputs = config.get("inputs", {})
+    carrier_pops, fiber_segments = _merged()
     off_net_file = inputs.get("forced")
     off_net = load_off_net(_off_net_rows(off_net_file) if off_net_file else [])
     app = app_config_from_parts(_parts(config))
-    graph = (
-        carrier_pops
-        + load_sites(_mapping_rows(inputs.get("locations", {})))
-        + load_regions(_rows(REPO_ROOT / inputs["providers"]) if inputs.get("providers") else [])
+    homed = dual_home(
+        carrier_pops + _tenant_sites(inputs), fiber_segments, app.params, off_net
     )
-    homed = dual_home(graph, fiber_segments, app.params, off_net)
     graph, fiber_segments, overrides = apply_role_overrides(
         homed.sites, homed.fiber_segments, app.params, app.operator_circuits
     )

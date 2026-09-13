@@ -41,7 +41,6 @@ class _Requirement:
 @dataclass(frozen=True)
 class _Writing:
     inputs: FiberInputs
-    fiber: Mapping[tuple[str, str], float]
     whole: Mapping[tuple[str, str], float]
     crossings: frozenset[tuple[str, str]]
     shores: Mapping[str, frozenset[str]]
@@ -140,7 +139,6 @@ def _writing(inputs: FiberInputs, fiber: Mapping[tuple[str, str], float]) -> _Wr
     }
     return _Writing(
         inputs,
-        fiber,
         {segment: 1.0 for segment in fiber},
         frozenset(segment for segment in fiber if segment not in on_land),
         reachable_over(build_adjacency(on_land)),
