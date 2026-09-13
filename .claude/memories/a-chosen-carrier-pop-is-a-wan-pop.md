@@ -92,7 +92,7 @@ became `validation.capped_wan_pops`, `circuits_clear_of_a_capped_wan_pop` and
 `survivable._wan_pops_the_carriers_can_give_two_circuits`; the verbs at
 `synthesize.py:59`, `synthesize.py:290`, `validation.py:299` and
 `coverage.py:152` became *select*; and `offnet.SeatedOffNetSites` became
-`RealizedOffNetSites` carrying `off_net_ids`, taking its shape from the sibling
+`RealizedOffNetSites` carrying `off_net_ids` (and `RealizedOffNetPops` under GitHub issue #229 once a site was a tenant's alone), taking its shape from the sibling
 `on_net_fabrication.FabricatedOnNetPops` and its `on_net_ids` that
 `stages.dual_home` calls beside it. Off-net prose took `codec.OFF_NET_KIND`'s word
 *site* rather than *select*, because building a local-fiber twin is not the

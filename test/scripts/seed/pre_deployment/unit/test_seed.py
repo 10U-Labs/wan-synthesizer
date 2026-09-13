@@ -590,7 +590,7 @@ def test_push_tenants_reads_off_net_when_present(
 
 
 @pytest.mark.usefixtures("put_recorder")
-def test_push_tenants_refuses_an_off_net_site_a_carrier_already_serves(
+def test_push_tenants_refuses_an_off_net_pop_a_carrier_already_serves(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _one_tenant(tmp_path, monkeypatch, _TENANT_YML)
     _write_csv(tmp_path / "offnet" / "off.csv", "Municipality,State", "Reston,VA")

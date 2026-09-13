@@ -7,7 +7,7 @@ from synthesizer.graphs import build_adjacency
 from synthesizer.input_graph import FiberSegment, Site
 from synthesizer.model import Synthesis, SynthesisParams, MeshRequirements, ValidationReport
 from synthesizer.on_net_fabrication import fabricate_missing_on_net_pops
-from synthesizer.offnet import realize_off_net_sites
+from synthesizer.offnet import realize_off_net_pops
 from synthesizer.validation import wan_pop_mesh_target, validate_synthesis
 
 
@@ -22,16 +22,16 @@ def dual_home(
     sites: list[Site],
     fiber_segments: dict[tuple[str, str], FiberSegment],
     params: SynthesisParams,
-    off_net_sites: list[Site],
+    off_net_pops: list[Site],
 ) -> DualHomed:
     forced_wan_pops = frozenset(params.forced_wan_pop_names)
     fabricated = fabricate_missing_on_net_pops(
-        sites, fiber_segments, forced_wan_pops - {site.name for site in off_net_sites}
+        sites, fiber_segments, forced_wan_pops - {site.name for site in off_net_pops}
     )
-    off_net = realize_off_net_sites(
+    off_net = realize_off_net_pops(
         fabricated.sites,
         fabricated.fiber_segments,
-        off_net_sites,
+        off_net_pops,
         forced_wan_pops,
     )
     return DualHomed(

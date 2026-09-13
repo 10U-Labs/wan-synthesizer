@@ -78,7 +78,7 @@ def provider_region(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:
     return Site(id=site_id, name=site_id, kind=PROVIDER_KIND, coords=(lat, lon))
 
 
-def off_net_site(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:
+def off_net_pop(site_id: str, lat: float = 0.0, lon: float = 0.0) -> Site:
     return Site(
         id=site_id,
         name=site_id,
@@ -205,7 +205,7 @@ def ring_params() -> SynthesisParams:
 
 
 def forced_off_net_case() -> tuple[Site, SynthesisParams]:
-    site = off_net_site("Dulles Hub", 40.5, -100.0)
+    site = off_net_pop("Dulles Hub", 40.5, -100.0)
     params = SynthesisParams(
         min_wan_pop_count=2,
         forced_wan_pop_names=("Dulles Hub",),
@@ -224,9 +224,9 @@ def run_synthesis(
     sites: list[Site],
     fiber_segments: dict[tuple[str, str], FiberSegment],
     params: SynthesisParams,
-    off_net_sites: list[Site] | None = None,
+    off_net_pops: list[Site] | None = None,
 ) -> SynthesisArtifacts:
-    homed = dual_home(sites, fiber_segments, params, off_net_sites or [])
+    homed = dual_home(sites, fiber_segments, params, off_net_pops or [])
     sites, fiber_segments, overrides = apply_role_overrides(
         homed.sites, homed.fiber_segments, params
     )

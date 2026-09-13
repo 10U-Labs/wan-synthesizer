@@ -8,7 +8,7 @@ from synthesizer.input_graph import FiberSegment, Site, SiteInfo, segment_key, h
 PROVIDER_KIND = "provider region"
 CARRIER_KIND = "PoP"
 SITE_KIND = "Tenant site"
-OFF_NET_KIND = "Off-net site"
+OFF_NET_KIND = "Off-net PoP"
 
 
 def _slug(value: str) -> str:

@@ -296,7 +296,7 @@ def _declared_off_net_paths() -> set[str]:
     return paths
 
 
-def test_no_declared_off_net_site_is_a_city_a_carrier_already_serves() -> None:
+def test_no_declared_off_net_pop_is_a_city_a_carrier_already_serves() -> None:
     carriers = _carrier_cities()
     overlapping = sorted(
         city

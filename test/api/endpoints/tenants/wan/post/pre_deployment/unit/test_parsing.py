@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from synthesizer.codec import _slug, load_merged_carriers, load_off_net, load_regions, load_sites
+from synthesizer.codec import (
+    OFF_NET_KIND,
+    _slug,
+    load_merged_carriers,
+    load_off_net,
+    load_regions,
+    load_sites,
+)
 from synthesizer.model import is_carrier_pop
 
 _MERGED_CARRIER_SITES = [
@@ -147,7 +154,11 @@ def test_places_without_an_exempt_column_are_not_exempt() -> None:
     assert not regions[0].exempt_from_distance_constraint
 
 
-def test_off_net_sites_are_named_by_city() -> None:
+def test_an_off_net_row_is_a_pop_by_kind() -> None:
+    assert OFF_NET_KIND == "Off-net PoP"
+
+
+def test_off_net_pops_are_named_by_city() -> None:
     off_net = load_off_net([
         {"municipality": "Dulles", "state": "VA", "country": "United States",
          "latitude": 39.0, "longitude": -77.4},

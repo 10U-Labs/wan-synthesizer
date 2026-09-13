@@ -209,11 +209,11 @@ def test_the_exempt_spur_picks_its_own_two_fiber_directions() -> None:
 def _forced_off_net_artifacts() -> SynthesisArtifacts:
     site, params = fixtures.forced_off_net_case()
     return run_synthesis(
-        fixtures.ring_sites(), fixtures.ring_fiber_segments(), params, off_net_sites=[site]
+        fixtures.ring_sites(), fixtures.ring_fiber_segments(), params, off_net_pops=[site]
     )
 
 
-def test_forced_off_net_site_is_selected_into_the_backbone() -> None:
+def test_forced_off_net_pop_is_selected_into_the_backbone() -> None:
     synthesis = _forced_off_net_artifacts().synthesis
     assert any(site_id.startswith("offnet_") for site_id in synthesis.wan_pop_ids)
 

@@ -24,8 +24,8 @@ def test_run_synthesis_honors_a_forced_wan_pop() -> None:
     assert "P3" in synthesis.wan_pop_ids
 
 
-def test_run_synthesis_selects_a_forced_off_net_site_as_a_wan_pop() -> None:
-    site = fixtures.off_net_site("Dulles Hub", 40.5, -100.0)
+def test_run_synthesis_selects_a_forced_off_net_pop_as_a_wan_pop() -> None:
+    site = fixtures.off_net_pop("Dulles Hub", 40.5, -100.0)
     synthesis = run_synthesis(
         fixtures.ring_sites(),
         fixtures.ring_fiber_segments(),
@@ -33,6 +33,6 @@ def test_run_synthesis_selects_a_forced_off_net_site_as_a_wan_pop() -> None:
             min_wan_pop_count=2,
             forced_wan_pop_names=("Dulles Hub",),
         ),
-        off_net_sites=[site],
+        off_net_pops=[site],
     ).synthesis
     assert any(site_id.startswith("offnet_") for site_id in synthesis.wan_pop_ids)

@@ -526,11 +526,11 @@
     },
     "/wan-synthesizer/tenants/{tenant}/off-net": {
       "get": {
-        "summary": "A tenant's off-net candidate sites (input).",
+        "summary": "A tenant's off-net candidate PoPs (input).",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The off-net sites." } },
+        "responses": { "200": { "description": "The off-net PoPs." } },
         "x-amazon-apigateway-integration": {
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
@@ -538,11 +538,11 @@
         }
       },
       "put": {
-        "summary": "Replace a tenant's off-net sites (stores only).",
+        "summary": "Replace a tenant's off-net PoPs (stores only).",
         "parameters": [
           { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "The off-net sites were replaced." } },
+        "responses": { "200": { "description": "The off-net PoPs were replaced." } },
         "x-amazon-apigateway-integration": {
           "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",

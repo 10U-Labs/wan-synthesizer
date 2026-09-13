@@ -15,7 +15,7 @@ def test_dual_home_returns_a_graph_without_off_net() -> None:
     assert all((homed.sites, homed.fiber_segments))
 
 
-def _homed_with_a_forced_off_net_site() -> DualHomed:
+def _homed_with_a_forced_off_net_pop() -> DualHomed:
     site, params = fixtures.forced_off_net_case()
     return dual_home(fixtures.ring_sites(), fixtures.ring_fiber_segments(), params, [site])
 
@@ -31,9 +31,9 @@ def _homed_with_a_forced_on_net_location() -> DualHomed:
     )
 
 
-def test_dual_home_realizes_a_forced_off_net_site() -> None:
+def test_dual_home_realizes_a_forced_off_net_pop() -> None:
     assert any(
-        site.id.startswith("offnet_") for site in _homed_with_a_forced_off_net_site().sites
+        site.id.startswith("offnet_") for site in _homed_with_a_forced_off_net_pop().sites
     )
 
 
@@ -44,7 +44,7 @@ def test_dual_home_fabricates_a_forced_on_net_location() -> None:
 
 
 def test_dual_home_reports_the_off_net_twin_it_fabricated() -> None:
-    homed = _homed_with_a_forced_off_net_site()
+    homed = _homed_with_a_forced_off_net_pop()
     assert {
         site.id for site in homed.sites if site.id.startswith("offnet_")
     } == homed.fabricated_ids
@@ -79,7 +79,7 @@ def test_a_forced_site_the_off_net_roster_also_lists_is_fabricated_once() -> Non
 
 
 def test_dual_home_reports_no_carrier_pop_as_fabricated() -> None:
-    homed = _homed_with_a_forced_off_net_site()
+    homed = _homed_with_a_forced_off_net_pop()
     assert not homed.fabricated_ids & {site.id for site in fixtures.ring_sites()}
 
 
