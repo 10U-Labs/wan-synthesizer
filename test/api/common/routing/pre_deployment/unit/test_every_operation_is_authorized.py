@@ -6,7 +6,7 @@ from typing import Any
 from repo_utils import REPO_ROOT
 
 _METHODS = ("get", "put", "post", "delete", "patch", "head", "options")
-_BEARER = [{"bearer": []}]
+_BEARER: list[dict[str, list[str]]] = [{"bearer": []}]
 
 
 def _spec() -> dict[str, Any]:
