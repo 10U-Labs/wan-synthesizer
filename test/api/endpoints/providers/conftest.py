@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -10,10 +9,6 @@ from test_terraform_config import lambda_handler_names, load_tf
 
 PROVIDERS_DIR = REPO_ROOT / "src" / "api" / "endpoints" / "providers"
 
-
-@pytest.fixture
-def providers_dir() -> Path:
-    return PROVIDERS_DIR
 
 
 @pytest.fixture(name="providers_main")

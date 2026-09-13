@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -10,10 +9,6 @@ from test_terraform_config import lambda_handler_names, load_tf
 
 MERGE_DIR = REPO_ROOT / "src" / "api" / "endpoints" / "carriers" / "merge"
 
-
-@pytest.fixture
-def merge_dir() -> Path:
-    return MERGE_DIR
 
 
 @pytest.fixture(name="merge_main")

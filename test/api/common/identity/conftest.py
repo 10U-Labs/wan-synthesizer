@@ -99,10 +99,6 @@ def blocks_of() -> Any:
     return _blocks
 
 
-@pytest.fixture
-def resources_of() -> Any:
-    return _resources_of
-
 
 @pytest.fixture
 def declared() -> Any:

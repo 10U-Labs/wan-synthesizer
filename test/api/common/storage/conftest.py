@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -11,10 +10,6 @@ from test_terraform_config import find_resource, load_tf
 
 STORAGE_DIR = REPO_ROOT / "src" / "api" / "common" / "storage"
 
-
-@pytest.fixture
-def storage_dir() -> Path:
-    return STORAGE_DIR
 
 
 @pytest.fixture(name="storage_main")

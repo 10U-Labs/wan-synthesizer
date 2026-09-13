@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 
 import pytest
 
@@ -9,10 +8,6 @@ from test_terraform_config import find_resource, lambda_handler_names, load_tf
 
 WAN_DIR = REPO_ROOT / "src" / "api" / "endpoints" / "tenants" / "wan"
 
-
-@pytest.fixture
-def wan_dir() -> Path:
-    return WAN_DIR
 
 
 @pytest.fixture
