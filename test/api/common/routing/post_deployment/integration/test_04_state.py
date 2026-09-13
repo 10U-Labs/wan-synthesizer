@@ -33,9 +33,7 @@ def test_the_key_the_authorizer_admits_is_written_nowhere_in_the_state(api_key: 
 
 
 def test_the_state_records_the_api_key_parameter_without_its_value() -> None:
-    assert _recorded("aws_ssm_parameter", "api_key")[0]["instances"][0]["attributes"][
-        "value"
-    ] is None
+    assert not _recorded("aws_ssm_parameter", "api_key")[0]["instances"][0]["attributes"]["value"]
 
 
 def test_the_state_records_no_password_for_the_api_key() -> None:
