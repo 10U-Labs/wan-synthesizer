@@ -7,7 +7,8 @@ import pytest
 
 from repo_utils import REPO_ROOT
 from test_module_utils import create_lambda_loader
-from test_terraform_config import api_key_parameter_name, find_resource, load_tf
+from test_terraform_config import find_resource, load_tf
+from test_terraform_config import api_key_parameter_name as declared_api_key_parameter_name
 
 ROUTING_DIR = REPO_ROOT / "src" / "api" / "common" / "routing"
 GOOGLE_CLIENT_ID = "client.apps.googleusercontent.com"
@@ -47,7 +48,7 @@ def authorizer(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 @pytest.fixture
 def api_key_parameter_name() -> str:
-    return api_key_parameter_name()
+    return declared_api_key_parameter_name()
 
 
 @pytest.fixture
