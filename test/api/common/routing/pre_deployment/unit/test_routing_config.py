@@ -6,7 +6,9 @@ from typing import Any, cast
 
 import pytest
 
-from test_terraform_config import find_resource, output_values
+from test_terraform_config import find_resource, load_tf, output_values
+
+ROTATION_AS_A_VERSION = '${tonumber(replace(var.api_key_rotation, "-", ""))}'
 
 
 def _resource(document: dict[str, object], resource_type: str, name: str) -> dict[str, Any]:
@@ -124,22 +126,54 @@ def test_the_api_key_is_kept_encrypted(routing_authorizer: dict[str, object]) ->
     assert parameter["type"] == "SecureString"
 
 
-def test_the_api_key_is_generated_not_written_down(
+def _ephemeral(document: dict[str, object], resource_type: str, name: str) -> dict[str, Any]:
+    for block in cast("list[dict[str, Any]]", document.get("ephemeral", [])):
+        if name in block.get(resource_type, {}):
+            return dict(block[resource_type][name])
+    raise AssertionError(f"ephemeral {resource_type}.{name} is not declared")
+
+
+def test_the_api_key_is_written_from_a_password_that_outlives_no_run(
         routing_authorizer: dict[str, object]) -> None:
     parameter = _resource(routing_authorizer, "aws_ssm_parameter", "api_key")
-    assert "random_password.api_key.result" in str(parameter["value"])
+    assert parameter["value_wo"] == "${ephemeral.random_password.api_key.result}"
+
+
+def test_the_api_key_parameter_records_no_value(routing_authorizer: dict[str, object]) -> None:
+    assert "value" not in _resource(routing_authorizer, "aws_ssm_parameter", "api_key")
+
+
+def test_the_api_key_is_no_resource_for_the_state_to_record(
+        routing_authorizer: dict[str, object]) -> None:
+    assert find_resource(routing_authorizer, "random_password", "api_key") is None
 
 
 def test_the_api_key_is_long_enough_to_be_unguessable(
         routing_authorizer: dict[str, object]) -> None:
-    generated = _resource(routing_authorizer, "random_password", "api_key")
+    generated = _ephemeral(routing_authorizer, "random_password", "api_key")
     assert int(generated["length"]) >= 32
 
 
-def test_the_api_key_is_regenerated_when_the_rotation_date_changes(
+def test_the_api_key_is_rewritten_when_the_rotation_date_changes(
         routing_authorizer: dict[str, object]) -> None:
-    generated = _resource(routing_authorizer, "random_password", "api_key")
-    assert generated["keepers"] == {"rotation": "${var.api_key_rotation}"}
+    parameter = _resource(routing_authorizer, "aws_ssm_parameter", "api_key")
+    assert parameter["value_wo_version"] == ROTATION_AS_A_VERSION
+
+
+def _required(routing_dir: Path) -> dict[str, Any]:
+    terraform = cast("list[dict[str, Any]]", load_tf(routing_dir / "backend.tf")["terraform"])
+    return terraform[0]
+
+
+def test_the_stack_requires_an_opentofu_that_keeps_an_ephemeral_value_out_of_state(
+        routing_dir: Path) -> None:
+    assert _required(routing_dir)["required_version"] == ">= 1.11"
+
+
+@pytest.mark.parametrize(("provider", "version"), [("aws", "~> 5.94"), ("random", "~> 3.7")])
+def test_the_stack_requires_a_provider_that_writes_without_recording(
+        routing_dir: Path, provider: str, version: str) -> None:
+    assert _required(routing_dir)["required_providers"][0][provider]["version"] == version
 
 
 def test_the_gateway_may_invoke_the_authorizer(routing_authorizer: dict[str, object]) -> None:

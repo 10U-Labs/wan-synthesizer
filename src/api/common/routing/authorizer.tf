@@ -19,7 +19,7 @@ resource "aws_ssm_parameter" "authorized_accounts" {
 }
 
 variable "api_key_rotation" {
-  description = "The date the API key was last rotated, as the deploy passes it from the repository variable WAN_SYNTHESIZER_API_KEY_ROTATION; a new date regenerates the key. Rotate every 180 days, and at once on suspected compromise."
+  description = "The date the API key was last rotated, as the deploy passes it from the repository variable WAN_SYNTHESIZER_API_KEY_ROTATION; a later date writes a fresh key. Rotate every 180 days, and at once on suspected compromise."
   type        = string
 
   validation {
@@ -28,19 +28,16 @@ variable "api_key_rotation" {
   }
 }
 
-resource "random_password" "api_key" {
+ephemeral "random_password" "api_key" {
   length  = 48
   special = false
-
-  keepers = {
-    rotation = var.api_key_rotation
-  }
 }
 
 resource "aws_ssm_parameter" "api_key" {
-  name  = "/wan-synthesizer/api-key"
-  type  = "SecureString"
-  value = random_password.api_key.result
+  name             = "/wan-synthesizer/api-key"
+  type             = "SecureString"
+  value_wo         = ephemeral.random_password.api_key.result
+  value_wo_version = tonumber(replace(var.api_key_rotation, "-", ""))
 }
 
 data "archive_file" "authorizer" {

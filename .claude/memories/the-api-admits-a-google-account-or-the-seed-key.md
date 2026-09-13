@@ -42,7 +42,7 @@ The 10ulabs.com mail is hosted on Google Workspace, so the accounts that exist a
 
 ### CI presents the key the routing stack generated
 
-`random_password.api_key` is kept as the SecureString parameter `/wan-synthesizer/api-key`, and the authorizer reads it from SSM on each cold verdict rather than caching it, because API Gateway remembers a verdict for five minutes per token. The `seeding` and `e2e-tests` jobs in `seed.yml` assume the OIDC role, read the parameter with `aws ssm get-parameter --with-decryption`, mask it, and export `WAN_SYNTHESIZER_API_KEY`, which `scripts/seed.py` sends as `Authorization: Bearer` on every request; without the variable it sends no header and the API says 401. `test_every_job_that_reaches_the_api_reads_the_key_the_authorizer_holds` in `test/scripts/seed/pre_deployment/integration/test_contracts.py` holds the two jobs to that. The routing post-deployment tests read the key through the `api_key` fixture and prove the CloudFront path forwards the header by getting a 200 with it and a 401 without.
+The key is kept as the SecureString parameter `/wan-synthesizer/api-key`, written from `ephemeral.random_password.api_key` through `value_wo` so no state records it, and the authorizer reads it from SSM on each cold verdict rather than caching it, because API Gateway remembers a verdict for five minutes per token. The `seeding` and `e2e-tests` jobs in `seed.yml` assume the OIDC role, read the parameter with `aws ssm get-parameter --with-decryption`, mask it, and export `WAN_SYNTHESIZER_API_KEY`, which `scripts/seed.py` sends as `Authorization: Bearer` on every request; without the variable it sends no header and the API says 401. `test_every_job_that_reaches_the_api_reads_the_key_the_authorizer_holds` in `test/scripts/seed/pre_deployment/integration/test_contracts.py` holds the two jobs to that. The routing post-deployment tests read the key through the `api_key` fixture and prove the CloudFront path forwards the header by getting a 200 with it and a 401 without.
 
 ### The key is granted every read and the writes the seed makes
 
@@ -90,11 +90,18 @@ there.
 
 ## The key is rotated by a date the deploy passes and measured weekly
 
-Since 2026-09-13 (GitHub issue #211) `random_password.api_key` carries
-`keepers = { rotation = var.api_key_rotation }`, and the routing deploy
+Since 2026-09-13 (GitHub issue #211) the routing deploy
 passes `TF_VAR_api_key_rotation` from the repository variable
 `WAN_SYNTHESIZER_API_KEY_ROTATION`, a `YYYY-MM-DD` date the variable's
-validation holds it to. A new date is a new key on the next apply, the
+validation holds it to, and since issue #212 the same day the parameter
+carries it as `value_wo_version = tonumber(replace(var.api_key_rotation,
+"-", ""))`, beside `value_wo = ephemeral.random_password.api_key.result`:
+the password is drawn afresh on every run and thrown away unless the
+version moved, and neither it nor the parameter's value is written to
+`wan-synthesizer/common/routing/terraform.tfstate`, which the routing
+post-deployment `test_04_state.py` pulls and reads to prove (`hashicorp/aws`
+`~> 5.94`, `hashicorp/random` `~> 3.7`, OpenTofu `>= 1.11`). A later date is
+a new key on the next apply, the
 SecureString parameter is overwritten with it, and nothing else moves:
 the authorizer reads the parameter on every verdict and `seed.yml` reads
 it at run time, so no consumer is told. The cadence NIST SP 800-171r3

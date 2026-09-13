@@ -37,3 +37,13 @@ def test_the_deploy_passes_both_variables_wherever_the_stack_is_planned_or_appli
 
 def test_the_workflow_runs_weekly_so_an_overdue_key_is_measured_without_a_push() -> None:
     assert _workflow()[True]["schedule"] == [{"cron": "37 4 * * 1"}]
+
+
+@pytest.mark.parametrize("job", [
+    "pre-deployment-integration-tests", "post-deployment-integration-tests",
+])
+def test_the_job_that_reads_the_state_initializes_the_stack_first(job: str) -> None:
+    assert [
+        step["run"] for step in _steps(job)
+        if str(step.get("run", "")).startswith("tofu -chdir=src/api/common/routing init")
+    ] == ["tofu -chdir=src/api/common/routing init -input=false"]
