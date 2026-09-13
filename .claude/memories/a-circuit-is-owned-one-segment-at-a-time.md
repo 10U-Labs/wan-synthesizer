@@ -37,4 +37,4 @@ one-carrier rule in a new test, a new issue or a new field; a circuit that
 changes hands at a PoP both carriers have is a circuit. uniti still lists
 sixteen segments ending at cities its PoP file does not carry, which GitHub
 issue #187 named the same defect and left open. See
-[[a-way-out-of-a-site-is-a-circuit]].
+[[a-way-out-is-a-circuit]].

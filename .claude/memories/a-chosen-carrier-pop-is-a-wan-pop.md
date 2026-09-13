@@ -66,7 +66,7 @@ and `strength`'s `candidate_ids`. The word that completes *candidate* is
 naming the object does not. This repository had already settled that question
 once: the served `paths` collection became `/homing-circuits` and
 `/fiber-segments` because it held both and no one word is true of both — see
-[a-way-out-of-a-site-is-a-circuit](a-way-out-of-a-site-is-a-circuit.md). The same
+[a-way-out-is-a-circuit](a-way-out-is-a-circuit.md). The same
 answer holds here, so `select_fiber` and `select_wan_pops` need no third word
 between them.
 
@@ -128,7 +128,7 @@ Twice, both of them graph algorithms rather than networks: `_Node` and its
 vertices of a unit-capacity flow network, and the `ast` nodes
 `scripts/assert_description_identifiers_exist.py` walks. The same exemption
 `reconstruct_path` and `_augmenting_path` hold for `path` — see
-[a-way-out-of-a-site-is-a-circuit](a-way-out-of-a-site-is-a-circuit.md). The two
+[a-way-out-is-a-circuit](a-way-out-is-a-circuit.md). The two
 served collections `/tenant-nodes` and `/provider-nodes` still say it and are
 wrong under any answer, because a tenant's site is not a PoP at all; that is
 GitHub issue #161 and it is open.

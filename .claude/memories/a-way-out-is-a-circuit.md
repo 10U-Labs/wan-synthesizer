@@ -1,11 +1,11 @@
 ---
-name: a-way-out-of-a-site-is-a-circuit
-description: A way out of a site is a circuit, the route it takes is the carrier PoPs it runs through, and ordering and cost are outside this repository's vocabulary
+name: a-way-out-is-a-circuit
+description: A way out of a site or a WAN PoP is a circuit, the route it takes is the carrier PoPs it runs through, and ordering and cost are outside this repository's vocabulary
 metadata:
   type: project
 ---
 
-# A way out of a site is a circuit
+# A way out is a circuit
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ metadata:
 
 ## Overview
 
-The synthesizer answers one question for a tenant: which ways out of each of their sites a WAN should have. One such way runs from one site to another over many fiber segments, and it is a single thing that either works or does not. The word for it is **circuit**, because that is the word the network engineers who read this repository already own and the word a carrier answers to. A tenant asking a carrier for a path will be asked what they mean.
+The synthesizer answers one question for a tenant: which ways out of each of their sites and each of the WAN PoPs a WAN should have. One such way runs from one place to another over many fiber segments, and it is a single thing that either works or does not. The word for it is **circuit**, because that is the word the network engineers who read this repository already own and the word a carrier answers to. A tenant asking a carrier for a path will be asked what they mean.
 
 Both sides of the wire say it. GitHub issue #150 renamed the identifiers on 2026-09-07 — `SynthesisCircuit`, `HomingCircuit`, `ForcedCircuits`, `independent_circuits`, `diverse_circuit_count`, `CircuitProofInputs` and the rest, some 1,600 uses across `src/`, `lib/python/` and `test/`. GitHub issue #148 moved the served surface on 2026-09-10: the one `paths` collection became `/homing-circuits` and `/fiber-segments` because it held both and no one word is true of both, `/backbone-links` became `/backbone-circuits`, the payload keys are `homing_circuits`, `drawn_circuits` and `summary.homing_circuit_count`, and the `path` field on a circuit — the carrier PoPs it runs through — is now `route`. The `link_kind` that told the two kinds apart is gone with the bag: a fiber row needs no discriminator in a fiber collection, and a homing row carries `homing_kind` for the tenant-or-provider question GitHub issue #149 asked. #149 closed on 2026-09-11 and the answer is two of everything: `Homings(tenant, provider)` and `HomingSites(tenant, provider)` hold the circuits and the sites apart from each other all the way through the synthesis, `SynthesisMetrics` carries `tenant_homing_miles` beside `provider_homing_miles`, the payload summary counts sites, circuits and miles once per kind, and the served WAN status carries `homing_miles.tenant` and `homing_miles.provider`. Nothing tests a site's kind to label a served row any more — each list is served under the one kind it holds. What still says path on the wire is the `forced-paths` and `prohibited-paths` inputs, which are store keys and `etc/` keys as well as routes; that is GitHub issue #162 and it is open.
 
@@ -37,7 +37,7 @@ A circuit's two ends are WAN PoPs; the carrier PoPs it crosses in between are tr
 
 ### Diverse ways out are diverse circuits
 
-`number_of_diverse_circuits` is how many ways out of a site the operator asks for, and each of those ways out is a circuit in its own right, so they are diverse circuits — "circuit diversity" is what a carrier is asked for. That is why `independent_circuits`, `independent_circuit_ceiling`, `diverse_circuit_count`, `diverse_circuit_ceilings` and `DiverseCircuitBounds` all say circuit.
+`number_of_diverse_circuits` is how many ways out of a WAN PoP the operator asks for — the knob sits under the `backbone:` block of every `etc/*.yml`, and a WAN PoP is not a site (GitHub issue #224) — and each of those ways out is a circuit in its own right, so they are diverse circuits — "circuit diversity" is what a carrier is asked for. That is why `independent_circuits`, `independent_circuit_ceiling`, `diverse_circuit_count`, `diverse_circuit_ceilings` and `DiverseCircuitBounds` all say circuit.
 
 This one moved as a whole chain on 2026-09-07 rather than waiting behind GitHub issue #148, because the operator asked for it directly and the word was wrong on both sides of the wire. All 132 uses went at once: `Tuning.backbone_number_of_diverse_circuits`, `MeshRequirements.number_of_diverse_circuits` and `WanPopConstraints.number_of_diverse_circuits` inside the program; the `backbone-number-of-diverse-circuits` resource and its `.json` object in the store; the `diverse_circuits` block of the served status and its `number_of_diverse_circuits` key; the `backbone_diverse_circuits_*` keys of the validation report; `src/www/api/openapi.json`; and the `number_of_diverse_circuits` key of all seven `etc/*.yml` tenant configs. It is a breaking change for every caller, which is why the whole chain had to go in one commit — a served key and the identifier read off it cannot be renamed apart.
 

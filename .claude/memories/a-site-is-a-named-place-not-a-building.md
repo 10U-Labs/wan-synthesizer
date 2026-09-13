@@ -21,7 +21,7 @@ metadata:
 
 The word **building** names nothing in this program. It appears nowhere in `src/`, `lib/`, `test/`, `data/`, `etc/` or `scripts/` — the one hit in the tree is the verb in `scripts/seed.py:226`, `"merge: rebuilding the merged carriers"`. Every other occurrence is prose written in a GitHub issue by a session here, nine issues in all: eight of them name a building as a thing this model holds, and one corrects them.
 
-What the program models is a **named place with a coordinate**. A tenant site, a provider region, an off-net site and a carrier PoP are four kinds of that one thing, and nothing smaller than a named place is modelled anywhere.
+What the program models is a **named place with a coordinate**. A tenant's site, a provider region, a carrier PoP and an off-net city that becomes a WAN PoP are four kinds of that one thing, and nothing smaller than a named place is modelled anywhere. Only the first is a **site**: the operator settled on 2026-09-12 that this program has one kind of site, a tenant's, and that a carrier PoP is a PoP and a provider region is a region (GitHub issue #224). The rulebook said four kinds of site until then, and the code is held to the rulebook, so the word moved here first.
 
 ## Conventions
 
@@ -31,7 +31,7 @@ What the program models is a **named place with a coordinate**. A tenant site, a
 
 There is no address, street, floor, suite, room or premise field in this repository. The only `address` in the tree is a Terraform resource address in `test/lib/python/test_terraform_drift/`. So a site has no interior and no postal identity, and prose that gives it one is describing a different program.
 
-The four kinds are named in `codec.py:8-11`: `PROVIDER_KIND` is `provider region`, `CARRIER_KIND` is `PoP`, `SITE_KIND` is `Tenant site`, `OFF_NET_KIND` is `Off-net site`. Those four words are the vocabulary. See [a-way-out-of-a-site-is-a-circuit](a-way-out-of-a-site-is-a-circuit.md) for the circuit that leaves one and [a-chosen-carrier-pop-is-a-wan-pop](a-chosen-carrier-pop-is-a-wan-pop.md) for the PoP a synthesis selects a WAN into.
+The four kinds are named in `codec.py:8-11`: `PROVIDER_KIND` is `provider region`, `CARRIER_KIND` is `PoP`, `SITE_KIND` is `Tenant site`, `OFF_NET_KIND` is `Off-net site`. Site, region and PoP are the vocabulary; `OFF_NET_KIND` still says site of a city that becomes a WAN PoP, `input_graph.Site` still types every vertex, and the served `/sites` collection still holds every vertex, which are GitHub issues #229, #227 and #225 and no licence to call a region or a PoP a site in the meantime. See [a-way-out-is-a-circuit](a-way-out-is-a-circuit.md) for the circuit that leaves one and [a-chosen-carrier-pop-is-a-wan-pop](a-chosen-carrier-pop-is-a-wan-pop.md) for the PoP a synthesis selects a WAN into.
 
 ### The unit of failure is a city
 
@@ -45,7 +45,7 @@ This is why the word matters beyond taste. Calling a vertex a building claims a 
 
 Because the settled vocabulary names roles in a graph and the directive's content is physical. `wan_pop`, `transit_pop`, `carrier_pop` and `site` all say what a place does for the WAN. None of them is a noun for the physical thing whose loss takes two circuits at once, which is the thing an issue about two vertices in one place has to name — so the prose borrows `building` from generic telecom idiom, where a conduit, a building and a city are three granularities of common failure.
 
-The replacement is the place itself. Say **city** where the claim is about the failure the directive is proved over, and say **site** or **PoP** where the claim is about a thing's part in the WAN. Do not reach below a named place for a noun, because there is nothing down there.
+The replacement is the place itself. Say **city** where the claim is about the failure the directive is proved over, and say **site**, **region** or **PoP** where the claim is about a thing's part in the WAN — site for a tenant's, region for a provider's, PoP for a carrier's. Do not reach below a named place for a noun, because there is nothing down there.
 
 ### This was caught once and not recorded
 
