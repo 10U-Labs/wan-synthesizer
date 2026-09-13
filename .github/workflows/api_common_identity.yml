@@ -1,0 +1,327 @@
+---
+concurrency:
+  cancel-in-progress: true
+  group: api-common-identity-${{ github.ref }}
+jobs:
+  assert-no-comments:
+    name: assert-no-comments
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-no-comments
+      - name: Assert nothing this repository publishes carries a comment
+        run: >-
+          assert-no-comments
+          --annotate
+          --exclude 'src/www/spa/vendor/*'
+          --verbose
+          .github/workflows
+          etc
+          lib
+          scripts
+          src
+          test
+  assert-no-inline-directives:
+    name: assert-no-inline-directives
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-no-inline-directives
+      - name: Assert no inline directives
+        run: >-
+          assert-no-inline-directives
+          --tools pylint,mypy,yamllint
+          --verbose
+          ${{ github.workspace }}/lib/python ${{ github.workspace }}/test/api/common/identity
+          ${{ github.workspace }}/test/lib/python/repo_utils
+          ${{ github.workspace }}/test/lib/python/test_fixtures
+          ${{ github.workspace }}/test/lib/python/test_terraform_config
+          ${{ github.workspace }}/test/lib/python/test_terraform_drift
+  assert-no-linter-config-files:
+    name: assert-no-linter-config-files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-no-linter-config-files
+      - name: Assert no linter config files
+        run: >-
+          assert-no-linter-config-files
+          --linters pylint,mypy,yamllint
+          --verbose
+          ${{ github.workspace }}
+  assert-one-assert-per-pytest:
+    name: assert-one-assert-per-pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-one-assert-per-pytest
+      - name: Assert one assert per pytest
+        run: >-
+          assert-one-assert-per-pytest
+          --verbose
+          ${{ github.workspace }}/test/api/common/identity
+          ${{ github.workspace }}/test/lib/python/repo_utils
+          ${{ github.workspace }}/test/lib/python/test_fixtures
+          ${{ github.workspace }}/test/lib/python/test_terraform_config
+          ${{ github.workspace }}/test/lib/python/test_terraform_drift
+  copy-paste-tests:
+    name: copy-paste-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: npm install -g jscpd
+      - name: Detect copy-paste in tests
+        run: >-
+          jscpd --pattern "**/*.py" --threshold 0
+          --reporters console test/api/common/identity/
+          test/lib/python/repo_utils
+          test/lib/python/test_fixtures
+          test/lib/python/test_terraform_config
+          test/lib/python/test_terraform_drift
+  lint-yaml:
+    name: lint-yaml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install yamllint
+      - name: Lint YAML
+        run: |
+          EMPTY='empty-lines: {max: 0, max-start: 0, max-end: 1}'
+          KEY='key-ordering: enable'
+          LL='line-length: disable'
+          NL='new-line-at-end-of-file: enable'
+          TR='truthy: {allowed-values: ["true", "false", "on"]}'
+          RULES="$EMPTY, $KEY, $LL, $NL, $TR"
+          yamllint --strict \
+            --config-data \
+            "{extends: default, rules: {$RULES}}" \
+            .github/workflows/api_common_identity.yml
+  mypy-tests:
+    name: mypy-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install mypy boto3 boto3-stubs botocore-stubs pytest 'python-hcl2<8' pyyaml types-PyYAML
+      - name: Run mypy on tests
+        run: >-
+          MYPYPATH=lib/python
+          python3 -m mypy --strict --explicit-package-bases
+          --ignore-missing-imports
+          test/api/common/identity/
+          test/lib/python/repo_utils
+          test/lib/python/test_fixtures
+          test/lib/python/test_terraform_config
+          test/lib/python/test_terraform_drift
+  post-deployment-integration-tests:
+    if: github.ref == 'refs/heads/main'
+    name: post-deployment-integration-tests
+    needs:
+      - reconciliation
+      - test-repo-libraries
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Install tools
+        run: pip install boto3 boto3-stubs pytest 'python-hcl2<8'
+      - name: Run post-deployment integration tests against live AWS
+        run: >-
+          PYTHONPATH=.:lib/python
+          python3 -m pytest
+          test/api/common/identity/post_deployment/integration/
+          --import-mode=importlib --confcutdir=test
+          --verbose
+  pre-deployment-integration-tests:
+    if: github.ref == 'refs/heads/main'
+    name: pre-deployment-integration-tests
+    needs: test-repo-libraries
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_wrapper: false
+      - name: Install tools
+        run: pip install boto3 boto3-stubs pytest 'python-hcl2<8'
+      - name: Initialize the stack for state inspection
+        run: tofu -chdir=src/api/common/identity init -input=false
+      - env:
+          OIDC_ROLE_ARN: ${{ vars.OIDC_ROLE_ARN }}
+        name: Run pre-deployment integration tests
+        run: >-
+          PYTHONPATH=.:lib/python
+          python3 -m pytest
+          test/api/common/identity/pre_deployment/integration/
+          --import-mode=importlib --confcutdir=test
+          --verbose
+  pylint-tests:
+    name: pylint-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install pylint boto3 boto3-stubs botocore-stubs pytest 'python-hcl2<8' pyyaml
+      - name: Run pylint on tests
+        run: >-
+          PYTHONPATH=.:lib/python
+          python3 -m pylint --recursive=y
+          test/api/common/identity/
+          test/lib/python/repo_utils
+          test/lib/python/test_fixtures
+          test/lib/python/test_terraform_config
+          test/lib/python/test_terraform_drift
+          --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
+          --fail-on=C,R,W --fail-under=10.0
+  reconciliation:
+    if: github.ref == 'refs/heads/main'
+    name: reconciliation
+    needs:
+      - assert-no-comments
+      - assert-no-inline-directives
+      - assert-no-linter-config-files
+      - assert-one-assert-per-pytest
+      - copy-paste-tests
+      - lint-yaml
+      - mypy-tests
+      - pre-deployment-integration-tests
+      - pylint-tests
+      - test-repo-libraries
+      - unit-tests
+      - validate-stack
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_wrapper: false
+      - name: Reconcile the stack to its declared state
+        run: |
+          tofu -chdir=src/api/common/identity init -input=false
+          tofu -chdir=src/api/common/identity apply -auto-approve -input=false
+  test-repo-libraries:
+    name: test-repo-libraries
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Install tools
+        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+      - name: Run the shared modules' unit tests with a 100% coverage gate
+        run: >-
+          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          python3 -m pytest
+          test/lib/python/repo_utils/pre_deployment/unit/
+          test/lib/python/test_fixtures/pre_deployment/unit/
+          test/lib/python/test_handler_contracts/pre_deployment/unit/
+          test/lib/python/test_http_doubles/pre_deployment/unit/
+          test/lib/python/test_module_utils/pre_deployment/unit/
+          test/lib/python/test_published_syntheses/pre_deployment/unit/
+          test/lib/python/test_s3_store_mock/pre_deployment/unit/
+          test/lib/python/test_terraform_config/pre_deployment/unit/
+          test/lib/python/test_terraform_drift/pre_deployment/unit/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
+          --cov=lib/python/repo_utils
+          --cov=lib/python/test_fixtures
+          --cov=lib/python/test_handler_contracts
+          --cov=lib/python/test_module_utils
+          --cov=lib/python/test_published_syntheses
+          --cov=lib/python/test_s3_store_mock
+          --cov=lib/python/test_terraform_config
+          --cov=lib/python/test_terraform_drift
+          --cov-branch
+          --cov-report=term-missing
+          --cov-fail-under=100
+      - name: Run the shared modules' integration tests with a 100% coverage gate
+        run: >-
+          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          python3 -m pytest
+          test/lib/python/test_handler_contracts/pre_deployment/integration/
+          test/lib/python/test_http_doubles/pre_deployment/
+          test/lib/python/test_published_syntheses/pre_deployment/integration/
+          test/lib/python/test_terraform_config/pre_deployment/integration/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
+          --cov=lib/python/test_http_doubles
+          --cov-branch
+          --cov-report=term-missing
+          --cov-fail-under=100
+  unit-tests:
+    name: unit-tests
+    needs: test-repo-libraries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install boto3 boto3-stubs pytest 'python-hcl2<8' pyyaml
+      - name: Run unit tests
+        run: >-
+          PYTHONPATH=.:lib/python
+          python3 -m pytest
+          test/api/common/identity/pre_deployment/unit/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
+  validate-stack:
+    name: validate-stack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_wrapper: false
+      - name: Validate the stack
+        run: |
+          tofu -chdir=src/api/common/identity init -backend=false -input=false
+          tofu -chdir=src/api/common/identity validate
+name: api_common_identity
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/api/common/identity/**
+      - lib/opentofu/common/**
+      - lib/python/**
+      - test/api/common/identity/**
+      - test/lib/python/**
+      - .github/workflows/**
+  workflow_dispatch: {}

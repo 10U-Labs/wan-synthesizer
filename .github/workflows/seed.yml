@@ -350,6 +350,7 @@ jobs:
           POLL_LIMIT: '180'
           POLL_SECONDS: '20'
           WORKFLOWS: >-
+            api_common_identity.yml
             api_common_routing.yml
             api_common_storage.yml
             api_endpoint_carriers.yml

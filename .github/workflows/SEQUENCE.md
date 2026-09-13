@@ -1,8 +1,11 @@
 # SEQUENCE
 
-Dependency order across `src/` — common infra, endpoints, and HTTP actions.
-Each node is one workflow (`api_common_*`, `api_endpoint_*`). `A ─→ B` means B
-builds on A: every endpoint reads the common `storage` + `routing` state, a
+Dependency order across `src/` — identity, common infra, endpoints, and HTTP
+actions. Each node is one workflow (`api_common_*`, `api_endpoint_*`). `A ─→ B`
+means B builds on A: every workflow assumes the role `api/common/identity`
+declares, so that stack sits ahead of every other and each reconciliation runs
+under the permissions it enumerates; every endpoint reads the common `storage`
++ `routing` state, a
 carrier/tenant write cascades to its builder (`carriers/merge`,
 `tenants/wan`), and the `tenants/wan` POST workflow
 (`*_post.yml`) lints, tests, and deploys the synthesizer's own stack
@@ -12,11 +15,11 @@ common module), so the two stacks stay decoupled -- each workflow owns and deplo
 its own stack.
 
 ```text
-api/common/storage ─┐
-api/common/routing ─┤
-                    ├─→ api/endpoints/carriers ─────→ api/endpoints/carriers/merge
-                    ├─→ api/endpoints/providers
-                    └─→ api/endpoints/tenants ──────→ api/endpoints/tenants/wan
-                                                      │
-                                                      └─→ tenants/wan POST (tenants/wan/post)
+api/common/identity ─┬─→ api/common/storage ─┐
+                     └─→ api/common/routing ─┤
+                                             ├─→ api/endpoints/carriers ─────→ api/endpoints/carriers/merge
+                                             ├─→ api/endpoints/providers
+                                             └─→ api/endpoints/tenants ──────→ api/endpoints/tenants/wan
+                                                                               │
+                                                                               └─→ tenants/wan POST (tenants/wan/post)
 ```
