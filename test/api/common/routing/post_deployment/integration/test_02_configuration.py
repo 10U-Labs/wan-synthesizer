@@ -32,3 +32,23 @@ def test_the_authorizer_knows_the_parameter_holding_the_key(
         authorizer_config: dict[str, Any], api_key_parameter_name: str) -> None:
     variables = authorizer_config["Environment"]["Variables"]
     assert variables["API_KEY_PARAMETER"] == api_key_parameter_name
+
+
+def test_the_authorizer_knows_the_parameter_holding_the_list(
+        authorizer_config: dict[str, Any], authorized_accounts_parameter_name: str) -> None:
+    variables = authorizer_config["Environment"]["Variables"]
+    assert variables["AUTHORIZED_ACCOUNTS_PARAMETER"] == authorized_accounts_parameter_name
+
+
+def test_somebody_is_authorized(authorized_accounts: list[str]) -> None:
+    assert authorized_accounts != []
+
+
+def test_every_authorized_account_is_on_the_hosted_domain(
+        authorized_accounts: list[str], authorizer_config: dict[str, Any]) -> None:
+    domain = authorizer_config["Environment"]["Variables"]["HOSTED_DOMAIN"]
+    assert [a for a in authorized_accounts if not a.endswith(f"@{domain}")] == []
+
+
+def test_no_authorized_account_is_listed_twice(authorized_accounts: list[str]) -> None:
+    assert sorted(set(authorized_accounts)) == sorted(authorized_accounts)

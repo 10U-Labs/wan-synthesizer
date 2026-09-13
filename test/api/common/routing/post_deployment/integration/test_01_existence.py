@@ -31,3 +31,9 @@ def test_the_api_key_is_kept(ssm_client: Any, api_key_parameter_name: str) -> No
 
 def test_the_api_stands_behind_an_authorizer(live_authorizer: dict[str, Any]) -> None:
     assert live_authorizer["name"]
+
+
+def test_the_authorized_accounts_are_kept(
+        ssm_client: Any, authorized_accounts_parameter_name: str) -> None:
+    response = ssm_client.get_parameter(Name=authorized_accounts_parameter_name)
+    assert response["Parameter"]["Type"] == "StringList"

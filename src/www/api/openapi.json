@@ -843,7 +843,7 @@
         "type": "apiKey",
         "name": "Authorization",
         "in": "header",
-        "description": "A Google ID token for an account on the hosted domain, or the API key the seed holds, as a bearer token.",
+        "description": "A Google ID token for an authorized account on the hosted domain, or the API key the seed holds, as a bearer token.",
         "x-amazon-apigateway-authtype": "custom",
         "x-amazon-apigateway-authorizer": {
           "type": "token",

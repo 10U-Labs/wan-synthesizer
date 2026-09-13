@@ -16,6 +16,8 @@ from test_http_doubles import UrlopenRecorder
 _API_KEY = "the-seed-key"
 _API = "arn:aws:execute-api:us-east-2:781581267945:abc123"
 _EMAIL = "someone@10ulabs.com"
+_ANOTHER = "another@10ulabs.com"
+_AUTHORIZED = f"{_EMAIL}, {_ANOTHER}"
 
 
 def _claims(**overrides: Any) -> dict[str, Any]:
@@ -29,10 +31,15 @@ def _claims(**overrides: Any) -> dict[str, Any]:
     }
 
 
-def _fake_ssm(names: list[str]) -> Any:
+def _fake_ssm(names: list[str], authorized: str = _AUTHORIZED) -> Any:
+    values = {
+        os.environ["API_KEY_PARAMETER"]: _API_KEY,
+        os.environ["AUTHORIZED_ACCOUNTS_PARAMETER"]: authorized,
+    }
+
     def get_parameter(**kwargs: Any) -> dict[str, Any]:
         names.append(kwargs["Name"])
-        return {"Parameter": {"Value": _API_KEY}}
+        return {"Parameter": {"Value": values[kwargs["Name"]]}}
 
     return SimpleNamespace(get_parameter=get_parameter)
 
@@ -56,14 +63,17 @@ def _google_says(monkeypatch: pytest.MonkeyPatch, **claims: Any) -> UrlopenRecor
     return recorder
 
 
-def _decide(authorizer: Any, token: str, names: list[str] | None = None) -> dict[str, Any]:
-    with patch("boto3.client", return_value=_fake_ssm([] if names is None else names)):
+def _decide(authorizer: Any, token: str, names: list[str] | None = None,
+            authorized: str = _AUTHORIZED) -> dict[str, Any]:
+    ssm = _fake_ssm([] if names is None else names, authorized)
+    with patch("boto3.client", return_value=ssm):
         decision: dict[str, Any] = authorizer.lambda_handler(_event(token), None)
     return decision
 
 
-def _effect(authorizer: Any, token: str) -> str:
-    return str(_decide(authorizer, token)["policyDocument"]["Statement"][0]["Effect"])
+def _effect(authorizer: Any, token: str, authorized: str = _AUTHORIZED) -> str:
+    decision = _decide(authorizer, token, authorized=authorized)
+    return str(decision["policyDocument"]["Statement"][0]["Effect"])
 
 
 def test_the_api_key_is_allowed(authorizer: Any) -> None:
@@ -98,10 +108,60 @@ def test_a_verdict_is_about_invoking_the_api(authorizer: Any) -> None:
     assert statement["Action"] == "execute-api:Invoke"
 
 
-def test_a_hosted_domain_account_is_allowed(
+def test_a_hosted_domain_account_on_the_list_is_allowed(
         authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     _google_says(monkeypatch)
     assert _effect(authorizer, "Bearer id-token") == "Allow"
+
+
+def test_a_hosted_domain_account_off_the_list_is_denied(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    _google_says(monkeypatch, email="stranger@10ulabs.com")
+    assert _effect(authorizer, "Bearer id-token") == "Deny"
+
+
+def test_an_empty_list_admits_nobody(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    _google_says(monkeypatch)
+    assert _effect(authorizer, "Bearer id-token", authorized="") == "Deny"
+
+
+def test_a_listed_account_is_matched_whole_and_not_as_a_suffix(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    _google_says(monkeypatch, email="one@10ulabs.com")
+    assert _effect(authorizer, "Bearer id-token") == "Deny"
+
+
+def test_a_listed_account_is_matched_regardless_of_case(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    _google_says(monkeypatch, email="Someone@10ulabs.com")
+    assert _effect(authorizer, "Bearer id-token") == "Allow"
+
+
+def test_every_entry_of_the_list_is_read_past_its_spacing(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    _google_says(monkeypatch, email=_ANOTHER)
+    assert _effect(authorizer, "Bearer id-token") == "Allow"
+
+
+def test_a_listed_account_off_the_hosted_domain_is_still_denied(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    _google_says(monkeypatch, hd="example.com")
+    assert _effect(authorizer, "Bearer id-token") == "Deny"
+
+
+def test_the_list_is_read_from_the_parameter_the_environment_names(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    _google_says(monkeypatch)
+    names: list[str] = []
+    _decide(authorizer, "Bearer id-token", names)
+    assert names == [os.environ["API_KEY_PARAMETER"], os.environ["AUTHORIZED_ACCOUNTS_PARAMETER"]]
+
+
+def test_the_api_key_is_settled_without_reading_the_list(authorizer: Any) -> None:
+    names: list[str] = []
+    _decide(authorizer, f"Bearer {_API_KEY}", names)
+    assert os.environ["AUTHORIZED_ACCOUNTS_PARAMETER"] not in names
 
 
 def test_the_account_is_named_as_the_principal(

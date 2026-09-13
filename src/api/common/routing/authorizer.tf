@@ -2,6 +2,22 @@ locals {
   authorizer_role_name = "wan-synthesizer-authorizer-lambda"
 }
 
+variable "authorized_accounts" {
+  description = "The 10ulabs.com accounts authorized to use the API, comma-separated, as the deploy passes them from the repository variable WAN_SYNTHESIZER_AUTHORIZED_ACCOUNTS."
+  type        = string
+
+  validation {
+    condition     = alltrue([for account in split(",", var.authorized_accounts) : endswith(trimspace(account), "@10ulabs.com")])
+    error_message = "Every authorized account is an address on the hosted domain."
+  }
+}
+
+resource "aws_ssm_parameter" "authorized_accounts" {
+  name  = "/wan-synthesizer/authorized-accounts"
+  type  = "StringList"
+  value = var.authorized_accounts
+}
+
 resource "random_password" "api_key" {
   length  = 48
   special = false
@@ -29,13 +45,14 @@ resource "aws_lambda_function" "authorizer" {
   architectures    = ["arm64"]
   timeout          = 10
   memory_size      = 128
-  description      = "Authorizer: admit a Google account on the hosted domain, or the API key the seed holds."
+  description      = "Authorizer: admit an authorized Google account on the hosted domain, or the API key the seed holds."
 
   environment {
     variables = {
-      GOOGLE_CLIENT_ID  = "846587722064-qjou8en4tk96n12ii3rgnpjshnbqovok.apps.googleusercontent.com"
-      HOSTED_DOMAIN     = "10ulabs.com"
-      API_KEY_PARAMETER = aws_ssm_parameter.api_key.name
+      GOOGLE_CLIENT_ID              = "846587722064-qjou8en4tk96n12ii3rgnpjshnbqovok.apps.googleusercontent.com"
+      HOSTED_DOMAIN                 = "10ulabs.com"
+      API_KEY_PARAMETER             = aws_ssm_parameter.api_key.name
+      AUTHORIZED_ACCOUNTS_PARAMETER = aws_ssm_parameter.authorized_accounts.name
     }
   }
 

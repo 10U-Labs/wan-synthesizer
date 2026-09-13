@@ -36,3 +36,10 @@ def authorizer_config_fixture(lambda_client: Any) -> dict[str, Any]:
 def api_key_fixture(ssm_client: Any, api_key_parameter_name: str) -> str:
     response = ssm_client.get_parameter(Name=api_key_parameter_name, WithDecryption=True)
     return str(response["Parameter"]["Value"])
+
+
+@pytest.fixture(name="authorized_accounts")
+def authorized_accounts_fixture(
+        ssm_client: Any, authorized_accounts_parameter_name: str) -> list[str]:
+    response = ssm_client.get_parameter(Name=authorized_accounts_parameter_name)
+    return [entry.strip() for entry in str(response["Parameter"]["Value"]).split(",")]

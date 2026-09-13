@@ -13,7 +13,7 @@ const ID_TOKEN_KEY = "wan-synthesizer-id-token";
 const SIGN_IN_NOTES = {
   first: `Sign in with a ${HOSTED_DOMAIN} account.`,
   401: "Your sign-in has expired. Sign in again.",
-  403: `That account is not on ${HOSTED_DOMAIN}. Sign in with one that is.`,
+  403: `That account is not authorized for the WAN Synthesizer. Sign in with one that is.`,
 };
 
 const DEFAULT_MAP_ID = "daf";

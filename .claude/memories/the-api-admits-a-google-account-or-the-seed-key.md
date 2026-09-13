@@ -1,6 +1,6 @@
 ---
 name: the-api-admits-a-google-account-or-the-seed-key
-description: "Every API operation but a preflight sits behind the routing stack's Lambda authorizer, which admits a Google ID token for a 10ulabs.com account or the API key CI reads from SSM"
+description: "Every API operation but a preflight sits behind the routing stack's Lambda authorizer, which admits a Google ID token for a 10ulabs.com account named in /wan-synthesizer/authorized-accounts, or the API key CI reads from SSM"
 metadata: 
   node_type: memory
   type: project
@@ -14,7 +14,7 @@ metadata:
 
 - [Overview](#overview)
 - [Conventions](#conventions)
-  - [A Google account is admitted by its hosted domain](#a-google-account-is-admitted-by-its-hosted-domain)
+  - [A Google account is admitted by its hosted domain and the authorized list](#a-google-account-is-admitted-by-its-hosted-domain-and-the-authorized-list)
   - [The page opens on the sign-in screen and nothing else](#the-page-opens-on-the-sign-in-screen-and-nothing-else)
   - [CI presents the key the routing stack generated](#ci-presents-the-key-the-routing-stack-generated)
   - [A route the map fetches answers a preflight](#a-route-the-map-fetches-answers-a-preflight)
@@ -28,9 +28,9 @@ The precedent is in `../10ulabs.com` history, not its tree: `1bf50323 Add Google
 
 ## Conventions
 
-### A Google account is admitted by its hosted domain
+### A Google account is admitted by its hosted domain and the authorized list
 
-The 10ulabs.com mail is hosted on Google Workspace, so the accounts that exist are `@10ulabs.com` Google accounts and no user store is kept here. The page uses Google Identity Services with the OAuth client `846587722064-qjou8en4tk96n12ii3rgnpjshnbqovok.apps.googleusercontent.com` (created in Google Cloud Console with `https://www.10ulabs.com` as an authorized JavaScript origin; a second one would need the same). The authorizer sends the ID token to `oauth2.googleapis.com/tokeninfo`, which vouches for the signature, and then holds the claims to that client (`aud`), a Google issuer, a verified address, and `hd == 10ulabs.com`. A token that fails the first three is a 401; an account off the domain is a 403 (`Deny`), so the page can tell the user which happened. `app.js` and `authorizer.tf` both spell the client and the domain, and `test/www/spa/pre_deployment/unit/test_login.py` fails when they disagree.
+The 10ulabs.com mail is hosted on Google Workspace, so the accounts that exist are `@10ulabs.com` Google accounts and no user store is kept here. Which of them may use this system is the StringList parameter `/wan-synthesizer/authorized-accounts` (GitHub issue #194, September 2026), whose value the routing deploy passes as `TF_VAR_authorized_accounts` from the repository variable `WAN_SYNTHESIZER_AUTHORIZED_ACCOUNTS`, comma-separated; adding, reviewing (quarterly) and removing an account is `gh variable set WAN_SYNTHESIZER_AUTHORIZED_ACCOUNTS` followed by a routing deploy, and the authorizer reads the list on each cold verdict beside the key. A verified domain account off the list is a 403 like one off the domain, so the page's 403 note says "not authorized" rather than naming the domain. The page uses Google Identity Services with the OAuth client `846587722064-qjou8en4tk96n12ii3rgnpjshnbqovok.apps.googleusercontent.com` (created in Google Cloud Console with `https://www.10ulabs.com` as an authorized JavaScript origin; a second one would need the same). The authorizer sends the ID token to `oauth2.googleapis.com/tokeninfo`, which vouches for the signature, and then holds the claims to that client (`aud`), a Google issuer, a verified address, `hd == 10ulabs.com`, and `email` on the list. A token that fails the first three is a 401; an account off the domain or off the list is a 403 (`Deny`), so the page can tell the user which happened. `app.js` and `authorizer.tf` both spell the client and the domain, and `test/www/spa/pre_deployment/unit/test_login.py` fails when they disagree.
 
 ### The page opens on the sign-in screen and nothing else
 

@@ -129,3 +129,18 @@ def test_every_route_the_map_fetches_answers_the_browsers_preflight() -> None:
         if "options" not in spec["paths"].get(route, {})
     ]
     assert unanswered == []
+
+
+def _sign_in_note(status: str) -> str:
+    match = re.search(rf"^  {status}: `([^`]+)`,$", _app_js(), re.M)
+    if match is None:
+        raise AssertionError(f"app.js carries no sign-in note for {status}")
+    return match.group(1)
+
+
+def test_a_turned_away_account_is_told_it_is_not_authorized() -> None:
+    assert "not authorized" in _sign_in_note("403")
+
+
+def test_a_turned_away_account_is_not_told_the_domain_alone_would_admit_it() -> None:
+    assert "${HOSTED_DOMAIN}" not in _sign_in_note("403")

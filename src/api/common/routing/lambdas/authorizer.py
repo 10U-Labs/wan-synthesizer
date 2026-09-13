@@ -18,11 +18,16 @@ class Unauthorized(Exception):
         super().__init__("Unauthorized")
 
 
-def _api_key() -> str:
+def _parameter(name: str) -> str:
     parameter = boto3.client("ssm", region_name="us-east-2").get_parameter(
-        Name=os.environ["API_KEY_PARAMETER"], WithDecryption=True
+        Name=os.environ[name], WithDecryption=True
     )
     return str(parameter["Parameter"]["Value"])
+
+
+def _authorized_accounts() -> frozenset[str]:
+    listed = _parameter("AUTHORIZED_ACCOUNTS_PARAMETER").split(",")
+    return frozenset(account.strip().lower() for account in listed if account.strip())
 
 
 def _bearer(event: dict[str, Any]) -> str:
@@ -61,11 +66,13 @@ def _verdict(event: dict[str, Any], principal: str, effect: str) -> dict[str, An
 
 def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     token = _bearer(event)
-    if hmac.compare_digest(token.encode(), _api_key().encode()):
+    if hmac.compare_digest(token.encode(), _parameter("API_KEY_PARAMETER").encode()):
         return _verdict(event, API_KEY_PRINCIPAL, "Allow")
     claims = _claims(token)
+    email = str(claims.get("email", ""))
     admitted = (
         claims.get("hd") == os.environ["HOSTED_DOMAIN"]
         and claims.get("email_verified") == "true"
+        and email.lower() in _authorized_accounts()
     )
-    return _verdict(event, str(claims.get("email", "")), "Allow" if admitted else "Deny")
+    return _verdict(event, email, "Allow" if admitted else "Deny")

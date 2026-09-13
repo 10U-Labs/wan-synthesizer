@@ -148,7 +148,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install mypy boto3 boto3-stubs botocore-stubs pytest 'python-hcl2<8'
+        run: pip install mypy boto3 boto3-stubs botocore-stubs pytest 'python-hcl2<8' pyyaml types-PyYAML
       - name: Run mypy on tests
         run: >-
           MYPYPATH=lib/python:scripts
@@ -209,7 +209,9 @@ jobs:
         run: pip install boto3 boto3-stubs pytest 'python-hcl2<8'
       - name: Initialize the stack for state inspection
         run: tofu -chdir=src/api/common/routing init -input=false
-      - name: Run pre-deployment integration tests
+      - env:
+          TF_VAR_authorized_accounts: ${{ vars.WAN_SYNTHESIZER_AUTHORIZED_ACCOUNTS }}
+        name: Run pre-deployment integration tests
         run: >-
           PYTHONPATH=.:lib/python:scripts
           python3 -m pytest
@@ -237,7 +239,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pylint boto3 boto3-stubs botocore-stubs pytest 'python-hcl2<8'
+        run: pip install pylint boto3 boto3-stubs botocore-stubs pytest 'python-hcl2<8' pyyaml types-PyYAML
       - name: Run pylint on tests
         run: >-
           PYTHONPATH=.:lib/python:scripts
@@ -285,7 +287,9 @@ jobs:
         uses: opentofu/setup-opentofu@v2
         with:
           tofu_wrapper: false
-      - name: Reconcile the stack to its declared state
+      - env:
+          TF_VAR_authorized_accounts: ${{ vars.WAN_SYNTHESIZER_AUTHORIZED_ACCOUNTS }}
+        name: Reconcile the stack to its declared state
         run: |
           tofu -chdir=src/api/common/routing init -input=false
           tofu -chdir=src/api/common/routing apply -auto-approve -input=false
@@ -351,7 +355,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install boto3 boto3-stubs pytest pytest-cov 'python-hcl2<8'
+        run: pip install boto3 boto3-stubs pytest pytest-cov 'python-hcl2<8' pyyaml types-PyYAML
       - name: Run unit tests with a 100% coverage gate over the authorizer
         run: >-
           PYTHONPATH=.:lib/python:scripts:src/api/common/routing/lambdas

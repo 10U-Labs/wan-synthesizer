@@ -25,7 +25,7 @@ resource "aws_iam_role_policy" "api_key_access" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["ssm:GetParameter"]
-      Resource = [aws_ssm_parameter.api_key.arn]
+      Resource = [aws_ssm_parameter.api_key.arn, aws_ssm_parameter.authorized_accounts.arn]
     }]
   })
 }
