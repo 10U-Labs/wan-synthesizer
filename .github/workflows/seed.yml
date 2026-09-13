@@ -100,10 +100,10 @@ jobs:
           test/lib/python/repo_utils
           test/lib/python/test_http_doubles
   e2e-tests:
-    if: ${{ !cancelled() && needs.seeding.result == 'success' }}
+    if: ${{ !cancelled() && needs.wait-for-every-wan.result == 'success' }}
     name: e2e-tests
     needs:
-      - seeding
+      - wait-for-every-wan
       - test-repo-libraries
     permissions:
       contents: read
@@ -395,6 +395,60 @@ jobs:
             done
           done
           echo "apply=$APPLY" >> "$GITHUB_OUTPUT"
+  wait-for-every-wan:
+    if: ${{ !cancelled() && needs.seeding.result == 'success' }}
+    name: wait-for-every-wan
+    needs: seeding
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Read the API key the authorizer admits
+        run: |
+          KEY=$(aws ssm get-parameter --name /wan-synthesizer/api-key \
+            --with-decryption --query Parameter.Value --output text)
+          echo "::add-mask::$KEY"
+          echo "WAN_SYNTHESIZER_API_KEY=$KEY" >> "$GITHUB_ENV"
+      - env:
+          API: https://api.10ulabs.com/wan-synthesizer
+          POLL_LIMIT: '45'
+          POLL_SECONDS: '20'
+        name: Wait for every WAN the seed asked for, so e2e-tests grades what it built
+        run: |
+          for CONFIG in etc/*.yml; do
+            TENANT=$(basename "$CONFIG" .yml | tr _ -)
+            POLL=0
+            while true; do
+              STATUS=$(curl --silent \
+                --header "Authorization: Bearer $WAN_SYNTHESIZER_API_KEY" \
+                "$API/tenants/$TENANT/wan" | jq --raw-output '.status // .error // ""')
+              case "$STATUS" in
+                creating|synthesizing)
+                  echo "$TENANT is $STATUS. Waiting."
+                  ;;
+                "")
+                  echo "$TENANT gave no answer. Waiting."
+                  ;;
+                *)
+                  echo "$TENANT ended $STATUS."
+                  break
+                  ;;
+              esac
+              if [ "$POLL" -ge "$POLL_LIMIT" ]; then
+                echo "::error::$TENANT has not finished."
+                exit 1
+              fi
+              sleep "$POLL_SECONDS"
+              POLL=$((POLL + 1))
+            done
+          done
   yamllint:
     name: yamllint
     runs-on: ubuntu-latest

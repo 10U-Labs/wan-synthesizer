@@ -19,7 +19,8 @@ from synthesizer.codec import load_merged_carriers, load_regions, load_sites
 from synthesizer.graphs import build_adjacency
 from synthesizer.input_graph import FiberSegment, Site, haversine_miles
 from test_http_doubles import UrlopenRecorder
-from test_terraform_config import api_key_parameter_name
+from test_published_syntheses import UNFINISHED
+from test_terraform_config import api_key_parameter_name, find_resource, load_tf
 
 _API = "http://stub"
 
@@ -31,13 +32,21 @@ def _declared_templates() -> set[str]:
     return {path[len(prefix):] for path in spec["paths"] if path.startswith(prefix)}
 
 
+def _downstream_of(jobs: dict[str, Any], root: str) -> set[str]:
+    downstream = {root}
+    while True:
+        wider = downstream | {
+            name for name, job in jobs.items()
+            if downstream & set(_needed_by(job))
+        }
+        if wider == downstream:
+            return downstream
+        downstream = wider
+
+
 def _gates_on_seeding() -> set[str]:
     jobs = _seed_workflow()["jobs"]
-    downstream = {
-        name for name, job in jobs.items()
-        if "seeding" in _needed_by(job)
-    }
-    return set(jobs) - downstream - {"seeding"}
+    return set(jobs) - _downstream_of(jobs, "seeding")
 
 
 def _linted_configs() -> set[str]:
@@ -138,7 +147,7 @@ def test_seeding_waits_for_every_workflow_that_deploys_on_the_same_commit() -> N
     assert _workflows_seeding_waits_for() == _workflows_that_deploy()
 
 
-_JOBS_REACHING_THE_API = ("seeding", "e2e-tests")
+_JOBS_REACHING_THE_API = ("seeding", "wait-for-every-wan", "e2e-tests")
 
 
 def _runs(job: dict[str, Any]) -> str:
@@ -166,6 +175,58 @@ def test_every_job_that_reaches_the_api_may_read_the_key() -> None:
 def test_seeding_seeds_only_on_the_conclusion_the_wait_job_reports() -> None:
     condition = _seed_workflow()["jobs"]["seeding"]["if"]
     assert f"needs.{_WAIT_JOB}.outputs.apply == 'true'" in condition
+
+
+_WAN_WAIT_JOB = "wait-for-every-wan"
+
+
+def _wan_wait_step() -> dict[str, Any]:
+    steps = _seed_workflow()["jobs"][_WAN_WAIT_JOB]["steps"]
+    return next(step for step in steps if "env" in step)
+
+
+def test_the_wan_wait_follows_seeding() -> None:
+    assert _needed_by(_seed_workflow()["jobs"][_WAN_WAIT_JOB]) == ["seeding"]
+
+
+def test_the_wan_wait_runs_only_on_a_seed_that_succeeded() -> None:
+    condition = _seed_workflow()["jobs"][_WAN_WAIT_JOB]["if"]
+    assert "needs.seeding.result == 'success'" in condition
+
+
+def test_e2e_tests_follow_the_wan_wait_and_not_seeding() -> None:
+    assert _needed_by(_seed_workflow()["jobs"]["e2e-tests"]) == [
+        _WAN_WAIT_JOB, "test-repo-libraries"]
+
+
+def test_e2e_tests_run_only_on_a_wan_wait_that_succeeded() -> None:
+    condition = _seed_workflow()["jobs"]["e2e-tests"]["if"]
+    assert re.findall(r"needs\.([\w-]+)\.result == 'success'", condition) == [_WAN_WAIT_JOB]
+
+
+def test_the_wan_wait_reads_the_api_the_seed_writes_to() -> None:
+    assert _wan_wait_step()["env"]["API"] == seed.DEFAULT_API
+
+
+def test_the_wan_wait_polls_every_tenant_config_the_seed_pushes() -> None:
+    assert "for CONFIG in etc/*.yml" in _wan_wait_step()["run"]
+
+
+def test_the_wan_wait_keeps_waiting_on_exactly_the_unfinished_statuses() -> None:
+    waited = re.search(r"^\s*([\w|]+)\)$", _wan_wait_step()["run"], re.MULTILINE)
+    assert set(str(waited and waited.group(1)).split("|")) == set(UNFINISHED)
+
+
+def _synthesizer_timeout_seconds() -> int:
+    synthesizer = find_resource(
+        load_tf(REPO_ROOT / "src/api/endpoints/tenants/wan/post/main.tf"),
+        "aws_lambda_function", "synthesizer")
+    return int(cast("dict[str, Any]", synthesizer)["timeout"])
+
+
+def test_the_wan_wait_allows_a_build_every_second_aws_allows_the_synthesizer() -> None:
+    env = _wan_wait_step()["env"]
+    assert int(env["POLL_LIMIT"]) * int(env["POLL_SECONDS"]) == _synthesizer_timeout_seconds()
 
 
 def _tenant_configs() -> dict[str, dict[str, Any]]:

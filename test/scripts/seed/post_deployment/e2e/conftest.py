@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from typing import Any
 
 import pytest
@@ -8,10 +7,7 @@ import yaml
 
 import seed
 from seed import DEFAULT_API, _slug
-from test_published_syntheses import published_synthesis, settled
-
-_BUILD_DEADLINE_SECONDS = 900
-_BUILD_POLL_SECONDS = 20
+from test_published_syntheses import published_synthesis
 
 
 def _roster() -> dict[str, dict[str, Any]]:
@@ -30,13 +26,7 @@ def _read_syntheses() -> list[dict[str, Any]]:
 
 @pytest.fixture(name="delivered_syntheses")
 def delivered_syntheses_fixture() -> list[dict[str, Any]]:
-    deadline = time.monotonic() + _BUILD_DEADLINE_SECONDS
-    syntheses = _read_syntheses()
-    while (not all(settled(synthesis["status"]) for synthesis in syntheses)
-            and time.monotonic() < deadline):
-        time.sleep(_BUILD_POLL_SECONDS)
-        syntheses = _read_syntheses()
-    return syntheses
+    return _read_syntheses()
 
 
 @pytest.fixture(name="published_syntheses")

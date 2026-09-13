@@ -61,10 +61,6 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
     }
 
 
-def settled(status: dict[str, Any]) -> bool:
-    return status.get("status") not in UNFINISHED
-
-
 def site_from_row(row: dict[str, Any]) -> Site:
     latitude, longitude = row["coords"]
     return Site(row["id"], row["name"], row["kind"], (latitude, longitude))
