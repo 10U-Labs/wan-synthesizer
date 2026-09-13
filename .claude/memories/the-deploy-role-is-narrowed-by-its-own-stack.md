@@ -1,6 +1,6 @@
 ---
 name: the-deploy-role-is-narrowed-by-its-own-stack
-description: "TenULabsWanSynthesizerRole is declared in src/api/common/identity and applied by the role itself, so a missing grant is measured by dispatching every workflow and fixed forward, the trust names GitHub's immutable subject, DescribeLogGroups is evaluated against log-group::log-stream:, and the OIDC provider is read by ARN"
+description: "TenULabsWanSynthesizerRole is declared in src/api/common/identity and applied by the role itself, so a missing grant is measured by dispatching every workflow and fixed forward, the trust names GitHub's immutable subject, DescribeLogGroups is evaluated against log-group::log-stream:, the OIDC provider is read by ARN, and seed.yml assumes the one-grant TenULabsWanSynthesizerSeedRole the same stack declares"
 metadata: 
   node_type: memory
   type: project
@@ -54,3 +54,26 @@ role's whole life and take minutes to scan, where
 The state and site buckets and the CloudFront distribution the role
 touches belong to `10U-Labs/10ulabs.com`; the distribution id is pinned
 in `iam.tf` and a post-deployment test holds it to serving `10ulabs.com`.
+
+## The seed assumes a role that can only read the key
+
+Since 2026-09-13 (GitHub issue #197) the same stack declares
+`TenULabsWanSynthesizerSeedRole`, trusted by the one `trust` document
+and granted `ssm:GetParameter` on `/wan-synthesizer/api-key` and
+nothing else. `seed.yml` assumes it through `vars.SEED_ROLE_ARN` in
+the three jobs that reach the API (`seeding`, `wait-for-every-wan`,
+`e2e-tests`), and its `test-repo-libraries` job assumes no role at all,
+the shared modules being exercised against literals. Every other
+workflow keeps `vars.OIDC_ROLE_ARN`; a unit test holds `seed.yml` to
+naming the seed variable alone, and a post-deployment test holds the
+live role to exactly one action.
+
+**Why:** seeding is what the API key exists for and needs one read,
+while the deploy role can replace every Lambda (NIST SP 800-171r3
+03.01.06, privileged accounts for privileged functions only).
+
+**How to apply:** the deploy role declares the seed role through the
+`DeclareTheSeedRole` statement of its `Roles` policy, and
+`aws_iam_role.seed` `depends_on` that policy so the grant lands before
+the first `CreateRole`; a write the seed newly needs is a defect in the
+API's authorizer, never a grant to add here.

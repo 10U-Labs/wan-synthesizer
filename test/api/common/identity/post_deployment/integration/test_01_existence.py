@@ -7,6 +7,10 @@ def test_the_role_exists(live_role: dict[str, Any], role_name: str) -> None:
     assert live_role["RoleName"] == role_name
 
 
+def test_the_seed_role_exists(live_seed_role: dict[str, Any], seed_role_name: str) -> None:
+    assert live_seed_role["RoleName"] == seed_role_name
+
+
 def test_this_run_is_the_declared_role(sts_client: Any, role_name: str) -> None:
     assert f":assumed-role/{role_name}/" in sts_client.get_caller_identity()["Arn"]
 

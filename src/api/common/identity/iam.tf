@@ -14,7 +14,9 @@ locals {
   gateway_role = "arn:aws:iam::${local.account}:role/aws-service-role/ops.apigateway.amazonaws.com/AWSServiceRoleForAPIGateway"
   rest_apis    = "arn:aws:apigateway:${local.region}::/restapis"
   parameters   = "arn:aws:ssm:${local.region}:${local.account}:parameter/${local.product}/*"
+  api_key      = "arn:aws:ssm:${local.region}:${local.account}:parameter/${local.product}/api-key"
   self         = "arn:aws:iam::${local.account}:role/${local.role_name}"
+  seed_role    = "arn:aws:iam::${local.account}:role/${local.seed_role_name}"
 }
 
 data "aws_iam_policy_document" "state" {
@@ -145,6 +147,27 @@ data "aws_iam_policy_document" "roles" {
   }
 
   statement {
+    sid = "DeclareTheSeedRole"
+    actions = [
+      "iam:CreateRole",
+      "iam:DeleteRole",
+      "iam:GetRole",
+      "iam:UpdateRole",
+      "iam:UpdateAssumeRolePolicy",
+      "iam:ListRolePolicies",
+      "iam:GetRolePolicy",
+      "iam:PutRolePolicy",
+      "iam:DeleteRolePolicy",
+      "iam:ListAttachedRolePolicies",
+      "iam:DetachRolePolicy",
+      "iam:ListInstanceProfilesForRole",
+      "iam:TagRole",
+      "iam:UntagRole",
+    ]
+    resources = [local.seed_role]
+  }
+
+  statement {
     sid       = "HandTheHandlersRolesToLambdaAlone"
     actions   = ["iam:PassRole"]
     resources = [local.lambda_roles]
@@ -265,6 +288,14 @@ data "aws_iam_policy_document" "self" {
   }
 }
 
+data "aws_iam_policy_document" "seed_key" {
+  statement {
+    sid       = "ReadTheApiKeyAlone"
+    actions   = ["ssm:GetParameter"]
+    resources = [local.api_key]
+  }
+}
+
 resource "aws_iam_role_policy" "state" {
   name   = "State"
   role   = aws_iam_role.deploy.id
@@ -305,4 +336,10 @@ resource "aws_iam_role_policy" "self" {
   name   = "Self"
   role   = aws_iam_role.deploy.id
   policy = data.aws_iam_policy_document.self.json
+}
+
+resource "aws_iam_role_policy" "seed_key" {
+  name   = "SeedKey"
+  role   = aws_iam_role.seed.id
+  policy = data.aws_iam_policy_document.seed_key.json
 }

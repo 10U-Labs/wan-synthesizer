@@ -170,6 +170,7 @@ jobs:
         run: tofu -chdir=src/api/common/identity init -input=false
       - env:
           OIDC_ROLE_ARN: ${{ vars.OIDC_ROLE_ARN }}
+          SEED_ROLE_ARN: ${{ vars.SEED_ROLE_ARN }}
         name: Run pre-deployment integration tests
         run: >-
           PYTHONPATH=.:lib/python

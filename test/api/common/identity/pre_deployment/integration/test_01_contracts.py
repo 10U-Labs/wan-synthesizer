@@ -8,7 +8,7 @@ from test_terraform_config import output_values
 
 def test_the_outputs_declare_the_role_and_the_subject(identity_dir: Any) -> None:
     outputs = output_values(identity_dir / "outputs.tf")
-    assert set(outputs) == {"role_arn", "role_name", "subject"}
+    assert set(outputs) == {"role_arn", "role_name", "seed_role_arn", "seed_role_name", "subject"}
 
 
 def test_the_role_arn_output_reads_the_declared_role(identity_dir: Any) -> None:
@@ -33,3 +33,9 @@ def test_the_role_the_workflows_assume_is_the_declared_one(
         role_name: str, config: dict[str, object]) -> None:
     expected = f"arn:aws:iam::{config['aws_account_id']}:role/{role_name}"
     assert os.environ["OIDC_ROLE_ARN"] == expected
+
+
+def test_the_role_the_seed_assumes_is_the_declared_one(
+        seed_role_name: str, config: dict[str, object]) -> None:
+    expected = f"arn:aws:iam::{config['aws_account_id']}:role/{seed_role_name}"
+    assert os.environ["SEED_ROLE_ARN"] == expected

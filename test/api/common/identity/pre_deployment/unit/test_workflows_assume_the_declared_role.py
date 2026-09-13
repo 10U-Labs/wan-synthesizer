@@ -8,7 +8,9 @@ import yaml
 from repo_utils import REPO_ROOT
 
 WORKFLOWS = REPO_ROOT / ".github" / "workflows"
-ROLE_VARIABLE = "${{ vars.OIDC_ROLE_ARN }}"
+DEPLOY_ROLE_VARIABLE = "${{ vars.OIDC_ROLE_ARN }}"
+SEED_ROLE_VARIABLE = "${{ vars.SEED_ROLE_ARN }}"
+SEED_WORKFLOW = "seed.yml"
 CREDENTIALS_ACTION = "aws-actions/configure-aws-credentials@v5"
 
 
@@ -30,11 +32,31 @@ def _credential_steps() -> list[tuple[str, dict[str, Any]]]:
     ]
 
 
-def test_every_workflow_assumes_the_role_by_the_one_variable() -> None:
+def test_every_workflow_but_the_seed_assumes_the_deploy_role_by_the_one_variable() -> None:
     assert [
         name for name, step in _credential_steps()
-        if step["with"].get("role-to-assume") != ROLE_VARIABLE
+        if name != SEED_WORKFLOW and step["with"].get("role-to-assume") != DEPLOY_ROLE_VARIABLE
     ] == []
+
+
+def test_the_seed_assumes_the_seed_role_and_no_other() -> None:
+    assert {
+        step["with"].get("role-to-assume")
+        for name, step in _credential_steps() if name == SEED_WORKFLOW
+    } == {SEED_ROLE_VARIABLE}
+
+
+def test_the_seed_names_the_deploy_role_nowhere() -> None:
+    assert "OIDC_ROLE_ARN" not in (WORKFLOWS / SEED_WORKFLOW).read_text(encoding="utf-8")
+
+
+def test_only_the_jobs_of_the_seed_that_reach_the_api_assume_a_role() -> None:
+    jobs = yaml.safe_load((WORKFLOWS / SEED_WORKFLOW).read_text(encoding="utf-8"))["jobs"]
+    assert sorted(
+        name for name, job in jobs.items()
+        if any(str(step.get("uses", "")).startswith("aws-actions/configure-aws-credentials")
+               for step in job.get("steps", []))
+    ) == ["e2e-tests", "seeding", "wait-for-every-wan"]
 
 
 def test_every_workflow_assumes_the_role_through_one_pinned_action() -> None:

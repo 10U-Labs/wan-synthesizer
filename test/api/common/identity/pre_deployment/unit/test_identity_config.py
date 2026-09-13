@@ -4,9 +4,12 @@ from typing import Any
 
 import pytest
 
+from test_terraform_config import api_key_parameter_name
+
 ISSUER = "token.actions.githubusercontent.com"
 EXCLUSIVE_ATTACHMENTS = "aws_iam_role_policy_attachments_exclusive"
 EXCLUSIVE_POLICIES = "aws_iam_role_policies_exclusive"
+ROLES = ["deploy", "seed"]
 
 
 def test_the_role_keeps_the_name_every_workflow_assumes(role_name: str) -> None:
@@ -22,14 +25,53 @@ def test_the_existing_role_is_imported_rather_than_recreated(
     assert identity_main.get("import") == [{"to": "${aws_iam_role.deploy}", "id": role_name}]
 
 
-def test_the_role_is_trusted_by_the_declared_document(
-        deploy_role: dict[str, Any], trust_document_name: str) -> None:
+@pytest.mark.parametrize("role", ROLES)
+def test_each_role_is_trusted_by_the_one_declared_document(
+        identity_main: dict[str, object], declared: Any, trust_document_name: str,
+        role: str) -> None:
     expected = f"${{data.aws_iam_policy_document.{trust_document_name}.json}}"
-    assert deploy_role["assume_role_policy"] == expected
+    assert declared(identity_main, "aws_iam_role", role)["assume_role_policy"] == expected
 
 
-def test_the_role_is_assumable_for_an_hour(deploy_role: dict[str, Any]) -> None:
-    assert deploy_role["max_session_duration"] == 3600
+@pytest.mark.parametrize("role", ROLES)
+def test_each_role_is_assumable_for_an_hour(
+        identity_main: dict[str, object], declared: Any, role: str) -> None:
+    assert declared(identity_main, "aws_iam_role", role)["max_session_duration"] == 3600
+
+
+def test_the_seed_role_keeps_the_name_the_seed_assumes(seed_role_name: str) -> None:
+    assert seed_role_name == "TenULabsWanSynthesizerSeedRole"
+
+
+def test_the_seed_role_is_declared_by_that_name(seed_role: dict[str, Any]) -> None:
+    assert seed_role["name"] == "${local.seed_role_name}"
+
+
+def test_the_seed_role_is_declared_once_the_deploy_role_may_declare_it(
+        seed_role: dict[str, Any]) -> None:
+    assert seed_role["depends_on"] == ["${aws_iam_role_policy.roles}"]
+
+
+def test_the_deploy_role_may_declare_the_seed_role(
+        permission_statements: list[dict[str, Any]], resolve: Any, seed_role_name: str) -> None:
+    assert [
+        statement["sid"]
+        for statement in permission_statements
+        if "iam:CreateRole" in statement["actions"]
+        and any(resolve(resource).endswith(f":role/{seed_role_name}")
+                for resource in statement["resources"])
+    ] == ["DeclareTheSeedRole"]
+
+
+def test_the_seed_role_is_granted_one_action(seed_statements: list[dict[str, Any]]) -> None:
+    assert [action for s in seed_statements for action in s["actions"]] == ["ssm:GetParameter"]
+
+
+def test_the_seed_role_reads_the_api_key_alone(
+        seed_statements: list[dict[str, Any]], resolve: Any) -> None:
+    assert [resolve(r) for s in seed_statements for r in s["resources"]] == [
+        "arn:aws:ssm:${module.common.aws_region}:${module.common.aws_account_id}"
+        f":parameter{api_key_parameter_name()}"]
 
 
 def test_the_trust_admits_the_web_identity_action_alone(
@@ -97,29 +139,33 @@ def test_the_subject_names_the_main_branch_alone(
     assert matched_subject(declared_subject).group(3) == "refs/heads/main"
 
 
-def test_no_managed_policy_is_attached(identity_main: dict[str, object], declared: Any) -> None:
-    assert declared(identity_main, EXCLUSIVE_ATTACHMENTS, "deploy")["policy_arns"] == []
+@pytest.mark.parametrize("role", ROLES)
+def test_no_managed_policy_is_attached(
+        identity_main: dict[str, object], declared: Any, role: str) -> None:
+    assert declared(identity_main, EXCLUSIVE_ATTACHMENTS, role)["policy_arns"] == []
 
 
+@pytest.mark.parametrize("role", ROLES)
 @pytest.mark.parametrize("resource_type", [EXCLUSIVE_ATTACHMENTS, EXCLUSIVE_POLICIES])
-def test_each_exclusive_list_is_held_on_the_declared_role(
-        identity_main: dict[str, object], declared: Any, resource_type: str) -> None:
-    exclusive = declared(identity_main, resource_type, "deploy")
-    assert exclusive["role_name"] == "${aws_iam_role.deploy.name}"
+def test_each_exclusive_list_is_held_on_the_role_it_is_named_for(
+        identity_main: dict[str, object], declared: Any, resource_type: str, role: str) -> None:
+    exclusive = declared(identity_main, resource_type, role)
+    assert exclusive["role_name"] == f"${{aws_iam_role.{role}.name}}"
 
 
-def test_every_inline_policy_is_in_the_exclusive_list(
-        identity_main: dict[str, object], declared: Any,
-        inline_policies: dict[str, dict[str, Any]]) -> None:
-    exclusive = declared(identity_main, EXCLUSIVE_POLICIES, "deploy")
+@pytest.mark.parametrize("role", ROLES)
+def test_every_inline_policy_is_in_the_exclusive_list_of_its_role(
+        identity_main: dict[str, object], declared: Any, inline_policies_of: Any,
+        role: str) -> None:
+    exclusive = declared(identity_main, EXCLUSIVE_POLICIES, role)
     assert sorted(exclusive["policy_names"]) == sorted(
-        f"${{aws_iam_role_policy.{name}.name}}" for name in inline_policies)
+        f"${{aws_iam_role_policy.{name}.name}}" for name in inline_policies_of(role))
 
 
-def test_every_inline_policy_is_attached_to_the_declared_role(
+def test_every_inline_policy_is_attached_to_a_declared_role(
         inline_policies: dict[str, dict[str, Any]]) -> None:
     roles = {policy["role"] for policy in inline_policies.values()}
-    assert roles == {"${aws_iam_role.deploy.id}"}
+    assert roles == {f"${{aws_iam_role.{role}.id}}" for role in ROLES}
 
 
 def test_every_inline_policy_is_named_after_its_document(
@@ -242,7 +288,7 @@ def test_the_data_sources_are_the_provider_and_the_policy_documents(
     assert kinds == {"aws_iam_openid_connect_provider", "aws_iam_policy_document"}
 
 
-def test_the_stack_declares_the_role_and_its_two_exclusive_lists_and_nothing_else(
+def test_the_stack_declares_the_roles_and_their_exclusive_lists_and_nothing_else(
         identity_main: dict[str, object], blocks_of: Any) -> None:
     kinds = {kind for block in blocks_of(identity_main, "resource") for kind in block}
     assert kinds == {"aws_iam_role", EXCLUSIVE_POLICIES, EXCLUSIVE_ATTACHMENTS}
@@ -259,10 +305,10 @@ def test_the_common_module_is_sourced(identity_main: dict[str, object]) -> None:
         {"common": {"source": "../../../../lib/opentofu/common"}}]
 
 
-def test_the_outputs_name_the_role_and_the_subject(
+def test_the_outputs_name_the_roles_and_the_subject(
         identity_outputs: dict[str, object], blocks_of: Any) -> None:
     names = sorted(name for block in blocks_of(identity_outputs, "output") for name in block)
-    assert names == ["role_arn", "role_name", "subject"]
+    assert names == ["role_arn", "role_name", "seed_role_arn", "seed_role_name", "subject"]
 
 
 def test_the_stack_is_tagged_as_this_repository(identity_tags: dict[str, str]) -> None:
@@ -274,10 +320,11 @@ def test_the_stack_is_tagged_as_this_repository(identity_tags: dict[str, str]) -
     }
 
 
+@pytest.mark.parametrize("role", ROLES)
 def test_the_managed_policies_are_detached_only_once_the_inline_ones_are_in_place(
-        identity_main: dict[str, object], declared: Any) -> None:
-    exclusive = declared(identity_main, EXCLUSIVE_ATTACHMENTS, "deploy")
-    assert exclusive["depends_on"] == ["${aws_iam_role_policies_exclusive.deploy}"]
+        identity_main: dict[str, object], declared: Any, role: str) -> None:
+    exclusive = declared(identity_main, EXCLUSIVE_ATTACHMENTS, role)
+    assert exclusive["depends_on"] == [f"${{aws_iam_role_policies_exclusive.{role}}}"]
 
 
 def test_describing_log_groups_is_granted_on_the_arn_iam_evaluates_it_against(

@@ -115,7 +115,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: us-east-2
-          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+          role-to-assume: ${{ vars.SEED_ROLE_ARN }}
       - name: Read the API key the authorizer admits
         run: |
           KEY=$(aws ssm get-parameter --name /wan-synthesizer/api-key \
@@ -250,7 +250,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: us-east-2
-          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+          role-to-assume: ${{ vars.SEED_ROLE_ARN }}
       - name: Read the API key the authorizer admits
         run: |
           KEY=$(aws ssm get-parameter --name /wan-synthesizer/api-key \
@@ -263,17 +263,9 @@ jobs:
         run: PYTHONPATH=lib/python:scripts python3 -c 'import seed; seed.main()'
   test-repo-libraries:
     name: test-repo-libraries
-    permissions:
-      contents: read
-      id-token: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-region: us-east-2
-          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
       - name: Install tools
         run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run the shared modules' unit tests with a 100% coverage gate
@@ -410,7 +402,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: us-east-2
-          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+          role-to-assume: ${{ vars.SEED_ROLE_ARN }}
       - name: Read the API key the authorizer admits
         run: |
           KEY=$(aws ssm get-parameter --name /wan-synthesizer/api-key \

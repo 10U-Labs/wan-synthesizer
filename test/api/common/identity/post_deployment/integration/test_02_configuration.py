@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from test_terraform_config import api_key_parameter_name
+
 
 def test_the_live_trust_admits_the_web_identity_action_alone(
         live_trust_statement: dict[str, Any]) -> None:
@@ -46,6 +48,35 @@ def test_the_provider_admits_sts_as_its_audience(
 def test_no_managed_policy_is_attached(iam_client: Any, role_name: str) -> None:
     attached = iam_client.list_attached_role_policies(RoleName=role_name)["AttachedPolicies"]
     assert attached == []
+
+
+def test_no_managed_policy_is_attached_to_the_seed_role(
+        iam_client: Any, seed_role_name: str) -> None:
+    attached = iam_client.list_attached_role_policies(RoleName=seed_role_name)
+    assert attached["AttachedPolicies"] == []
+
+
+def test_the_live_seed_role_is_trusted_as_the_deploy_role_is(
+        live_role: dict[str, Any], live_seed_role: dict[str, Any]) -> None:
+    assert live_seed_role["AssumeRolePolicyDocument"] == live_role["AssumeRolePolicyDocument"]
+
+
+def test_the_live_seed_role_allows_exactly_one_action(
+        live_seed_statements: list[dict[str, Any]], live_actions_of: Any) -> None:
+    assert [
+        action for statement in live_seed_statements for action in live_actions_of(statement)
+    ] == ["ssm:GetParameter"]
+
+
+def test_the_live_seed_role_reads_the_api_key_alone(
+        live_seed_statements: list[dict[str, Any]], config: dict[str, object]) -> None:
+    assert [statement["Resource"] for statement in live_seed_statements] == [
+        f"arn:aws:ssm:{config['aws_region']}:{config['aws_account_id']}"
+        f":parameter{api_key_parameter_name()}"]
+
+
+def test_the_live_seed_session_lasts_an_hour(live_seed_role: dict[str, Any]) -> None:
+    assert live_seed_role["MaxSessionDuration"] == 3600
 
 
 def test_the_live_inline_policies_are_the_declared_ones(

@@ -129,6 +129,11 @@ def role_name_fixture(identity_locals: dict[str, Any]) -> str:
     return str(identity_locals["role_name"])
 
 
+@pytest.fixture(name="seed_role_name")
+def seed_role_name_fixture(identity_locals: dict[str, Any]) -> str:
+    return str(identity_locals["seed_role_name"])
+
+
 @pytest.fixture(name="declared_subject")
 def declared_subject_fixture(identity_locals: dict[str, Any], resolve: Any) -> str:
     return str(resolve(str(identity_locals["subject"])))
@@ -176,6 +181,30 @@ def inline_policies_fixture(identity_iam: dict[str, object]) -> dict[str, dict[s
     return _resources_of(identity_iam, "aws_iam_role_policy")
 
 
+@pytest.fixture(name="inline_policies_of")
+def inline_policies_of_fixture(inline_policies: dict[str, dict[str, Any]]) -> Any:
+    return lambda role: {
+        name: policy for name, policy in inline_policies.items()
+        if policy["role"] == f"${{aws_iam_role.{role}.id}}"
+    }
+
+
+@pytest.fixture(name="seed_statements")
+def seed_statements_fixture(
+        permission_documents: dict[str, list[dict[str, Any]]],
+        inline_policies_of: Any) -> list[dict[str, Any]]:
+    return [
+        statement
+        for name in inline_policies_of("seed")
+        for statement in permission_documents[name]
+    ]
+
+
 @pytest.fixture(name="deploy_role")
 def deploy_role_fixture(identity_main: dict[str, object]) -> dict[str, Any]:
     return _declared(identity_main, "aws_iam_role", "deploy")
+
+
+@pytest.fixture(name="seed_role")
+def seed_role_fixture(identity_main: dict[str, object]) -> dict[str, Any]:
+    return _declared(identity_main, "aws_iam_role", "seed")

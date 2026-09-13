@@ -3,11 +3,12 @@ module "common" {
 }
 
 locals {
-  role_name  = "TenULabsWanSynthesizerRole"
-  issuer     = "token.actions.githubusercontent.com"
-  repository = "10U-Labs@240548037/wan-synthesizer@1262350676"
-  ref        = "refs/heads/main"
-  subject    = "repo:${local.repository}:ref:${local.ref}"
+  role_name      = "TenULabsWanSynthesizerRole"
+  seed_role_name = "TenULabsWanSynthesizerSeedRole"
+  issuer         = "token.actions.githubusercontent.com"
+  repository     = "10U-Labs@240548037/wan-synthesizer@1262350676"
+  ref            = "refs/heads/main"
+  subject        = "repo:${local.repository}:ref:${local.ref}"
 }
 
 data "aws_iam_openid_connect_provider" "github" {
@@ -69,4 +70,25 @@ resource "aws_iam_role_policies_exclusive" "deploy" {
     aws_iam_role_policy.site.name,
     aws_iam_role_policy.self.name,
   ]
+}
+
+resource "aws_iam_role" "seed" {
+  name                 = local.seed_role_name
+  description          = "The role seed.yml assumes: reads the API key the authorizer admits and nothing else, since the seed talks to the product through its API."
+  assume_role_policy   = data.aws_iam_policy_document.trust.json
+  max_session_duration = 3600
+
+  depends_on = [aws_iam_role_policy.roles]
+}
+
+resource "aws_iam_role_policy_attachments_exclusive" "seed" {
+  role_name   = aws_iam_role.seed.name
+  policy_arns = []
+
+  depends_on = [aws_iam_role_policies_exclusive.seed]
+}
+
+resource "aws_iam_role_policies_exclusive" "seed" {
+  role_name    = aws_iam_role.seed.name
+  policy_names = [aws_iam_role_policy.seed_key.name]
 }
