@@ -4,6 +4,7 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from typing import Any
 
 import boto3
@@ -11,6 +12,32 @@ import boto3
 TOKENINFO = "https://oauth2.googleapis.com/tokeninfo"
 ISSUERS = frozenset({"accounts.google.com", "https://accounts.google.com"})
 API_KEY_PRINCIPAL = "api-key"
+BASE_PATH = "wan-synthesizer"
+SEED_WRITES: tuple[tuple[str, str], ...] = (
+    ("DELETE", "tenants/*"),
+    ("POST", "carriers/merge"),
+    ("POST", "store/prune"),
+    ("POST", "tenants/*/wan"),
+    ("PUT", "carriers/*/fiber-segments"),
+    ("PUT", "carriers/*/pops"),
+    ("PUT", "providers/regions"),
+    ("PUT", "tenants/*/backbone-number-of-diverse-circuits"),
+    ("PUT", "tenants/*/convergence-promotion"),
+    ("PUT", "tenants/*/degree-exempt-wan-pops"),
+    ("PUT", "tenants/*/forced-circuits"),
+    ("PUT", "tenants/*/forced-homes"),
+    ("PUT", "tenants/*/forced-wan-pops"),
+    ("PUT", "tenants/*/homing-degree"),
+    ("PUT", "tenants/*/knobs"),
+    ("PUT", "tenants/*/label"),
+    ("PUT", "tenants/*/locations"),
+    ("PUT", "tenants/*/off-net"),
+    ("PUT", "tenants/*/prohibited-circuits"),
+    ("PUT", "tenants/*/prohibited-wan-pops"),
+    ("PUT", "tenants/*/provider-regions"),
+    ("PUT", "tenants/*/settings"),
+    ("PUT", "tenants/*/wan-pop-count"),
+)
 
 
 class Unauthorized(Exception):
@@ -49,8 +76,21 @@ def _claims(token: str) -> dict[str, Any]:
     return claims
 
 
-def _verdict(event: dict[str, Any], principal: str, effect: str) -> dict[str, Any]:
-    api, stage, *_ = str(event["methodArn"]).split("/")
+def _every_operation(stage: str) -> str | list[str]:
+    return f"{stage}/*"
+
+
+def _the_seeds_operations(stage: str) -> str | list[str]:
+    reads = [f"{stage}/GET/{BASE_PATH}/*"]
+    return reads + [f"{stage}/{method}/{BASE_PATH}/{path}" for method, path in SEED_WRITES]
+
+
+def _verdict(
+    event: dict[str, Any], principal: str, effect: str,
+    operations: Callable[[str], str | list[str]],
+) -> dict[str, Any]:
+    api, stage_name, *_ = str(event["methodArn"]).split("/")
+    stage = f"{api}/{stage_name}"
     return {
         "principalId": principal,
         "policyDocument": {
@@ -58,7 +98,7 @@ def _verdict(event: dict[str, Any], principal: str, effect: str) -> dict[str, An
             "Statement": [{
                 "Action": "execute-api:Invoke",
                 "Effect": effect,
-                "Resource": f"{api}/{stage}/*",
+                "Resource": operations(stage),
             }],
         },
     }
@@ -67,7 +107,7 @@ def _verdict(event: dict[str, Any], principal: str, effect: str) -> dict[str, An
 def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     token = _bearer(event)
     if hmac.compare_digest(token.encode(), _parameter("API_KEY_PARAMETER").encode()):
-        return _verdict(event, API_KEY_PRINCIPAL, "Allow")
+        return _verdict(event, API_KEY_PRINCIPAL, "Allow", _the_seeds_operations)
     claims = _claims(token)
     email = str(claims.get("email", ""))
     admitted = (
@@ -75,4 +115,4 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
         and claims.get("email_verified") == "true"
         and email.lower() in _authorized_accounts()
     )
-    return _verdict(event, email, "Allow" if admitted else "Deny")
+    return _verdict(event, email, "Allow" if admitted else "Deny", _every_operation)

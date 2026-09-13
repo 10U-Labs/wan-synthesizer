@@ -7,8 +7,8 @@ from urllib.request import Request, urlopen
 from seed import DEFAULT_API
 
 
-def _status(headers: dict[str, str]) -> int:
-    request = Request(f"{DEFAULT_API}/tenants", headers=headers)
+def _status(headers: dict[str, str], method: str = "GET", path: str = "tenants") -> int:
+    request = Request(f"{DEFAULT_API}/{path}", headers=headers, method=method)
     try:
         with urlopen(request, timeout=30) as response:
             return int(response.status)
@@ -37,3 +37,8 @@ def test_a_request_carrying_nothing_is_turned_away() -> None:
 
 def test_a_request_carrying_a_made_up_token_is_turned_away() -> None:
     assert _status({"Authorization": "Bearer made-up"}) == 401
+
+
+def test_the_key_is_refused_the_delete_of_a_carrier(api_key: str) -> None:
+    headers = {"Authorization": f"Bearer {api_key}"}
+    assert _status(headers, "DELETE", "carriers/no-such-carrier") == 403

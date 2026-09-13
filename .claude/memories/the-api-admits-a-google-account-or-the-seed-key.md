@@ -1,6 +1,6 @@
 ---
 name: the-api-admits-a-google-account-or-the-seed-key
-description: "Every API operation but a preflight sits behind the routing stack's Lambda authorizer, which admits a Google ID token for a 10ulabs.com account named in /wan-synthesizer/authorized-accounts, or the API key CI reads from SSM"
+description: "Every API operation but a preflight sits behind the routing stack's Lambda authorizer, which admits a Google ID token for a 10ulabs.com account named in /wan-synthesizer/authorized-accounts to every operation, or the API key CI reads from SSM to every read and the writes seed.py makes"
 metadata: 
   node_type: memory
   type: project
@@ -17,6 +17,7 @@ metadata:
   - [A Google account is admitted by its hosted domain and the authorized list](#a-google-account-is-admitted-by-its-hosted-domain-and-the-authorized-list)
   - [The page opens on the sign-in screen and nothing else](#the-page-opens-on-the-sign-in-screen-and-nothing-else)
   - [CI presents the key the routing stack generated](#ci-presents-the-key-the-routing-stack-generated)
+  - [The key is granted every read and the writes the seed makes](#the-key-is-granted-every-read-and-the-writes-the-seed-makes)
   - [A route the map fetches answers a preflight](#a-route-the-map-fetches-answers-a-preflight)
   - [Nothing here is a Cognito pool or a Lambda layer](#nothing-here-is-a-cognito-pool-or-a-lambda-layer)
 
@@ -39,6 +40,10 @@ The 10ulabs.com mail is hosted on Google Workspace, so the accounts that exist a
 ### CI presents the key the routing stack generated
 
 `random_password.api_key` is kept as the SecureString parameter `/wan-synthesizer/api-key`, and the authorizer reads it from SSM on each cold verdict rather than caching it, because API Gateway remembers a verdict for five minutes per token. The `seeding` and `e2e-tests` jobs in `seed.yml` assume the OIDC role, read the parameter with `aws ssm get-parameter --with-decryption`, mask it, and export `WAN_SYNTHESIZER_API_KEY`, which `scripts/seed.py` sends as `Authorization: Bearer` on every request; without the variable it sends no header and the API says 401. `test_every_job_that_reaches_the_api_reads_the_key_the_authorizer_holds` in `test/scripts/seed/pre_deployment/integration/test_contracts.py` holds the two jobs to that. The routing post-deployment tests read the key through the `api_key` fixture and prove the CloudFront path forwards the header by getting a 200 with it and a 401 without.
+
+### The key is granted every read and the writes the seed makes
+
+An admitted Google account's verdict covers `{stage}/*`; the key's verdict (GitHub issue #195, September 2026) lists `GET/wan-synthesizer/*` and then one `execute-api:Invoke` resource per row of `SEED_WRITES` in `authorizer.py`, the table of every `PUT`, `POST` and `DELETE` that `scripts/seed.py` makes with a path parameter spelled `*`. A write the table lacks is a 403 to CI, so a route the seed starts calling is added to the table in the same commit, and `test_the_api_key_verdict_writes_exactly_what_the_seed_writes` runs the seed against a recorder and fails when the two drift either way. Every read is granted because `e2e-tests` and `wait-for-every-wan` read the published collections with the same key and reading is CI's task; `DELETE /carriers/{carrier}` and `DELETE /providers/regions` are what the key cannot do, and `test_the_key_is_refused_the_delete_of_a_carrier` asks the live gateway. The verdict lists every resource at once rather than only the one asked for because the gateway caches it per token for five minutes and applies it to every later request.
 
 ### A route the map fetches answers a preflight
 

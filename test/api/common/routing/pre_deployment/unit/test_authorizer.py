@@ -2,19 +2,25 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import urllib.error
 import urllib.request
 from email.message import Message
+from fnmatch import fnmatchcase
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
 
 import pytest
 
+from repo_utils import REPO_ROOT
+from seed import ETC, _carrier_names, _slug, main
 from test_http_doubles import UrlopenRecorder
 
 _API_KEY = "the-seed-key"
 _API = "arn:aws:execute-api:us-east-2:781581267945:abc123"
+_STAGE = f"{_API}/prod"
+_STALE_TENANT = "stale"
 _EMAIL = "someone@10ulabs.com"
 _ANOTHER = "another@10ulabs.com"
 _AUTHORIZED = f"{_EMAIL}, {_ANOTHER}"
@@ -48,7 +54,7 @@ def _event(token: str) -> dict[str, Any]:
     return {
         "type": "TOKEN",
         "authorizationToken": token,
-        "methodArn": f"{_API}/prod/GET/wan-synthesizer/tenants",
+        "methodArn": f"{_STAGE}/GET/wan-synthesizer/tenants",
     }
 
 
@@ -98,9 +104,107 @@ def test_the_api_key_is_settled_without_asking_google(
     assert not recorder.requests
 
 
-def test_a_verdict_covers_every_method_and_route_of_the_stage(authorizer: Any) -> None:
-    statement = _decide(authorizer, f"Bearer {_API_KEY}")["policyDocument"]["Statement"][0]
-    assert statement["Resource"] == f"{_API}/prod/*"
+def _resources(authorizer: Any, token: str) -> list[str]:
+    statement = _decide(authorizer, token)["policyDocument"]["Statement"][0]
+    resource = statement["Resource"]
+    return [str(entry) for entry in ([resource] if isinstance(resource, str) else resource)]
+
+
+def _granted(resources: list[str], method: str, path: str) -> bool:
+    return any(fnmatchcase(f"{_STAGE}/{method}/{path}", resource) for resource in resources)
+
+
+def _operations_served() -> set[tuple[str, str]]:
+    spec = json.loads((REPO_ROOT / "src" / "www" / "api" / "openapi.json").read_text())
+    return {
+        (method.upper(), path.lstrip("/"))
+        for path, operations in spec["paths"].items()
+        for method in operations
+        if method != "options"
+    }
+
+
+def _ids_the_seed_names() -> frozenset[str]:
+    carriers = {_slug(name) for name in _carrier_names()}
+    tenants = {_slug(path.stem) for path in ETC.glob("*.yml")}
+    return frozenset(carriers | tenants | {_STALE_TENANT})
+
+
+def _generalized(path: str, ids: frozenset[str]) -> str:
+    return "/".join("*" if segment in ids else segment for segment in path.split("/"))
+
+
+def _writes_the_seed_makes(monkeypatch: pytest.MonkeyPatch) -> set[tuple[str, str]]:
+    api = "http://api"
+    recorder = UrlopenRecorder(body=json.dumps([{"id": _STALE_TENANT}]).encode())
+    monkeypatch.setattr(urllib.request, "urlopen", recorder)
+    monkeypatch.setattr(sys, "argv", ["seed", api])
+    main()
+    ids = _ids_the_seed_names()
+    return {
+        (request.get_method(), _generalized(path, ids))
+        for request, path in zip(recorder.requests, recorder.paths(api))
+        if request.get_method() != "GET"
+    }
+
+
+def _writes_the_key_is_granted(authorizer: Any) -> set[tuple[str, str]]:
+    prefix = f"{_STAGE}/"
+    granted: set[tuple[str, str]] = set()
+    for resource in _resources(authorizer, f"Bearer {_API_KEY}"):
+        method, _, path = resource[len(prefix):].partition("/")
+        if method != "GET":
+            granted.add((method, path[len(f"{authorizer.BASE_PATH}/"):]))
+    return granted
+
+
+def test_a_google_verdict_covers_every_method_and_route_of_the_stage(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    _google_says(monkeypatch)
+    assert _resources(authorizer, "Bearer id-token") == [f"{_STAGE}/*"]
+
+
+def test_a_google_verdict_covers_every_operation_the_api_serves(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    _google_says(monkeypatch)
+    resources = _resources(authorizer, "Bearer id-token")
+    assert all(_granted(resources, method, path) for method, path in _operations_served())
+
+
+def test_the_api_key_verdict_reads_every_route(authorizer: Any) -> None:
+    resources = _resources(authorizer, f"Bearer {_API_KEY}")
+    reads = {(method, path) for method, path in _operations_served() if method == "GET"}
+    assert all(_granted(resources, method, path) for method, path in reads)
+
+
+def test_the_api_key_verdict_writes_exactly_what_the_seed_writes(
+        authorizer: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    assert _writes_the_key_is_granted(authorizer) == _writes_the_seed_makes(monkeypatch)
+
+
+def test_every_grant_to_the_api_key_sits_under_the_base_path(authorizer: Any) -> None:
+    resources = _resources(authorizer, f"Bearer {_API_KEY}")
+    assert all(f"{_STAGE}/" in resource and f"/{authorizer.BASE_PATH}/" in resource
+               for resource in resources)
+
+
+def test_the_api_key_cannot_delete_a_carrier(authorizer: Any) -> None:
+    resources = _resources(authorizer, f"Bearer {_API_KEY}")
+    assert not _granted(resources, "DELETE", f"{authorizer.BASE_PATH}/carriers/level3")
+
+
+def test_the_api_key_cannot_delete_the_provider_regions(authorizer: Any) -> None:
+    resources = _resources(authorizer, f"Bearer {_API_KEY}")
+    assert not _granted(resources, "DELETE", f"{authorizer.BASE_PATH}/providers/regions")
+
+
+def test_the_api_key_can_delete_a_tenant(authorizer: Any) -> None:
+    resources = _resources(authorizer, f"Bearer {_API_KEY}")
+    assert _granted(resources, "DELETE", f"{authorizer.BASE_PATH}/tenants/f-35")
+
+
+def test_every_route_the_api_serves_sits_under_the_base_path(authorizer: Any) -> None:
+    assert all(path.startswith(f"{authorizer.BASE_PATH}/") for _, path in _operations_served())
 
 
 def test_a_verdict_is_about_invoking_the_api(authorizer: Any) -> None:
