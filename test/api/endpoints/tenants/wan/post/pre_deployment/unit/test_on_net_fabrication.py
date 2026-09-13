@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 import fixtures
 from synthesizer.on_net_fabrication import (
     FabricatedOnNetPops,
@@ -37,12 +39,12 @@ def test_fabricated_twin_is_a_carrier_pop() -> None:
     assert is_carrier_pop(next(v for v in result.sites if v.id == "fac_luke")) is True
 
 
-def test_ignores_unforced_locations() -> None:
+def test_ignores_unforced_sites() -> None:
     result = _fabricate(fixtures.tenant_site("luke", 0.0, 0.5))
     assert result.on_net_ids == frozenset()
 
 
-def test_fabricates_a_forced_remote_location_regardless_of_distance() -> None:
+def test_fabricates_a_forced_remote_site_regardless_of_distance() -> None:
     result = _fabricate(
         fixtures.tenant_site("remote", 0.0, 10.0), forced=frozenset({"remote"})
     )
@@ -74,3 +76,14 @@ def test_avoids_id_collision() -> None:
         forced=frozenset({"luke"}),
     )
     assert "fac_luke_2" in result.on_net_ids
+
+
+def test_a_forced_site_no_fiber_can_reach_is_left_demand_only_as_a_site(
+        caplog: pytest.LogCaptureFixture) -> None:
+    with caplog.at_level("INFO"):
+        fabricate_missing_on_net_pops(
+            [fixtures.tenant_site("alone", 0.0, 0.5)], {}, frozenset({"alone"})
+        )
+    assert [record.getMessage() for record in caplog.records] == [
+        "Site alone has fewer than 2 carrier PoPs to wire to; leaving it demand-only"
+    ]

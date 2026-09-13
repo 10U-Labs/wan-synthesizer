@@ -20,7 +20,7 @@ def _homed_with_a_forced_off_net_pop() -> DualHomed:
     return dual_home(fixtures.ring_sites(), fixtures.ring_fiber_segments(), params, [site])
 
 
-def _homed_with_a_forced_on_net_location() -> DualHomed:
+def _homed_with_a_forced_on_net_site() -> DualHomed:
     luke = fixtures.tenant_site("Luke", 40.5, -100.0)
     params = SynthesisParams(
         min_wan_pop_count=2,
@@ -37,9 +37,9 @@ def test_dual_home_realizes_a_forced_off_net_pop() -> None:
     )
 
 
-def test_dual_home_fabricates_a_forced_on_net_location() -> None:
+def test_dual_home_fabricates_a_forced_on_net_site() -> None:
     assert any(
-        site.id.startswith("fac_") for site in _homed_with_a_forced_on_net_location().sites
+        site.id.startswith("fac_") for site in _homed_with_a_forced_on_net_site().sites
     )
 
 
@@ -51,7 +51,7 @@ def test_dual_home_reports_the_off_net_twin_it_fabricated() -> None:
 
 
 def test_dual_home_reports_the_on_net_twin_it_fabricated() -> None:
-    homed = _homed_with_a_forced_on_net_location()
+    homed = _homed_with_a_forced_on_net_site()
     assert {
         site.id for site in homed.sites if site.id.startswith("fac_")
     } == homed.fabricated_ids

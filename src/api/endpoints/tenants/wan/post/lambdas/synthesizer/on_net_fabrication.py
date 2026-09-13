@@ -40,27 +40,27 @@ def fabricate_missing_on_net_pops(
     augmented_fiber_segments = dict(fiber_segments)
     on_net_ids: set[str] = set()
     seen_coords: set[tuple[float, float]] = set()
-    for location in sorted(
+    for forced in sorted(
         (
             site for site in sites
             if not is_carrier_pop(site) and site.name in forced_wan_pop_names
         ),
         key=lambda site: site.id,
     ):
-        coord_key = _coord_key(location)
+        coord_key = _coord_key(forced)
         if coord_key in seen_coords:
             continue
         seen_coords.add(coord_key)
-        twin_id = unique_twin_id(f"{ON_NET_ID_PREFIX}{location.id}", used_ids)
+        twin_id = unique_twin_id(f"{ON_NET_ID_PREFIX}{forced.id}", used_ids)
         built = build_local_fiber_twin(
-            location, twin_id, carrier_pops,
+            forced, twin_id, carrier_pops,
             LocalFiberTwinSettings(note=ON_NET_SEGMENT_NOTE, max_radius=None),
         )
         if built is None:
             logger.info(
-                "Location %s has fewer than %d carrier PoPs to wire to; "
+                "Site %s has fewer than %d carrier PoPs to wire to; "
                 "leaving it demand-only",
-                location.id,
+                forced.id,
                 LOCAL_FIBER_MIN_HOMING_DEGREE,
             )
             continue

@@ -69,7 +69,7 @@ def test_the_sites_the_wan_includes_are_read_once_for_every_site_published(
     assert len(read) == 1
 
 
-def test_synthesis_payload_sites_carry_location() -> None:
+def test_synthesis_payload_entries_carry_municipality_and_state() -> None:
     sites = synthesis_payload(ARTIFACTS)["sites"]
     assert all(
         "municipality" in site["info"] and "state" in site["info"] for site in sites
