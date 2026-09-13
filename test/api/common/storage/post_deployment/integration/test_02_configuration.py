@@ -42,12 +42,18 @@ def test_the_store_policy_denies_every_action_over_plaintext(
     assert denied == [("s3:*", {"Bool": {"aws:SecureTransport": "false"}})]
 
 
+def _plaintext_listing(s3_client: Any, store_bucket_name: str) -> str:
+    plaintext = boto3.client("s3", region_name=s3_client.meta.region_name, use_ssl=False)
+    try:
+        plaintext.list_objects_v2(Bucket=store_bucket_name, MaxKeys=1)
+    except ClientError as refused:
+        return str(refused.response["Error"]["Code"])
+    return "served"
+
+
 def test_a_plaintext_request_to_the_store_is_refused(
         s3_client: Any, store_bucket_name: str) -> None:
-    plaintext = boto3.client("s3", region_name=s3_client.meta.region_name, use_ssl=False)
-    with pytest.raises(ClientError) as refused:
-        plaintext.list_objects_v2(Bucket=store_bucket_name, MaxKeys=1)
-    assert refused.value.response["Error"]["Code"] == "AccessDenied"
+    assert _plaintext_listing(s3_client, store_bucket_name) == "AccessDenied"
 
 
 def test_versioning_is_suspended(s3_client: Any, store_bucket_name: str) -> None:
