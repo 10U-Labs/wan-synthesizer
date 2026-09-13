@@ -78,14 +78,14 @@ def role_name_of(function_config: dict[str, Any]) -> str:
     return str(function_config["Role"]).rsplit("/", 1)[-1]
 
 
-def managed_policies_of(iam_client: Any, function_config: dict[str, Any]) -> list[str]:
-    attached = iam_client.list_attached_role_policies(
+def managed_policies_of(iam: Any, function_config: dict[str, Any]) -> list[str]:
+    attached = iam.list_attached_role_policies(
         RoleName=role_name_of(function_config))["AttachedPolicies"]
     return sorted(str(policy["PolicyArn"]) for policy in attached)
 
 
-def log_resources_of(iam_client: Any, function_config: dict[str, Any]) -> list[str]:
-    document = iam_client.get_role_policy(
+def log_resources_of(iam: Any, function_config: dict[str, Any]) -> list[str]:
+    document = iam.get_role_policy(
         RoleName=role_name_of(function_config), PolicyName=LOG_POLICY)["PolicyDocument"]
     return sorted(
         str(resource)
@@ -94,7 +94,7 @@ def log_resources_of(iam_client: Any, function_config: dict[str, Any]) -> list[s
     )
 
 
-def log_group_arn(logs_client: Any, function_config: dict[str, Any]) -> str:
+def log_group_arn(logs: Any, function_config: dict[str, Any]) -> str:
     name = str(function_config["LoggingConfig"]["LogGroup"])
-    groups = logs_client.describe_log_groups(logGroupNamePrefix=name)["logGroups"]
+    groups = logs.describe_log_groups(logGroupNamePrefix=name)["logGroups"]
     return str(next(group["arn"] for group in groups if group["logGroupName"] == name))

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from pathlib import Path
+from typing import Any, cast
 
 from test_terraform_config import STACKS_DIR, declared_state_keys, lambda_handler_names, load_tf
 
@@ -9,12 +10,16 @@ _JSONENCODE = "${jsonencode("
 _STREAM_WRITES = {"logs:CreateLogStream", "logs:PutLogEvents"}
 
 
+def _resource_blocks(path: Path) -> list[dict[str, Any]]:
+    return cast("list[dict[str, Any]]", load_tf(path).get("resource", []))
+
+
 def _stacks() -> dict[str, list[dict[str, Any]]]:
     return {
         stack: [
             block
             for path in sorted((STACKS_DIR / stack).glob("*.tf"))
-            for block in load_tf(path).get("resource", [])
+            for block in _resource_blocks(path)
         ]
         for stack in declared_state_keys()
     }
