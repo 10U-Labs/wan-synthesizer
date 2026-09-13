@@ -59,6 +59,27 @@ jobs:
           --linters pylint,mypy,yamllint
           --verbose
           ${{ github.workspace }}
+  assert-no-pytest-plugin-declarations:
+    name: assert-no-pytest-plugin-declarations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-no-pytest-plugin-declarations
+      - name: Assert no pytest plugin declarations
+        run: >-
+          assert-no-pytest-plugin-declarations
+          --verbose
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/conftest.py
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/pre_deployment
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/post_deployment
+          ${{ github.workspace }}/test/lib/python/repo_utils
+          ${{ github.workspace }}/test/lib/python/test_fixtures
+          ${{ github.workspace }}/test/lib/python/test_handler_contracts
+          ${{ github.workspace }}/test/lib/python/test_module_utils
+          ${{ github.workspace }}/test/lib/python/test_s3_store_mock
+          ${{ github.workspace }}/test/lib/python/test_terraform_config
+          ${{ github.workspace }}/test/lib/python/test_terraform_drift
   assert-one-assert-per-pytest:
     name: assert-one-assert-per-pytest
     runs-on: ubuntu-latest
@@ -69,6 +90,83 @@ jobs:
       - name: Assert one assert per pytest
         run: >-
           assert-one-assert-per-pytest
+          --verbose
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/conftest.py
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/pre_deployment
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/post_deployment
+          ${{ github.workspace }}/test/lib/python/repo_utils
+          ${{ github.workspace }}/test/lib/python/test_fixtures
+          ${{ github.workspace }}/test/lib/python/test_handler_contracts
+          ${{ github.workspace }}/test/lib/python/test_module_utils
+          ${{ github.workspace }}/test/lib/python/test_s3_store_mock
+          ${{ github.workspace }}/test/lib/python/test_terraform_config
+          ${{ github.workspace }}/test/lib/python/test_terraform_drift
+  assert-opentofu-resource-is-used:
+    name: assert-opentofu-resource-is-used
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-opentofu-resource-is-used
+      - name: Assert every OpenTofu resource is reached by something
+        run: >-
+          assert-opentofu-resource-is-used
+          --search-in .
+          --verbose
+          src/api/endpoints/carriers/merge
+          lib/opentofu/common
+  assert-pytest-class-holds-state:
+    name: assert-pytest-class-holds-state
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-pytest-class-holds-state
+      - name: Assert every pytest class holds state
+        run: >-
+          assert-pytest-class-holds-state
+          --verbose
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/conftest.py
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/pre_deployment
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/post_deployment
+          ${{ github.workspace }}/test/lib/python/repo_utils
+          ${{ github.workspace }}/test/lib/python/test_fixtures
+          ${{ github.workspace }}/test/lib/python/test_handler_contracts
+          ${{ github.workspace }}/test/lib/python/test_module_utils
+          ${{ github.workspace }}/test/lib/python/test_s3_store_mock
+          ${{ github.workspace }}/test/lib/python/test_terraform_config
+          ${{ github.workspace }}/test/lib/python/test_terraform_drift
+  assert-pytest-fixture-name-is-needed:
+    name: assert-pytest-fixture-name-is-needed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-pytest-fixture-name-is-needed
+      - name: Assert every pytest fixture name is needed
+        run: >-
+          assert-pytest-fixture-name-is-needed
+          --verbose
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/conftest.py
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/pre_deployment
+          ${{ github.workspace }}/test/api/endpoints/carriers/merge/post_deployment
+          ${{ github.workspace }}/test/lib/python/repo_utils
+          ${{ github.workspace }}/test/lib/python/test_fixtures
+          ${{ github.workspace }}/test/lib/python/test_handler_contracts
+          ${{ github.workspace }}/test/lib/python/test_module_utils
+          ${{ github.workspace }}/test/lib/python/test_s3_store_mock
+          ${{ github.workspace }}/test/lib/python/test_terraform_config
+          ${{ github.workspace }}/test/lib/python/test_terraform_drift
+  assert-pytest-test-can-fail:
+    name: assert-pytest-test-can-fail
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-pytest-test-can-fail
+      - name: Assert every pytest test can fail
+        run: >-
+          assert-pytest-test-can-fail
           --verbose
           ${{ github.workspace }}/test/api/endpoints/carriers/merge/conftest.py
           ${{ github.workspace }}/test/api/endpoints/carriers/merge/pre_deployment
@@ -278,7 +376,12 @@ jobs:
       - assert-no-comments
       - assert-no-inline-directives
       - assert-no-linter-config-files
+      - assert-no-pytest-plugin-declarations
       - assert-one-assert-per-pytest
+      - assert-opentofu-resource-is-used
+      - assert-pytest-class-holds-state
+      - assert-pytest-fixture-name-is-needed
+      - assert-pytest-test-can-fail
       - assert-python-definition-is-used
       - copy-paste-source
       - copy-paste-tests

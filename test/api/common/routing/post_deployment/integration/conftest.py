@@ -18,28 +18,28 @@ def api_id_fixture(apigateway_client: Any) -> str:
     raise AssertionError(f"REST API '{API_NAME}' not found in AWS")
 
 
-@pytest.fixture(name="live_authorizer")
-def live_authorizer_fixture(apigateway_client: Any, api_id: str) -> dict[str, Any]:
+@pytest.fixture
+def live_authorizer(apigateway_client: Any, api_id: str) -> dict[str, Any]:
     items = apigateway_client.get_authorizers(restApiId=api_id)["items"]
     if len(items) != 1:
         raise AssertionError(f"expected one authorizer on '{API_NAME}', found {len(items)}")
     return cast("dict[str, Any]", items[0])
 
 
-@pytest.fixture(name="authorizer_config")
-def authorizer_config_fixture(lambda_client: Any) -> dict[str, Any]:
+@pytest.fixture
+def authorizer_config(lambda_client: Any) -> dict[str, Any]:
     response = lambda_client.get_function(FunctionName=lambda_handler_names()["authorizer"])
     return cast("dict[str, Any]", response["Configuration"])
 
 
-@pytest.fixture(name="api_key")
-def api_key_fixture(ssm_client: Any, api_key_parameter_name: str) -> str:
+@pytest.fixture
+def api_key(ssm_client: Any, api_key_parameter_name: str) -> str:
     response = ssm_client.get_parameter(Name=api_key_parameter_name, WithDecryption=True)
     return str(response["Parameter"]["Value"])
 
 
-@pytest.fixture(name="authorized_accounts")
-def authorized_accounts_fixture(
+@pytest.fixture
+def authorized_accounts(
         ssm_client: Any, authorized_accounts_parameter_name: str) -> list[str]:
     response = ssm_client.get_parameter(Name=authorized_accounts_parameter_name)
     return [entry.strip() for entry in str(response["Parameter"]["Value"]).split(",")]

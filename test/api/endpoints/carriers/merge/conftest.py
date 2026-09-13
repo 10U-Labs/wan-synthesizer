@@ -11,8 +11,8 @@ from test_terraform_config import lambda_handler_names, load_tf
 MERGE_DIR = REPO_ROOT / "src" / "api" / "endpoints" / "carriers" / "merge"
 
 
-@pytest.fixture(name="merge_dir")
-def merge_dir_fixture() -> Path:
+@pytest.fixture
+def merge_dir() -> Path:
     return MERGE_DIR
 
 
@@ -21,8 +21,8 @@ def merge_main_fixture() -> dict[str, object]:
     return load_tf(MERGE_DIR / "main.tf")
 
 
-@pytest.fixture(name="merge_iam")
-def merge_iam_fixture() -> dict[str, object]:
+@pytest.fixture
+def merge_iam() -> dict[str, object]:
     return load_tf(MERGE_DIR / "iam.tf")
 
 
@@ -32,11 +32,11 @@ def merge_locals_fixture(merge_main: dict[str, object]) -> dict[str, Any]:
     return blocks[0] if isinstance(blocks, list) and blocks else {}
 
 
-@pytest.fixture(name="function_name")
-def function_name_fixture() -> str:
+@pytest.fixture
+def function_name() -> str:
     return lambda_handler_names()["merge"]
 
 
-@pytest.fixture(name="role_name")
-def role_name_fixture(merge_locals: dict[str, Any]) -> str:
+@pytest.fixture
+def role_name(merge_locals: dict[str, Any]) -> str:
     return str(merge_locals["role_name"])

@@ -11,8 +11,8 @@ from test_terraform_config import lambda_handler_names, load_tf
 CARRIERS_DIR = REPO_ROOT / "src" / "api" / "endpoints" / "carriers"
 
 
-@pytest.fixture(name="carriers_dir")
-def carriers_dir_fixture() -> Path:
+@pytest.fixture
+def carriers_dir() -> Path:
     return CARRIERS_DIR
 
 
@@ -21,8 +21,8 @@ def carriers_main_fixture() -> dict[str, object]:
     return load_tf(CARRIERS_DIR / "main.tf")
 
 
-@pytest.fixture(name="carriers_iam")
-def carriers_iam_fixture() -> dict[str, object]:
+@pytest.fixture
+def carriers_iam() -> dict[str, object]:
     return load_tf(CARRIERS_DIR / "iam.tf")
 
 
@@ -32,11 +32,11 @@ def carriers_locals_fixture(carriers_main: dict[str, object]) -> dict[str, Any]:
     return blocks[0] if isinstance(blocks, list) and blocks else {}
 
 
-@pytest.fixture(name="function_name")
-def function_name_fixture() -> str:
+@pytest.fixture
+def function_name() -> str:
     return lambda_handler_names()["carriers"]
 
 
-@pytest.fixture(name="role_name")
-def role_name_fixture(carriers_locals: dict[str, Any]) -> str:
+@pytest.fixture
+def role_name(carriers_locals: dict[str, Any]) -> str:
     return str(carriers_locals["role_name"])

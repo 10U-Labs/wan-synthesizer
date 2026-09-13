@@ -29,8 +29,8 @@ def delivered_syntheses_fixture() -> list[dict[str, Any]]:
     return _read_syntheses()
 
 
-@pytest.fixture(name="published_syntheses")
-def published_syntheses_fixture(
+@pytest.fixture
+def published_syntheses(
     delivered_syntheses: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
     return [

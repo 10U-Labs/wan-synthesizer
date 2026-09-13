@@ -58,8 +58,8 @@ def _matched(subject: str) -> re.Match[str]:
     return match
 
 
-@pytest.fixture(name="identity_dir")
-def identity_dir_fixture() -> Path:
+@pytest.fixture
+def identity_dir() -> Path:
     return IDENTITY_DIR
 
 
@@ -73,13 +73,13 @@ def identity_iam_fixture() -> dict[str, object]:
     return load_tf(IDENTITY_DIR / "iam.tf")
 
 
-@pytest.fixture(name="identity_outputs")
-def identity_outputs_fixture() -> dict[str, object]:
+@pytest.fixture
+def identity_outputs() -> dict[str, object]:
     return load_tf(IDENTITY_DIR / "outputs.tf")
 
 
-@pytest.fixture(name="identity_tags")
-def identity_tags_fixture() -> dict[str, str]:
+@pytest.fixture
+def identity_tags() -> dict[str, str]:
     providers = _blocks(load_tf(IDENTITY_DIR / "providers.tf"), "provider")
     return dict(providers[0]["aws"]["default_tags"][0]["tags"])
 
@@ -94,18 +94,18 @@ def identity_locals_fixture(
     return merged
 
 
-@pytest.fixture(name="blocks_of")
-def blocks_of_fixture() -> Any:
+@pytest.fixture
+def blocks_of() -> Any:
     return _blocks
 
 
-@pytest.fixture(name="resources_of")
-def resources_of_fixture() -> Any:
+@pytest.fixture
+def resources_of() -> Any:
     return _resources_of
 
 
-@pytest.fixture(name="declared")
-def declared_fixture() -> Any:
+@pytest.fixture
+def declared() -> Any:
     return _declared
 
 
@@ -114,33 +114,33 @@ def resolve_fixture(identity_locals: dict[str, Any]) -> Any:
     return lambda expression: _resolve(expression, identity_locals)
 
 
-@pytest.fixture(name="matched_subject")
-def matched_subject_fixture() -> Any:
+@pytest.fixture
+def matched_subject() -> Any:
     return _matched
 
 
-@pytest.fixture(name="listings_iam_cannot_scope")
-def listings_iam_cannot_scope_fixture() -> frozenset[str]:
+@pytest.fixture
+def listings_iam_cannot_scope() -> frozenset[str]:
     return LISTINGS_IAM_CANNOT_SCOPE
 
 
-@pytest.fixture(name="role_name")
-def role_name_fixture(identity_locals: dict[str, Any]) -> str:
+@pytest.fixture
+def role_name(identity_locals: dict[str, Any]) -> str:
     return str(identity_locals["role_name"])
 
 
-@pytest.fixture(name="seed_role_name")
-def seed_role_name_fixture(identity_locals: dict[str, Any]) -> str:
+@pytest.fixture
+def seed_role_name(identity_locals: dict[str, Any]) -> str:
     return str(identity_locals["seed_role_name"])
 
 
-@pytest.fixture(name="declared_subject")
-def declared_subject_fixture(identity_locals: dict[str, Any], resolve: Any) -> str:
+@pytest.fixture
+def declared_subject(identity_locals: dict[str, Any], resolve: Any) -> str:
     return str(resolve(str(identity_locals["subject"])))
 
 
-@pytest.fixture(name="trust_document_name")
-def trust_document_name_fixture() -> str:
+@pytest.fixture
+def trust_document_name() -> str:
     return TRUST_DOCUMENT
 
 
@@ -152,8 +152,8 @@ def trust_statement_fixture(identity_main: dict[str, object]) -> dict[str, Any]:
     return statements[0]
 
 
-@pytest.fixture(name="trust_conditions")
-def trust_conditions_fixture(trust_statement: dict[str, Any]) -> dict[str, dict[str, Any]]:
+@pytest.fixture
+def trust_conditions(trust_statement: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {
         str(condition["variable"]).rsplit(":", 1)[-1]: condition
         for condition in trust_statement["condition"]
@@ -166,8 +166,8 @@ def permission_documents_fixture(
     return _policy_documents(identity_iam)
 
 
-@pytest.fixture(name="permission_statements")
-def permission_statements_fixture(
+@pytest.fixture
+def permission_statements(
         permission_documents: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
     return [
         statement
@@ -189,8 +189,8 @@ def inline_policies_of_fixture(inline_policies: dict[str, dict[str, Any]]) -> An
     }
 
 
-@pytest.fixture(name="seed_statements")
-def seed_statements_fixture(
+@pytest.fixture
+def seed_statements(
         permission_documents: dict[str, list[dict[str, Any]]],
         inline_policies_of: Any) -> list[dict[str, Any]]:
     return [
@@ -200,11 +200,11 @@ def seed_statements_fixture(
     ]
 
 
-@pytest.fixture(name="deploy_role")
-def deploy_role_fixture(identity_main: dict[str, object]) -> dict[str, Any]:
+@pytest.fixture
+def deploy_role(identity_main: dict[str, object]) -> dict[str, Any]:
     return _declared(identity_main, "aws_iam_role", "deploy")
 
 
-@pytest.fixture(name="seed_role")
-def seed_role_fixture(identity_main: dict[str, object]) -> dict[str, Any]:
+@pytest.fixture
+def seed_role(identity_main: dict[str, object]) -> dict[str, Any]:
     return _declared(identity_main, "aws_iam_role", "seed")

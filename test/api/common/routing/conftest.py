@@ -16,13 +16,13 @@ API_KEY_PARAMETER = "/wan-synthesizer/api-key"
 AUTHORIZED_ACCOUNTS_PARAMETER = "/wan-synthesizer/authorized-accounts"
 
 
-@pytest.fixture(name="routing_dir")
-def routing_dir_fixture() -> Path:
+@pytest.fixture
+def routing_dir() -> Path:
     return ROUTING_DIR
 
 
-@pytest.fixture(name="routing_main")
-def routing_main_fixture() -> dict[str, object]:
+@pytest.fixture
+def routing_main() -> dict[str, object]:
     return load_tf(ROUTING_DIR / "main.tf")
 
 
@@ -31,13 +31,13 @@ def routing_authorizer_fixture() -> dict[str, object]:
     return load_tf(ROUTING_DIR / "authorizer.tf")
 
 
-@pytest.fixture(name="routing_iam")
-def routing_iam_fixture() -> dict[str, object]:
+@pytest.fixture
+def routing_iam() -> dict[str, object]:
     return load_tf(ROUTING_DIR / "iam.tf")
 
 
-@pytest.fixture(name="authorizer")
-def authorizer_fixture(monkeypatch: pytest.MonkeyPatch) -> Any:
+@pytest.fixture
+def authorizer(monkeypatch: pytest.MonkeyPatch) -> Any:
     monkeypatch.setenv("GOOGLE_CLIENT_ID", GOOGLE_CLIENT_ID)
     monkeypatch.setenv("HOSTED_DOMAIN", HOSTED_DOMAIN)
     monkeypatch.setenv("API_KEY_PARAMETER", API_KEY_PARAMETER)
@@ -45,13 +45,13 @@ def authorizer_fixture(monkeypatch: pytest.MonkeyPatch) -> Any:
     return create_lambda_loader(ROUTING_DIR / "lambdas")("authorizer.py", "routing_authorizer")
 
 
-@pytest.fixture(name="api_key_parameter_name")
-def api_key_parameter_name_fixture() -> str:
+@pytest.fixture
+def api_key_parameter_name() -> str:
     return api_key_parameter_name()
 
 
-@pytest.fixture(name="authorized_accounts_parameter_name")
-def authorized_accounts_parameter_name_fixture(routing_authorizer: dict[str, object]) -> str:
+@pytest.fixture
+def authorized_accounts_parameter_name(routing_authorizer: dict[str, object]) -> str:
     parameter = find_resource(routing_authorizer, "aws_ssm_parameter", "authorized_accounts")
     if parameter is None:
         raise AssertionError("aws_ssm_parameter.authorized_accounts is not declared")
