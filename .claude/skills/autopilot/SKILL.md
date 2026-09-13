@@ -13,7 +13,7 @@ The argument is the sub-command: `start` or `stop`. `start` may be followed by `
 
 ## Start
 
-Create six jobs with `CronCreate`, exactly as listed below. Use `recurring: true` (the default), and take all six prompts verbatim, except that when `--skip-label` was given the first prompt ends with one extra sentence per label: ` Skip every issue labelled "<label>".`
+Create six jobs with `CronCreate`, exactly as listed below. Use `recurring: true` (the default), and take all six prompts verbatim, except that when `--skip-label` was given the first prompt ends with one extra sentence per label, after a space: `Skip every issue labelled "<label>".`
 
 | Offset | Cron | Prompt |
 | --- | --- | --- |
