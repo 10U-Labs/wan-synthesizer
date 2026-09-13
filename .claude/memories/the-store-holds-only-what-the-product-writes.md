@@ -96,4 +96,3 @@ to, in every `test-repo-libraries`; so a new role that touches the
 store is added to the output in the same commit as its grant, or that
 job is red everywhere and, if it got past, the role's first request is
 an `AccessDenied` from the bucket.
-
