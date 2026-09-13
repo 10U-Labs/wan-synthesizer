@@ -63,11 +63,16 @@ def test_the_distribution_the_role_may_invalidate_serves_the_site(
         cloudfront_client: Any, live_resources: set[str]) -> None:
     distributions = [r for r in live_resources if ":distribution/" in r]
     served = [
-        "10ulabs.com" in cloudfront_client.get_distribution(
-            Id=arn.rsplit("/", 1)[-1])["Distribution"]["DistributionConfig"]["Aliases"]["Items"]
+        [
+            alias
+            for alias in cloudfront_client.get_distribution(
+                Id=arn.rsplit("/", 1)[-1]
+            )["Distribution"]["DistributionConfig"]["Aliases"]["Items"]
+            if alias == "10ulabs.com"
+        ]
         for arn in distributions
     ]
-    assert served == [True]
+    assert served == [["10ulabs.com"]]
 
 
 def test_the_site_prefix_the_role_may_write_is_the_product_s(live_resources: set[str]) -> None:

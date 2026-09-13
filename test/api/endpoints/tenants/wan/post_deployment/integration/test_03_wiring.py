@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from test_fixtures.aws import log_group_arn, log_resources_of, managed_policies_of
@@ -10,9 +11,11 @@ def test_lambda_assumes_the_declared_role(
     assert lambda_config["Role"].endswith(f"role/{role_name}")
 
 
-def test_api_gateway_may_invoke_the_lambda(lambda_client: Any, function_name: str) -> None:
-    policy = lambda_client.get_policy(FunctionName=function_name)["Policy"]
-    assert "apigateway.amazonaws.com" in policy
+def test_api_gateway_alone_may_invoke_the_lambda(lambda_client: Any, function_name: str) -> None:
+    policy = json.loads(lambda_client.get_policy(FunctionName=function_name)["Policy"])
+    assert [
+        statement["Principal"]["Service"] for statement in policy["Statement"]
+    ] == ["apigateway.amazonaws.com"]
 
 
 def test_dispatch_role_grants_invoke(iam_client: Any, role_name: str) -> None:

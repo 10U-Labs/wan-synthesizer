@@ -3,6 +3,35 @@ concurrency:
   cancel-in-progress: true
   group: documentation-${{ github.ref }}
 jobs:
+  assert-one-assert-per-pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-one-assert-per-pytest
+      - name: Assert one assert per pytest
+        run: >-
+          assert-one-assert-per-pytest
+          --verbose
+          ${{ github.workspace }}/test/documentation
+  code-scanning:
+    permissions:
+      contents: read
+      security-events: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install pytest pyyaml
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        name: Hold the repository to code scanning with the extended suite
+        run: >-
+          PYTHONPATH=.:lib/python:scripts
+          python3 -m pytest
+          test/documentation/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
   markdownlint:
     runs-on: ubuntu-latest
     steps:
@@ -36,6 +65,31 @@ jobs:
           ${{ github.workspace }}
       - name: Lint Markdown
         run: markdownlint '**/*.md' '.claude/**/*.md' --disable MD013
+  mypy-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install mypy pytest pyyaml types-PyYAML
+      - name: Run mypy on tests
+        run: >-
+          MYPYPATH=lib/python:scripts
+          python3 -m mypy --strict --explicit-package-bases
+          --ignore-missing-imports
+          test/documentation/
+  pylint-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install pylint pytest pyyaml
+      - name: Run pylint on tests
+        run: >-
+          PYTHONPATH=.:lib/python:scripts
+          python3 -m pylint --recursive=y
+          test/documentation/
+          --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
+          --fail-on=C,R,W --fail-under=10.0
   yamllint:
     runs-on: ubuntu-latest
     steps:
@@ -81,4 +135,5 @@ on:
       - '**/*.md'
       - .claude/**/*.md
       - .github/workflows/documentation.yml
+      - test/documentation/**
   workflow_dispatch: {}
