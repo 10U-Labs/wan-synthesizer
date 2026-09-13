@@ -14,8 +14,8 @@ PASSED = {
 }
 
 
-def _workflow() -> dict[str, Any]:
-    loaded: dict[str, Any] = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+def _workflow() -> dict[Any, Any]:
+    loaded: dict[Any, Any] = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
     return loaded
 
 
