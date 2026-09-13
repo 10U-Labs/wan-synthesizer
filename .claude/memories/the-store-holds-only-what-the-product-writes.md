@@ -78,3 +78,22 @@ rejected because KMS requests are billed. The deploy role's
 post-deployment tier reads both back and opens a `use_ssl=False`
 client to prove the refusal is live, so a client that speaks plaintext
 to the store is an `AccessDenied`, never a silent success.
+
+## The store admits the roles the common module names and nobody else
+
+Since 2026-09-13 (GitHub issue #219, NIST SP 800-171r3 03.13.01 and
+03.13.06) the store's policy carries a second statement,
+`DenyEveryPrincipalNotNamed`, denying `s3:*` to every principal whose
+`aws:PrincipalArn` is not the account root or one of the roles
+`module.common.store_principals` lists in `lib/opentofu/common/outputs.tf`:
+the eight handlers' roles and `TenULabsWanSynthesizerRole`. The list
+is built into `local.store_principal_arns` outside the `jsonencode`,
+because python-hcl2 renders a `concat` inside one unparsably.
+`test_store_principals.py` in `test_terraform_config`'s integration
+tier walks every stack for an inline policy whose document names the
+store and holds the output to exactly the roles those policies attach
+to, in every `test-repo-libraries`; so a new role that touches the
+store is added to the output in the same commit as its grant, or that
+job is red everywhere and, if it got past, the role's first request is
+an `AccessDenied` from the bucket.
+

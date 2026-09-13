@@ -3,14 +3,14 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Iterator
-from typing import Any
+from typing import Any, cast
 
 import boto3
 import pytest
 from botocore.exceptions import ClientError
 
 from repo_utils import REPO_ROOT
-from test_terraform_config import lambda_handler_names, load_tf
+from test_terraform_config import common_outputs, lambda_handler_names, load_tf
 
 SRC = REPO_ROOT / "src"
 HANDLER_PREFIX = "wan-synthesizer-"
@@ -40,6 +40,24 @@ def test_the_store_policy_denies_every_action_over_plaintext(
         if statement["Sid"] == "DenyInsecureTransport"
     ]
     assert denied == [("s3:*", {"Bool": {"aws:SecureTransport": "false"}})]
+
+
+def test_the_store_admits_the_account_and_the_named_roles_alone(
+        s3_client: Any, store_bucket_name: str) -> None:
+    policy = json.loads(s3_client.get_bucket_policy(Bucket=store_bucket_name)["Policy"])
+    admitted = [
+        sorted(statement["Condition"]["StringNotLike"]["aws:PrincipalArn"])
+        for statement in policy["Statement"]
+        if statement["Sid"] == "DenyEveryPrincipalNotNamed"
+    ]
+    account = common_outputs()["aws_account_id"]
+    assert admitted == [sorted([
+        f"arn:aws:iam::{account}:root",
+        *(
+            f"arn:aws:iam::{account}:role/{role}"
+            for role in cast("list[Any]", common_outputs()["store_principals"])
+        ),
+    ])]
 
 
 def _plaintext_listing(s3_client: Any, store_bucket_name: str) -> str:

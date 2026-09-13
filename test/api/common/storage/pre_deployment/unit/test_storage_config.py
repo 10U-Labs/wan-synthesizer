@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -68,6 +68,27 @@ def test_the_store_refuses_plaintext_transport_before_anything_else(
         "Resource": ["${aws_s3_bucket.store.arn}", "${aws_s3_bucket.store.arn}/*"],
         "Condition": {"Bool": {"aws:SecureTransport": "false"}},
     }
+
+
+def test_the_store_denies_every_principal_it_does_not_name(
+        storage_main: dict[str, object]) -> None:
+    assert _policy_statements(storage_main)[1] == {
+        "Sid": "DenyEveryPrincipalNotNamed",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:*",
+        "Resource": ["${aws_s3_bucket.store.arn}", "${aws_s3_bucket.store.arn}/*"],
+        "Condition": {"StringNotLike": {"aws:PrincipalArn": "${local.store_principal_arns}"}},
+    }
+
+
+def test_the_principals_the_store_names_are_the_account_and_the_common_modules_roles(
+        storage_main: dict[str, object]) -> None:
+    blocks = cast("list[dict[str, Any]]", storage_main.get("locals", []))
+    arns = str(next(
+        block["store_principal_arns"] for block in blocks if "store_principal_arns" in block
+    ))
+    assert (":root" in arns, "module.common.store_principals" in arns) == (True, True)
 
 
 def test_store_bucket_is_declared(storage_main: dict[str, object]) -> None:

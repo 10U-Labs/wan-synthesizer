@@ -33,6 +33,14 @@ resource "aws_s3_bucket_policy" "store" {
         Action    = "s3:*"
         Resource  = [aws_s3_bucket.store.arn, "${aws_s3_bucket.store.arn}/*"]
         Condition = { Bool = { "aws:SecureTransport" = "false" } }
+      },
+      {
+        Sid       = "DenyEveryPrincipalNotNamed"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource  = [aws_s3_bucket.store.arn, "${aws_s3_bucket.store.arn}/*"]
+        Condition = { StringNotLike = { "aws:PrincipalArn" = local.store_principal_arns } }
       }
     ]
   })
@@ -66,6 +74,13 @@ module "common" {
 locals {
   function_name = module.common.lambda_handler_names.prune
   role_name     = "wan-synthesizer-prune-lambda"
+  store_principal_arns = concat(
+    ["arn:aws:iam::${module.common.aws_account_id}:root"],
+    [
+      for role in module.common.store_principals :
+      "arn:aws:iam::${module.common.aws_account_id}:role/${role}"
+    ],
+  )
 }
 
 data "terraform_remote_state" "routing" {
