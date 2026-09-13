@@ -119,6 +119,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_wrapper: false
       - name: Install tools
         run: >-
           pip install assert-pytest-fixture-is-requested boto3 boto3-stubs
