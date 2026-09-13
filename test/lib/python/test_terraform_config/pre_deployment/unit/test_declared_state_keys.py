@@ -18,11 +18,11 @@ def test_each_backend_is_read_under_its_stack_path(tmp_path: Path) -> None:
 
 def test_a_backend_without_a_key_is_not_a_stack(tmp_path: Path) -> None:
     _stack(tmp_path, "keyless", 'terraform {\n  backend "s3" {\n    bucket = "b"\n  }\n}\n')
-    assert declared_state_keys(tmp_path) == {}
+    assert not declared_state_keys(tmp_path)
 
 
 def test_a_tree_without_a_backend_declares_nothing(tmp_path: Path) -> None:
-    assert declared_state_keys(tmp_path) == {}
+    assert not declared_state_keys(tmp_path)
 
 
 def test_the_real_tree_files_every_stack_under_the_repository_prefix() -> None:
