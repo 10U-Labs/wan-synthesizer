@@ -65,3 +65,17 @@ with nothing in the repository able to clear one. The prune now pages
 does appear is gone on the next `seed` run, and a new writer that deletes
 without the version is caught by the fake in `lib/python/test_s3_store_mock`,
 which models the marker.
+
+## The store is encrypted at rest and reached over TLS alone
+
+Since 2026-09-13 (GitHub issue #218, NIST SP 800-171r3 03.13.08 and
+03.13.11) `src/api/common/storage/main.tf` declares SSE-S3 (`AES256`)
+on the store and a bucket policy whose first statement denies `s3:*`
+to every principal when `aws:SecureTransport` is `false`; SSE-KMS was
+rejected because KMS requests are billed. The deploy role's
+`DeclareTheStore` statement carries `PutEncryptionConfiguration`,
+`PutBucketPolicy` and `DeleteBucketPolicy` for it. The storage
+post-deployment tier reads both back and opens a `use_ssl=False`
+client to prove the refusal is live, so a client that speaks plaintext
+to the store is an `AccessDenied`, never a silent success.
+

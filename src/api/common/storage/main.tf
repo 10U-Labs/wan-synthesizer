@@ -10,6 +10,34 @@ resource "aws_s3_bucket_public_access_block" "store" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "store" {
+  bucket = aws_s3_bucket.store.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "store" {
+  bucket = aws_s3_bucket.store.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyInsecureTransport"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource  = [aws_s3_bucket.store.arn, "${aws_s3_bucket.store.arn}/*"]
+        Condition = { Bool = { "aws:SecureTransport" = "false" } }
+      }
+    ]
+  })
+}
+
 resource "aws_s3_bucket_versioning" "store" {
   bucket = aws_s3_bucket.store.id
   versioning_configuration {

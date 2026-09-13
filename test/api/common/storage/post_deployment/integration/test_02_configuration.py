@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Iterator
 from typing import Any
 
+import boto3
 import pytest
+from botocore.exceptions import ClientError
 
 from repo_utils import REPO_ROOT
 from test_terraform_config import lambda_handler_names, load_tf
@@ -17,6 +20,34 @@ _REFERENCE = re.compile(r"\$\{([^{}]*)\}")
 
 def _listings(s3_client: Any, bucket: str) -> list[dict[str, Any]]:
     return list(s3_client.get_paginator("list_object_versions").paginate(Bucket=bucket))
+
+
+def test_the_store_is_encrypted_at_rest_with_sse_s3(
+        s3_client: Any, store_bucket_name: str) -> None:
+    response = s3_client.get_bucket_encryption(Bucket=store_bucket_name)
+    rules = response["ServerSideEncryptionConfiguration"]["Rules"]
+    assert [rule["ApplyServerSideEncryptionByDefault"]["SSEAlgorithm"] for rule in rules] == [
+        "AES256"
+    ]
+
+
+def test_the_store_policy_denies_every_action_over_plaintext(
+        s3_client: Any, store_bucket_name: str) -> None:
+    policy = json.loads(s3_client.get_bucket_policy(Bucket=store_bucket_name)["Policy"])
+    denied = [
+        (statement["Action"], statement["Condition"])
+        for statement in policy["Statement"]
+        if statement["Sid"] == "DenyInsecureTransport"
+    ]
+    assert denied == [("s3:*", {"Bool": {"aws:SecureTransport": "false"}})]
+
+
+def test_a_plaintext_request_to_the_store_is_refused(
+        s3_client: Any, store_bucket_name: str) -> None:
+    plaintext = boto3.client("s3", region_name=s3_client.meta.region_name, use_ssl=False)
+    with pytest.raises(ClientError) as refused:
+        plaintext.list_objects_v2(Bucket=store_bucket_name, MaxKeys=1)
+    assert refused.value.response["Error"]["Code"] == "AccessDenied"
 
 
 def test_versioning_is_suspended(s3_client: Any, store_bucket_name: str) -> None:

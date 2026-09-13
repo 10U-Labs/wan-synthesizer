@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import pytest
@@ -41,6 +42,32 @@ def _rule(storage_main: dict[str, object], rule_id: str) -> dict[str, Any]:
 def _filter_of(rule: dict[str, Any]) -> dict[str, Any]:
     blocks: list[dict[str, Any] | None] = rule.get("filter") or [{}]
     return blocks[0] or {}
+
+
+def _policy_statements(storage_main: dict[str, object]) -> list[dict[str, Any]]:
+    rendered = str(_store(storage_main, "aws_s3_bucket_policy")["policy"])
+    document = json.loads(rendered.removeprefix("${jsonencode(").removesuffix(")}"))
+    statements: list[dict[str, Any]] = document["Statement"]
+    return statements
+
+
+def test_the_store_is_encrypted_at_rest_with_sse_s3(storage_main: dict[str, object]) -> None:
+    encryption = _store(storage_main, "aws_s3_bucket_server_side_encryption_configuration")
+    assert encryption["rule"][0]["apply_server_side_encryption_by_default"][0] == {
+        "sse_algorithm": "AES256"
+    }
+
+
+def test_the_store_refuses_plaintext_transport_before_anything_else(
+        storage_main: dict[str, object]) -> None:
+    assert _policy_statements(storage_main)[0] == {
+        "Sid": "DenyInsecureTransport",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:*",
+        "Resource": ["${aws_s3_bucket.store.arn}", "${aws_s3_bucket.store.arn}/*"],
+        "Condition": {"Bool": {"aws:SecureTransport": "false"}},
+    }
 
 
 def test_store_bucket_is_declared(storage_main: dict[str, object]) -> None:
