@@ -42,6 +42,22 @@ body {
   color: #fff;
 }
 
+#sign-out {
+  flex-shrink: 0;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid #b0bec5;
+  border-radius: 0.2rem;
+  background: transparent;
+  color: #b0bec5;
+  font: inherit;
+  cursor: pointer;
+}
+
+#sign-out:hover {
+  background: #3b4754;
+  color: #fff;
+}
+
 #app {
   height: 100%;
 }

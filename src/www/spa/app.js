@@ -9,11 +9,16 @@ const API_BASE = "https://api.10ulabs.com/wan-synthesizer";
 const GOOGLE_CLIENT_ID = "846587722064-qjou8en4tk96n12ii3rgnpjshnbqovok.apps.googleusercontent.com";
 const HOSTED_DOMAIN = "10ulabs.com";
 const ID_TOKEN_KEY = "wan-synthesizer-id-token";
+const INACTIVITY_LIMIT_MINUTES = 15;
+const ACTIVITY_EVENTS = ["pointerdown", "pointermove", "keydown", "wheel"];
 
 const SIGN_IN_NOTES = {
   first: `Sign in with a ${HOSTED_DOMAIN} account.`,
   401: "Your sign-in has expired. Sign in again.",
   403: `That account is not authorized for the WAN Synthesizer. Sign in with one that is.`,
+  expired: "Your sign-in has expired. Sign in again.",
+  idle: `You were signed out after ${INACTIVITY_LIMIT_MINUTES} minutes without activity. Sign in again.`,
+  out: "You signed out.",
 };
 
 const DEFAULT_MAP_ID = "daf";
@@ -272,22 +277,76 @@ function showSignIn(note) {
   });
 }
 
+let expiryTimer = null;
+let idleTimer = null;
+
+function tokenExpiry(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return Number.isFinite(payload.exp) ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+function stopWatching() {
+  clearTimeout(expiryTimer);
+  clearTimeout(idleTimer);
+}
+
+function touch() {
+  if (idToken === null) {
+    return;
+  }
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => endSession(SIGN_IN_NOTES.idle), INACTIVITY_LIMIT_MINUTES * 60 * 1000);
+}
+
+function watchSession() {
+  stopWatching();
+  const expiry = tokenExpiry(idToken);
+  if (expiry === null) {
+    endSession(SIGN_IN_NOTES[401]);
+    return;
+  }
+  expiryTimer = setTimeout(() => endSession(SIGN_IN_NOTES.expired), Math.max(0, expiry - Date.now()));
+  touch();
+}
+
+function openSession() {
+  watchSession();
+  if (idToken === null) {
+    return Promise.resolve();
+  }
+  showApp();
+  return start();
+}
+
 function onSignedIn(response) {
   idToken = response.credential;
   storeToken(idToken);
-  showApp();
-  start().catch((error) => {
+  openSession().catch((error) => {
     console.error(error);
   });
 }
 
-function turnedAway(status) {
+function endSession(note) {
   if (idToken === null) {
     return;
   }
   idToken = null;
   storeToken(null);
-  showSignIn(SIGN_IN_NOTES[status]);
+  stopWatching();
+  showSignIn(note);
+}
+
+function turnedAway(status) {
+  endSession(SIGN_IN_NOTES[status]);
+}
+
+function signOut() {
+  google.accounts.id.disableAutoSelect();
+  endSession(SIGN_IN_NOTES.out);
 }
 
 async function getJSON(path) {
@@ -378,9 +437,12 @@ async function start() {
 }
 
 function init() {
+  document.getElementById("sign-out").addEventListener("click", signOut);
+  for (const type of ACTIVITY_EVENTS) {
+    document.addEventListener(type, touch, { passive: true });
+  }
   if (idToken) {
-    showApp();
-    return start();
+    return openSession();
   }
   showSignIn(SIGN_IN_NOTES.first);
   return Promise.resolve();

@@ -68,3 +68,19 @@ accepts them.
 rate; `seed.py` writes sequentially and `wait-for-every-wan` polls one
 tenant every twenty seconds. A load test against the live API is a
 change to those two numbers first.
+
+## A session ends on sign-out, at the token's expiry, or after fifteen idle minutes
+
+Since 2026-09-13 (GitHub issue #201) `app.js` ends a session through one
+function, `endSession(note)`, which drops the token, stops both timers
+and shows the sign-in card with the note. Four paths reach it: a `401`
+or `403` from the API (`turnedAway`), the `Sign out` control
+(`signOut`, which also calls `google.accounts.id.disableAutoSelect()`),
+a timer set to the `exp` decoded from the ID token's payload
+(`watchSession`; a token whose `exp` cannot be read ends the session at
+once), and an inactivity timer of `INACTIVITY_LIMIT_MINUTES` (15, NIST
+SP 800-171r3 03.01.11 and 03.13.09) restarted by every event in
+`ACTIVITY_EVENTS`. `test/www/spa/pre_deployment/unit/test_session.py`
+holds each path by reading the source, since nothing runs the SPA in
+CI; a new way to end a session goes through `endSession` and is added
+there.
