@@ -133,4 +133,18 @@ is declared there, not in a `<meta>` tag, which cannot set HSTS.
 `test/www/spa/post_deployment/e2e/test_headers.py` reads them off the
 served SPA in `www_spa.yml`'s `post-deployment-e2e-tests`, which runs
 after `deploy`, so a change there that drops one is red here on the
-next SPA push.
+next SPA push. The page's own `Content-Security-Policy` is a `<meta>`
+in `index.html` (GitHub issue #222, 2026-09-13): `default-src 'none'`,
+scripts from `'self'` and `https://accounts.google.com`, connections to
+`'self'`, `https://api.10ulabs.com` and `https://accounts.google.com`,
+frames from `https://accounts.google.com`, styles from `'self'`,
+`https://fonts.googleapis.com` and `https://accounts.google.com`, fonts
+from `https://fonts.gstatic.com`, images from `'self'` and `data:`, and
+`base-uri` and `form-action` `'none'`; Google's `gsi/client` carries no
+stable hash, so it is admitted by origin. `test_content_security_policy.py`
+holds each directive to exactly those sources and every script,
+stylesheet and the API base the page names to being admitted, and the
+e2e tier holds the served page to the tree's byte for byte, which the
+deploy's `aws cloudfront wait invalidation-completed` makes sound. A
+new origin the page needs is added to the directive, the test's
+`POLICY`, and the CORS places above where it is a fetch.

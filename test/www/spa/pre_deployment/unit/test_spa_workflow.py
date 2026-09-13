@@ -25,3 +25,10 @@ def test_the_e2e_job_runs_the_spas_post_deployment_e2e_tier() -> None:
         step for step in _job(E2E)["steps"]
         if "test/www/spa/post_deployment/e2e/" in str(step.get("run", ""))
     ] != []
+
+
+def test_the_deploy_waits_for_its_invalidation_before_the_e2e_tier_reads_the_page() -> None:
+    assert [
+        step for step in _job("deploy")["steps"]
+        if "aws cloudfront wait invalidation-completed" in str(step.get("run", ""))
+    ] != []

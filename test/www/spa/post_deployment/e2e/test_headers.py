@@ -5,7 +5,10 @@ from urllib.request import urlopen
 
 import pytest
 
+from repo_utils import REPO_ROOT
+
 SITE = "10ulabs.com"
+INDEX = REPO_ROOT / "src" / "www" / "spa" / "index.html"
 SPA_PATH = "/wan-synthesizer/"
 ONE_YEAR_SECONDS = 31536000
 
@@ -14,6 +17,12 @@ ONE_YEAR_SECONDS = 31536000
 def served_fixture() -> dict[str, str]:
     with urlopen(f"https://{SITE}{SPA_PATH}", timeout=30) as response:
         return {key.lower(): value for key, value in response.getheaders()}
+
+
+@pytest.fixture(name="page", scope="module")
+def page_fixture() -> str:
+    with urlopen(f"https://{SITE}{SPA_PATH}", timeout=30) as response:
+        return str(response.read().decode("utf-8"))
 
 
 @pytest.fixture(name="over_http", scope="module")
@@ -50,3 +59,8 @@ def test_the_spa_sends_its_referrer_to_the_origin_alone_across_sites(
 
 def test_the_spa_denies_framing(served: dict[str, str]) -> None:
     assert served["x-frame-options"] == "DENY"
+
+
+def test_the_page_served_is_the_page_in_the_tree_with_its_content_security_policy(
+        page: str) -> None:
+    assert page == INDEX.read_text(encoding="utf-8")

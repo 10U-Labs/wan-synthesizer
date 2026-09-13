@@ -258,8 +258,12 @@ data "aws_iam_policy_document" "site" {
   }
 
   statement {
-    sid       = "InvalidateTheSiteDistribution"
-    actions   = ["cloudfront:GetDistribution", "cloudfront:CreateInvalidation"]
+    sid = "InvalidateTheSiteDistribution"
+    actions = [
+      "cloudfront:GetDistribution",
+      "cloudfront:CreateInvalidation",
+      "cloudfront:GetInvalidation",
+    ]
     resources = [local.distribution]
   }
 }
