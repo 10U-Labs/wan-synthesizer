@@ -61,7 +61,10 @@ def test_the_store_admits_the_account_and_the_named_roles_alone(
 
 
 def _plaintext_listing(s3_client: Any, store_bucket_name: str) -> str:
-    plaintext = boto3.client("s3", region_name=s3_client.meta.region_name, use_ssl=False)
+    region = s3_client.meta.region_name
+    plaintext = boto3.client(
+        "s3", region_name=region, use_ssl=False, endpoint_url=f"http://s3.{region}.amazonaws.com"
+    )
     try:
         plaintext.list_objects_v2(Bucket=store_bucket_name, MaxKeys=1)
     except ClientError as refused:
