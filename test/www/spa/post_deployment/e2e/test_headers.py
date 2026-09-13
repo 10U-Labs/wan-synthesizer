@@ -19,9 +19,12 @@ def served_fixture() -> dict[str, str]:
 @pytest.fixture(name="over_http", scope="module")
 def over_http_fixture() -> tuple[int, str]:
     connection = HTTPConnection(SITE, timeout=30)
-    connection.request("GET", SPA_PATH)
-    response = connection.getresponse()
-    return response.status, response.getheader("Location", "")
+    try:
+        connection.request("GET", SPA_PATH)
+        response = connection.getresponse()
+        return response.status, response.getheader("Location", "")
+    finally:
+        connection.close()
 
 
 def test_the_spa_is_sent_over_https_alone(over_http: tuple[int, str]) -> None:
