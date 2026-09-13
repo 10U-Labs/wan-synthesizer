@@ -72,8 +72,19 @@ live role to exactly one action.
 while the deploy role can replace every Lambda (NIST SP 800-171r3
 03.01.06, privileged accounts for privileged functions only).
 
-**How to apply:** the deploy role declares the seed role through the
-`DeclareTheSeedRole` statement of its `Roles` policy, and
-`aws_iam_role.seed` `depends_on` that policy so the grant lands before
-the first `CreateRole`; a write the seed newly needs is a defect in the
-API's authorizer, never a grant to add here.
+**How to apply:**
+
+- The deploy role declares the seed role through the
+  `DeclareTheSeedRole` statement of its `Roles` policy, and
+  `aws_iam_role.seed` `depends_on` that policy. IAM still refused the
+  `CreateRole` the same apply issued a second after the grant landed
+  (run 34735362074), so a new grant a stack uses in the apply that
+  writes it is a red reconciliation followed by a green one, never a
+  reason to widen anything.
+- A write the seed newly needs is a defect in the API's authorizer,
+  never a grant to add here.
+- The check that every state object in the bucket is a stack still in
+  the tree reads live S3, so it is the identity stack's post-deployment
+  `test_04_state_objects.py`, under the deploy role; the shared modules'
+  own tests touch nothing live, which is what lets the seed's
+  `test-repo-libraries` run with no role.

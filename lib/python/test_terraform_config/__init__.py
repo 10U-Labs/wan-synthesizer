@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import cast
 
@@ -12,6 +13,9 @@ STORAGE_MAIN_FILE: Path = REPO_ROOT / "src" / "api" / "common" / "storage" / "ma
 ROUTING_AUTHORIZER_FILE: Path = (
     REPO_ROOT / "src" / "api" / "common" / "routing" / "authorizer.tf"
 )
+STACKS_DIR: Path = REPO_ROOT / "src" / "api"
+STATE_KEY_PREFIX = "wan-synthesizer/"
+STATE_KEY_LINE = re.compile(r'^\s*key\s*=\s*"([^"]+)"', re.M)
 
 
 def load_tf(path: Path) -> dict[str, object]:
@@ -76,6 +80,15 @@ def api_key_parameter_name() -> str:
     if parameter is None:
         raise AssertionError("aws_ssm_parameter.api_key is not declared in the routing stack")
     return str(parameter["name"])
+
+
+def declared_state_keys(stacks: Path = STACKS_DIR) -> dict[str, str]:
+    keys = {}
+    for backend in sorted(stacks.rglob("backend.tf")):
+        match = STATE_KEY_LINE.search(backend.read_text(encoding="utf-8"))
+        if match is not None:
+            keys[str(backend.parent.relative_to(stacks))] = match.group(1)
+    return keys
 
 
 def _string_output(name: str, fallback: str) -> str:
