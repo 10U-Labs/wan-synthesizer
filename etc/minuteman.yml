@@ -9,7 +9,7 @@ backbone:
       - Great Falls, MT
       - Minot, ND
       - Salt Lake City, UT
-  number_of_diverse_circuits: 2
+  number_of_diverse_circuits: 3
   prohibited:
     circuits: []
     wan_pops: []
