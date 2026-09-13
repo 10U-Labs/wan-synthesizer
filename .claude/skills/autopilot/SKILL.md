@@ -1,19 +1,19 @@
 ---
 name: autopilot
-description: Start or stop the standing reminders that keep an autonomous issue-solving session on the rails. Use when the user says "start autopilot", "go autonomous on the open issues", "stop autopilot", or asks to clear the reminders. Takes "start" or "stop".
+description: Start or stop the standing reminders that keep an autonomous issue-solving session on the rails. Use when the user says "start autopilot", "go autonomous on the open issues", "stop autopilot", or asks to clear the reminders. Takes "start" or "stop"; "start" also takes `--skip-label <label>`, repeatable, naming a label whose issues the session leaves alone.
 ---
 
 # Autopilot
 
 Six recurring reminders, one per standing rule, that fire back into this session while it works through open issues on its own. Each rule gets its own reminder so that no rule can be quietly dropped from a merged block of text, and the fire times are staggered across the ten-minute period so they arrive one at a time.
 
-The argument is the sub-command: `start` or `stop`.
+The argument is the sub-command: `start` or `stop`. `start` may be followed by `--skip-label <label>`, once per label, naming an issue label the session must not work on — `start --skip-label "needs decision"` leaves every issue carrying `needs decision` to a human. A label with a space in it is quoted.
 
 `CronCreate`, `CronList` and `CronDelete` are deferred tools: a call made before the schema is fetched fails with `InputValidationError` and creates nothing. Fetch them first with `ToolSearch`, query `select:CronCreate,CronList,CronDelete`.
 
 ## Start
 
-Create six jobs with `CronCreate`, exactly as listed below. Use `recurring: true` (the default), and take all six prompts verbatim:
+Create six jobs with `CronCreate`, exactly as listed below. Use `recurring: true` (the default), and take all six prompts verbatim, except that when `--skip-label` was given the first prompt ends with one extra sentence per label: ` Skip every issue labelled "<label>".`
 
 | Offset | Cron | Prompt |
 | --- | --- | --- |
@@ -26,7 +26,7 @@ Create six jobs with `CronCreate`, exactly as listed below. Use `recurring: true
 
 Then tell the user that six reminders are running, and the two limits that come with them: the jobs live in this session only and are gone when it ends, and recurring jobs auto-expire after seven days.
 
-Then start working, in the same turn that created the jobs. Every open issue in the repository the session is running in is in scope, and so is any issue reached by following a `blocked_by` edge out of that set, whatever repository it lives in. Read the open issues with `gh issue list`, then read `gh api repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by` for each of them and for each issue those entries reach, until nothing new comes back. Take the lowest-numbered issue in the set that no open issue blocks, preferring the repository the session is running in when two are equally unblocked, and solve it — committing in whichever repository its `Proposed Solution` names, and reading that repository's CI to confirm it.
+Then start working, in the same turn that created the jobs. Every open issue in the repository the session is running in is in scope, and so is any issue reached by following a `blocked_by` edge out of that set, whatever repository it lives in. Read the open issues with `gh issue list`, then read `gh api repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by` for each of them and for each issue those entries reach, until nothing new comes back. Drop from consideration every issue carrying a label named by `--skip-label`; it still blocks whatever depends on it, so an issue behind it stays out of reach too. Take the lowest-numbered remaining issue in the set that no open issue blocks, preferring the repository the session is running in when two are equally unblocked, and solve it — committing in whichever repository its `Proposed Solution` names, and reading that repository's CI to confirm it. When nothing remains, every open issue being skipped or blocked, say which label or issue holds each one back and stop rather than starting on one anyway.
 
 `.claude/memories/` in this repository is the rulebook wherever the session is working, including in another repository the traversal reaches.
 
