@@ -78,4 +78,3 @@ rejected because KMS requests are billed. The deploy role's
 post-deployment tier reads both back and opens a `use_ssl=False`
 client to prove the refusal is live, so a client that speaks plaintext
 to the store is an `AccessDenied`, never a silent success.
-
