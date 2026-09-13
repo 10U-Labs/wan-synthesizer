@@ -44,6 +44,28 @@ def test_deployment_is_declared(routing_main: dict[str, object]) -> None:
     assert find_resource(routing_main, "aws_api_gateway_deployment", "prod") is not None
 
 
+def _throttle(routing_main: dict[str, object]) -> dict[str, Any]:
+    return _resource(routing_main, "aws_api_gateway_method_settings", "throttle")
+
+
+def test_the_throttle_is_held_on_the_prod_stage(routing_main: dict[str, object]) -> None:
+    throttle = _throttle(routing_main)
+    assert (throttle["rest_api_id"], throttle["stage_name"]) == (
+        "${aws_api_gateway_rest_api.api.id}", "${aws_api_gateway_stage.prod.stage_name}")
+
+
+def test_the_throttle_covers_every_method_of_every_route(routing_main: dict[str, object]) -> None:
+    assert _throttle(routing_main)["method_path"] == "*/*"
+
+
+def test_the_throttle_admits_twenty_requests_a_second(routing_main: dict[str, object]) -> None:
+    assert _throttle(routing_main)["settings"][0]["throttling_rate_limit"] == 20
+
+
+def test_the_throttle_admits_a_burst_of_forty(routing_main: dict[str, object]) -> None:
+    assert _throttle(routing_main)["settings"][0]["throttling_burst_limit"] == 40
+
+
 def test_common_module_is_sourced(routing_main: dict[str, object]) -> None:
     common = next(m["common"] for m in _modules(routing_main) if "common" in m)
     assert common["source"] == "../../../../lib/opentofu/common"

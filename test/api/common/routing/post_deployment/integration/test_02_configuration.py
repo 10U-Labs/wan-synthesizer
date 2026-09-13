@@ -13,6 +13,24 @@ def test_prod_stage_exists(apigateway_client: Any, api_id: str) -> None:
     assert stage["stageName"] == "prod"
 
 
+def _live_throttle(apigateway_client: Any, api_id: str) -> dict[str, Any]:
+    stage = apigateway_client.get_stage(restApiId=api_id, stageName="prod")
+    return {
+        path: (settings["throttlingRateLimit"], settings["throttlingBurstLimit"])
+        for path, settings in stage["methodSettings"].items()
+    }
+
+
+def test_the_live_stage_throttles_every_method_of_every_route_and_nothing_narrower(
+        apigateway_client: Any, api_id: str) -> None:
+    assert list(_live_throttle(apigateway_client, api_id)) == ["*/*"]
+
+
+def test_the_live_stage_admits_twenty_a_second_and_a_burst_of_forty(
+        apigateway_client: Any, api_id: str) -> None:
+    assert _live_throttle(apigateway_client, api_id)["*/*"] == (20.0, 40)
+
+
 def test_the_live_authorizer_reads_the_whole_authorization_header(
         live_authorizer: dict[str, Any]) -> None:
     assert (live_authorizer["type"], live_authorizer["identitySource"]) == (

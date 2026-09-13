@@ -52,3 +52,19 @@ A fetch carrying `Authorization` is preflighted, so every route `app.js` fetches
 ### Nothing here is a Cognito pool or a Lambda layer
 
 A Cognito user pool federated to Google was the alternative, and was not taken: it would need a Google client secret kept somewhere, a hosted UI, and a trigger to restrict the domain, for one hosted domain. Verifying the JWT locally would need `cryptography` shipped as a layer per [third-party-code-ships-as-a-layer](third-party-code-ships-as-a-layer.md); the tokeninfo call keeps the authorizer on the standard library and boto3.
+
+## The stage admits twenty requests a second and a burst of forty
+
+Since 2026-09-13 (GitHub issue #199) `aws_api_gateway_method_settings.throttle`
+in the routing stack holds `*/*` of the `prod` stage to
+`throttling_rate_limit = 20` and `throttling_burst_limit = 40`; a caller
+past that gets `429` until the bucket refills. That is the limit on
+unsuccessful logon attempts NIST SP 800-171r3 03.01.08 asks for, since
+a refused token is re-evaluated on every request and the account default
+of 10,000 a second would let a caller try tokens as fast as the gateway
+accepts them.
+
+**How to apply:** anything in CI that talks to the API stays under that
+rate; `seed.py` writes sequentially and `wait-for-every-wan` polls one
+tenant every twenty seconds. A load test against the live API is a
+change to those two numbers first.
