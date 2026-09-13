@@ -210,6 +210,7 @@ jobs:
       - name: Initialize the stack for state inspection
         run: tofu -chdir=src/api/common/routing init -input=false
       - env:
+          TF_VAR_api_key_rotation: ${{ vars.WAN_SYNTHESIZER_API_KEY_ROTATION }}
           TF_VAR_authorized_accounts: ${{ vars.WAN_SYNTHESIZER_AUTHORIZED_ACCOUNTS }}
         name: Run pre-deployment integration tests
         run: >-
@@ -288,6 +289,7 @@ jobs:
         with:
           tofu_wrapper: false
       - env:
+          TF_VAR_api_key_rotation: ${{ vars.WAN_SYNTHESIZER_API_KEY_ROTATION }}
           TF_VAR_authorized_accounts: ${{ vars.WAN_SYNTHESIZER_AUTHORIZED_ACCOUNTS }}
         name: Reconcile the stack to its declared state
         run: |
@@ -392,4 +394,6 @@ on:
       - test/api/common/routing/**
       - test/lib/python/**
       - .github/workflows/api_common_routing.yml
+  schedule:
+    - cron: 37 4 * * 1
   workflow_dispatch: {}

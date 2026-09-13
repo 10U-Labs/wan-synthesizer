@@ -136,6 +136,12 @@ def test_the_api_key_is_long_enough_to_be_unguessable(
     assert int(generated["length"]) >= 32
 
 
+def test_the_api_key_is_regenerated_when_the_rotation_date_changes(
+        routing_authorizer: dict[str, object]) -> None:
+    generated = _resource(routing_authorizer, "random_password", "api_key")
+    assert generated["keepers"] == {"rotation": "${var.api_key_rotation}"}
+
+
 def test_the_gateway_may_invoke_the_authorizer(routing_authorizer: dict[str, object]) -> None:
     permission = _resource(routing_authorizer, "aws_lambda_permission", "api_gateway")
     assert permission["principal"] == "apigateway.amazonaws.com"
@@ -198,14 +204,26 @@ def test_every_passed_account_is_held_to_the_hosted_domain(
     assert 'endswith(trimspace(account), "@10ulabs.com")' in condition
 
 
-def test_the_authorized_accounts_are_the_only_variable(
+def test_the_deploy_must_pass_the_rotation_date_as_one_string(
+        routing_authorizer: dict[str, object]) -> None:
+    variable = _variable(routing_authorizer, "api_key_rotation")
+    assert (variable["type"], "default" in variable) == ("string", False)
+
+
+def test_the_rotation_date_is_held_to_a_calendar_date(
+        routing_authorizer: dict[str, object]) -> None:
+    condition = _variable(routing_authorizer, "api_key_rotation")["validation"][0]["condition"]
+    assert 'regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", var.api_key_rotation)' in condition
+
+
+def test_the_accounts_and_the_rotation_date_are_the_only_variables(
         routing_authorizer: dict[str, object]) -> None:
     declared = [
         name
         for block in cast("list[dict[str, Any]]", routing_authorizer.get("variable", []))
         for name in block
     ]
-    assert declared == ["authorized_accounts"]
+    assert declared == ["authorized_accounts", "api_key_rotation"]
 
 
 def test_the_authorizer_is_handed_the_list_the_stack_declares(

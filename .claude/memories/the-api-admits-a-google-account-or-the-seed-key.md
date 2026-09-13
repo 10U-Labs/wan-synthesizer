@@ -20,6 +20,9 @@ metadata:
   - [The key is granted every read and the writes the seed makes](#the-key-is-granted-every-read-and-the-writes-the-seed-makes)
   - [A route the map fetches answers a preflight](#a-route-the-map-fetches-answers-a-preflight)
   - [Nothing here is a Cognito pool or a Lambda layer](#nothing-here-is-a-cognito-pool-or-a-lambda-layer)
+- [The stage admits twenty requests a second and a burst of forty](#the-stage-admits-twenty-requests-a-second-and-a-burst-of-forty)
+- [A session ends on sign-out, at the token's expiry, or after fifteen idle minutes](#a-session-ends-on-sign-out-at-the-tokens-expiry-or-after-fifteen-idle-minutes)
+- [The key is rotated by a date the deploy passes and measured weekly](#the-key-is-rotated-by-a-date-the-deploy-passes-and-measured-weekly)
 
 ## Overview
 
@@ -84,3 +87,26 @@ SP 800-171r3 03.01.11 and 03.13.09) restarted by every event in
 holds each path by reading the source, since nothing runs the SPA in
 CI; a new way to end a session goes through `endSession` and is added
 there.
+
+## The key is rotated by a date the deploy passes and measured weekly
+
+Since 2026-09-13 (GitHub issue #211) `random_password.api_key` carries
+`keepers = { rotation = var.api_key_rotation }`, and the routing deploy
+passes `TF_VAR_api_key_rotation` from the repository variable
+`WAN_SYNTHESIZER_API_KEY_ROTATION`, a `YYYY-MM-DD` date the variable's
+validation holds it to. A new date is a new key on the next apply, the
+SecureString parameter is overwritten with it, and nothing else moves:
+the authorizer reads the parameter on every verdict and `seed.yml` reads
+it at run time, so no consumer is told. The cadence NIST SP 800-171r3
+03.05.07 and 03.05.12 ask for is 180 days, and at once on suspected
+compromise; `test_the_api_key_was_rotated_within_the_cadence` in the
+routing post-deployment tests reads the parameter's `LastModifiedDate`
+and fails when it is older than `API_KEY_ROTATION_CADENCE`. A stale key
+is broken by no push, so `api_common_routing.yml` also runs on the
+schedule `37 4 * * 1`, the first scheduled workflow here; the review
+workflow the issue named for the check was deleted before it existed.
+
+**How to apply:** rotating is `gh variable set
+WAN_SYNTHESIZER_API_KEY_ROTATION --body <today>` followed by a routing
+deploy, on or before the 180th day; a run of the routing workflow red on
+that one test is the clock having run out, not a defect in the stack.

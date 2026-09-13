@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from typing import Any
+
+API_KEY_ROTATION_CADENCE = timedelta(days=180)
 
 
 def test_endpoint_is_regional(apigateway_client: Any, api_id: str) -> None:
@@ -70,3 +73,9 @@ def test_every_authorized_account_is_on_the_hosted_domain(
 
 def test_no_authorized_account_is_listed_twice(authorized_accounts: list[str]) -> None:
     assert sorted(set(authorized_accounts)) == sorted(authorized_accounts)
+
+
+def test_the_api_key_was_rotated_within_the_cadence(
+        ssm_client: Any, api_key_parameter_name: str) -> None:
+    response = ssm_client.get_parameter(Name=api_key_parameter_name, WithDecryption=True)
+    assert datetime.now(UTC) - response["Parameter"]["LastModifiedDate"] <= API_KEY_ROTATION_CADENCE

@@ -18,9 +18,23 @@ resource "aws_ssm_parameter" "authorized_accounts" {
   value = var.authorized_accounts
 }
 
+variable "api_key_rotation" {
+  description = "The date the API key was last rotated, as the deploy passes it from the repository variable WAN_SYNTHESIZER_API_KEY_ROTATION; a new date regenerates the key. Rotate every 180 days, and at once on suspected compromise."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", var.api_key_rotation))
+    error_message = "The rotation date is a calendar date, YYYY-MM-DD."
+  }
+}
+
 resource "random_password" "api_key" {
   length  = 48
   special = false
+
+  keepers = {
+    rotation = var.api_key_rotation
+  }
 }
 
 resource "aws_ssm_parameter" "api_key" {
