@@ -9,6 +9,9 @@ _SITE = "a"
 _ONE_PEER = frozenset({"b"})
 _TWO_PEERS = frozenset({"b", "c"})
 _NOTHING_SPARED: frozenset[str] = frozenset()
+_NOTHING_BARRED: frozenset[tuple[str, str]] = frozenset()
+_ARRIVING_AT_THE_PEER = frozenset({("a", "b")})
+_ARRIVING_AT_THE_SITE = frozenset({("b", "a")})
 
 _NOTHING_TO_SELECT = Separation(frozenset(), frozenset())
 _ONLY_THE_SEGMENT = Separation(frozenset(), frozenset({("a", "b")}))
@@ -24,8 +27,11 @@ def _asked(
     required: int,
     peers: frozenset[str] = _ONE_PEER,
     spared: frozenset[str] = _NOTHING_SPARED,
+    barred: frozenset[tuple[str, str]] = _NOTHING_BARRED,
 ) -> Separation | None:
-    return weakest_separation(SeparationQuestion(_SITE, peers, spared, held), required)
+    return weakest_separation(
+        SeparationQuestion(_SITE, peers, spared, held, barred), required
+    )
 
 
 _DIRECT = _whole(("a", "b"))
@@ -84,3 +90,11 @@ def test_a_circuit_ending_at_a_peer_and_one_crossing_it_carry_one_way_out() -> N
     assert _asked(_whole(("a", "p"), ("p", "b"), ("b", "c")), 2, peers=_TWO_PEERS) == Separation(
         frozenset(), frozenset({("a", "p")})
     )
+
+
+def test_an_arc_the_question_bars_carries_nothing_and_is_no_segment_to_select() -> None:
+    assert _asked(_DIRECT, 1, barred=_ARRIVING_AT_THE_PEER) == _NOTHING_TO_SELECT
+
+
+def test_barring_the_arc_the_other_way_leaves_the_circuit_carried() -> None:
+    assert _asked(_DIRECT, 1, barred=_ARRIVING_AT_THE_SITE) is None

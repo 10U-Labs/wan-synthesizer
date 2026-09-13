@@ -21,6 +21,7 @@ class SeparationQuestion:
     peers: frozenset[str]
     spared: frozenset[str]
     held: Mapping[tuple[str, str], float]
+    barred: frozenset[tuple[str, str]] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,10 @@ def _add_arc(residual: _Residual, tail: _Half, head: _Half, capacity: float) -> 
     residual.setdefault(head, {}).setdefault(tail, 0.0)
 
 
+def _admits(question: SeparationQuestion, tail: str, head: str) -> bool:
+    return (tail, head) not in question.barred
+
+
 def _residual_network(question: SeparationQuestion) -> _Residual:
     spared = question.spared | {question.site}
     residual: _Residual = {}
@@ -46,8 +51,10 @@ def _residual_network(question: SeparationQuestion) -> _Residual:
     for city in sorted(cities - spared):
         _add_arc(residual, ("in", city), ("out", city), 1.0)
     for (left, right), share in question.held.items():
-        _add_arc(residual, ("out", left), _half(right, "in", spared), share)
-        _add_arc(residual, ("out", right), _half(left, "in", spared), share)
+        if _admits(question, left, right):
+            _add_arc(residual, ("out", left), _half(right, "in", spared), share)
+        if _admits(question, right, left):
+            _add_arc(residual, ("out", right), _half(left, "in", spared), share)
     for peer in sorted(question.peers & cities):
         _add_arc(residual, _half(peer, "in", spared), _SINK, math.inf)
     return residual
@@ -79,6 +86,19 @@ def _send(residual: _Residual, reached: dict[_Half, _Half], source: _Half) -> fl
     return carried
 
 
+def _crossed(
+    question: SeparationQuestion,
+    near: set[str],
+    lost: frozenset[str],
+    segment: tuple[str, str],
+) -> bool:
+    left, right = segment
+    if left in lost or right in lost or (left in near) == (right in near):
+        return False
+    tail, head = segment if left in near else (right, left)
+    return _admits(question, tail, head)
+
+
 def _read_separation(question: SeparationQuestion, reached: dict[_Half, _Half]) -> Separation:
     spared = question.spared | {question.site}
     lost = frozenset(
@@ -90,7 +110,7 @@ def _read_separation(question: SeparationQuestion, reached: dict[_Half, _Half]) 
     crossing = frozenset(
         segment_key(left, right)
         for left, right in question.held
-        if (left in near) != (right in near) and left not in lost and right not in lost
+        if _crossed(question, near, lost, (left, right))
     )
     return Separation(lost, crossing)
 

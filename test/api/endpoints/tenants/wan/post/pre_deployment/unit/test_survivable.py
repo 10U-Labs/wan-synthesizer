@@ -15,6 +15,7 @@ from synthesizer.survivable import (
     _held,
     _shortfalls,
     _diverse_circuits_out_of,
+    _two_circuits_sharing_no_pop,
     _writing,
     select_fiber,
 )
@@ -137,7 +138,7 @@ def test_the_floor_states_both_circuits_to_a_wan_pops_only_reachable_peer() -> N
 
 
 _ASKED_TWO_OVER_ONE = _Requirement(
-    "a", frozenset({"b"}), frozenset({"a"}), _DIVERSE_CIRCUITS, frozenset({("a", "b")})
+    "a", frozenset({"b"}), frozenset({"a"}), _DIVERSE_CIRCUITS, frozenset()
 )
 
 
@@ -156,6 +157,53 @@ _UNDER_WATER_ONLY_SELECTION = _selected(_UNDER_WATER_ONLY, ("a", "b"))
 
 def test_submarine_fiber_is_selected_where_a_peer_is_reachable_no_other_way() -> None:
     assert _UNDER_WATER_ONLY_SELECTION.segments == frozenset(_UNDER_WATER_ONLY)
+
+
+_TWO_SHORES = fixtures.fiber_segments_under_water(
+    {
+        ("a", "b"): 10.0, ("a", "x"): 50.0, ("x", "b"): 50.0,
+        ("a", "c"): 1000.0, ("b", "c"): 1000.0,
+    },
+    {("a", "c"), ("b", "c")},
+)
+_TWO_SHORE_SITES = ("a", "b", "c")
+_TWO_SHORE_INPUTS = _asking(_TWO_SHORES, _TWO_SHORE_SITES)
+_TWO_SHORE_WRITING = _writing(_TWO_SHORE_INPUTS, _whole(_TWO_SHORE_INPUTS))
+_TWO_SHORE_SELECTION = _selected(_TWO_SHORES, _TWO_SHORE_SITES)
+_THE_SECOND_WAY_OVER_LAND = frozenset({("a", "x"), ("b", "x")})
+_ARRIVING_ON_THE_NEAR_SHORE = frozenset({("c", "a"), ("c", "b")})
+_ONE_SHORE = fixtures.fiber_segments_under_water(
+    {**_RING_PAIRS, ("a", "c"): 10.0}, {("a", "c")}
+)
+_ONE_SHORE_INPUTS = _asking(_ONE_SHORE, _RING_SITES)
+_ONE_SHORE_WRITING = _writing(_ONE_SHORE_INPUTS, _whole(_ONE_SHORE_INPUTS))
+_ARRIVING_ON_THE_ONLY_SHORE = frozenset({("a", "c"), ("c", "a")})
+
+
+def test_a_pops_own_circuits_admit_no_crossing_arriving_on_its_shore() -> None:
+    assert _diverse_circuits_out_of("a", _TWO_SHORE_WRITING)[0].barred == (
+        _ARRIVING_ON_THE_NEAR_SHORE
+    )
+
+
+def test_a_pair_on_a_wan_spanning_two_shores_is_joined_over_any_fiber() -> None:
+    assert _two_circuits_sharing_no_pop(_TWO_SHORE_WRITING)[0].barred == frozenset()
+
+
+def test_a_pair_on_a_wan_held_to_one_shore_is_joined_over_land_alone() -> None:
+    assert _two_circuits_sharing_no_pop(_ONE_SHORE_WRITING)[0].barred == (
+        _ARRIVING_ON_THE_ONLY_SHORE
+    )
+
+
+def test_a_pair_on_one_shore_is_joined_the_long_way_round_through_a_pop_across_the_water(
+) -> None:
+    assert not _TWO_SHORE_SELECTION.segments & _THE_SECOND_WAY_OVER_LAND
+
+
+def test_the_floor_states_a_circuit_over_land_and_a_crossing_for_a_pop_with_a_peer_on_each_shore(
+) -> None:
+    assert _TWO_SHORE_SELECTION.lower_bound_miles == pytest.approx(2010.0)
 
 
 _TWIN_CIRCUITS = physical({

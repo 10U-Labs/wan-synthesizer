@@ -35,7 +35,7 @@ class _Requirement:
     peers: frozenset[str]
     spared: frozenset[str]
     required: int
-    over: frozenset[tuple[str, str]]
+    barred: frozenset[tuple[str, str]]
 
 
 @dataclass(frozen=True)
@@ -43,8 +43,8 @@ class _Writing:
     inputs: FiberInputs
     fiber: Mapping[tuple[str, str], float]
     whole: Mapping[tuple[str, str], float]
-    land: frozenset[tuple[str, str]]
-    land_reach: Mapping[str, frozenset[str]]
+    crossings: frozenset[tuple[str, str]]
+    shores: Mapping[str, frozenset[str]]
 
 
 @dataclass
@@ -63,7 +63,8 @@ def _question(
         requirement.site,
         requirement.peers,
         requirement.spared,
-        {segment: share for segment, share in held.items() if segment in requirement.over},
+        held,
+        requirement.barred,
     )
 
 
@@ -81,15 +82,17 @@ def _lowered(
     return [row for row in carried if row.required]
 
 
-def _over_land(
-    site: str,
-    peers: frozenset[str],
-    over: frozenset[tuple[str, str]],
-    writing: _Writing,
-) -> frozenset[tuple[str, str]]:
-    if peers & writing.land_reach.get(site, frozenset()):
-        return over & writing.land
-    return over
+def _shore_of(site: str, writing: _Writing) -> frozenset[str]:
+    return writing.shores.get(site, frozenset({site}))
+
+
+def _arriving_on(shore: frozenset[str], writing: _Writing) -> frozenset[tuple[str, str]]:
+    return frozenset(
+        (away, home)
+        for left, right in writing.crossings
+        for away, home in ((left, right), (right, left))
+        if home in shore
+    )
 
 
 def _diverse_circuits_out_of(site: str, writing: _Writing) -> list[_Requirement]:
@@ -101,11 +104,18 @@ def _diverse_circuits_out_of(site: str, writing: _Writing) -> list[_Requirement]
                 peers,
                 frozenset({site}),
                 max(writing.inputs.number_of_diverse_circuits, CIRCUITS_SHARING_NO_POP),
-                _over_land(site, peers, frozenset(writing.fiber), writing),
+                _arriving_on(_shore_of(site, writing), writing),
             )
         ],
         writing.whole,
     )
+
+
+def _barred_between(near: str, writing: _Writing) -> frozenset[tuple[str, str]]:
+    shore = _shore_of(near, writing)
+    if shore.issuperset(writing.inputs.wan_pop_ids):
+        return _arriving_on(shore, writing)
+    return frozenset()
 
 
 def _two_circuits_sharing_no_pop(writing: _Writing) -> list[_Requirement]:
@@ -115,7 +125,7 @@ def _two_circuits_sharing_no_pop(writing: _Writing) -> list[_Requirement]:
             frozenset({far}),
             frozenset({near, far}),
             CIRCUITS_SHARING_NO_POP,
-            _over_land(near, frozenset({far}), frozenset(writing.fiber), writing),
+            _barred_between(near, writing),
         )
         for near, far in combinations(sorted(writing.inputs.wan_pop_ids), 2)
     ]
@@ -128,13 +138,12 @@ def _writing(inputs: FiberInputs, fiber: Mapping[tuple[str, str], float]) -> _Wr
         for key, segment in inputs.fiber_segments.items()
         if not segment.submarine
     }
-    terrestrial = build_adjacency(on_land)
     return _Writing(
         inputs,
         fiber,
         {segment: 1.0 for segment in fiber},
-        frozenset(segment for segment in fiber if segment in on_land),
-        reachable_over(terrestrial),
+        frozenset(segment for segment in fiber if segment not in on_land),
+        reachable_over(build_adjacency(on_land)),
     )
 
 

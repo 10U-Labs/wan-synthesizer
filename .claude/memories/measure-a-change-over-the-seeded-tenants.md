@@ -56,6 +56,17 @@ Orleans, LA) and minuteman 4,712.437. Run
 deployed API to the thousandth and is green on every tier; the seed run a
 synthesizer push starts itself grades the WANs the previous Lambda built, per
 [seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md).
+After 7c3ce2b pinned DAF at RAF Molesworth and Stuttgart, and e123e73 asked
+Minuteman for three circuits, main measured two-pop 3,884.265 against
+3,884.265, daf 13,590.076 against 13,598.940, dow 5,120.509 against 5,120.509,
+f-35 5,537.800 against 5,537.800 and minuteman 8,186.726 against 8,142.329;
+DAF under its floor was GitHub issue #238, and the commit closing it, which
+states every floor row over the arcs a circuit may run per
+[the-over-water-rule-holds-one-hop-at-a-time](the-over-water-rule-holds-one-hop-at-a-time.md),
+moves DAF alone, to 13,565.420 against 13,565.420 on a nine-PoP ring that
+crosses the Atlantic at Manchester to New York and Paris to Ashburn.
+`test_seeded_floor.py` under `test/api/endpoints/tenants/wan/post/pre_deployment/integration/`
+runs this measurement over DAF in CI and holds the miles to the floor.
 The e2e helpers in `test_delivered_syntheses.py` (`_overstated_ceilings`,
 `_credited_past_the_ceiling`, `_pairs_joined_over_land_drawn_under_water`,
 `_circuits_over_fiber_nobody_owns`) take a dict shaped like
