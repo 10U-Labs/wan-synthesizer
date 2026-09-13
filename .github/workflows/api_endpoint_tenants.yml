@@ -257,7 +257,7 @@ jobs:
         run: pip install pylint boto3 boto3-stubs botocore-stubs pytest 'python-hcl2<8' pyyaml types-PyYAML
       - name: Run pylint on tests
         run: >-
-          PYTHONPATH=.:lib/python:src/api/endpoints/tenants/lambdas
+          PYTHONPATH=.:lib/python:scripts:src/api/endpoints/tenants/lambdas
           python3 -m pylint --recursive=y
           test/api/endpoints/tenants/conftest.py
           test/api/endpoints/tenants/pre_deployment
