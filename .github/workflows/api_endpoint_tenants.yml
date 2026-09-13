@@ -198,7 +198,7 @@ jobs:
         run: pip install boto3 boto3-stubs pytest 'python-hcl2<8'
       - name: Run post-deployment integration tests against live AWS
         run: >-
-          PYTHONPATH=.:lib/python
+          PYTHONPATH=.:lib/python:scripts
           python3 -m pytest
           test/api/endpoints/tenants/post_deployment/integration/
           --import-mode=importlib --confcutdir=test

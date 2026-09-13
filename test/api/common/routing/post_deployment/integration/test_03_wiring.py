@@ -56,10 +56,5 @@ def test_a_preflight_is_answered_with_the_pages_origin_alone() -> None:
     assert _answer(headers, "OPTIONS").headers[_ORIGIN_HEADER] == SPA_ORIGIN
 
 
-def test_an_answer_carrying_data_names_the_pages_origin_alone(api_key: str) -> None:
-    headers = {"Authorization": f"Bearer {api_key}", "Origin": SPA_ORIGIN}
-    assert _answer(headers).headers[_ORIGIN_HEADER] == SPA_ORIGIN
-
-
 def test_a_refusal_the_gateway_writes_names_the_pages_origin_alone() -> None:
     assert _answer({"Origin": SPA_ORIGIN}).headers[_ORIGIN_HEADER] == SPA_ORIGIN

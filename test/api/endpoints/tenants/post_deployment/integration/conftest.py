@@ -4,6 +4,14 @@ from typing import Any, cast
 
 import pytest
 
+from test_terraform_config import api_key_parameter_name
+
+
+@pytest.fixture(name="api_key")
+def api_key_fixture(ssm_client: Any) -> str:
+    response = ssm_client.get_parameter(Name=api_key_parameter_name(), WithDecryption=True)
+    return str(response["Parameter"]["Value"])
+
 
 @pytest.fixture(name="lambda_config")
 def lambda_config_fixture(lambda_client: Any, function_name: str) -> dict[str, Any]:

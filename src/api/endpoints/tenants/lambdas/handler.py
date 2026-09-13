@@ -5,7 +5,10 @@ from typing import Any
 import boto3
 
 _CLIENTS: dict[str, Any] = {}
-_HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "https://www.10ulabs.com"}
+_HEADERS = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "https://www.10ulabs.com",
+}
 _ONLY_VERSION = "null"
 _WAN_COLLECTIONS = (
     "sites",

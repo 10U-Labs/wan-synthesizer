@@ -9,7 +9,10 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 _CLIENTS: dict[str, Any] = {}
-_HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "https://www.10ulabs.com"}
+_HEADERS = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "https://www.10ulabs.com",
+}
 
 STATUSES_WITH_NO_WAN = frozenset({"fail", "timeout"})
 
