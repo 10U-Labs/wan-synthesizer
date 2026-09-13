@@ -5,7 +5,7 @@ from typing import Any
 import boto3
 
 _CLIENTS: dict[str, Any] = {}
-_HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+_HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "https://www.10ulabs.com"}
 _ONLY_VERSION = "null"
 _SITE_FIELDS = {"municipality", "state", "country", "latitude", "longitude"}
 _LINK_FIELDS = {"a_municipality", "a_state", "z_municipality", "z_state", "submarine"}

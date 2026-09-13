@@ -5,7 +5,7 @@ from typing import Any
 import boto3
 
 _CLIENTS: dict[str, Any] = {}
-_HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+_HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "https://www.10ulabs.com"}
 
 CARRIER_FILES = frozenset({"pops.json", "fiber-segments.json"})
 PROVIDER_FILES = frozenset({"regions.json"})

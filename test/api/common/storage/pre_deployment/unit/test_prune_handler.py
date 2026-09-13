@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
+from test_handler_contracts import SPA_ORIGIN
 from test_s3_store_mock import fake_s3
 
 _CURRENT = [
@@ -221,3 +222,9 @@ def test_a_get_names_the_same_keys_the_prune_would_delete(prune_handler: Any) ->
     with patch("boto3.client", return_value=fake_s3(_store())):
         response = prune_handler.lambda_handler({"httpMethod": "GET"}, None)
     assert json.loads(response["body"])["stale"] == sorted(_STALE)
+
+
+def test_the_prune_answers_the_spas_origin_and_no_other(prune_handler: Any) -> None:
+    with patch("boto3.client", return_value=fake_s3(_store())):
+        response = prune_handler.lambda_handler({"httpMethod": "POST"}, None)
+    assert response["headers"]["Access-Control-Allow-Origin"] == SPA_ORIGIN

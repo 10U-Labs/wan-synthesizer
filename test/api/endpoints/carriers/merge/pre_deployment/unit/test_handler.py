@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from test_handler_contracts import load_handler
+from test_handler_contracts import SPA_ORIGIN, load_handler
 from test_s3_store_mock import fake_s3
 
 
@@ -83,3 +83,11 @@ def test_merge_caches_the_s3_client(monkeypatch: pytest.MonkeyPatch) -> None:
         module.lambda_handler({"httpMethod": "POST"}, None)
         module.lambda_handler({"path": "/x/carriers/merge/pops"}, None)
     assert mock_client.call_count == 1
+
+
+def test_merge_answers_the_spas_origin_and_no_other(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = load_handler("carriers/merge", monkeypatch)
+    objects = _merge_objects()
+    with patch("boto3.client", return_value=fake_s3(objects, keys=[*objects])):
+        response = module.lambda_handler({"httpMethod": "POST"}, None)
+    assert response["headers"]["Access-Control-Allow-Origin"] == SPA_ORIGIN

@@ -151,7 +151,7 @@
             "default": {
               "statusCode": "200",
               "responseParameters": {
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'https://www.10ulabs.com'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
                 "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
               }
@@ -241,7 +241,7 @@
             "default": {
               "statusCode": "200",
               "responseParameters": {
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'https://www.10ulabs.com'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
                 "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
               }
@@ -286,7 +286,7 @@
             "default": {
               "statusCode": "200",
               "responseParameters": {
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'https://www.10ulabs.com'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
                 "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
               }
@@ -331,7 +331,7 @@
             "default": {
               "statusCode": "200",
               "responseParameters": {
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'https://www.10ulabs.com'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
                 "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
               }
@@ -376,7 +376,7 @@
             "default": {
               "statusCode": "200",
               "responseParameters": {
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'https://www.10ulabs.com'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
                 "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
               }
@@ -435,7 +435,7 @@
             "default": {
               "statusCode": "200",
               "responseParameters": {
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'https://www.10ulabs.com'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
                 "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
               }
@@ -827,7 +827,7 @@
             "default": {
               "statusCode": "200",
               "responseParameters": {
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'https://www.10ulabs.com'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
                 "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'"
               }
@@ -857,10 +857,10 @@
   "security": [{ "bearer": [] }],
   "x-amazon-apigateway-gateway-responses": {
     "DEFAULT_4XX": {
-      "responseParameters": { "gatewayresponse.header.Access-Control-Allow-Origin": "'*'" }
+      "responseParameters": { "gatewayresponse.header.Access-Control-Allow-Origin": "'https://www.10ulabs.com'" }
     },
     "DEFAULT_5XX": {
-      "responseParameters": { "gatewayresponse.header.Access-Control-Allow-Origin": "'*'" }
+      "responseParameters": { "gatewayresponse.header.Access-Control-Allow-Origin": "'https://www.10ulabs.com'" }
     }
   }
 }

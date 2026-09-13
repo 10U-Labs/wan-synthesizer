@@ -10,6 +10,8 @@ from repo_utils import REPO_ROOT
 from test_module_utils import create_lambda_loader
 from test_s3_store_mock import fake_lambda, fake_s3
 
+SPA_ORIGIN = "https://www.10ulabs.com"
+
 
 def load_handler(endpoint: str, monkeypatch: pytest.MonkeyPatch, **env: str) -> Any:
     monkeypatch.setenv("STORE_BUCKET", "test-bucket")
@@ -70,6 +72,12 @@ class ReaderContract:
             module.lambda_handler({}, None)
             module.lambda_handler({}, None)
         assert mock_client.call_count == 1
+
+    def test_answers_the_spas_origin_and_no_other(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        module = load_handler(self.CFG["endpoint"], monkeypatch)
+        with patch("boto3.client", return_value=fake_s3({}, keys=self.CFG["list_keys"])):
+            response = module.lambda_handler({}, None)
+        assert response["headers"]["Access-Control-Allow-Origin"] == SPA_ORIGIN
 
 
 class SharedWriteTests:

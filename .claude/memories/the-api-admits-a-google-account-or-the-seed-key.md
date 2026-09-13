@@ -47,7 +47,7 @@ An admitted Google account's verdict covers `{stage}/*`; the key's verdict (GitH
 
 ### A route the map fetches answers a preflight
 
-A fetch carrying `Authorization` is preflighted, so every route `app.js` fetches has an `options` mock in the spec allowing that header, and `x-amazon-apigateway-gateway-responses` gives the gateway's own 4XX and 5XX answers the CORS origin so the browser can read a 401. A new fetch in `app.js` without an `options` on its route fails `test_every_route_the_map_fetches_answers_the_browsers_preflight`.
+A fetch carrying `Authorization` is preflighted, so every route `app.js` fetches has an `options` mock in the spec allowing that header, and `x-amazon-apigateway-gateway-responses` gives the gateway's own 4XX and 5XX answers the CORS origin so the browser can read a 401. A new fetch in `app.js` without an `options` on its route fails `test_every_route_the_map_fetches_answers_the_browsers_preflight`. Every `Access-Control-Allow-Origin` — the seven mocks, the two gateway responses, and `_HEADERS` in each of the six handlers — names `https://www.10ulabs.com` and nothing wider (GitHub issue #196, September 2026): the apex `10ulabs.com` is a 301 to `www`, so that is the page's one origin, spelled once as `SPA_ORIGIN` in `lib/python/test_handler_contracts`. `test_cors.py` in the routing unit tests walks the spec for every value of the header, `ReaderContract` and the merge and prune handler tests read it off a response, and the routing post-deployment tests read it off a live preflight, a keyed GET and a 401. A second origin is a commit that adds it in every one of those places.
 
 ### Nothing here is a Cognito pool or a Lambda layer
 

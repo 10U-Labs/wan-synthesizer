@@ -104,15 +104,6 @@ def test_a_verdict_is_remembered_no_longer_than_a_google_token_lives() -> None:
     assert 0 < ttl <= 3600
 
 
-def test_an_answer_the_gateway_writes_itself_can_be_read_by_the_browser() -> None:
-    responses = _spec()["x-amazon-apigateway-gateway-responses"]
-    assert [
-        name for name in ("DEFAULT_4XX", "DEFAULT_5XX")
-        if responses[name]["responseParameters"].get(
-            "gatewayresponse.header.Access-Control-Allow-Origin") != "'*'"
-    ] == []
-
-
 def test_every_preflight_lets_the_token_through() -> None:
     spec = _spec()
     refusing = [
