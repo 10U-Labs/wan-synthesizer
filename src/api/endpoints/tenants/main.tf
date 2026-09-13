@@ -60,7 +60,8 @@ resource "aws_lambda_function" "handler" {
 
   environment {
     variables = {
-      STORE_BUCKET = data.terraform_remote_state.storage.outputs.bucket_name
+      AWS_USE_FIPS_ENDPOINT = "true"
+      STORE_BUCKET          = data.terraform_remote_state.storage.outputs.bucket_name
     }
   }
 

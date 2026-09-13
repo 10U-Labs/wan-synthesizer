@@ -113,7 +113,8 @@ resource "aws_lambda_function" "prune" {
 
   environment {
     variables = {
-      STORE_BUCKET = aws_s3_bucket.store.id
+      AWS_USE_FIPS_ENDPOINT = "true"
+      STORE_BUCKET          = aws_s3_bucket.store.id
     }
   }
 

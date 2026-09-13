@@ -85,13 +85,14 @@ resource "aws_lambda_function" "synthesizer" {
   runtime          = "python3.13"
   architectures    = ["arm64"]
   layers           = [aws_lambda_layer_version.solver.arn]
-  timeout     = 900
-  memory_size = 8192
-  description = "WAN synthesizer: build the tenant's WAN and write it to the store."
+  timeout          = 900
+  memory_size      = 8192
+  description      = "WAN synthesizer: build the tenant's WAN and write it to the store."
 
   environment {
     variables = {
-      STORE_BUCKET = local.store_bucket
+      AWS_USE_FIPS_ENDPOINT = "true"
+      STORE_BUCKET          = local.store_bucket
     }
   }
 
@@ -158,13 +159,14 @@ resource "aws_lambda_function" "failure_handler" {
   runtime          = "python3.13"
   architectures    = ["arm64"]
   layers           = [aws_lambda_layer_version.solver.arn]
-  timeout     = 30
-  memory_size = 128
-  description = "WAN failure handler: record the timeout status when AWS kills the synthesizer."
+  timeout          = 30
+  memory_size      = 128
+  description      = "WAN failure handler: record the timeout status when AWS kills the synthesizer."
 
   environment {
     variables = {
-      STORE_BUCKET = local.store_bucket
+      AWS_USE_FIPS_ENDPOINT = "true"
+      STORE_BUCKET          = local.store_bucket
     }
   }
 

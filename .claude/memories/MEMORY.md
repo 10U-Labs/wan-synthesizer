@@ -30,6 +30,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 - [seeding-waits-for-every-deploy](seeding-waits-for-every-deploy.md) — `seeding` runs after every workflow on the same commit that deploys something it talks to, through a wait job copied from `10ulabs.com`, so a seed never grades WANs the previous Lambda built
 - [seed-tests-every-push](seed-tests-every-push.md) — every push that starts `seed.yml` runs every tier, and how a new check is wired into `reconciliation` and `seeding`
 - [shared-modules-are-tested-first](shared-modules-are-tested-first.md) — `test-repo-libraries` runs every module's tests ahead of every job whose tests import them
+- [aws-is-called-over-fips-endpoints](aws-is-called-over-fips-endpoints.md) — every function's environment and every role-assuming workflow's `env` set `AWS_USE_FIPS_ENDPOINT` to `true`, held tree-wide by `test_fips_endpoints.py` in every `test-repo-libraries`
 - [code-scanning-is-held-on-by-a-test](code-scanning-is-held-on-by-a-test.md) — CodeQL default setup runs the extended suite over the Python and the JavaScript, `test/documentation` holds a fresh analysis of each language and zero results on the newest through the API the workflow token can read, and an alert it raises is fixed in the session that sees it
 - [where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md) — a test runs in the workflow the change it guards arrives on, and one that already runs in two needs no cross-listed `paths`
 

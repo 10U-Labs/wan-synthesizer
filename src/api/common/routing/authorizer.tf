@@ -60,6 +60,7 @@ resource "aws_lambda_function" "authorizer" {
 
   environment {
     variables = {
+      AWS_USE_FIPS_ENDPOINT         = "true"
       GOOGLE_CLIENT_ID              = "846587722064-qjou8en4tk96n12ii3rgnpjshnbqovok.apps.googleusercontent.com"
       HOSTED_DOMAIN                 = "10ulabs.com"
       API_KEY_PARAMETER             = aws_ssm_parameter.api_key.name

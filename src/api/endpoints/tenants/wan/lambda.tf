@@ -28,6 +28,7 @@ resource "aws_lambda_function" "handler" {
 
   environment {
     variables = {
+      AWS_USE_FIPS_ENDPOINT     = "true"
       STORE_BUCKET              = local.store_bucket
       SYNTHESIZER_FUNCTION_NAME = "${module.common.lambda_handler_names.wan}-synthesizer"
     }
