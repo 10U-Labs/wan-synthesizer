@@ -18,8 +18,8 @@ def _steps(job: str) -> list[dict[str, Any]]:
 
 
 @pytest.mark.parametrize(("job", "verb"), [
-    ("reconciliation", "apply"),
-    ("pre-deployment-integration-tests", "pytest"),
+    ("reconciliation", "tofu -chdir=src/api/common/routing apply"),
+    ("pre-deployment-integration-tests", "python3 -m pytest"),
 ])
 def test_the_deploy_passes_the_authorized_accounts_wherever_the_stack_is_planned_or_applied(
         job: str, verb: str) -> None:
