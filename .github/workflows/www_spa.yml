@@ -104,6 +104,23 @@ jobs:
           python3 -m mypy --strict --explicit-package-bases
           --ignore-missing-imports
           test/www/spa/
+  post-deployment-e2e-tests:
+    if: github.ref == 'refs/heads/main'
+    name: post-deployment-e2e-tests
+    needs:
+      - deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install pytest
+      - name: Read the headers off the served SPA
+        run: >-
+          PYTHONPATH=.:lib/python:scripts
+          python3 -m pytest
+          test/www/spa/post_deployment/e2e/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
   pylint-tests:
     name: pylint-tests
     runs-on: ubuntu-latest

@@ -23,6 +23,7 @@ metadata:
 - [The stage admits twenty requests a second and a burst of forty](#the-stage-admits-twenty-requests-a-second-and-a-burst-of-forty)
 - [A session ends on sign-out, at the token's expiry, or after fifteen idle minutes](#a-session-ends-on-sign-out-at-the-tokens-expiry-or-after-fifteen-idle-minutes)
 - [The key is rotated by a date the deploy passes and measured weekly](#the-key-is-rotated-by-a-date-the-deploy-passes-and-measured-weekly)
+- [The SPA is served with the site's security headers](#the-spa-is-served-with-the-sites-security-headers)
 
 ## Overview
 
@@ -117,3 +118,19 @@ workflow the issue named for the check was deleted before it existed.
 WAN_SYNTHESIZER_API_KEY_ROTATION --body <today>` followed by a routing
 deploy, on or before the 180th day; a run of the routing workflow red on
 that one test is the clock having run out, not a defect in the stack.
+
+## The SPA is served with the site's security headers
+
+The distribution that serves `10ulabs.com/wan-synthesizer/` is
+`10U-Labs/10ulabs.com`'s `src/www/common/cloudfront_s3.tf`, which
+redirects HTTP to HTTPS, holds viewers to `TLSv1.2_2021`, and since its
+627731e0 (GitHub issue #214, 2026-09-13) sends
+`Strict-Transport-Security` for a year with subdomains and preload,
+`X-Content-Type-Options: nosniff`, `Referrer-Policy:
+strict-origin-when-cross-origin` and `X-Frame-Options: DENY` from
+`aws_cloudfront_response_headers_policy.website`. A header the SPA needs
+is declared there, not in a `<meta>` tag, which cannot set HSTS.
+`test/www/spa/post_deployment/e2e/test_headers.py` reads them off the
+served SPA in `www_spa.yml`'s `post-deployment-e2e-tests`, which runs
+after `deploy`, so a change there that drops one is red here on the
+next SPA push.
