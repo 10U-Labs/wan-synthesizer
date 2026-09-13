@@ -73,6 +73,12 @@ def test_every_stylesheet_the_page_loads_is_one_the_policy_admits() -> None:
     assert {_source_of(href) for href in _page().stylesheets} <= POLICY["style-src"]
 
 
+def _api_base() -> str:
+    found = _API_BASE.search((SPA / "app.js").read_text(encoding="utf-8"))
+    if found is None:
+        raise AssertionError("app.js declares no API_BASE")
+    return found.group(1)
+
+
 def test_the_api_the_page_fetches_is_one_the_policy_admits() -> None:
-    api_base = _API_BASE.search((SPA / "app.js").read_text(encoding="utf-8"))
-    assert api_base is not None and _source_of(api_base.group(1)) in POLICY["connect-src"]
+    assert _source_of(_api_base()) in POLICY["connect-src"]

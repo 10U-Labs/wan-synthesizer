@@ -18,7 +18,7 @@ ORIGINS_THE_PAGE_MAY_REACH = frozenset({
     "fonts.gstatic.com",
 })
 
-_URL = re.compile(r"https?://[^\s\"'`)<>]+")
+_URL = re.compile(r"https?://[^\s\"'`)<>;]+")
 
 
 def _page(name: str) -> str:
