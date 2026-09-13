@@ -44,7 +44,7 @@ const HOMING_CIRCUIT = "Homing circuit";
 const LEGEND_ROWS = [
   { swatch: "dot", color: ROLE_STYLE.wan_pop.color, label: WAN_POP },
   { swatch: "dot", color: PROVIDER_STYLE.color, label: "Provider region" },
-  { swatch: "dot", color: ROLE_STYLE.tenant.color, label: "Location", tenant: true },
+  { swatch: "dot", color: ROLE_STYLE.tenant.color, label: "Site", tenant: true },
   { swatch: "line", color: LINE_STYLE.fiber.color, label: "Fiber" },
   { swatch: "line", color: LINE_STYLE.homing.color, label: HOMING_CIRCUIT },
 ];
@@ -85,7 +85,7 @@ legend.addTo(map);
 
 function showLegendTenant(label) {
   if (tenantLegendText) {
-    tenantLegendText.textContent = `${label} Location`;
+    tenantLegendText.textContent = `${label} Site`;
   }
 }
 
@@ -372,7 +372,7 @@ function showCounts(sites) {
   }
   counts.textContent =
     `WAN PoPs ${tally.wan_pop}`
-    + ` LOCATIONS ${tally.tenant}`
+    + ` SITES ${tally.tenant}`
     + ` PROVIDER REGIONS ${tally.provider}`;
 }
 
