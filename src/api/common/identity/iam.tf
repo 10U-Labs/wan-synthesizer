@@ -9,6 +9,7 @@ locals {
   functions    = "arn:aws:lambda:${local.region}:${local.account}:function:${local.product}-*"
   layers       = "arn:aws:lambda:${local.region}:${local.account}:layer:${local.product}-*"
   log_groups   = "arn:aws:logs:${local.region}:${local.account}:log-group:/aws/lambda/${local.product}-*"
+  log_listing  = "arn:aws:logs:${local.region}:${local.account}:log-group::log-stream:"
   lambda_roles = "arn:aws:iam::${local.account}:role/${local.product}-*"
   gateway_role = "arn:aws:iam::${local.account}:role/aws-service-role/ops.apigateway.amazonaws.com/AWSServiceRoleForAPIGateway"
   rest_apis    = "arn:aws:apigateway:${local.region}::/restapis"
@@ -102,11 +103,16 @@ data "aws_iam_policy_document" "functions" {
   }
 
   statement {
+    sid       = "DescribeLogGroupsOnTheArnIamEvaluatesItAgainst"
+    actions   = ["logs:DescribeLogGroups"]
+    resources = [local.log_listing]
+  }
+
+  statement {
     sid = "KeepTheHandlersLogGroups"
     actions = [
       "logs:CreateLogGroup",
       "logs:DeleteLogGroup",
-      "logs:DescribeLogGroups",
       "logs:PutRetentionPolicy",
       "logs:ListTagsForResource",
       "logs:TagResource",

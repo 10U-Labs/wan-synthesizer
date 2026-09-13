@@ -277,3 +277,14 @@ def test_the_managed_policies_are_detached_only_once_the_inline_ones_are_in_plac
         identity_main: dict[str, object], declared: Any) -> None:
     exclusive = declared(identity_main, EXCLUSIVE_ATTACHMENTS, "deploy")
     assert exclusive["depends_on"] == ["${aws_iam_role_policies_exclusive.deploy}"]
+
+
+def test_describing_log_groups_is_granted_on_the_arn_iam_evaluates_it_against(
+        permission_statements: list[dict[str, Any]], resolve: Any) -> None:
+    assert [
+        resolve(resource)
+        for statement in permission_statements
+        if "logs:DescribeLogGroups" in statement["actions"]
+        for resource in statement["resources"]
+    ] == ["arn:aws:logs:${module.common.aws_region}:${module.common.aws_account_id}"
+          ":log-group::log-stream:"]

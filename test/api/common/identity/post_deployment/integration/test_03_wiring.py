@@ -65,3 +65,9 @@ def test_the_distribution_the_role_may_invalidate_serves_the_site(
 def test_the_site_prefix_the_role_may_write_is_the_product_s(live_resources: set[str]) -> None:
     objects = {r for r in live_resources if r.startswith("arn:aws:s3:::www-10ulabs-com/")}
     assert objects == {"arn:aws:s3:::www-10ulabs-com/wan-synthesizer/*"}
+
+
+def test_the_role_may_describe_log_groups(
+        live_resources: set[str], config: dict[str, object]) -> None:
+    region, account = config["aws_region"], config["aws_account_id"]
+    assert f"arn:aws:logs:{region}:{account}:log-group::log-stream:" in live_resources
