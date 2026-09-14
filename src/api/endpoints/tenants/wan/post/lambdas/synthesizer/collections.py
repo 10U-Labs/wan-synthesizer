@@ -26,10 +26,6 @@ def homing_circuits(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return _published(payload, "homing_circuits")
 
 
-def fiber_segments(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    return _published(payload, "fiber_segments")
-
-
 def backbone_circuits(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return [
         drawn_circuit

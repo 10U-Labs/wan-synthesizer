@@ -44,11 +44,6 @@ def test_homing_circuits_are_the_payloads_homing_circuits() -> None:
     assert gc.homing_circuits(payload) == payload["homing_circuits"]
 
 
-def test_fiber_segments_are_the_payloads_fiber_segments() -> None:
-    payload = _payload()
-    assert gc.fiber_segments(payload) == payload["fiber_segments"]
-
-
 def test_wan_pops_are_all_tier_wan_pop() -> None:
     assert all(site["tier_role"] == "wan_pop" for site in gc.wan_pops(_payload()))
 

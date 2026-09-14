@@ -12,7 +12,6 @@ _HEADERS = {
 _ONLY_VERSION = "null"
 _WAN_COLLECTIONS = (
     "homing-circuits",
-    "fiber-segments",
     "wan-pops",
     "backbone-circuits",
     "tenant-sites",

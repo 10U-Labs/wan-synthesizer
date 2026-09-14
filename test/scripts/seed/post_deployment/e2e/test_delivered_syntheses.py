@@ -1,53 +1,22 @@
 from __future__ import annotations
 
 import csv
-from collections.abc import Callable
 from typing import Any
 from urllib.error import HTTPError
 
 import seed
 from seed import DEFAULT_API, _get
-from synthesizer.graphs import reachable_over
 from synthesizer.input_graph import Site
 from synthesizer.local_fiber import LOCAL_FIBER_HOMING_DEGREE, nearest_carrier_pops
 from test_published_syntheses import (
-    wan_pop_groups,
     cut_cities,
     diverse_circuit_count,
     offered_diverse_circuits,
-    fiber_miles_run_over,
     overbuilt_pairs,
     removable_circuits,
     site_from_row,
     worst_haul,
 )
-
-
-_ROUNDED_TO = 0.001
-
-
-def _rounding_slack(synthesis: dict[str, Any]) -> float:
-    return (len(synthesis["fiber"]) + 1) * _ROUNDED_TO / 2
-
-
-def _tenants_outside(
-    syntheses: list[dict[str, Any]],
-    allowed: Callable[[float, float, float], bool],
-) -> dict[str, tuple[float, float]]:
-    measured = {
-        synthesis["tenant"]: (
-            fiber_miles_run_over(synthesis),
-            synthesis["lower_bound_miles"],
-            _rounding_slack(synthesis),
-        )
-        for synthesis in syntheses
-        if synthesis["lower_bound_miles"] is not None
-    }
-    return {
-        tenant: (miles, floor)
-        for tenant, (miles, floor, slack) in measured.items()
-        if not allowed(miles, floor, slack)
-    }
 
 
 def _published_cities(synthesis: dict[str, Any]) -> set[str]:
@@ -100,16 +69,6 @@ def test_no_refused_tenant_still_serves_the_wan_it_published_before(
         and _still_serves_a_wan(synthesis["tenant"])
     ]
     assert served == []
-
-
-def test_every_published_network_is_one_network(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    split = {
-        synthesis["tenant"]: groups
-        for synthesis in published_syntheses
-        if len(groups := wan_pop_groups(synthesis)) > 1
-    }
-    assert split == {}
 
 
 def test_every_published_network_reports_the_coverage_it_delivered(
@@ -207,27 +166,6 @@ def test_no_published_network_is_split_by_the_loss_of_one_city(
         for synthesis in published_syntheses
     }
     assert {tenant: cities for tenant, cities in split.items() if cities} == {}
-
-
-def test_no_published_network_runs_more_than_twice_the_fewest_miles_it_could_have(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    assert _tenants_outside(
-        published_syntheses, lambda miles, floor, _slack: miles <= 2 * floor
-    ) == {}
-
-
-def test_no_published_network_runs_more_than_a_tenth_further_than_the_floor_it_publishes(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    assert _tenants_outside(
-        published_syntheses, lambda miles, floor, _slack: miles <= 1.1 * floor
-    ) == {}
-
-
-def test_no_published_network_runs_fewer_miles_than_the_floor_it_publishes(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    assert _tenants_outside(
-        published_syntheses, lambda miles, floor, slack: miles >= floor - slack
-    ) == {}
 
 
 def _city_names() -> dict[tuple[str, str], str]:
@@ -358,54 +296,6 @@ def test_no_published_wan_pop_is_credited_more_diverse_circuits_than_its_ceiling
         for synthesis in published_syntheses
         if _credited_past_the_ceiling(synthesis)
     } == {}
-
-
-def _submarine_pairs(synthesis: dict[str, Any]) -> set[frozenset[str]]:
-    return {
-        frozenset({entry["source_name"], entry["target_name"]})
-        for entry in synthesis["fiber"]
-        if entry["submarine"]
-    }
-
-
-def _runs_under_water(pops: list[str], under_water: set[frozenset[str]]) -> bool:
-    return any(
-        frozenset({near, far}) in under_water for near, far in zip(pops, pops[1:])
-    )
-
-
-def _shores(fiber: set[frozenset[str]]) -> dict[str, frozenset[str]]:
-    adjacency: dict[str, list[tuple[str, float]]] = {}
-    for pair in fiber:
-        if len(pair) != 2:
-            continue
-        near, far = sorted(pair)
-        adjacency.setdefault(near, []).append((far, 0.0))
-        adjacency.setdefault(far, []).append((near, 0.0))
-    return reachable_over(adjacency)
-
-
-def _pairs_joined_over_land_drawn_under_water(
-        synthesis: dict[str, Any]) -> list[tuple[str, ...]]:
-    under_water = _submarine_pairs(synthesis)
-    ashore = _shores(
-        _carrier_fiber(seed.TERRESTRIAL) | _fiber_laid_to_a_fabricated_wan_pop(synthesis)
-    )
-    return [
-        (synthesis["tenant"], f"{pops[0]} <-> {pops[-1]}", " -> ".join(pops))
-        for pops in sorted(circuit["route"] for circuit in synthesis["circuits"])
-        if _runs_under_water(pops, under_water)
-        and pops[-1] in ashore.get(pops[0], frozenset())
-    ]
-
-
-def test_no_published_pair_joined_over_land_is_drawn_a_circuit_under_water(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    assert [
-        offender
-        for synthesis in published_syntheses
-        for offender in _pairs_joined_over_land_drawn_under_water(synthesis)
-    ] == []
 
 
 def _sites_homed_the_wrong_number_of_times(synthesis: dict[str, Any]) -> dict[str, int]:

@@ -131,7 +131,7 @@ function circuitsBySegment(circuits) {
   for (const circuit of circuits) {
     const route = circuit.route || [];
     for (let step = 0; step + 1 < route.length; step += 1) {
-      const key = segmentKey(route[step], route[step + 1]);
+      const key = segmentKey(cityOf(route[step]), cityOf(route[step + 1]));
       crossing.set(key, (crossing.get(key) || []).concat([circuit]));
     }
   }
@@ -211,6 +211,21 @@ function drawSites(sites) {
     }
   }
   return coords;
+}
+
+function drawFiber(segments, crossing) {
+  for (const segment of segments) {
+    const ends = [
+      [segment.a_latitude, nearLon(segment.a_longitude)],
+      [segment.z_latitude, nearLon(segment.z_longitude)],
+    ];
+    const key = segmentKey(segment.a_municipality, segment.z_municipality);
+    add(L.polyline(ends, {
+      color: LINE_STYLE.fiber.color,
+      weight: LINE_STYLE.fiber.weight,
+      opacity: 0.8,
+    }).bindTooltip(circuitsLabel(crossing.get(key) || []), { sticky: true }));
+  }
 }
 
 function drawLines(lines, byName, style, label) {
@@ -390,7 +405,7 @@ async function render(entry) {
       getJSON(
         `${API_BASE}/wan-syntheses/${entry.synthesis}/hyperscale-cloud-service-provider-regions`,
       ),
-      getJSON(`${API_BASE}/wan-synthesizer/tenants/${entry.tenant}/fiber-segments`),
+      getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/fiber-segments`),
       getJSON(`${API_BASE}/wan-synthesizer/tenants/${entry.tenant}/homing-circuits`),
       getJSON(`${API_BASE}/wan-synthesizer/tenants/${entry.tenant}/backbone-circuits`),
     ]);
@@ -406,9 +421,7 @@ async function render(entry) {
   showCounts(dots);
 
   const byName = indexByName(dots);
-  const crossing = circuitsBySegment(circuits);
-  drawLines(fiber, byName, LINE_STYLE.fiber, (source, target) =>
-    circuitsLabel(crossing.get(segmentKey(source.name, target.name)) || []));
+  drawFiber(fiber, circuitsBySegment(circuits));
   drawLines(homings, byName, LINE_STYLE.homing, homingLabel);
   const points = drawSites(dots);
 

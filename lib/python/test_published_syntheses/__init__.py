@@ -18,7 +18,6 @@ COLLECTIONS = (
     "tenant-sites",
     "provider-sites",
     "homing-circuits",
-    "fiber-segments",
 )
 
 
@@ -57,7 +56,6 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "provider_regions": published.get("provider-sites", []),
         "circuits": published.get("backbone-circuits", []),
         "homings": published.get("homing-circuits", []),
-        "fiber": published.get("fiber-segments", []),
     }
 
 
@@ -242,32 +240,6 @@ def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
             continue
         removable.append((" -> ".join(spare["route"]), spare["distance_miles"]))
     return sorted(removable, key=lambda found: (-found[1], found[0]))
-
-
-def _published_fiber(synthesis: dict[str, Any]) -> dict[str, dict[str, float]]:
-    fiber: dict[str, dict[str, float]] = {}
-    for entry in synthesis["fiber"]:
-        fiber.setdefault(entry["source_id"], {})[entry["target_id"]] = entry["distance_miles"]
-        fiber.setdefault(entry["target_id"], {})[entry["source_id"]] = entry["distance_miles"]
-    return fiber
-
-
-def wan_pop_groups(synthesis: dict[str, Any]) -> list[list[str]]:
-    fiber = _published_fiber(synthesis)
-    joined: dict[str, set[str]] = {row["id"]: set() for row in synthesis["wan_pops"]}
-    joined |= {city: set(neighbors) for city, neighbors in fiber.items()}
-    unplaced = {row["id"] for row in synthesis["wan_pops"]}
-    groups: list[list[str]] = []
-    while unplaced:
-        reached = _reached(joined, min(unplaced))
-        groups.append(sorted(unplaced & reached))
-        unplaced -= reached
-    return groups
-
-
-def fiber_miles_run_over(synthesis: dict[str, Any]) -> float:
-    segments: list[float] = [entry["distance_miles"] for entry in synthesis["fiber"]]
-    return sum(segments)
 
 
 _ARRIVING = "into "
