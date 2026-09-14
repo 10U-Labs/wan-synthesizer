@@ -37,7 +37,7 @@ def _read_collection(client: Any, carrier: str, collection: str) -> Any:
 
 def _get(client: Any, carrier: str, event: dict[str, Any]) -> dict[str, Any]:
     collection = event.get("path", "").rsplit("/", 1)[-1]
-    if collection not in ("pops", "fiber-segments"):
+    if collection != "fiber-segments":
         return _response(404, {"error": collection})
     rows = _read_collection(client, carrier, collection)
     if rows is None:

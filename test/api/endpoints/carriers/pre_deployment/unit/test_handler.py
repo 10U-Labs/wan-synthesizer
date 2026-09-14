@@ -11,11 +11,11 @@ from test_s3_store_mock import fake_s3
 
 _READER: dict[str, Any] = {
     "endpoint": "carriers",
-    "stored_key": "carriers/lumen/pops.json",
+    "stored_key": "carriers/lumen/fiber-segments.json",
     "stored": [{"id": "P"}],
     "serve_event": {
         "pathParameters": {"carrier": "lumen"},
-        "path": "/x/carriers/lumen/pops",
+        "path": "/x/carriers/lumen/fiber-segments",
     },
     "serve_expect": [{"id": "P"}],
     "unknown_event": {
@@ -45,19 +45,20 @@ def _store_after_deleting(
 
 def test_carrier_delete_removes_an_object_the_endpoint_never_wrote(
         monkeypatch: pytest.MonkeyPatch) -> None:
-    stored = {"carriers/lumen/pops.json": b"[]", "carriers/lumen/vertices.json": b"[]"}
+    stored = {"carriers/lumen/fiber-segments.json": b"[]", "carriers/lumen/vertices.json": b"[]"}
     assert not _store_after_deleting(monkeypatch, stored, "lumen")
 
 
 def test_carrier_delete_leaves_another_carrier_alone(monkeypatch: pytest.MonkeyPatch) -> None:
-    stored = {"carriers/lumen/pops.json": b"[]", "carriers/zayo/pops.json": b"[]"}
+    stored = {
+        "carriers/lumen/fiber-segments.json": b"[]", "carriers/zayo/fiber-segments.json": b"[]"}
     kept = list(_store_after_deleting(monkeypatch, stored, "lumen"))
-    assert kept == ["carriers/zayo/pops.json"]
+    assert kept == ["carriers/zayo/fiber-segments.json"]
 
 
 def test_carrier_delete_leaves_no_delete_marker(monkeypatch: pytest.MonkeyPatch) -> None:
     module = load_handler("carriers", monkeypatch)
-    fake = fake_s3({"carriers/lumen/pops.json": b"[]"})
+    fake = fake_s3({"carriers/lumen/fiber-segments.json": b"[]"})
     event = {"httpMethod": "DELETE", "pathParameters": {"carrier": "lumen"}}
     with patch("boto3.client", return_value=fake):
         module.lambda_handler(event, None)

@@ -6,20 +6,6 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/wan-synthesizer/carriers/{carrier}/pops": {
-      "get": {
-        "summary": "A carrier's PoPs.",
-        "parameters": [
-          { "name": "carrier", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "200": { "description": "The carrier's PoPs." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${CarriersHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
-      }
-    },
     "/wan-synthesizer/carriers/{carrier}/fiber-segments": {
       "get": {
         "summary": "A carrier's fiber.",

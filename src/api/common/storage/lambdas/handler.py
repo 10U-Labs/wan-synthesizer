@@ -10,7 +10,7 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 
-CARRIER_FILES = frozenset({"pops.json", "fiber-segments.json"})
+CARRIER_FILES = frozenset({"fiber-segments.json"})
 PROVIDER_FILES = frozenset({"regions.json"})
 _KEPT_BY_PREFIX = {
     "carriers": CARRIER_FILES,

@@ -6,11 +6,11 @@ from test_handler_contracts import ReaderContract
 
 _CFG: dict[str, Any] = {
     "endpoint": "carriers",
-    "stored_key": "carriers/telia/pops.json",
+    "stored_key": "carriers/telia/fiber-segments.json",
     "stored": [{"id": "denver-1"}],
     "serve_event": {
         "pathParameters": {"carrier": "telia"},
-        "path": "/x/carriers/telia/pops",
+        "path": "/x/carriers/telia/fiber-segments",
     },
     "serve_expect": [{"id": "denver-1"}],
     "unknown_event": {
@@ -19,7 +19,7 @@ _CFG: dict[str, Any] = {
     },
     "notbuilt_event": {
         "pathParameters": {"carrier": "arelion"},
-        "path": "/x/carriers/arelion/pops",
+        "path": "/x/carriers/arelion/fiber-segments",
     },
 }
 

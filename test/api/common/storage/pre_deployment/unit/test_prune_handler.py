@@ -11,7 +11,6 @@ from test_handler_contracts import SPA_ORIGIN
 from test_s3_store_mock import fake_s3
 
 _CURRENT = [
-    "carriers/lumen/pops.json",
     "carriers/lumen/fiber-segments.json",
     "providers/regions.json",
 ]
@@ -139,7 +138,7 @@ def _markers_after_pruning(handler: Any, fake: Any) -> list[dict[str, Any]]:
 
 
 def test_the_prune_removes_a_marker_over_a_current_key(prune_handler: Any) -> None:
-    fake = _marked(_store(), ["carriers/lumen/pops.json"])
+    fake = _marked(_store(), ["carriers/lumen/fiber-segments.json"])
     assert _markers_after_pruning(prune_handler, fake) == []
 
 
@@ -149,47 +148,49 @@ def test_the_prune_removes_a_marker_over_a_stale_key(prune_handler: Any) -> None
 
 
 def test_the_prune_names_the_key_a_marker_hid(prune_handler: Any) -> None:
-    fake = _marked({key: b"[]" for key in _CURRENT}, ["carriers/lumen/pops.json"])
+    fake = _marked({key: b"[]" for key in _CURRENT}, ["carriers/lumen/fiber-segments.json"])
     with patch("boto3.client", return_value=fake):
         response = prune_handler.lambda_handler({"httpMethod": "POST"}, None)
-    assert json.loads(response["body"])["deleted"] == ["carriers/lumen/pops.json"]
+    assert json.loads(response["body"])["deleted"] == ["carriers/lumen/fiber-segments.json"]
 
 
 def test_the_prune_leaves_every_current_object_beside_a_marker(prune_handler: Any) -> None:
     objects = _store()
-    _markers_after_pruning(prune_handler, _marked(objects, ["carriers/two-node/pops.json"]))
+    marked = _marked(objects, ["carriers/dcn/fiber-segments.json"])
+    _markers_after_pruning(prune_handler, marked)
     assert sorted(objects) == sorted(_CURRENT)
 
 
 def test_the_prune_removes_a_marker_by_the_version_it_was_listed_with(
         prune_handler: Any) -> None:
     named: list[tuple[str, str | None]] = []
-    marker = {"Key": "carriers/two-node/pops.json", "VersionId": "3sL4kqtJ", "IsLatest": True}
+    marker = {
+        "Key": "carriers/dcn/fiber-segments.json", "VersionId": "3sL4kqtJ", "IsLatest": True}
     fake = fake_s3({})
     fake.get_paginator = lambda _name: SimpleNamespace(
         paginate=lambda **_kwargs: iter([{"DeleteMarkers": [marker]}]))
     fake.delete_object = lambda **kwargs: named.append((kwargs["Key"], kwargs.get("VersionId")))
     with patch("boto3.client", return_value=fake):
         prune_handler.lambda_handler({"httpMethod": "POST"}, None)
-    assert named == [("carriers/two-node/pops.json", "3sL4kqtJ")]
+    assert named == [("carriers/dcn/fiber-segments.json", "3sL4kqtJ")]
 
 
 def test_a_get_names_the_key_a_marker_hides(prune_handler: Any) -> None:
-    fake = _marked({key: b"[]" for key in _CURRENT}, ["carriers/two-node/pops.json"])
+    fake = _marked({key: b"[]" for key in _CURRENT}, ["carriers/dcn/fiber-segments.json"])
     with patch("boto3.client", return_value=fake):
         response = prune_handler.lambda_handler({"httpMethod": "GET"}, None)
-    assert json.loads(response["body"])["stale"] == ["carriers/two-node/pops.json"]
+    assert json.loads(response["body"])["stale"] == ["carriers/dcn/fiber-segments.json"]
 
 
 def test_a_get_leaves_a_marker_where_it_is(prune_handler: Any) -> None:
-    fake = _marked({}, ["carriers/two-node/pops.json"])
+    fake = _marked({}, ["carriers/dcn/fiber-segments.json"])
     with patch("boto3.client", return_value=fake):
         prune_handler.lambda_handler({"httpMethod": "GET"}, None)
     assert len(fake.list_object_versions(Bucket="test-bucket")["DeleteMarkers"]) == 1
 
 
 def test_a_second_prune_finds_no_marker_left_to_remove(prune_handler: Any) -> None:
-    fake = _marked(_store(), ["carriers/two-node/pops.json", "carriers/two-node/edges.json"])
+    fake = _marked(_store(), ["carriers/dcn/fiber-segments.json", "carriers/dcn/edges.json"])
     _markers_after_pruning(prune_handler, fake)
     with patch("boto3.client", return_value=fake):
         response = prune_handler.lambda_handler({"httpMethod": "POST"}, None)
