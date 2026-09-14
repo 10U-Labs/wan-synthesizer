@@ -225,14 +225,6 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/prohibited-circuits": {
-      "get": {
-        "summary": "A tenant's prohibited circuits (input).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The prohibited circuits." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      }
-    },
     "/wan-synthesizer/tenants/{tenant}": {
       "delete": {
         "summary": "Remove a tenant and all its inputs and outputs.",
