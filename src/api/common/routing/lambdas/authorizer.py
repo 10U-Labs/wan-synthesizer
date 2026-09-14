@@ -14,7 +14,6 @@ ISSUERS = frozenset({"accounts.google.com", "https://accounts.google.com"})
 API_KEY_PRINCIPAL = "api-key"
 BASE_PATH = "wan-synthesizer"
 SEED_WRITES: tuple[tuple[str, str], ...] = (
-    ("POST", "carriers/merge"),
     ("POST", "store/prune"),
     ("PUT", "carriers/*/fiber-segments"),
     ("PUT", "carriers/*/pops"),

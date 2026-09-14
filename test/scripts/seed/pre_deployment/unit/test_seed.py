@@ -13,13 +13,11 @@ import seed
 from test_http_doubles import CallRecorder, UrlopenRecorder
 from seed import (
     _carrier_names,
-    _post,
     _post_json,
     _put,
     _rows,
     _send,
     _slug,
-    build_merged_carriers,
     main,
     prune_store,
     push_carriers,
@@ -227,27 +225,7 @@ def test_put_prints_the_response_status(capsys: pytest.CaptureFixture[str]) -> N
     assert "-> 200" in capsys.readouterr().out
 
 
-def test_post_uses_the_post_method(urlopen_recorder: UrlopenRecorder) -> None:
-    _post("http://api", "carriers/merge")
-    assert urlopen_recorder.requests[0].method == "POST"
-
-
-def test_post_targets_the_api_path(urlopen_recorder: UrlopenRecorder) -> None:
-    _post("http://api", "carriers/merge")
-    assert urlopen_recorder.requests[0].full_url == "http://api/carriers/merge"
-
-
-def test_post_sends_no_body(urlopen_recorder: UrlopenRecorder) -> None:
-    _post("http://api", "carriers/merge")
-    assert urlopen_recorder.requests[0].data == b""
-
-
 @pytest.mark.usefixtures("urlopen_recorder")
-def test_post_prints_the_response_status(capsys: pytest.CaptureFixture[str]) -> None:
-    _post("http://api", "carriers/merge")
-    assert "-> 200" in capsys.readouterr().out
-
-
 def test_post_json_decodes_the_json_response(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         urllib.request, "urlopen", UrlopenRecorder(body=b'{"deleted": ["csps/a.json"]}'))
@@ -292,11 +270,6 @@ def test_push_providers_pushes_regions(
 
 @pytest.mark.usefixtures("put_recorder")
 @pytest.mark.usefixtures("put_recorder")
-def test_build_merged_carriers_posts_the_merge(post_recorder: CallRecorder) -> None:
-    build_merged_carriers("http://api")
-    assert post_recorder.calls == [("http://api", "carriers/merge")]
-
-
 def _prune_answering(
         monkeypatch: pytest.MonkeyPatch, deleted: list[str]) -> list[tuple[str, str, Any]]:
     sent: list[tuple[str, str, Any]] = []
@@ -351,7 +324,6 @@ def _run_main(
 
     monkeypatch.setattr(sys, "argv", argv)
     monkeypatch.setattr(seed, "push_carriers", lambda api: calls.append(("carriers", api)))
-    monkeypatch.setattr(seed, "build_merged_carriers", lambda api: calls.append(("merge", api)))
     monkeypatch.setattr(seed, "push_providers", lambda api: calls.append(("providers", api)))
     monkeypatch.setattr(
         seed, "prune_store", lambda api: calls.append(("prune-store", api)))
@@ -370,4 +342,4 @@ def test_main_uses_the_cli_argument_when_given(monkeypatch: pytest.MonkeyPatch) 
 def test_main_seeds_inputs_then_triggers_builds_in_order(
         monkeypatch: pytest.MonkeyPatch) -> None:
     assert [name for name, _ in _run_main(monkeypatch, ["seed"])] == [
-        "carriers", "merge", "providers", "prune-store"]
+        "carriers", "providers", "prune-store"]

@@ -81,10 +81,6 @@ def _put(api: str, path: str, body: Any) -> None:
     WRITTEN.add(f"{path}.json")
 
 
-def _post(api: str, path: str) -> None:
-    _send(api, path, "POST", b"")
-
-
 def _post_json(api: str, path: str, body: Any) -> Any:
     return json.loads(_send(api, path, "POST", json.dumps(body).encode()))
 
@@ -128,14 +124,8 @@ def prune_store(api: str) -> None:
         print(f"  deleted {key}", flush=True)
 
 
-def build_merged_carriers(api: str) -> None:
-    print("merge: rebuilding the merged carriers", flush=True)
-    _post(api, "carriers/merge")
-
-
 def main() -> None:
     api = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_API
     push_carriers(api)
-    build_merged_carriers(api)
     push_providers(api)
     prune_store(api)

@@ -25,10 +25,3 @@ def put_recorder(monkeypatch: pytest.MonkeyPatch) -> CallRecorder:
     recorder = CallRecorder()
     monkeypatch.setattr(seed, "_put", recorder)
     return recorder
-
-
-@pytest.fixture
-def post_recorder(monkeypatch: pytest.MonkeyPatch) -> CallRecorder:
-    recorder = CallRecorder()
-    monkeypatch.setattr(seed, "_post", recorder)
-    return recorder

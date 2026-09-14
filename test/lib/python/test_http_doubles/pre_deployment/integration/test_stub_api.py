@@ -52,17 +52,17 @@ def test_the_body_a_client_sent_is_recorded() -> None:
 
 def test_a_request_carrying_no_body_records_an_empty_one() -> None:
     with StubApi() as api:
-        _send(api, "POST", "/carriers/merge")
+        _send(api, "POST", "/store/prune")
         assert [body for _method, _path, body in api.records] == [""]
 
 
 def test_every_request_is_recorded_in_the_order_it_arrived() -> None:
     with StubApi() as api:
         _send(api, "PUT", "/carriers/lumen/pops", b"[]")
-        _send(api, "POST", "/carriers/merge")
+        _send(api, "POST", "/store/prune")
         assert [path for _method, path, _body in api.records] == [
             "/carriers/lumen/pops",
-            "/carriers/merge",
+            "/store/prune",
         ]
 
 
