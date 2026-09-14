@@ -16,7 +16,7 @@ _CURRENT = [
     "carriers/merge/pops.json",
     "carriers/merge/fiber-segments.json",
     "providers/regions.json",
-    "tenants/daf/forced-circuits.json",
+    "tenants/daf/forced-homes.json",
     "tenants/daf/wan.json",
     "tenants/daf/wan-status.json",
 ]
