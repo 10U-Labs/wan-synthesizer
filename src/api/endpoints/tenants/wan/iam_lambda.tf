@@ -41,13 +41,6 @@ resource "aws_iam_role_policy" "dispatch" {
         Effect   = "Allow"
         Action   = ["s3:ListBucket"]
         Resource = [data.terraform_remote_state.storage.outputs.bucket_arn]
-      },
-      {
-        Effect = "Allow"
-        Action = ["lambda:InvokeFunction"]
-        Resource = [
-          "arn:aws:lambda:${module.common.aws_region}:${module.common.aws_account_id}:function:${module.common.lambda_handler_names.wan}-synthesizer"
-        ]
       }
     ]
   })

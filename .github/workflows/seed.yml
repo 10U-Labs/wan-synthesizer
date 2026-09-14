@@ -157,38 +157,6 @@ jobs:
           --reporters console test/scripts/seed/
           test/lib/python/repo_utils
           test/lib/python/test_http_doubles
-  e2e-tests:
-    if: ${{ !cancelled() && needs.wait-for-every-wan.result == 'success' }}
-    name: e2e-tests
-    needs:
-      - wait-for-every-wan
-      - test-repo-libraries
-    permissions:
-      contents: read
-      id-token: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-region: us-east-2
-          role-to-assume: ${{ vars.SEED_ROLE_ARN }}
-      - name: Read the API key the authorizer admits
-        run: |
-          KEY=$(aws ssm get-parameter --name /wan-synthesizer/api-key \
-            --with-decryption --query Parameter.Value --output text)
-          echo "::add-mask::$KEY"
-          echo "WAN_SYNTHESIZER_API_KEY=$KEY" >> "$GITHUB_ENV"
-      - name: Install tools
-        run: pip install pytest pyyaml
-      - name: Check every published network against the config that asked for it
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src/api/endpoints/tenants/wan/post/lambdas
-          python3 -m pytest
-          test/scripts/seed/post_deployment/e2e/
-          --import-mode=importlib --confcutdir=test
-          --verbose
   integration-tests:
     name: integration-tests
     needs: test-repo-libraries
@@ -199,7 +167,7 @@ jobs:
         run: pip install pytest pyyaml 'python-hcl2<8'
       - name: Run integration tests against a mocked and a stubbed API
         run: >-
-          PYTHONPATH=.:lib/python:scripts:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:test
           python3 -m pytest
           test/scripts/seed/pre_deployment/integration/
           --import-mode=importlib --confcutdir=test
@@ -225,7 +193,7 @@ jobs:
         run: pip install mypy boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on tests
         run: >-
-          MYPYPATH=lib/python:scripts:test:src/api/endpoints/tenants/wan/post/lambdas
+          MYPYPATH=lib/python:scripts:test
           python3 -m mypy --strict
           --explicit-package-bases test/scripts/seed/
           test/lib/python/repo_utils
@@ -239,7 +207,7 @@ jobs:
         run: pip install pylint boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run pylint on source
         run: >-
-          PYTHONPATH=lib/python:scripts:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=lib/python:scripts
           python3 -m pylint
           scripts/seed.py lib/python/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
@@ -253,7 +221,7 @@ jobs:
         run: pip install pylint boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run pylint on tests
         run: >-
-          PYTHONPATH=.:lib/python:scripts:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:test
           python3 -m pylint --recursive=y
           test/scripts/seed/
           test/lib/python/repo_utils
@@ -333,17 +301,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run the shared modules' unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/repo_utils/pre_deployment/unit/
           test/lib/python/test_fixtures/pre_deployment/unit/
           test/lib/python/test_handler_contracts/pre_deployment/unit/
           test/lib/python/test_http_doubles/pre_deployment/unit/
           test/lib/python/test_module_utils/pre_deployment/unit/
-          test/lib/python/test_published_syntheses/pre_deployment/unit/
           test/lib/python/test_s3_store_mock/pre_deployment/unit/
           test/lib/python/test_terraform_config/pre_deployment/unit/
           test/lib/python/test_terraform_drift/pre_deployment/unit/
@@ -353,7 +320,6 @@ jobs:
           --cov=lib/python/test_fixtures
           --cov=lib/python/test_handler_contracts
           --cov=lib/python/test_module_utils
-          --cov=lib/python/test_published_syntheses
           --cov=lib/python/test_s3_store_mock
           --cov=lib/python/test_terraform_config
           --cov=lib/python/test_terraform_drift
@@ -362,11 +328,10 @@ jobs:
           --cov-fail-under=100
       - name: Run the shared modules' integration tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_handler_contracts/pre_deployment/integration/
           test/lib/python/test_http_doubles/pre_deployment/
-          test/lib/python/test_published_syntheses/pre_deployment/integration/
           test/lib/python/test_terraform_config/pre_deployment/integration/
           --import-mode=importlib --confcutdir=test
           --verbose --pythonwarnings=error
@@ -416,7 +381,6 @@ jobs:
             api_endpoint_providers.yml
             api_endpoint_tenants.yml
             api_endpoint_tenants_wan.yml
-            api_endpoint_tenants_wan_post.yml
         id: deploys
         name: Wait for every deploy this commit started, so seeding runs against what it ships
         run: |
@@ -454,60 +418,6 @@ jobs:
             done
           done
           echo "apply=$APPLY" >> "$GITHUB_OUTPUT"
-  wait-for-every-wan:
-    if: ${{ !cancelled() && needs.seeding.result == 'success' }}
-    name: wait-for-every-wan
-    needs: seeding
-    permissions:
-      contents: read
-      id-token: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-region: us-east-2
-          role-to-assume: ${{ vars.SEED_ROLE_ARN }}
-      - name: Read the API key the authorizer admits
-        run: |
-          KEY=$(aws ssm get-parameter --name /wan-synthesizer/api-key \
-            --with-decryption --query Parameter.Value --output text)
-          echo "::add-mask::$KEY"
-          echo "WAN_SYNTHESIZER_API_KEY=$KEY" >> "$GITHUB_ENV"
-      - env:
-          API: https://api.10ulabs.com/wan-synthesizer
-          POLL_LIMIT: '45'
-          POLL_SECONDS: '20'
-        name: Wait for every WAN the seed asked for, so e2e-tests grades what it built
-        run: |
-          for CONFIG in etc/*.yml; do
-            TENANT=$(basename "$CONFIG" .yml | tr _ -)
-            POLL=0
-            while true; do
-              STATUS=$(curl --silent \
-                --header "Authorization: Bearer $WAN_SYNTHESIZER_API_KEY" \
-                "$API/tenants/$TENANT/wan" | jq --raw-output '.status // .error // ""')
-              case "$STATUS" in
-                creating|synthesizing)
-                  echo "$TENANT is $STATUS. Waiting."
-                  ;;
-                "")
-                  echo "$TENANT gave no answer. Waiting."
-                  ;;
-                *)
-                  echo "$TENANT ended $STATUS."
-                  break
-                  ;;
-              esac
-              if [ "$POLL" -ge "$POLL_LIMIT" ]; then
-                echo "::error::$TENANT has not finished."
-                exit 1
-              fi
-              sleep "$POLL_SECONDS"
-              POLL=$((POLL + 1))
-            done
-          done
   yamllint:
     name: yamllint
     runs-on: ubuntu-latest
@@ -540,7 +450,6 @@ on:
       - scripts/seed.py
       - src/api/common/routing/authorizer.tf
       - src/api/common/storage/**
-      - src/api/endpoints/tenants/wan/post/lambdas/**
       - src/www/api/openapi.json
       - test/lib/python/**
       - test/scripts/seed/**

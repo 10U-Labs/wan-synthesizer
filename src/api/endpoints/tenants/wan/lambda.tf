@@ -24,13 +24,12 @@ resource "aws_lambda_function" "handler" {
   architectures    = ["arm64"]
   timeout          = 10
   memory_size      = 128
-  description      = "WAN create endpoint: async-invoke the synthesizer, report status."
+  description      = "WAN status endpoint: report where a tenant's run stands."
 
   environment {
     variables = {
-      AWS_USE_FIPS_ENDPOINT     = "true"
-      STORE_BUCKET              = local.store_bucket
-      SYNTHESIZER_FUNCTION_NAME = "${module.common.lambda_handler_names.wan}-synthesizer"
+      AWS_USE_FIPS_ENDPOINT = "true"
+      STORE_BUCKET          = local.store_bucket
     }
   }
 

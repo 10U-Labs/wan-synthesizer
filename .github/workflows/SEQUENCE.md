@@ -5,14 +5,9 @@ actions. Each node is one workflow (`api_common_*`, `api_endpoint_*`). `A ─→
 means B builds on A: every workflow assumes the role `api/common/identity`
 declares, so that stack sits ahead of every other and each reconciliation runs
 under the permissions it enumerates; every endpoint reads the common `storage`
-+ `routing` state, a
-carrier/tenant write cascades to its builder (`carriers/merge`,
-`tenants/wan`), and the `tenants/wan` POST workflow
-(`*_post.yml`) lints, tests, and deploys the synthesizer's own stack
-(`tenants/wan/post`, named after the workflow that owns it). The `tenants/wan`
-dispatcher stack invokes the synthesizer by its deterministic derived name (from the
-common module), so the two stacks stay decoupled -- each workflow owns and deploys
-its own stack.
++ `routing` state, and a carrier write cascades to its builder
+(`carriers/merge`). The synthesizer moved to `api.10ulabs.com`, so
+`tenants/wan` serves a run's status alone.
 
 ```text
 api/common/identity ─┬─→ api/common/storage ─┐
@@ -20,6 +15,4 @@ api/common/identity ─┬─→ api/common/storage ─┐
                                              ├─→ api/endpoints/carriers ─────→ api/endpoints/carriers/merge
                                              ├─→ api/endpoints/providers
                                              └─→ api/endpoints/tenants ──────→ api/endpoints/tenants/wan
-                                                                               │
-                                                                               └─→ tenants/wan POST (tenants/wan/post)
 ```

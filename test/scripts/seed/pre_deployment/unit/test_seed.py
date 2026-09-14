@@ -16,7 +16,6 @@ from seed import (
     _carrier_names,
     _city_key,
     _degree_doc,
-    _get,
     _mapping_rows,
     _off_net_rows,
     _post,
@@ -26,7 +25,6 @@ from seed import (
     _send,
     _slug,
     build_merged_carriers,
-    build_tenants,
     main,
     prune_store,
     push_carriers,
@@ -398,8 +396,8 @@ def test_post_uses_the_post_method(urlopen_recorder: UrlopenRecorder) -> None:
 
 
 def test_post_targets_the_api_path(urlopen_recorder: UrlopenRecorder) -> None:
-    _post("http://api", "tenants/f-35/wan")
-    assert urlopen_recorder.requests[0].full_url == "http://api/tenants/f-35/wan"
+    _post("http://api", "carriers/merge")
+    assert urlopen_recorder.requests[0].full_url == "http://api/carriers/merge"
 
 
 def test_post_sends_no_body(urlopen_recorder: UrlopenRecorder) -> None:
@@ -429,22 +427,6 @@ def test_put_records_the_key_it_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "WRITTEN", set())
     _put("http://api", "tenants/t/knobs", {})
     assert seed.WRITTEN == {"tenants/t/knobs.json"}
-
-
-def test_get_uses_the_get_method(urlopen_recorder: UrlopenRecorder) -> None:
-    _get("http://api", "carriers")
-    assert urlopen_recorder.requests[0].method == "GET"
-
-
-def test_get_sends_no_body(urlopen_recorder: UrlopenRecorder) -> None:
-    _get("http://api", "carriers")
-    assert urlopen_recorder.requests[0].data is None
-
-
-def test_get_decodes_the_json_response(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        urllib.request, "urlopen", UrlopenRecorder(body=b'[{"id": "f-35"}]'))
-    assert _get("http://api", "carriers") == [{"id": "f-35"}]
 
 
 def test_push_carriers_puts_the_pops_path(
@@ -682,16 +664,6 @@ def test_prune_store_survives_an_answer_it_does_not_recognise(
     assert "deleted " not in capsys.readouterr().out
 
 
-def test_build_tenants_posts_a_wan_build_for_each(post_recorder: CallRecorder) -> None:
-    build_tenants("http://api", ["f-35", "minuteman"])
-    assert post_recorder.nth(1) == ["tenants/f-35/wan", "tenants/minuteman/wan"]
-
-
-def test_build_tenants_posts_nothing_without_tenants(post_recorder: CallRecorder) -> None:
-    build_tenants("http://api", [])
-    assert post_recorder.calls == []
-
-
 def _run_main(
         monkeypatch: pytest.MonkeyPatch, argv: list[str]) -> list[tuple[str, str]]:
     calls: list[tuple[str, str]] = []
@@ -707,8 +679,6 @@ def _run_main(
     monkeypatch.setattr(seed, "push_tenants", _push_tenants)
     monkeypatch.setattr(
         seed, "prune_store", lambda api: calls.append(("prune-store", api)))
-    monkeypatch.setattr(
-        seed, "build_tenants", lambda api, _tenants: calls.append(("build", api)))
     main()
     return calls
 
@@ -724,6 +694,6 @@ def test_main_uses_the_cli_argument_when_given(monkeypatch: pytest.MonkeyPatch) 
 def test_main_seeds_inputs_then_triggers_builds_in_order(
         monkeypatch: pytest.MonkeyPatch) -> None:
     assert [name for name, _ in _run_main(monkeypatch, ["seed"])] == [
-        "carriers", "merge", "providers", "tenants", "prune-store", "build"]
+        "carriers", "merge", "providers", "tenants", "prune-store"]
 
 

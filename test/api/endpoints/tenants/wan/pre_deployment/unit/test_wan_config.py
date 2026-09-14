@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest
-
 from test_terraform_config import find_resource
 
 
@@ -39,11 +37,9 @@ def test_lambda_entrypoint(wan_lambda: dict[str, object]) -> None:
     assert handler["handler"] == "handler.lambda_handler"
 
 
-@pytest.mark.parametrize("variable", ["STORE_BUCKET", "SYNTHESIZER_FUNCTION_NAME"])
-def test_lambda_environment_declares_variable(
-        wan_lambda: dict[str, object], variable: str) -> None:
+def test_lambda_environment_declares_the_store(wan_lambda: dict[str, object]) -> None:
     handler = _resource(wan_lambda, "aws_lambda_function", "handler")
-    assert variable in handler["environment"][0]["variables"]
+    assert "STORE_BUCKET" in handler["environment"][0]["variables"]
 
 
 def test_log_group_retention_is_seven_days(wan_lambda: dict[str, object]) -> None:
@@ -58,11 +54,6 @@ def test_iam_role_is_declared(wan_iam: dict[str, object]) -> None:
 def test_dispatch_policy_is_named(wan_iam: dict[str, object]) -> None:
     dispatch = _resource(wan_iam, "aws_iam_role_policy", "dispatch")
     assert dispatch["name"] == "Dispatch"
-
-
-def test_dispatch_policy_grants_invoke(wan_iam: dict[str, object]) -> None:
-    dispatch = _resource(wan_iam, "aws_iam_role_policy", "dispatch")
-    assert "lambda:InvokeFunction" in str(dispatch["policy"])
 
 
 def test_dispatch_policy_grants_listing_the_bucket(wan_iam: dict[str, object]) -> None:

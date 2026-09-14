@@ -29,9 +29,5 @@ def test_lambda_arn_output_references_the_declared_handler() -> None:
     assert "aws_lambda_function.handler" in str(outputs["lambda_function_arn"])
 
 
-def test_dispatcher_invokes_the_derived_synthesizer_name() -> None:
-    assert "${module.common.lambda_handler_names.wan}-synthesizer" in _stack_text()
-
-
-def test_dispatch_policy_targets_the_derived_synthesizer_arn() -> None:
-    assert ":function:${module.common.lambda_handler_names.wan}-synthesizer" in _stack_text()
+def test_the_stack_names_no_synthesizer_since_the_api_computes_the_runs() -> None:
+    assert "-synthesizer" not in _stack_text()

@@ -18,16 +18,6 @@ def test_api_gateway_alone_may_invoke_the_lambda(lambda_client: Any, function_na
     ] == ["apigateway.amazonaws.com"]
 
 
-def test_dispatch_role_grants_invoke(iam_client: Any, role_name: str) -> None:
-    policy = iam_client.get_role_policy(RoleName=role_name, PolicyName="Dispatch")
-    assert "lambda:InvokeFunction" in str(policy["PolicyDocument"])
-
-
-def test_dispatch_role_targets_the_synthesizer(iam_client: Any, role_name: str) -> None:
-    policy = iam_client.get_role_policy(RoleName=role_name, PolicyName="Dispatch")
-    assert "-synthesizer" in str(policy["PolicyDocument"])
-
-
 def test_dispatch_role_grants_listing_the_bucket(iam_client: Any, role_name: str) -> None:
     policy = iam_client.get_role_policy(RoleName=role_name, PolicyName="Dispatch")
     assert "s3:ListBucket" in str(policy["PolicyDocument"])

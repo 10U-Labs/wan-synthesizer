@@ -5,7 +5,6 @@ import re
 import sys
 from pathlib import Path
 from urllib.parse import urlsplit
-from collections.abc import Callable
 from typing import Any, cast
 
 import pytest
@@ -13,14 +12,9 @@ import yaml
 
 import seed
 from repo_utils import REPO_ROOT
-from seed import _carrier_cities, _carrier_names, _city_key, _mapping_rows, _rows, _slug
-from synthesizer.ceiling import CircuitProofInputs, diverse_circuit_ceiling
-from synthesizer.codec import load_merged_carriers, load_regions, load_sites
-from synthesizer.graphs import build_adjacency
-from synthesizer.input_graph import FiberSegment, Site, haversine_miles
+from seed import _carrier_cities, _carrier_names, _city_key, _rows, _slug
 from test_http_doubles import UrlopenRecorder
-from test_published_syntheses import UNFINISHED
-from test_terraform_config import api_key_parameter_name, find_resource, load_tf
+from test_terraform_config import api_key_parameter_name
 
 _API = "http://stub"
 
@@ -147,7 +141,7 @@ def test_seeding_waits_for_every_workflow_that_deploys_on_the_same_commit() -> N
     assert _workflows_seeding_waits_for() == _workflows_that_deploy()
 
 
-_JOBS_REACHING_THE_API = ("seeding", "wait-for-every-wan", "e2e-tests")
+_JOBS_REACHING_THE_API = ("seeding",)
 
 
 def _runs(job: dict[str, Any]) -> str:
@@ -175,58 +169,6 @@ def test_every_job_that_reaches_the_api_may_read_the_key() -> None:
 def test_seeding_seeds_only_on_the_conclusion_the_wait_job_reports() -> None:
     condition = _seed_workflow()["jobs"]["seeding"]["if"]
     assert f"needs.{_WAIT_JOB}.outputs.apply == 'true'" in condition
-
-
-_WAN_WAIT_JOB = "wait-for-every-wan"
-
-
-def _wan_wait_step() -> dict[str, Any]:
-    steps = _seed_workflow()["jobs"][_WAN_WAIT_JOB]["steps"]
-    return next(step for step in steps if "env" in step)
-
-
-def test_the_wan_wait_follows_seeding() -> None:
-    assert _needed_by(_seed_workflow()["jobs"][_WAN_WAIT_JOB]) == ["seeding"]
-
-
-def test_the_wan_wait_runs_only_on_a_seed_that_succeeded() -> None:
-    condition = _seed_workflow()["jobs"][_WAN_WAIT_JOB]["if"]
-    assert "needs.seeding.result == 'success'" in condition
-
-
-def test_e2e_tests_follow_the_wan_wait_and_not_seeding() -> None:
-    assert _needed_by(_seed_workflow()["jobs"]["e2e-tests"]) == [
-        _WAN_WAIT_JOB, "test-repo-libraries"]
-
-
-def test_e2e_tests_run_only_on_a_wan_wait_that_succeeded() -> None:
-    condition = _seed_workflow()["jobs"]["e2e-tests"]["if"]
-    assert re.findall(r"needs\.([\w-]+)\.result == 'success'", condition) == [_WAN_WAIT_JOB]
-
-
-def test_the_wan_wait_reads_the_api_the_seed_writes_to() -> None:
-    assert _wan_wait_step()["env"]["API"] == seed.DEFAULT_API
-
-
-def test_the_wan_wait_polls_every_tenant_config_the_seed_pushes() -> None:
-    assert "for CONFIG in etc/*.yml" in _wan_wait_step()["run"]
-
-
-def test_the_wan_wait_keeps_waiting_on_exactly_the_unfinished_statuses() -> None:
-    waited = re.search(r"^\s*([\w|]+)\)$", _wan_wait_step()["run"], re.MULTILINE)
-    assert set(str(waited and waited.group(1)).split("|")) == set(UNFINISHED)
-
-
-def _synthesizer_timeout_seconds() -> int:
-    synthesizer = find_resource(
-        load_tf(REPO_ROOT / "src/api/endpoints/tenants/wan/post/main.tf"),
-        "aws_lambda_function", "synthesizer")
-    return int(cast("dict[str, Any]", synthesizer)["timeout"])
-
-
-def test_the_wan_wait_allows_a_build_every_second_aws_allows_the_synthesizer() -> None:
-    env = _wan_wait_step()["env"]
-    assert int(env["POLL_LIMIT"]) * int(env["POLL_SECONDS"]) == _synthesizer_timeout_seconds()
 
 
 def _tenant_configs() -> dict[str, dict[str, Any]]:
@@ -348,121 +290,3 @@ def test_pipeline_writes_a_document_for_every_tenant(
         monkeypatch: pytest.MonkeyPatch) -> None:
     paths = _seed(urlopen_recorder, monkeypatch)
     assert _tenants_written(paths, resource) == len(list(seed.ETC.glob("*.yml")))
-
-
-def _merged_carriers() -> tuple[list[Site], dict[tuple[str, str], FiberSegment]]:
-    points = [
-        row
-        for path in sorted((seed.DATA / "pops").glob("*.csv"))
-        for row in _rows(path)
-    ]
-    segments = [
-        row
-        for path in sorted((seed.DATA / seed.FIBER_SEGMENTS).glob("*/*.csv"))
-        for row in _rows(path)
-    ]
-    return load_merged_carriers(points, segments)
-
-
-def _cities_and_adjacency() -> tuple[dict[str, str], dict[str, list[tuple[str, float]]]]:
-    sites, fiber = _merged_carriers()
-    return {site.name: site.id for site in sites}, build_adjacency(fiber)
-
-
-def _pinned_cities(backbone: dict[str, Any]) -> list[str]:
-    return list((backbone.get("forced") or {}).get("wan_pops") or [])
-
-
-def _exempt_cities(backbone: dict[str, Any]) -> list[str]:
-    return list(backbone.get("degree_exempt") or [])
-
-
-def _pinned_ids(backbone: dict[str, Any], by_name: dict[str, str]) -> tuple[str, ...]:
-    return tuple(by_name[name] for name in _pinned_cities(backbone) if name in by_name)
-
-
-def _path_endpoints(city_id: str, pinned: tuple[str, ...]) -> int:
-    return len(pinned) - (1 if city_id in pinned else 0)
-
-
-def _ceiling_bounds(
-    cities: Callable[[dict[str, Any]], list[str]],
-) -> list[tuple[str, str, int, int]]:
-    by_name, adjacency = _cities_and_adjacency()
-    bounds: list[tuple[str, str, int, int]] = []
-    for tenant, backbone in sorted(_backbone_blocks().items()):
-        pinned = _pinned_ids(backbone, by_name)
-        asked = backbone["number_of_diverse_circuits"]
-        for city in cities(backbone):
-            city_id = by_name.get(city)
-            if city_id is None or _path_endpoints(city_id, pinned) < 1:
-                continue
-            bound = diverse_circuit_ceiling(city_id, CircuitProofInputs(pinned, adjacency))
-            bounds.append((tenant, city, bound, asked))
-    return bounds
-
-
-def _exemption_ceiling_bounds() -> list[tuple[str, str, int, int]]:
-    return _ceiling_bounds(_exempt_cities)
-
-
-def test_no_tenant_exempts_a_city_its_own_fiber_already_accounts_for() -> None:
-    assert [
-        (tenant, city, bound, degree)
-        for tenant, city, bound, degree in _exemption_ceiling_bounds()
-        if bound < degree
-    ] == []
-
-
-def test_every_pinned_city_can_carry_the_diversity_its_tenant_asks_for() -> None:
-    assert [
-        (tenant, city, bound, asked)
-        for tenant, city, bound, asked in _ceiling_bounds(_pinned_cities)
-        if bound < asked
-    ] == []
-
-
-def _demand(config: dict[str, Any]) -> list[Site]:
-    inputs = config["inputs"]
-    providers = inputs.get("providers")
-    sites = load_sites(_mapping_rows(inputs.get("locations", {})))
-    sites += load_regions(_rows(REPO_ROOT / providers)) if providers else []
-    return [site for site in sites if not site.exempt_from_distance_constraint]
-
-
-def _wan_pops_for_coverage(config: dict[str, Any], carriers: list[Site]) -> int:
-    target = config["backbone"]["coverage_target_miles"]
-    sites = _demand(config)
-    reach = {
-        carrier.name: {
-            site.id for site in sites if haversine_miles(site, carrier) <= target
-        }
-        for carrier in carriers
-    }
-    pinned = _pinned_cities(config["backbone"])
-    unserved = {site.id for site in sites}
-    for city in pinned:
-        unserved -= reach.get(city, set())
-    wan_pops = len(pinned)
-    while unserved:
-        best = max(reach.values(), key=lambda served: len(served & unserved))
-        if not best & unserved:
-            break
-        unserved -= best
-        wan_pops += 1
-    return wan_pops
-
-
-def _wan_pop_shortfalls() -> list[tuple[str, int, int]]:
-    carriers, _segments = _merged_carriers()
-    shortfalls: list[tuple[str, int, int]] = []
-    for tenant, config in sorted(_tenant_configs().items()):
-        cap = config["backbone"]["wan_pop_count"]["max"]
-        needed = _wan_pops_for_coverage(config, carriers)
-        if cap < needed:
-            shortfalls.append((tenant, cap, needed))
-    return shortfalls
-
-
-def test_no_tenant_caps_its_backbone_below_the_coverage_target_it_asks_for() -> None:
-    assert not _wan_pop_shortfalls()

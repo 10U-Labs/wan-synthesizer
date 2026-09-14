@@ -126,10 +126,6 @@ def _post_json(api: str, path: str, body: Any) -> Any:
     return json.loads(_send(api, path, "POST", json.dumps(body).encode()))
 
 
-def _get(api: str, path: str) -> Any:
-    return json.loads(_send(api, path, "GET", None))
-
-
 def _degree_doc(value: Any) -> dict[str, Any]:
     return {"degree": value}
 
@@ -223,17 +219,10 @@ def build_merged_carriers(api: str) -> None:
     _post(api, "carriers/merge")
 
 
-def build_tenants(api: str, tenants: list[str]) -> None:
-    for tid in tenants:
-        print(f"tenant {tid}: synthesizing WAN", flush=True)
-        _post(api, f"tenants/{tid}/wan")
-
-
 def main() -> None:
     api = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_API
     push_carriers(api)
     build_merged_carriers(api)
     push_providers(api)
-    tenants = push_tenants(api)
+    push_tenants(api)
     prune_store(api)
-    build_tenants(api, tenants)

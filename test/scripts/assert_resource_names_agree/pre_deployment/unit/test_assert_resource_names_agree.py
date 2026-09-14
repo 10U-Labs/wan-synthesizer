@@ -9,7 +9,6 @@ import pytest
 from assert_resource_names_agree import (
     OPENAPI,
     SPA,
-    SYNTHESIZER,
     TENANTS,
     disagreements,
     documented_collections,
@@ -17,7 +16,6 @@ from assert_resource_names_agree import (
     fetched_collections,
     main,
     named_strings,
-    published_keys,
 )
 
 _ROUTE = "/wan-synthesizer/tenants/{tenant}"
@@ -32,23 +30,6 @@ _INPUTS = frozenset({
 _LIMIT = 5
 _SEEN = {}
 _SEEN["kind"] = "site"
-'''
-_SYNTHESIZER_SOURCE = '''CONFIG_RESOURCES = (
-    "forced-circuits",
-)
-
-
-def _build_wan(payload, other):
-    nothing = {}
-    apart = {"count": len(payload)}
-    helped = {"rows": rows(payload)}
-    deep = {"rows": one.two.three(payload)}
-    elsewhere = {"rows": other.sites(payload)}
-    numbered = {1: published.sites(payload)}
-    return {
-        "sites": published.sites(payload),
-        "wan-pops": published.wan_pops(payload),
-    }, nothing, apart, helped, deep, elsewhere, numbered
 '''
 _SPA_SOURCE = """
 async function render(tenantId) {
@@ -81,7 +62,6 @@ def _write(root: Path, relative: Path, text: str) -> None:
 def _agreeing_repo(root: Path, spec: dict[str, Any] | None = None) -> Path:
     _write(root, OPENAPI, json.dumps(spec if spec is not None else _spec()))
     _write(root, TENANTS, _TENANTS_SOURCE)
-    _write(root, SYNTHESIZER, _SYNTHESIZER_SOURCE)
     _write(root, SPA, _SPA_SOURCE)
     return root
 
@@ -120,10 +100,6 @@ def test_named_strings_finds_nothing_under_a_name_nothing_is_assigned_to() -> No
     assert named_strings(_TENANTS_SOURCE, "_NOWHERE") == frozenset()
 
 
-def test_published_keys_are_the_keys_of_the_wan_the_synthesizer_writes() -> None:
-    assert published_keys(_SYNTHESIZER_SOURCE) == frozenset({"sites", "wan-pops"})
-
-
 def test_fetched_collections_are_the_ones_the_map_asks_for() -> None:
     assert fetched_collections(_SPA_SOURCE) == frozenset({"sites", "wan-pops"})
 
@@ -150,22 +126,6 @@ def test_a_collection_documented_and_left_out_of_the_handler_is_reported(
 def test_an_input_the_handler_serves_and_nothing_documents_is_reported(tmp_path: Path) -> None:
     root = _agreeing_repo(tmp_path, _without("forced-circuits"))
     assert [line for line in disagreements(root) if "forced-circuits" in line]
-
-
-def test_a_wan_key_the_synthesizer_writes_that_nothing_serves_is_reported(
-    tmp_path: Path,
-) -> None:
-    _agreeing_repo(tmp_path)
-    _write(tmp_path, SYNTHESIZER, _SYNTHESIZER_SOURCE.replace("wan-pops", "provider-pops"))
-    assert [line for line in disagreements(tmp_path) if f"::error file={SYNTHESIZER}::" in line]
-
-
-def test_a_config_resource_the_synthesizer_reads_that_nothing_serves_is_reported(
-    tmp_path: Path,
-) -> None:
-    _agreeing_repo(tmp_path)
-    _write(tmp_path, SYNTHESIZER, _SYNTHESIZER_SOURCE.replace("forced-circuits", "forced-paths"))
-    assert [line for line in disagreements(tmp_path) if "forced-paths" in line]
 
 
 def test_a_collection_the_map_fetches_that_nothing_serves_is_reported(tmp_path: Path) -> None:

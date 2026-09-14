@@ -126,10 +126,10 @@ jobs:
       - name: Install tools
         run: >-
           pip install assert-pytest-fixture-is-requested boto3 boto3-stubs
-          highspy==1.15.1 pytest 'python-hcl2<8' pyyaml
+          pytest 'python-hcl2<8' pyyaml
       - name: Assert every pytest fixture is requested
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           assert-pytest-fixture-is-requested
           --defined-in lib/python
           --dont-search-in 'test/lib/python/test_{package}'
@@ -239,7 +239,7 @@ jobs:
         run: pip install mypy boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on tests
         run: >-
-          MYPYPATH=lib/python:scripts:test:src/api/endpoints/tenants/wan/post/lambdas
+          MYPYPATH=lib/python:scripts:test
           python3 -m mypy --strict --ignore-missing-imports
           --explicit-package-bases test/scripts/ test/lib/python/
   pylint-source:
@@ -251,7 +251,7 @@ jobs:
         run: pip install pylint boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run pylint on source
         run: >-
-          PYTHONPATH=lib/python:scripts:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=lib/python:scripts
           python3 -m pylint --recursive=y
           scripts/ lib/python/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
@@ -265,7 +265,7 @@ jobs:
         run: pip install pylint boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run pylint on tests
         run: >-
-          PYTHONPATH=.:lib/python:scripts:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:test
           python3 -m pylint --recursive=y
           test/scripts/ test/lib/python/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
@@ -312,10 +312,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/repo_utils/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
@@ -330,10 +330,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_fixtures/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
@@ -348,10 +348,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_handler_contracts/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
@@ -362,7 +362,7 @@ jobs:
           --cov-fail-under=100
       - name: Run integration tests
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_handler_contracts/pre_deployment/integration/
           --import-mode=importlib --confcutdir=test
@@ -373,10 +373,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run both tiers with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_http_doubles/pre_deployment/
           --import-mode=importlib --confcutdir=test
@@ -391,10 +391,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_module_utils/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
@@ -409,23 +409,20 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
-          test/lib/python/test_published_syntheses/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
           --verbose --pythonwarnings=error
-          --cov=lib/python/test_published_syntheses
           --cov-branch
           --cov-report=term-missing
           --cov-fail-under=100
       - name: Run integration tests
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
-          test/lib/python/test_published_syntheses/pre_deployment/integration/
           --import-mode=importlib --confcutdir=test
           --verbose --pythonwarnings=error
   test-lib-test-s3-store-mock:
@@ -434,10 +431,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_s3_store_mock/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
@@ -452,10 +449,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_terraform_config/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
@@ -466,7 +463,7 @@ jobs:
           --cov-fail-under=100
       - name: Run the integration tests that read no AWS
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_terraform_config/pre_deployment/integration/
           --ignore=test/lib/python/test_terraform_config/pre_deployment/integration/test_state_keys.py
@@ -478,10 +475,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_terraform_drift/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
@@ -510,7 +507,7 @@ jobs:
           --cov-fail-under=100
       - name: Run integration tests against a mocked and a stubbed API
         run: >-
-          PYTHONPATH=.:lib/python:scripts:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:test
           python3 -m pytest
           test/scripts/seed/pre_deployment/integration/
           --import-mode=importlib --confcutdir=test

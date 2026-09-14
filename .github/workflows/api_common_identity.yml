@@ -330,17 +330,16 @@ jobs:
           aws-region: us-east-2
           role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
       - name: Install tools
-        run: pip install --upgrade boto3 highspy==1.15.1 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run the shared modules' unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/repo_utils/pre_deployment/unit/
           test/lib/python/test_fixtures/pre_deployment/unit/
           test/lib/python/test_handler_contracts/pre_deployment/unit/
           test/lib/python/test_http_doubles/pre_deployment/unit/
           test/lib/python/test_module_utils/pre_deployment/unit/
-          test/lib/python/test_published_syntheses/pre_deployment/unit/
           test/lib/python/test_s3_store_mock/pre_deployment/unit/
           test/lib/python/test_terraform_config/pre_deployment/unit/
           test/lib/python/test_terraform_drift/pre_deployment/unit/
@@ -350,7 +349,6 @@ jobs:
           --cov=lib/python/test_fixtures
           --cov=lib/python/test_handler_contracts
           --cov=lib/python/test_module_utils
-          --cov=lib/python/test_published_syntheses
           --cov=lib/python/test_s3_store_mock
           --cov=lib/python/test_terraform_config
           --cov=lib/python/test_terraform_drift
@@ -359,11 +357,10 @@ jobs:
           --cov-fail-under=100
       - name: Run the shared modules' integration tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test:src/api/endpoints/tenants/wan/post/lambdas
+          PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
           test/lib/python/test_handler_contracts/pre_deployment/integration/
           test/lib/python/test_http_doubles/pre_deployment/
-          test/lib/python/test_published_syntheses/pre_deployment/integration/
           test/lib/python/test_terraform_config/pre_deployment/integration/
           --import-mode=importlib --confcutdir=test
           --verbose --pythonwarnings=error
