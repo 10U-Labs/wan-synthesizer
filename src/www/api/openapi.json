@@ -457,14 +457,6 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/label": {
-      "get": {
-        "summary": "A tenant's display label (input).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The label." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      }
-    },
     "/wan-synthesizer/tenants/{tenant}": {
       "delete": {
         "summary": "Remove a tenant and all its inputs and outputs.",

@@ -21,20 +21,20 @@ _LOCATIONS_ROW: dict[str, Any] = {
 
 _READER: dict[str, Any] = {
     "endpoint": "tenants",
-    "stored_key": "tenants/f-35/label.json",
-    "stored": {"label": "F-35"},
+    "stored_key": "tenants/f-35/knobs.json",
+    "stored": {"backbone_coverage_target_miles": 745},
     "serve_event": {
         "pathParameters": {"tenant": "f-35"},
-        "path": "/x/tenants/f-35/label",
+        "path": "/x/tenants/f-35/knobs",
     },
-    "serve_expect": {"label": "F-35"},
+    "serve_expect": {"backbone_coverage_target_miles": 745},
     "unknown_event": {
         "pathParameters": {"tenant": "f-35"},
         "path": "/x/tenants/f-35/bogus",
     },
     "notbuilt_event": {
         "pathParameters": {"tenant": "minuteman"},
-        "path": "/x/tenants/minuteman/label",
+        "path": "/x/tenants/minuteman/knobs",
     },
 }
 

@@ -21,7 +21,6 @@ TENANT_FILES = frozenset({
     "forced-wan-pops.json",
     "homing-degree.json",
     "knobs.json",
-    "label.json",
     "locations.json",
     "off-net.json",
     "prohibited-circuits.json",
