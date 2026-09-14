@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from collections import deque
-from itertools import combinations
 from typing import Any
 from urllib.error import HTTPError
 
@@ -14,7 +13,6 @@ UNFINISHED = frozenset({"creating", "synthesizing"})
 
 COLLECTIONS = (
     "wan-pops",
-    "backbone-circuits",
     "tenant-sites",
     "provider-sites",
 )
@@ -53,7 +51,6 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "wan_pops": published.get("wan-pops", []),
         "tenant_sites": published.get("tenant-sites", []),
         "provider_regions": published.get("provider-sites", []),
-        "circuits": published.get("backbone-circuits", []),
     }
 
 
@@ -78,166 +75,12 @@ def worst_haul(synthesis: dict[str, Any]) -> float:
     return round(max(hauls, default=0.0), 1)
 
 
-def _circuits_out_of(
-    circuits: list[dict[str, Any]], site: str, names: dict[str, str]
-) -> list[tuple[str, frozenset[str]]]:
-    return [
-        (
-            names[circuit["target_id"] if circuit["source_id"] == site else circuit["source_id"]],
-            frozenset(circuit["route"]) - {names[site]},
-        )
-        for circuit in circuits
-        if site in (circuit["source_id"], circuit["target_id"])
-    ]
-
-
-def _fail_apart(circuits: tuple[tuple[str, frozenset[str]], ...]) -> bool:
-    return all(
-        not ((near & far) - ({peer} if peer == other else frozenset()))
-        for (peer, near), (other, far) in combinations(circuits, 2)
-    )
-
-
-def diverse_circuit_count(
-    circuits: list[dict[str, Any]], site: str, names: dict[str, str]
-) -> int:
-    out_of_site = _circuits_out_of(circuits, site, names)
-    return max(
-        (
-            size
-            for size in range(1, len(out_of_site) + 1)
-            if any(_fail_apart(combo) for combo in combinations(out_of_site, size))
-        ),
-        default=0,
-    )
-
-
-def overbuilt_pairs(synthesis: dict[str, Any]) -> list[tuple[str, int]]:
-    drawn: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for drawn_circuit in synthesis["circuits"]:
-        pair = tuple(sorted((drawn_circuit["source_id"], drawn_circuit["target_id"])))
-        drawn.setdefault(pair, []).append(drawn_circuit)
-    names = {row["id"]: row["name"] for row in synthesis["wan_pops"]}
-    asked = synthesis["number_of_diverse_circuits"]
-    apart = pieces_without_each(synthesis["circuits"])
-    overbuilt: list[tuple[str, int]] = []
-    for pair, circuits in sorted(drawn.items()):
-        if len(circuits) < 2:
-            continue
-        spare = max(circuits, key=lambda circuit: circuit["distance_miles"])
-        kept = [circuit for circuit in synthesis["circuits"] if circuit is not spare]
-        if _cuts_deeper(kept, apart):
-            continue
-        if not any(
-            diverse_circuit_count(kept, end, names)
-            < min(asked, diverse_circuit_count(synthesis["circuits"], end, names))
-            for end in pair
-        ):
-            overbuilt.append((" <-> ".join(pair), len(circuits)))
-    return overbuilt
-
-
 def _joined_to(pairs: list[tuple[str, str]]) -> dict[str, set[str]]:
     joined: dict[str, set[str]] = {}
     for near, far in pairs:
         joined.setdefault(near, set()).add(far)
         joined.setdefault(far, set()).add(near)
     return joined
-
-
-def _reached(joined: dict[str, set[str]], start: str) -> set[str]:
-    found = {start}
-    unswept = [start]
-    while unswept:
-        here = unswept.pop()
-        for there in joined[here] - found:
-            found.add(there)
-            unswept.append(there)
-    return found
-
-
-def _all_one_network(joined: dict[str, set[str]]) -> bool:
-    return all(_reached(joined, start) == set(joined) for start in sorted(joined)[:1])
-
-
-def _pieces(joined: dict[str, set[str]]) -> int:
-    unplaced = set(joined)
-    counted = 0
-    while unplaced:
-        unplaced -= _reached(joined, min(unplaced))
-        counted += 1
-    return counted
-
-
-def pieces_without_each(circuits: list[dict[str, Any]]) -> dict[str, int]:
-    joined = _cities_the_circuits_cross(circuits)
-    return {
-        lost: _pieces({
-            city: reached - {lost} for city, reached in joined.items() if city != lost
-        })
-        for lost in joined
-    }
-
-
-def _cuts_deeper(
-    kept: list[dict[str, Any]], apart: dict[str, int]
-) -> bool:
-    return any(
-        pieces > apart[lost] for lost, pieces in pieces_without_each(kept).items()
-    )
-
-
-def cut_cities(circuits: list[dict[str, Any]]) -> list[str]:
-    whole = _pieces(_cities_the_circuits_cross(circuits))
-    return sorted(
-        lost for lost, pieces in pieces_without_each(circuits).items() if pieces > whole
-    )
-
-
-def _sites_the_circuits_join(
-    circuits: list[dict[str, Any]], sites: list[str]
-) -> dict[str, set[str]]:
-    alone: dict[str, set[str]] = {site: set() for site in sites}
-    return alone | _joined_to(
-        [(circuit["source_id"], circuit["target_id"]) for circuit in circuits]
-    )
-
-
-def _cities_the_circuits_cross(circuits: list[dict[str, Any]]) -> dict[str, set[str]]:
-    return _joined_to([
-        (near, far)
-        for circuit in circuits
-        for near, far in zip(circuit["route"], circuit["route"][1:])
-    ])
-
-
-def removable_circuits(synthesis: dict[str, Any]) -> list[tuple[str, float]]:
-    names = {row["id"]: row["name"] for row in synthesis["wan_pops"]}
-    sites = list(names)
-    asked = synthesis["number_of_diverse_circuits"]
-    pinned = {
-        frozenset((pair["source"], pair["target"])) for pair in synthesis["forced_circuits"]
-    }
-    held_diverse_circuits = {
-        site: min(asked, diverse_circuit_count(synthesis["circuits"], site, names))
-        for site in sites
-    }
-    apart = pieces_without_each(synthesis["circuits"])
-    removable: list[tuple[str, float]] = []
-    for spare in synthesis["circuits"]:
-        if frozenset((names[spare["source_id"]], names[spare["target_id"]])) in pinned:
-            continue
-        kept = [circuit for circuit in synthesis["circuits"] if circuit is not spare]
-        if any(
-            diverse_circuit_count(kept, site, names) < held_diverse_circuits[site] for site in sites
-        ):
-            continue
-        if not _all_one_network(_sites_the_circuits_join(kept, sites)):
-            continue
-        if _cuts_deeper(kept, apart):
-            continue
-        removable.append((" -> ".join(spare["route"]), spare["distance_miles"]))
-    return sorted(removable, key=lambda found: (-found[1], found[0]))
 
 
 _ARRIVING = "into "

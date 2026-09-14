@@ -133,7 +133,6 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     logger.info("Publishing WAN for %s", tenant)
     return {
         "wan-pops": published.wan_pops(payload),
-        "backbone-circuits": published.backbone_circuits(payload),
         "tenant-sites": published.tenant_sites(payload),
         "provider-sites": published.provider_sites(payload),
     }, _delivered(graph, synthesis, artifacts.validation, params, tenant)

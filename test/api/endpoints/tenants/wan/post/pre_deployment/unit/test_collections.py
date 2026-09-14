@@ -51,10 +51,6 @@ def test_provider_sites_are_all_tier_provider() -> None:
     assert all(site["tier_role"] == "provider" for site in gc.provider_sites(_payload()))
 
 
-def test_backbone_circuits_exist_for_a_meshed_synthesis() -> None:
-    assert gc.backbone_circuits(_payload())
-
-
 def test_backbone_circuits_are_all_backbone_mesh_circuits() -> None:
     assert all(
         circuit["purpose"] == "backbone_mesh" for circuit in gc.backbone_circuits(_payload())

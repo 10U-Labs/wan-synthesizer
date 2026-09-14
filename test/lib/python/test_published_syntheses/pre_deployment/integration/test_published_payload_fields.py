@@ -21,14 +21,12 @@ _PAYLOAD = synthesis_payload(
 
 _WAN_POP_FIELDS = ("id", "name", "kind", "coords")
 _SITE_FIELDS = (*_WAN_POP_FIELDS, "exempt_from_distance_constraint")
-_CIRCUIT_FIELDS = ("source_id", "target_id", "distance_miles", "route")
 
 
 def _subjects() -> list[tuple[str, list[dict[str, Any]], tuple[str, ...]]]:
     return [
         ("wan-pops", published.wan_pops(_PAYLOAD), _WAN_POP_FIELDS),
         ("tenant-sites", published.tenant_sites(_PAYLOAD), _SITE_FIELDS),
-        ("backbone-circuits", published.backbone_circuits(_PAYLOAD), _CIRCUIT_FIELDS),
     ]
 
 

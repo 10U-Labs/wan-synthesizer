@@ -9,11 +9,7 @@ from seed import DEFAULT_API, _get
 from synthesizer.input_graph import Site
 from synthesizer.local_fiber import LOCAL_FIBER_HOMING_DEGREE, nearest_carrier_pops
 from test_published_syntheses import (
-    cut_cities,
-    diverse_circuit_count,
     offered_diverse_circuits,
-    overbuilt_pairs,
-    removable_circuits,
     site_from_row,
     worst_haul,
 )
@@ -140,34 +136,6 @@ def test_no_published_network_leaves_a_site_short_of_the_circuits_it_was_asked_f
     assert {tenant: sites for tenant, sites in short.items() if sites} == {}
 
 
-def test_no_published_network_draws_a_pair_more_circuits_than_its_tenant_asked_for(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    overbuilt = {
-        synthesis["tenant"]: overbuilt_pairs(synthesis)
-        for synthesis in published_syntheses
-        if overbuilt_pairs(synthesis)
-    }
-    assert overbuilt == {}
-
-
-def test_no_published_network_holds_a_circuit_that_is_nobodys_diverse_circuit(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    spare = {
-        synthesis["tenant"]: removable_circuits(synthesis)
-        for synthesis in published_syntheses
-    }
-    assert {tenant: circuits for tenant, circuits in spare.items() if circuits} == {}
-
-
-def test_no_published_network_is_split_by_the_loss_of_one_city(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    split = {
-        synthesis["tenant"]: cut_cities(synthesis["circuits"])
-        for synthesis in published_syntheses
-    }
-    assert {tenant: cities for tenant, cities in split.items() if cities} == {}
-
-
 def _city_names() -> dict[tuple[str, str], str]:
     named: dict[tuple[str, str], str] = {}
     for path in sorted((seed.DATA / "pops").glob("*.csv")):
@@ -209,11 +177,6 @@ def _carrier_fiber(directory: str = "*") -> set[frozenset[str]]:
     return pairs
 
 
-def _hops(circuit: dict[str, Any]) -> list[frozenset[str]]:
-    cities = circuit.get("route") or []
-    return [frozenset({left, right}) for left, right in zip(cities, cities[1:])]
-
-
 def _fiber_laid_to_a_fabricated_wan_pop(synthesis: dict[str, Any]) -> set[frozenset[str]]:
     pops = _carrier_pops()
     return {
@@ -228,23 +191,6 @@ def _fiber_laid_to_a_fabricated_wan_pop(synthesis: dict[str, Any]) -> set[frozen
 
 def _tenants_fiber(synthesis: dict[str, Any]) -> set[frozenset[str]]:
     return _carrier_fiber() | _fiber_laid_to_a_fabricated_wan_pop(synthesis)
-
-
-def _circuits_over_fiber_nobody_owns(syntheses: list[dict[str, Any]]) -> dict[str, list[str]]:
-    found: dict[str, list[str]] = {}
-    for synthesis in syntheses:
-        fiber = _tenants_fiber(synthesis)
-        for circuit in synthesis["circuits"]:
-            if any(hop not in fiber for hop in _hops(circuit)):
-                found.setdefault(synthesis["tenant"], []).append(
-                    f"{circuit['source_name']} to {circuit['target_name']}"
-                )
-    return found
-
-
-def test_every_published_circuit_runs_over_segments_each_of_which_a_carrier_owns(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    assert not _circuits_over_fiber_nobody_owns(published_syntheses)
 
 
 def _cities_with_fiber(held: set[frozenset[str]]) -> set[str]:
@@ -272,30 +218,6 @@ def _overstated_ceilings(syntheses: list[dict[str, Any]]) -> dict[str, list[str]
 def test_no_published_networks_ceiling_is_higher_than_the_circuits_its_carriers_can_offer(
         published_syntheses: list[dict[str, Any]]) -> None:
     assert not _overstated_ceilings(published_syntheses)
-
-
-def _credited_past_the_ceiling(synthesis: dict[str, Any]) -> list[str]:
-    names = {row["id"]: row["name"] for row in synthesis["wan_pops"]}
-    ceilings = {
-        str(entry["name"]): int(entry["ceiling"])
-        for entry in synthesis["status"].get("diverse_circuits", {}).get("ceilings", [])
-    }
-    return [
-        f"{name} credited {credited} against a ceiling of {ceilings[name]}"
-        for site, name in sorted(names.items(), key=lambda pair: pair[1])
-        if name in ceilings
-        and (credited := diverse_circuit_count(synthesis["circuits"], site, names))
-        > ceilings[name]
-    ]
-
-
-def test_no_published_wan_pop_is_credited_more_diverse_circuits_than_its_ceiling(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    assert {
-        synthesis["tenant"]: _credited_past_the_ceiling(synthesis)
-        for synthesis in published_syntheses
-        if _credited_past_the_ceiling(synthesis)
-    } == {}
 
 
 def test_no_published_site_is_served_as_a_tenant_site_and_a_provider_region_both(

@@ -138,13 +138,15 @@ function circuitsBySegment(circuits) {
   return crossing;
 }
 
-function circuitLabel(circuit) {
-  const ends = `${cityOf(circuit.source_name)} ↔ ${cityOf(circuit.target_name)}`;
+function circuitLabel(circuit, byKey) {
+  const source = byKey[dotKey("wan_pop", circuit.source)];
+  const target = byKey[dotKey("wan_pop", circuit.target)];
+  const ends = `${cityName(source)} ↔ ${cityName(target)}`;
   return `<strong>Circuit ${ends}</strong>`;
 }
 
-function circuitsLabel(circuits) {
-  return circuits.map(circuitLabel).join("<br>");
+function circuitsLabel(circuits, byKey) {
+  return circuits.map((circuit) => circuitLabel(circuit, byKey)).join("<br>");
 }
 
 function clear() {
@@ -222,7 +224,7 @@ function drawSites(sites) {
   return coords;
 }
 
-function drawFiber(segments, crossing) {
+function drawFiber(segments, crossing, byKey) {
   for (const segment of segments) {
     const ends = [
       [segment.a_latitude, nearLon(segment.a_longitude)],
@@ -233,7 +235,7 @@ function drawFiber(segments, crossing) {
       color: LINE_STYLE.fiber.color,
       weight: LINE_STYLE.fiber.weight,
       opacity: 0.8,
-    }).bindTooltip(circuitsLabel(crossing.get(key) || []), { sticky: true }));
+    }).bindTooltip(circuitsLabel(crossing.get(key) || [], byKey), { sticky: true }));
   }
 }
 
@@ -416,7 +418,7 @@ async function render(entry) {
       ),
       getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/fiber-segments`),
       getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/homing-circuits`),
-      getJSON(`${API_BASE}/wan-synthesizer/tenants/${entry.tenant}/backbone-circuits`),
+      getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/backbone-circuits`),
     ]);
   } catch (error) {
     document.getElementById("counts").textContent = "WAN not synthesized yet";
@@ -429,8 +431,9 @@ async function render(entry) {
   ];
   showCounts(dots);
 
-  drawFiber(fiber, circuitsBySegment(circuits));
-  drawHomings(homings, indexByKey(dots));
+  const byKey = indexByKey(dots);
+  drawFiber(fiber, circuitsBySegment(circuits), byKey);
+  drawHomings(homings, byKey);
   const points = drawSites(dots);
 
   if (points.length) {
