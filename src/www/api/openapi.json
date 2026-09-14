@@ -6,20 +6,6 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/wan-synthesizer/carriers/{carrier}/fiber-segments": {
-      "get": {
-        "summary": "A carrier's fiber.",
-        "parameters": [
-          { "name": "carrier", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "200": { "description": "The carrier's links." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${CarriersHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
-      }
-    },
     "/wan-synthesizer/carriers/{carrier}": {
       "delete": {
         "summary": "Remove a carrier.",

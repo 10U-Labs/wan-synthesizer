@@ -26,25 +26,6 @@ def _response(status: int, body: Any) -> dict[str, Any]:
     return {"statusCode": status, "headers": dict(_HEADERS), "body": json.dumps(body)}
 
 
-def _read_collection(client: Any, carrier: str, collection: str) -> Any:
-    key = f"carriers/{carrier}/{collection}.json"
-    try:
-        body = client.get_object(Bucket=os.environ["STORE_BUCKET"], Key=key)["Body"].read()
-    except client.exceptions.NoSuchKey:
-        return None
-    return json.loads(body)
-
-
-def _get(client: Any, carrier: str, event: dict[str, Any]) -> dict[str, Any]:
-    collection = event.get("path", "").rsplit("/", 1)[-1]
-    if collection != "fiber-segments":
-        return _response(404, {"error": collection})
-    rows = _read_collection(client, carrier, collection)
-    if rows is None:
-        return _response(404, {"error": f"not built: {carrier}"})
-    return _response(200, rows)
-
-
 def _delete(client: Any, carrier: str) -> dict[str, Any]:
     bucket = os.environ["STORE_BUCKET"]
     listing = client.list_objects_v2(Bucket=bucket, Prefix=f"carriers/{carrier}/")
@@ -59,8 +40,6 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     carrier = (event.get("pathParameters") or {}).get("carrier")
     if not carrier:
         return _response(404, {"error": "carrier required"})
-    if method == "GET":
-        return _get(client, carrier, event)
     if method == "DELETE":
         return _delete(client, carrier)
     return _response(404, {"error": method})
