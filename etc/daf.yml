@@ -18,7 +18,5 @@ backbone:
 homing:
   forced: []
 inputs:
-  locations:
-    DAF: data/tenants/daf.csv
   providers: data/providers/providers.csv
 label: DAF

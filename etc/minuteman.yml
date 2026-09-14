@@ -14,7 +14,5 @@ backbone:
 homing:
   forced: []
 inputs:
-  locations:
-    Minuteman: data/tenants/minuteman.csv
   providers: data/providers/providers.csv
 label: Minuteman

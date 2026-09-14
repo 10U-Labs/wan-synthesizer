@@ -16,7 +16,5 @@ backbone:
 homing:
   forced: []
 inputs:
-  locations:
-    DoW: data/tenants/dow.csv
   providers: data/providers/providers.csv
 label: DoW

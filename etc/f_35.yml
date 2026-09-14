@@ -10,7 +10,5 @@ backbone:
 homing:
   forced: []
 inputs:
-  locations:
-    F-35: data/tenants/f_35.csv
   providers: data/providers/providers.csv
 label: F-35

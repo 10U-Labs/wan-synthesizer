@@ -39,14 +39,6 @@ def _rows(path: Path) -> list[dict[str, Any]]:
         return rows
 
 
-def _mapping_rows(mapping: dict[str, Any]) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for value in mapping.values():
-        for raw in value if isinstance(value, list) else [value]:
-            rows.extend(_rows(REPO_ROOT / raw))
-    return rows
-
-
 def _city_key(row: dict[str, Any]) -> tuple[str, str]:
     return str(row["municipality"]).casefold(), str(row["state"]).casefold()
 
@@ -171,13 +163,10 @@ def push_tenants(api: str) -> list[str]:
         forced = backbone.get("forced", {})
         prohibited = backbone.get("prohibited", {})
         homes = homing.get("forced", [])
-        locations = _mapping_rows(inputs.get("locations", {}))
         regions = _rows(REPO_ROOT / inputs["providers"]) if inputs.get("providers") else []
         off_net_file = inputs.get("forced")
         off_net = _off_net_rows(off_net_file) if off_net_file else []
-        print(f"tenant {tid}: {len(locations)} sites, {len(regions)} regions, "
-              f"{len(off_net)} off-net", flush=True)
-        _put(api, f"tenants/{tid}/locations", locations)
+        print(f"tenant {tid}: {len(regions)} regions, {len(off_net)} off-net", flush=True)
         _put(api, f"tenants/{tid}/provider-regions", regions)
         _put(api, f"tenants/{tid}/off-net", off_net)
         _put(api, f"tenants/{tid}/forced-wan-pops", forced.get("wan_pops", []))

@@ -15,7 +15,6 @@ from seed import (
     _carrier_cities,
     _carrier_names,
     _city_key,
-    _mapping_rows,
     _off_net_rows,
     _post,
     _post_json,
@@ -53,8 +52,6 @@ homing:
       target: Nellis, NV
 inputs:
   forced: offnet/off.csv
-  locations:
-    F-35: locations/f35.csv
   providers: regions/providers.csv
 label: F-35
 """
@@ -98,7 +95,6 @@ def _one_tenant(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, body: str) -> N
     _off_net_file(tmp_path, monkeypatch, "Link,TX")
     monkeypatch.setattr(seed, "ETC", tmp_path / "etc")
     _write_csv(tmp_path / "regions" / "providers.csv", "city,state", "Reston,VA")
-    _write_csv(tmp_path / "locations" / "f35.csv", "city,state", "Luke,AZ")
     (tmp_path / "etc").mkdir(parents=True, exist_ok=True)
     (tmp_path / "etc" / "f_35.yml").write_text(body, encoding="utf-8")
 
@@ -152,28 +148,6 @@ def test_rows_keeps_string_values_without_coordinates(tmp_path: Path) -> None:
 def test_rows_raises_for_a_missing_file(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="does not exist"):
         _rows(tmp_path / "missing.csv")
-
-
-def test_mapping_rows_concatenates_list_values(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "REPO_ROOT", tmp_path)
-    _write_csv(tmp_path / "a.csv", "city,state", "Reston,VA")
-    _write_csv(tmp_path / "b.csv", "city,state", "Denver,CO")
-    assert len(_mapping_rows({"one": ["a.csv"], "two": ["b.csv"]})) == 2
-
-
-def test_mapping_rows_accepts_a_scalar_value(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "REPO_ROOT", tmp_path)
-    _write_csv(tmp_path / "a.csv", "city,state", "Reston,VA")
-    assert len(_mapping_rows({"only": "a.csv"})) == 1
-
-
-def test_mapping_rows_drops_the_grouping_labels(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "REPO_ROOT", tmp_path)
-    _write_csv(tmp_path / "a.csv", "city,state", "Reston,VA")
-    assert "group" not in _mapping_rows({"group": "a.csv"})[0]
 
 
 def test_carrier_names_returns_sorted_stems(

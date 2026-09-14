@@ -9,14 +9,13 @@ import pytest
 from test_handler_contracts import ReaderContract, load_handler, write_clients
 from test_s3_store_mock import fake_s3
 
-_LOCATIONS_ROW: dict[str, Any] = {
-    "name": "Site",
-    "municipality": "Denver",
-    "state": "CO",
+_REGION_ROW: dict[str, Any] = {
+    "name": "us-east-1",
+    "municipality": "Ashburn",
+    "state": "VA",
     "country": "United States",
     "latitude": 1.0,
     "longitude": 2.0,
-    "exemptfromdistanceconstraint": "No",
 }
 
 _READER: dict[str, Any] = {
@@ -81,53 +80,18 @@ def test_tenant_serves_the_backbone_circuits(monkeypatch: pytest.MonkeyPatch) ->
 def test_tenant_accepts_a_well_formed_site_input(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
     objects: dict[str, bytes] = {}
-    row = dict(_LOCATIONS_ROW)
+    row = dict(_REGION_ROW)
     with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(_tenant_put("locations", [row]), None)
-    assert json.loads(objects["tenants/f-35/locations.json"]) == [row]
+        module.lambda_handler(_tenant_put("provider-regions", [row]), None)
+    assert json.loads(objects["tenants/f-35/provider-regions.json"]) == [row]
 
 
-def test_tenant_accepts_a_locations_row_with_an_extra_field(
+def test_tenant_accepts_a_site_row_with_an_extra_field(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     module = _tenant(monkeypatch)
     objects: dict[str, bytes] = {}
-    row = dict(_LOCATIONS_ROW, note="extra")
-    with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(_tenant_put("locations", [row]), None)
-    assert json.loads(objects["tenants/f-35/locations.json"]) == [row]
-
-
-def test_tenant_rejects_a_locations_row_without_the_exempt_field(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    module = _tenant(monkeypatch)
-    row = {
-        "name": "Site",
-        "municipality": "Denver",
-        "state": "CO",
-        "country": "United States",
-        "latitude": 1.0,
-        "longitude": 2.0,
-    }
-    with patch("boto3.client", side_effect=write_clients({}, [])):
-        response = module.lambda_handler(_tenant_put("locations", [row]), None)
-    assert response["statusCode"] == 400
-
-
-def test_tenant_accepts_a_provider_region_without_the_exempt_field(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    module = _tenant(monkeypatch)
-    objects: dict[str, bytes] = {}
-    row = {
-        "name": "us-east-1",
-        "municipality": "Ashburn",
-        "state": "VA",
-        "country": "United States",
-        "latitude": 1.0,
-        "longitude": 2.0,
-    }
+    row = dict(_REGION_ROW, note="extra")
     with patch("boto3.client", side_effect=write_clients(objects, [])):
         module.lambda_handler(_tenant_put("provider-regions", [row]), None)
     assert json.loads(objects["tenants/f-35/provider-regions.json"]) == [row]
@@ -172,7 +136,7 @@ def test_tenant_put_persists_the_degree_exempt_wan_pops_document(
 def test_tenant_rejects_a_malformed_site_input(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
     with patch("boto3.client", side_effect=write_clients({}, [])):
-        response = module.lambda_handler(_tenant_put("locations", [{"oops": 1}]), None)
+        response = module.lambda_handler(_tenant_put("off-net", [{"oops": 1}]), None)
     assert response["statusCode"] == 400
 
 
