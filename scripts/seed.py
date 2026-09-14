@@ -134,7 +134,6 @@ def push_tenants(api: str) -> list[str]:
         backbone = config["backbone"]
         prohibited = backbone.get("prohibited", {})
         print(f"tenant {tid}", flush=True)
-        _put(api, f"tenants/{tid}/prohibited-wan-pops", prohibited.get("wan_pops", []))
         _put(api, f"tenants/{tid}/prohibited-circuits", prohibited.get("circuits", []))
         _put(api, f"tenants/{tid}/degree-exempt-wan-pops",
              backbone.get("degree_exempt", []))

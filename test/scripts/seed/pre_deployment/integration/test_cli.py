@@ -34,10 +34,10 @@ def test_seed_cli_writes_carrier_pops(stub_api: StubApi) -> None:
     assert any("/carriers/" in path and path.endswith("/pops") for path in paths)
 
 
-def test_seed_cli_writes_a_tenants_prohibited_wan_pops(stub_api: StubApi) -> None:
+def test_seed_cli_writes_a_tenants_prohibited_circuits(stub_api: StubApi) -> None:
     _run_seed(stub_api.url)
     paths = [path for _method, path, _body in stub_api.records]
-    assert any(path.endswith("/prohibited-wan-pops") for path in paths)
+    assert any(path.endswith("/prohibited-circuits") for path in paths)
 
 
 def test_seed_cli_fails_when_the_api_rejects_writes() -> None:

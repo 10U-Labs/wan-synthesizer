@@ -15,7 +15,6 @@ PROVIDER_FILES = frozenset({"regions.json"})
 TENANT_FILES = frozenset({
     "degree-exempt-wan-pops.json",
     "prohibited-circuits.json",
-    "prohibited-wan-pops.json",
     "wan-status.json",
     "wan.json",
 })
