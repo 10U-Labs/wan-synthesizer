@@ -28,9 +28,6 @@ from seed import (
 )
 
 _TENANT_YML = """\
-backbone:
-  degree_exempt:
-    - Nellis, NV
 label: F-35
 """
 
@@ -60,14 +57,6 @@ def _one_tenant(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, body: str) -> N
     monkeypatch.setattr(seed, "ETC", tmp_path / "etc")
     (tmp_path / "etc").mkdir(parents=True, exist_ok=True)
     (tmp_path / "etc" / "f_35.yml").write_text(body, encoding="utf-8")
-
-
-def _pushed_bodies(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, put_recorder: CallRecorder,
-        body: str = _TENANT_YML) -> dict[str, Any]:
-    _one_tenant(tmp_path, monkeypatch, body)
-    push_tenants("http://api")
-    return dict(zip(put_recorder.nth(1), put_recorder.nth(2)))
 
 
 def test_slug_replaces_underscores_with_hyphens() -> None:
@@ -285,8 +274,8 @@ def test_post_json_encodes_the_json_body(urlopen_recorder: UrlopenRecorder) -> N
 @pytest.mark.usefixtures("urlopen_recorder")
 def test_put_records_the_key_it_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "WRITTEN", set())
-    _put("http://api", "tenants/t/degree-exempt-wan-pops", {})
-    assert seed.WRITTEN == {"tenants/t/degree-exempt-wan-pops.json"}
+    _put("http://api", "carriers/lumen/pops", {})
+    assert seed.WRITTEN == {"carriers/lumen/pops.json"}
 
 
 def test_push_carriers_puts_the_pops_path(
@@ -314,22 +303,6 @@ def test_push_providers_pushes_regions(
 
 
 @pytest.mark.usefixtures("put_recorder")
-def test_push_tenants_puts_the_degree_exempt_wan_pops_resource(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/degree-exempt-wan-pops"] == ["Nellis, NV"]
-
-
-def test_push_tenants_puts_an_empty_degree_exempt_document_when_absent(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(
-        tmp_path, monkeypatch, put_recorder,
-        _TENANT_YML.replace("backbone:\n  degree_exempt:\n    - Nellis, NV\n", ""))
-    assert bodies["tenants/f-35/degree-exempt-wan-pops"] == []
-
-
 def test_push_tenants_skips_empty_config_files(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
@@ -371,10 +344,10 @@ def test_prune_store_posts_the_prune(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_prune_store_sends_the_keys_this_run_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     sent = _prune_answering(monkeypatch, [])
     monkeypatch.setattr(
-        seed, "WRITTEN", {"tenants/t/degree-exempt-wan-pops.json", "providers/regions.json"})
+        seed, "WRITTEN", {"carriers/lumen/pops.json", "providers/regions.json"})
     prune_store("http://api")
     assert sent[0][2] == {
-        "written": ["providers/regions.json", "tenants/t/degree-exempt-wan-pops.json"]}
+        "written": ["providers/regions.json", "carriers/lumen/pops.json"]}
 
 
 def test_prune_store_names_every_key_that_went(
@@ -429,5 +402,3 @@ def test_main_seeds_inputs_then_triggers_builds_in_order(
         monkeypatch: pytest.MonkeyPatch) -> None:
     assert [name for name, _ in _run_main(monkeypatch, ["seed"])] == [
         "carriers", "merge", "providers", "tenants", "prune-store"]
-
-

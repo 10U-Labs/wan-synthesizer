@@ -37,15 +37,6 @@ def _tenant(monkeypatch: pytest.MonkeyPatch) -> Any:
     return load_handler("tenants", monkeypatch)
 
 
-def _tenant_put(collection: str, body: Any) -> dict[str, Any]:
-    return {
-        "httpMethod": "PUT",
-        "pathParameters": {"tenant": "f-35"},
-        "path": f"/x/tenants/f-35/{collection}",
-        "body": json.dumps(body),
-    }
-
-
 def test_a_get_without_a_tenant_answers_404(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
     with patch("boto3.client", return_value=fake_s3({})):
@@ -75,43 +66,6 @@ def test_tenant_get_serves_an_input_document(monkeypatch: pytest.MonkeyPatch) ->
     with patch("boto3.client", side_effect=write_clients(stored, [])):
         response = module.lambda_handler(event, None)
     assert json.loads(response["body"]) == ["Luke, AZ"]
-
-
-def test_tenant_put_persists_an_input(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = _tenant(monkeypatch)
-    objects: dict[str, bytes] = {}
-    with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(_tenant_put("degree-exempt-wan-pops", []), None)
-    assert "tenants/f-35/degree-exempt-wan-pops.json" in objects
-
-
-def _stored_put(monkeypatch: pytest.MonkeyPatch, collection: str, body: Any) -> Any:
-    module = _tenant(monkeypatch)
-    stored: dict[str, bytes] = {}
-    with patch("boto3.client", side_effect=write_clients(stored, [])):
-        module.lambda_handler(_tenant_put(collection, body), None)
-    return json.loads(stored[f"tenants/f-35/{collection}.json"])
-
-
-def test_tenant_put_persists_the_degree_exempt_wan_pops_document(
-        monkeypatch: pytest.MonkeyPatch) -> None:
-    exempt = ["San Jose, CA"]
-    assert _stored_put(monkeypatch, "degree-exempt-wan-pops", exempt) == exempt
-
-
-def test_tenant_put_404_for_unknown_collection(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = _tenant(monkeypatch)
-    with patch("boto3.client", side_effect=write_clients({}, [])):
-        response = module.lambda_handler(_tenant_put("sites", {}), None)
-    assert response["statusCode"] == 404
-
-
-def test_tenant_put_does_not_trigger_a_build(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = _tenant(monkeypatch)
-    invocations: list[dict[str, Any]] = []
-    with patch("boto3.client", side_effect=write_clients({}, invocations)):
-        module.lambda_handler(_tenant_put("degree-exempt-wan-pops", []), None)
-    assert not invocations
 
 
 def test_tenant_delete_removes_every_object(monkeypatch: pytest.MonkeyPatch) -> None:

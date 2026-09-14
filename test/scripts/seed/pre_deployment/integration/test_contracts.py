@@ -85,18 +85,6 @@ def test_pipeline_writes_at_least_one_carrier(
     assert any(re.fullmatch(r"carriers/[^/]+/pops", path) for path in paths)
 
 
-def _backbone_keys_seed_reads() -> set[str]:
-    source = (REPO_ROOT / "scripts" / "seed.py").read_text(encoding="utf-8")
-    return set(re.findall(r'backbone(?:\[|\.get\()"([^"]+)"', source))
-
-
-def test_no_tenant_declares_a_backbone_key_the_seed_does_not_read() -> None:
-    declared: set[str] = set()
-    for config in sorted((REPO_ROOT / "etc").glob("*.yml")):
-        declared |= set(yaml.safe_load(config.read_text(encoding="utf-8")).get("backbone", {}))
-    assert declared <= _backbone_keys_seed_reads()
-
-
 def test_yamllint_names_every_tenant_config() -> None:
     declared = {path.name for path in seed.ETC.glob("*.yml")}
     assert _linted_configs() == declared
@@ -193,15 +181,3 @@ def test_push_carriers_marks_each_fiber_row_by_the_directory_it_came_out_of(
         False: len(_rows(_fiber_file(seed.TERRESTRIAL))),
         True: len(_rows(_fiber_file(seed.SUBMARINE))),
     }
-
-
-def _tenants_written(paths: list[str], resource: str) -> int:
-    return sum(1 for path in paths if re.fullmatch(rf"tenants/[^/]+/{resource}", path))
-
-
-@pytest.mark.parametrize("resource", ["degree-exempt-wan-pops"])
-def test_pipeline_writes_a_document_for_every_tenant(
-        resource: str, urlopen_recorder: UrlopenRecorder,
-        monkeypatch: pytest.MonkeyPatch) -> None:
-    paths = _seed(urlopen_recorder, monkeypatch)
-    assert _tenants_written(paths, resource) == len(list(seed.ETC.glob("*.yml")))

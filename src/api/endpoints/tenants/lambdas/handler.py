@@ -10,10 +10,9 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_READ_ONLY: tuple[str, ...] = ()
-_INPUTS = frozenset({
-    "degree-exempt-wan-pops",
-})
+_READ_ONLY = ("degree-exempt-wan-pops",)
+
+
 def _s3() -> Any:
     if "s3" not in _CLIENTS:
         _CLIENTS["s3"] = boto3.client("s3", region_name="us-east-2")
@@ -45,20 +44,9 @@ def _serve(client: Any, tenant: str, key: str, field: str | None = None) -> dict
 
 def _get(client: Any, tenant: str, event: dict[str, Any]) -> dict[str, Any]:
     collection = event.get("path", "").rsplit("/", 1)[-1]
-    if collection in _INPUTS or collection in _READ_ONLY:
+    if collection in _READ_ONLY:
         return _serve(client, tenant, f"tenants/{tenant}/{collection}.json")
     return _response(404, {"error": collection})
-
-
-def _put(client: Any, tenant: str, event: dict[str, Any]) -> dict[str, Any]:
-    collection = event.get("path", "").rsplit("/", 1)[-1]
-    if collection not in _INPUTS:
-        return _response(404, {"error": collection})
-    document = json.loads(event["body"])
-    key = f"tenants/{tenant}/{collection}.json"
-    client.put_object(
-        Bucket=os.environ["STORE_BUCKET"], Key=key, Body=json.dumps(document).encode())
-    return _response(200, {"updated": f"{tenant}/{collection}"})
 
 
 def _delete(client: Any, tenant: str) -> dict[str, Any]:
@@ -79,4 +67,4 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
         return _get(client, tenant, event)
     if method == "DELETE":
         return _delete(client, tenant)
-    return _put(client, tenant, event)
+    return _response(404, {"error": method})

@@ -131,10 +131,7 @@ def push_tenants(api: str) -> list[str]:
             continue
         tid = _slug(path.stem)
         tenant_ids.append(tid)
-        backbone = config.get("backbone", {})
         print(f"tenant {tid}", flush=True)
-        _put(api, f"tenants/{tid}/degree-exempt-wan-pops",
-             backbone.get("degree_exempt", []))
     return tenant_ids
 
 

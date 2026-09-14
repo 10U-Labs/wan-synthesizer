@@ -217,12 +217,6 @@
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
         "responses": { "200": { "description": "The degree-exempt WAN PoPs." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      },
-      "put": {
-        "summary": "Replace a tenant's degree-exempt WAN PoPs (stores only).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The degree-exempt WAN PoPs were replaced." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
     "/wan-synthesizer/tenants/{tenant}": {
