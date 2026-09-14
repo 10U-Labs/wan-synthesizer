@@ -19,7 +19,6 @@ output "lambda_handler_names" {
   value = {
     carriers   = "wan-synthesizer-carriers"
     providers  = "wan-synthesizer-providers"
-    tenants    = "wan-synthesizer-tenants"
     merge      = "wan-synthesizer-merge"
     prune      = "wan-synthesizer-prune"
     authorizer = "wan-synthesizer-authorizer"
@@ -34,6 +33,5 @@ output "store_principals" {
     "wan-synthesizer-merge-lambda",
     "wan-synthesizer-providers-lambda",
     "wan-synthesizer-prune-lambda",
-    "wan-synthesizer-tenants-lambda",
   ]
 }

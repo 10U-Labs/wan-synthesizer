@@ -14,7 +14,7 @@ from unittest.mock import patch
 import pytest
 
 from repo_utils import REPO_ROOT
-from seed import ETC, _carrier_names, _slug, main
+from seed import _carrier_names, _slug, main
 from test_http_doubles import UrlopenRecorder
 
 _API_KEY = "the-seed-key"
@@ -125,9 +125,7 @@ def _operations_served() -> set[tuple[str, str]]:
 
 
 def _ids_the_seed_names() -> frozenset[str]:
-    carriers = {_slug(name) for name in _carrier_names()}
-    tenants = {_slug(path.stem) for path in ETC.glob("*.yml")}
-    return frozenset(carriers | tenants | {_STALE_TENANT})
+    return frozenset({_slug(name) for name in _carrier_names()} | {_STALE_TENANT})
 
 
 def _generalized(path: str, ids: frozenset[str]) -> str:
@@ -196,11 +194,6 @@ def test_the_api_key_cannot_delete_a_carrier(authorizer: Any) -> None:
 def test_the_api_key_cannot_delete_the_provider_regions(authorizer: Any) -> None:
     resources = _resources(authorizer, f"Bearer {_API_KEY}")
     assert not _granted(resources, "DELETE", f"{authorizer.BASE_PATH}/providers/regions")
-
-
-def test_the_api_key_can_delete_a_tenant(authorizer: Any) -> None:
-    resources = _resources(authorizer, f"Bearer {_API_KEY}")
-    assert _granted(resources, "DELETE", f"{authorizer.BASE_PATH}/tenants/f-35")
 
 
 def test_every_route_the_api_serves_sits_under_the_base_path(authorizer: Any) -> None:

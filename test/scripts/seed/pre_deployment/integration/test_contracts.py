@@ -43,11 +43,6 @@ def _gates_on_seeding() -> set[str]:
     return set(jobs) - _downstream_of(jobs, "seeding")
 
 
-def _linted_configs() -> set[str]:
-    workflow = (REPO_ROOT / ".github/workflows/seed.yml").read_text(encoding="utf-8")
-    return set(re.findall(r"etc/(\w+\.yml)", workflow))
-
-
 def _matches(path: str, template: str) -> bool:
     pattern = re.sub(r"\{[^}]+\}", "[^/]+", template)
     return re.fullmatch(pattern, path) is not None
@@ -83,11 +78,6 @@ def test_pipeline_writes_at_least_one_carrier(
         urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
     paths = _seed(urlopen_recorder, monkeypatch)
     assert any(re.fullmatch(r"carriers/[^/]+/pops", path) for path in paths)
-
-
-def test_yamllint_names_every_tenant_config() -> None:
-    declared = {path.name for path in seed.ETC.glob("*.yml")}
-    assert _linted_configs() == declared
 
 
 def test_seeding_waits_for_every_check_the_workflow_runs() -> None:

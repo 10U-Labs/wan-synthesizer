@@ -10,15 +10,12 @@ import urllib.request
 from pathlib import Path
 from typing import Any, cast
 
-import yaml
-
 from repo_utils import REPO_ROOT
 
 DEFAULT_API = "https://api.10ulabs.com/wan-synthesizer"
 API_KEY_VARIABLE = "WAN_SYNTHESIZER_API_KEY"
 RETRY_PAUSE_SECONDS = 1.0
 DATA = REPO_ROOT / "data"
-ETC = REPO_ROOT / "etc"
 FIBER_SEGMENTS = "fiber_segments"
 TERRESTRIAL = "terrestrial"
 SUBMARINE = "submarine"
@@ -123,18 +120,6 @@ def push_providers(api: str) -> None:
     _put(api, "providers/regions", regions)
 
 
-def push_tenants(api: str) -> list[str]:
-    tenant_ids: list[str] = []
-    for path in sorted(ETC.glob("*.yml")):
-        config = yaml.safe_load(path.read_text(encoding="utf-8"))
-        if not config:
-            continue
-        tid = _slug(path.stem)
-        tenant_ids.append(tid)
-        print(f"tenant {tid}", flush=True)
-    return tenant_ids
-
-
 def prune_store(api: str) -> None:
     print("store: pruning collections nothing writes any more", flush=True)
     answer = _post_json(api, "store/prune", {"written": sorted(WRITTEN)})
@@ -153,5 +138,4 @@ def main() -> None:
     push_carriers(api)
     build_merged_carriers(api)
     push_providers(api)
-    push_tenants(api)
     prune_store(api)

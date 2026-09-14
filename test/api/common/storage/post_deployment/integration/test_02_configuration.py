@@ -113,7 +113,7 @@ def test_public_access_is_blocked(
 
 def test_the_store_holds_the_product_it_is_supposed_to_hold(
         s3_client: Any, store_bucket_name: str) -> None:
-    prefixes = ("carriers/", "providers/", "tenants/")
+    prefixes = ("carriers/", "providers/")
     empty = [
         prefix for prefix in prefixes
         if not s3_client.list_objects_v2(

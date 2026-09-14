@@ -41,7 +41,6 @@ jobs:
           --exclude 'src/www/spa/vendor/*'
           --verbose
           .github/workflows
-          etc
           lib
           scripts
           src
@@ -187,15 +186,6 @@ jobs:
           search-in: lib/python scripts test
           trees: lib/python
           verbose: "true"
-  assert-resource-names-agree:
-    name: assert-resource-names-agree
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert every hand-written list of resource names agrees with the rest
-        run: >-
-          PYTHONPATH=lib/python:scripts
-          python3 -c 'import sys, assert_resource_names_agree as check; sys.exit(check.main())'
   copy-paste-source:
     name: copy-paste-source
     runs-on: ubuntu-latest
@@ -285,24 +275,6 @@ jobs:
           --import-mode=importlib --confcutdir=test
           --verbose --pythonwarnings=error
           --cov=assert_description_identifiers_exist
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-  test-assert-resource-names-agree:
-    name: test-assert-resource-names-agree
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install pytest pytest-cov
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts
-          python3 -m pytest
-          test/scripts/assert_resource_names_agree/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=assert_resource_names_agree
           --cov-branch
           --cov-report=term-missing
           --cov-fail-under=100

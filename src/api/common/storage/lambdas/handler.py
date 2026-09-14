@@ -12,14 +12,9 @@ _HEADERS = {
 
 CARRIER_FILES = frozenset({"pops.json", "fiber-segments.json"})
 PROVIDER_FILES = frozenset({"regions.json"})
-TENANT_FILES = frozenset({
-    "wan-status.json",
-    "wan.json",
-})
 _KEPT_BY_PREFIX = {
     "carriers": CARRIER_FILES,
     "providers": PROVIDER_FILES,
-    "tenants": TENANT_FILES,
 }
 
 

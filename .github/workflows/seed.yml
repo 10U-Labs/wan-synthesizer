@@ -19,7 +19,6 @@ jobs:
           --exclude 'src/www/spa/vendor/*'
           --verbose
           .github/workflows
-          etc
           lib
           scripts
           src
@@ -291,8 +290,6 @@ jobs:
             --with-decryption --query Parameter.Value --output text)
           echo "::add-mask::$KEY"
           echo "WAN_SYNTHESIZER_API_KEY=$KEY" >> "$GITHUB_ENV"
-      - name: Install tools
-        run: pip install pyyaml
       - name: Push the git-authored inputs to the API
         run: PYTHONPATH=lib/python:scripts python3 -c 'import seed; seed.main()'
   test-repo-libraries:
@@ -379,7 +376,6 @@ jobs:
             api_endpoint_carriers.yml
             api_endpoint_carriers_merge.yml
             api_endpoint_providers.yml
-            api_endpoint_tenants.yml
         id: deploys
         name: Wait for every deploy this commit started, so seeding runs against what it ships
         run: |
@@ -435,8 +431,7 @@ jobs:
           yamllint --strict \
             --config-data \
             "{extends: default, rules: {$RULES}}" \
-            .github/workflows/seed.yml etc/daf.yml etc/dow.yml \
-            etc/f_35.yml etc/minuteman.yml etc/two_pop.yml
+            .github/workflows/seed.yml
 name: seed
 on:
   push:
@@ -444,7 +439,6 @@ on:
     paths:
       - .github/workflows/seed.yml
       - data/**
-      - etc/**
       - lib/python/**
       - scripts/seed.py
       - src/api/common/routing/authorizer.tf

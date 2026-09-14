@@ -19,7 +19,6 @@ jobs:
           --exclude 'src/www/spa/vendor/*'
           --verbose
           .github/workflows
-          etc
           lib
           scripts
           src

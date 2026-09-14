@@ -2,7 +2,7 @@
   "openapi": "3.0.1",
   "info": {
     "title": "wan-synthesizer",
-    "description": "Graphs as REST resources: carriers, providers, the carrier merge, and tenants' WANs. Inputs are writable; computed graphs are read-only. One JSON format throughout.",
+    "description": "Graphs as REST resources: carriers, providers and the carrier merge. Inputs are writable; computed graphs are read-only. One JSON format throughout.",
     "version": "1.0.0"
   },
   "paths": {
@@ -206,20 +206,6 @@
         "responses": { "200": { "description": "The provider regions were removed." } },
         "x-amazon-apigateway-integration": {
           "uri": "${ProvidersHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
-      }
-    },
-    "/wan-synthesizer/tenants/{tenant}": {
-      "delete": {
-        "summary": "Remove a tenant and all its inputs and outputs.",
-        "parameters": [
-          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "200": { "description": "The tenant was removed." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${TenantsHandlerArn}",
           "httpMethod": "POST",
           "type": "aws_proxy"
         }

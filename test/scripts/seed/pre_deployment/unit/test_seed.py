@@ -24,13 +24,7 @@ from seed import (
     prune_store,
     push_carriers,
     push_providers,
-    push_tenants,
 )
-
-_TENANT_YML = """\
-label: F-35
-"""
-
 
 def _write_csv(path: Path, header: str, *rows: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -51,12 +45,6 @@ def _one_provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "DATA", tmp_path)
     _write_csv(
         tmp_path / "providers" / "providers.csv", "city,state", "Reston,VA")
-
-
-def _one_tenant(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, body: str) -> None:
-    monkeypatch.setattr(seed, "ETC", tmp_path / "etc")
-    (tmp_path / "etc").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "etc" / "f_35.yml").write_text(body, encoding="utf-8")
 
 
 def test_slug_replaces_underscores_with_hyphens() -> None:
@@ -303,21 +291,7 @@ def test_push_providers_pushes_regions(
 
 
 @pytest.mark.usefixtures("put_recorder")
-def test_push_tenants_skips_empty_config_files(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    _one_tenant(tmp_path, monkeypatch, "\n")
-    push_tenants("http://api")
-    assert put_recorder.calls == []
-
-
 @pytest.mark.usefixtures("put_recorder")
-def test_push_tenants_returns_the_tenant_ids(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _one_tenant(tmp_path, monkeypatch, _TENANT_YML)
-    assert push_tenants("http://api") == ["f-35"]
-
-
 def test_build_merged_carriers_posts_the_merge(post_recorder: CallRecorder) -> None:
     build_merged_carriers("http://api")
     assert post_recorder.calls == [("http://api", "carriers/merge")]
@@ -375,15 +349,10 @@ def _run_main(
         monkeypatch: pytest.MonkeyPatch, argv: list[str]) -> list[tuple[str, str]]:
     calls: list[tuple[str, str]] = []
 
-    def _push_tenants(api: str) -> list[str]:
-        calls.append(("tenants", api))
-        return ["t"]
-
     monkeypatch.setattr(sys, "argv", argv)
     monkeypatch.setattr(seed, "push_carriers", lambda api: calls.append(("carriers", api)))
     monkeypatch.setattr(seed, "build_merged_carriers", lambda api: calls.append(("merge", api)))
     monkeypatch.setattr(seed, "push_providers", lambda api: calls.append(("providers", api)))
-    monkeypatch.setattr(seed, "push_tenants", _push_tenants)
     monkeypatch.setattr(
         seed, "prune_store", lambda api: calls.append(("prune-store", api)))
     main()
@@ -401,4 +370,4 @@ def test_main_uses_the_cli_argument_when_given(monkeypatch: pytest.MonkeyPatch) 
 def test_main_seeds_inputs_then_triggers_builds_in_order(
         monkeypatch: pytest.MonkeyPatch) -> None:
     assert [name for name, _ in _run_main(monkeypatch, ["seed"])] == [
-        "carriers", "merge", "providers", "tenants", "prune-store"]
+        "carriers", "merge", "providers", "prune-store"]
