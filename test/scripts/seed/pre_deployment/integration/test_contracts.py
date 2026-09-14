@@ -250,7 +250,7 @@ def _tenants_written(paths: list[str], resource: str) -> int:
     return sum(1 for path in paths if re.fullmatch(rf"tenants/[^/]+/{resource}", path))
 
 
-@pytest.mark.parametrize("resource", ["forced-homes", "settings", "provider-regions"])
+@pytest.mark.parametrize("resource", ["forced-homes", "locations", "provider-regions"])
 def test_pipeline_writes_a_document_for_every_tenant(
         resource: str, urlopen_recorder: UrlopenRecorder,
         monkeypatch: pytest.MonkeyPatch) -> None:

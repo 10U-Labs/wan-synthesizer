@@ -15,7 +15,3 @@ inputs:
     Two-PoP: data/tenants/two_pop.csv
   providers: data/providers/providers.csv
 label: Two-PoP
-settings:
-  bytes_per_wan_pop_combination: 160
-  compass_sector_count: 8
-  wan_pop_search_memory_share: 0.6

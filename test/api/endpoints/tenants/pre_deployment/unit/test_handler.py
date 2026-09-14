@@ -158,11 +158,6 @@ def _stored_put(monkeypatch: pytest.MonkeyPatch, collection: str, body: Any) -> 
     return json.loads(stored[f"tenants/f-35/{collection}.json"])
 
 
-def test_tenant_put_persists_a_settings_document(monkeypatch: pytest.MonkeyPatch) -> None:
-    settings = {"compass_sector_count": 4}
-    assert _stored_put(monkeypatch, "settings", settings) == settings
-
-
 def test_tenant_put_persists_the_forced_homes_document(monkeypatch: pytest.MonkeyPatch) -> None:
     homes = [{"source": "Luke, AZ", "target": "Nellis, NV"}]
     assert _stored_put(monkeypatch, "forced-homes", homes) == homes
