@@ -211,14 +211,6 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/degree-exempt-wan-pops": {
-      "get": {
-        "summary": "A tenant's degree-exempt WAN PoPs (input).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The degree-exempt WAN PoPs." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      }
-    },
     "/wan-synthesizer/tenants/{tenant}": {
       "delete": {
         "summary": "Remove a tenant and all its inputs and outputs.",

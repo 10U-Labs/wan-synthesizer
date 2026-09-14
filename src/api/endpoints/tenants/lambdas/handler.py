@@ -10,7 +10,6 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_READ_ONLY = ("degree-exempt-wan-pops",)
 
 
 def _s3() -> Any:
@@ -27,28 +26,6 @@ def _response(status: int, body: Any) -> dict[str, Any]:
     return {"statusCode": status, "headers": dict(_HEADERS), "body": json.dumps(body)}
 
 
-def _read_object(client: Any, key: str) -> Any:
-    try:
-        body = client.get_object(Bucket=os.environ["STORE_BUCKET"], Key=key)["Body"].read()
-    except client.exceptions.NoSuchKey:
-        return None
-    return json.loads(body)
-
-
-def _serve(client: Any, tenant: str, key: str, field: str | None = None) -> dict[str, Any]:
-    doc = _read_object(client, key)
-    if doc is None:
-        return _response(404, {"error": f"not built: {tenant}"})
-    return _response(200, doc if field is None else doc[field])
-
-
-def _get(client: Any, tenant: str, event: dict[str, Any]) -> dict[str, Any]:
-    collection = event.get("path", "").rsplit("/", 1)[-1]
-    if collection in _READ_ONLY:
-        return _serve(client, tenant, f"tenants/{tenant}/{collection}.json")
-    return _response(404, {"error": collection})
-
-
 def _delete(client: Any, tenant: str) -> dict[str, Any]:
     bucket = os.environ["STORE_BUCKET"]
     listing = client.list_objects_v2(Bucket=bucket, Prefix=f"tenants/{tenant}/")
@@ -63,8 +40,6 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     tenant = (event.get("pathParameters") or {}).get("tenant")
     if not tenant:
         return _response(404, {"error": "tenant required"})
-    if method == "GET":
-        return _get(client, tenant, event)
     if method == "DELETE":
         return _delete(client, tenant)
     return _response(404, {"error": method})
