@@ -17,6 +17,4 @@ backbone:
     wan_pops: []
 homing:
   forced: []
-inputs:
-  providers: data/providers/providers.csv
 label: DAF

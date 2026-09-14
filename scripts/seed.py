@@ -163,11 +163,9 @@ def push_tenants(api: str) -> list[str]:
         forced = backbone.get("forced", {})
         prohibited = backbone.get("prohibited", {})
         homes = homing.get("forced", [])
-        regions = _rows(REPO_ROOT / inputs["providers"]) if inputs.get("providers") else []
         off_net_file = inputs.get("forced")
         off_net = _off_net_rows(off_net_file) if off_net_file else []
-        print(f"tenant {tid}: {len(regions)} regions, {len(off_net)} off-net", flush=True)
-        _put(api, f"tenants/{tid}/provider-regions", regions)
+        print(f"tenant {tid}: {len(off_net)} off-net", flush=True)
         _put(api, f"tenants/{tid}/off-net", off_net)
         _put(api, f"tenants/{tid}/forced-wan-pops", forced.get("wan_pops", []))
         _put(api, f"tenants/{tid}/forced-circuits", forced.get("circuits", []))

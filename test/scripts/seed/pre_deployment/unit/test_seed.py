@@ -52,7 +52,6 @@ homing:
       target: Nellis, NV
 inputs:
   forced: offnet/off.csv
-  providers: regions/providers.csv
 label: F-35
 """
 
@@ -94,7 +93,6 @@ def _one_provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 def _one_tenant(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, body: str) -> None:
     _off_net_file(tmp_path, monkeypatch, "Link,TX")
     monkeypatch.setattr(seed, "ETC", tmp_path / "etc")
-    _write_csv(tmp_path / "regions" / "providers.csv", "city,state", "Reston,VA")
     (tmp_path / "etc").mkdir(parents=True, exist_ok=True)
     (tmp_path / "etc" / "f_35.yml").write_text(body, encoding="utf-8")
 
@@ -449,22 +447,6 @@ def test_push_tenants_puts_the_prohibited_circuits_resource(
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
     assert bodies["tenants/f-35/prohibited-circuits"] == [
         {"source": "Luke, AZ", "target": "Link, TX"}]
-
-
-def test_push_tenants_puts_the_provider_regions_its_config_names(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/provider-regions"] == [{"city": "Reston", "state": "VA"}]
-
-
-def test_push_tenants_uses_empty_provider_regions_when_absent(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(
-        tmp_path, monkeypatch, put_recorder,
-        _TENANT_YML.replace("  providers: regions/providers.csv\n", ""))
-    assert bodies["tenants/f-35/provider-regions"] == []
 
 
 def test_push_tenants_reads_off_net_when_present(

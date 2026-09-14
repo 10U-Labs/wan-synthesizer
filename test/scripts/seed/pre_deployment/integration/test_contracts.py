@@ -12,7 +12,7 @@ import yaml
 
 import seed
 from repo_utils import REPO_ROOT
-from seed import _carrier_cities, _carrier_names, _city_key, _rows, _slug
+from seed import _carrier_cities, _carrier_names, _city_key, _rows
 from test_http_doubles import UrlopenRecorder
 from test_terraform_config import api_key_parameter_name
 
@@ -67,14 +67,6 @@ def _needed_by(job: dict[str, Any]) -> list[str]:
 def _seed_workflow() -> dict[str, Any]:
     return cast("dict[str, Any]", yaml.safe_load(
         (REPO_ROOT / ".github/workflows/seed.yml").read_text(encoding="utf-8")))
-
-
-def _written_by_tenant(recorder: UrlopenRecorder, resource: str) -> dict[str, Any]:
-    return {
-        request.full_url.split("/")[-2]: json.loads(cast("bytes", request.data))
-        for request in recorder.requests
-        if request.full_url.endswith(f"/{resource}")
-    }
 
 
 def test_every_requested_path_is_declared_in_openapi(
@@ -171,29 +163,6 @@ def test_seeding_seeds_only_on_the_conclusion_the_wait_job_reports() -> None:
     assert f"needs.{_WAIT_JOB}.outputs.apply == 'true'" in condition
 
 
-def _tenant_configs() -> dict[str, dict[str, Any]]:
-    return {
-        _slug(path.stem): yaml.safe_load(path.read_text(encoding="utf-8"))
-        for path in seed.ETC.glob("*.yml")
-    }
-
-
-def _configs_naming_a_providers_file() -> set[str]:
-    return {
-        tenant
-        for tenant, config in _tenant_configs().items()
-        if config.get("inputs", {}).get("providers")
-    }
-
-
-def test_pipeline_writes_every_tenant_the_regions_of_the_file_its_config_names(
-        urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
-    _seed(urlopen_recorder, monkeypatch)
-    written = _written_by_tenant(urlopen_recorder, "provider-regions")
-    seeded = sum(1 for regions in written.values() if regions)
-    assert seeded == len(_configs_naming_a_providers_file())
-
-
 def _declared_off_net_paths() -> set[str]:
     paths: set[str] = set()
     for config in seed.ETC.glob("*.yml"):
@@ -250,7 +219,7 @@ def _tenants_written(paths: list[str], resource: str) -> int:
     return sum(1 for path in paths if re.fullmatch(rf"tenants/[^/]+/{resource}", path))
 
 
-@pytest.mark.parametrize("resource", ["forced-homes", "off-net", "provider-regions"])
+@pytest.mark.parametrize("resource", ["forced-homes", "off-net", "forced-wan-pops"])
 def test_pipeline_writes_a_document_for_every_tenant(
         resource: str, urlopen_recorder: UrlopenRecorder,
         monkeypatch: pytest.MonkeyPatch) -> None:

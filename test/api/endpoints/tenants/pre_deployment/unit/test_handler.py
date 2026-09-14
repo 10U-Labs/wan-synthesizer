@@ -9,8 +9,7 @@ import pytest
 from test_handler_contracts import ReaderContract, load_handler, write_clients
 from test_s3_store_mock import fake_s3
 
-_REGION_ROW: dict[str, Any] = {
-    "name": "us-east-1",
+_OFF_NET_ROW: dict[str, Any] = {
     "municipality": "Ashburn",
     "state": "VA",
     "country": "United States",
@@ -80,10 +79,10 @@ def test_tenant_serves_the_backbone_circuits(monkeypatch: pytest.MonkeyPatch) ->
 def test_tenant_accepts_a_well_formed_site_input(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
     objects: dict[str, bytes] = {}
-    row = dict(_REGION_ROW)
+    row = dict(_OFF_NET_ROW)
     with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(_tenant_put("provider-regions", [row]), None)
-    assert json.loads(objects["tenants/f-35/provider-regions.json"]) == [row]
+        module.lambda_handler(_tenant_put("off-net", [row]), None)
+    assert json.loads(objects["tenants/f-35/off-net.json"]) == [row]
 
 
 def test_tenant_accepts_a_site_row_with_an_extra_field(
@@ -91,10 +90,10 @@ def test_tenant_accepts_a_site_row_with_an_extra_field(
 ) -> None:
     module = _tenant(monkeypatch)
     objects: dict[str, bytes] = {}
-    row = dict(_REGION_ROW, note="extra")
+    row = dict(_OFF_NET_ROW, note="extra")
     with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(_tenant_put("provider-regions", [row]), None)
-    assert json.loads(objects["tenants/f-35/provider-regions.json"]) == [row]
+        module.lambda_handler(_tenant_put("off-net", [row]), None)
+    assert json.loads(objects["tenants/f-35/off-net.json"]) == [row]
 
 
 def test_tenant_get_serves_an_input_document(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -110,8 +109,8 @@ def test_tenant_put_persists_an_input(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
     objects: dict[str, bytes] = {}
     with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(_tenant_put("provider-regions", []), None)
-    assert "tenants/f-35/provider-regions.json" in objects
+        module.lambda_handler(_tenant_put("forced-wan-pops", []), None)
+    assert "tenants/f-35/forced-wan-pops.json" in objects
 
 
 def _stored_put(monkeypatch: pytest.MonkeyPatch, collection: str, body: Any) -> Any:

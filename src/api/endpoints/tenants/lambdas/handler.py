@@ -10,9 +10,8 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_READ_ONLY: tuple[str, ...] = ()
+_READ_ONLY = ("provider-regions",)
 _INPUTS = frozenset({
-    "provider-regions",
     "off-net",
     "forced-wan-pops",
     "forced-circuits",
@@ -21,9 +20,7 @@ _INPUTS = frozenset({
     "prohibited-circuits",
     "degree-exempt-wan-pops",
 })
-_SITE_FIELDS = {"name", "municipality", "state", "country", "latitude", "longitude"}
 _SITE_INPUT_FIELDS = {
-    "provider-regions": _SITE_FIELDS,
     "off-net": {"municipality", "state", "country", "latitude", "longitude"},
 }
 
