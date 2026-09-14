@@ -10,7 +10,7 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_READ_ONLY = ("prohibited-wan-pops",)
+_READ_ONLY: tuple[str, ...] = ()
 _INPUTS = frozenset({
     "prohibited-circuits",
     "degree-exempt-wan-pops",
