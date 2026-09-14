@@ -22,10 +22,6 @@ def _published(payload: dict[str, Any], key: str) -> list[dict[str, Any]]:
     return result
 
 
-def sites(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    return _published(payload, "sites")
-
-
 def homing_circuits(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return _published(payload, "homing_circuits")
 

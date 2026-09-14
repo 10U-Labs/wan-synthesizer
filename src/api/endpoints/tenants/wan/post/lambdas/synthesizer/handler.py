@@ -132,7 +132,6 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     payload = synthesis_payload(artifacts)
     logger.info("Publishing WAN for %s", tenant)
     return {
-        "sites": published.sites(payload),
         "homing-circuits": published.homing_circuits(payload),
         "fiber-segments": published.fiber_segments(payload),
         "wan-pops": published.wan_pops(payload),

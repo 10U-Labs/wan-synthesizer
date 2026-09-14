@@ -23,11 +23,10 @@ const SIGN_IN_NOTES = {
 
 const DEFAULT_MAP_ID = "daf";
 
-const PROVIDER_KIND = "provider region";
-const PROVIDER_STYLE = { color: "#ef6c00", radius: 5 };
 const ROLE_STYLE = {
   wan_pop: { color: "#6a1b9a", radius: 8 },
   tenant: { color: "#1565c0", radius: 4 },
+  provider: { color: "#ef6c00", radius: 5 },
 };
 
 const LINE_STYLE = {
@@ -43,7 +42,7 @@ const HOMING_CIRCUIT = "Homing circuit";
 
 const LEGEND_ROWS = [
   { swatch: "dot", color: ROLE_STYLE.wan_pop.color, label: WAN_POP },
-  { swatch: "dot", color: PROVIDER_STYLE.color, label: "Provider region" },
+  { swatch: "dot", color: ROLE_STYLE.provider.color, label: "Provider region" },
   { swatch: "dot", color: ROLE_STYLE.tenant.color, label: "Site", tenant: true },
   { swatch: "line", color: LINE_STYLE.fiber.color, label: "Fiber" },
   { swatch: "line", color: LINE_STYLE.homing.color, label: HOMING_CIRCUIT },
@@ -90,9 +89,6 @@ function showLegendTenant(label) {
 }
 
 function styleFor(site) {
-  if (site.kind === PROVIDER_KIND) {
-    return PROVIDER_STYLE;
-  }
   return ROLE_STYLE[site.tier_role] || null;
 }
 
@@ -114,10 +110,9 @@ function displayName(site) {
 }
 
 function siteLabel(site) {
-  const info = site.info || {};
-  const region = info.country === "United States" ? info.state : info.country;
-  const located = info.municipality && region
-    ? `<br>${info.municipality}, ${region}`
+  const region = site.country === "United States" ? site.state : site.country;
+  const located = site.municipality && region
+    ? `<br>${site.municipality}, ${region}`
     : "";
   return `<strong>${displayName(site)}</strong>${located}`;
 }
@@ -190,15 +185,19 @@ function nearLon(lon) {
 }
 
 function displayCoords(site) {
-  return [site.coords[0], nearLon(site.coords[1])];
+  return [site.latitude, nearLon(site.longitude)];
 }
 
-function indexById(sites) {
-  const byId = {};
+function indexByName(sites) {
+  const byName = {};
   for (const site of sites) {
-    byId[site.id] = site;
+    byName[site.name] = site;
   }
-  return byId;
+  return byName;
+}
+
+function vertices(rows, tierRole) {
+  return rows.map((row) => ({ ...row, tier_role: tierRole }));
 }
 
 function drawSites(sites) {
@@ -214,10 +213,10 @@ function drawSites(sites) {
   return coords;
 }
 
-function drawLines(lines, byId, style, label) {
+function drawLines(lines, byName, style, label) {
   for (const line of lines) {
-    const source = byId[line.source_id];
-    const target = byId[line.target_id];
+    const source = byName[line.source_name];
+    const target = byName[line.target_name];
     if (source && target) {
       add(L.polyline([displayCoords(source), displayCoords(target)], {
         color: style.color,
@@ -366,7 +365,7 @@ function showCounts(sites) {
   const counts = document.getElementById("counts");
   const tally = { wan_pop: 0, tenant: 0, provider: 0 };
   for (const site of sites) {
-    if (site.included !== false && tally[site.tier_role] !== undefined) {
+    if (tally[site.tier_role] !== undefined) {
       tally[site.tier_role] += 1;
     }
   }
@@ -376,43 +375,54 @@ function showCounts(sites) {
     + ` PROVIDER REGIONS ${tally.provider}`;
 }
 
-async function render(tenantId) {
+async function render(entry) {
   clear();
+  let wanPops;
   let sites;
+  let regions;
   let fiber;
   let homings;
   let circuits;
   try {
-    [sites, fiber, homings, circuits] = await Promise.all([
-      getJSON(`${API_BASE}/wan-synthesizer/tenants/${tenantId}/sites`),
-      getJSON(`${API_BASE}/wan-synthesizer/tenants/${tenantId}/fiber-segments`),
-      getJSON(`${API_BASE}/wan-synthesizer/tenants/${tenantId}/homing-circuits`),
-      getJSON(`${API_BASE}/wan-synthesizer/tenants/${tenantId}/backbone-circuits`),
+    [wanPops, sites, regions, fiber, homings, circuits] = await Promise.all([
+      getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/wan-pops`),
+      getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/sites`),
+      getJSON(
+        `${API_BASE}/wan-syntheses/${entry.synthesis}/hyperscale-cloud-service-provider-regions`,
+      ),
+      getJSON(`${API_BASE}/wan-synthesizer/tenants/${entry.tenant}/fiber-segments`),
+      getJSON(`${API_BASE}/wan-synthesizer/tenants/${entry.tenant}/homing-circuits`),
+      getJSON(`${API_BASE}/wan-synthesizer/tenants/${entry.tenant}/backbone-circuits`),
     ]);
   } catch (error) {
     document.getElementById("counts").textContent = "WAN not synthesized yet";
     return;
   }
-  showCounts(sites);
+  const dots = [
+    ...vertices(wanPops, "wan_pop"),
+    ...vertices(sites, "tenant"),
+    ...vertices(regions, "provider"),
+  ];
+  showCounts(dots);
 
-  const byId = indexById(sites);
+  const byName = indexByName(dots);
   const crossing = circuitsBySegment(circuits);
-  drawLines(fiber, byId, LINE_STYLE.fiber, (source, target) =>
+  drawLines(fiber, byName, LINE_STYLE.fiber, (source, target) =>
     circuitsLabel(crossing.get(segmentKey(source.name, target.name)) || []));
-  drawLines(homings, byId, LINE_STYLE.homing, homingLabel);
-  const points = drawSites(sites);
+  drawLines(homings, byName, LINE_STYLE.homing, homingLabel);
+  const points = drawSites(dots);
 
   if (points.length) {
     map.fitBounds(points, { padding: [30, 30] });
   }
 }
 
-function select(link, mapId) {
+function select(link, entry) {
   for (const other of document.querySelectorAll("#tenants a")) {
     other.classList.toggle("active", other === link);
   }
   showLegendTenant(link.textContent);
-  return render(mapId);
+  return render(entry);
 }
 
 function slug(label) {
@@ -423,21 +433,21 @@ async function start() {
   const nav = document.getElementById("tenants");
   nav.replaceChildren();
   const syntheses = await getJSON(`${API_BASE}/wan-syntheses`);
-  const entries = syntheses.map(({ label }) => {
-    const id = slug(label);
+  const entries = syntheses.map(({ id, label }) => {
+    const entry = { synthesis: id, tenant: slug(label) };
     const link = document.createElement("a");
     link.href = "#";
     link.textContent = label;
     link.addEventListener("click", (event) => {
       event.preventDefault();
-      select(link, id);
+      select(link, entry);
     });
     nav.appendChild(link);
-    return { link, id };
+    return { link, entry };
   });
-  const start = entries.find((entry) => entry.id === DEFAULT_MAP_ID) || entries[0];
+  const start = entries.find(({ entry }) => entry.tenant === DEFAULT_MAP_ID) || entries[0];
   if (start) {
-    await select(start.link, start.id);
+    await select(start.link, start.entry);
   }
 }
 

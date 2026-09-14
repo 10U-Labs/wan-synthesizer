@@ -39,11 +39,6 @@ def test_site_role_provider_for_a_provider_region() -> None:
     assert gc.site_role(fixtures.provider_region("r"), _synthesis((), ())) == "provider"
 
 
-def test_sites_returns_the_payload_sites() -> None:
-    payload = _payload()
-    assert gc.sites(payload) == payload["sites"]
-
-
 def test_homing_circuits_are_the_payloads_homing_circuits() -> None:
     payload = _payload()
     assert gc.homing_circuits(payload) == payload["homing_circuits"]

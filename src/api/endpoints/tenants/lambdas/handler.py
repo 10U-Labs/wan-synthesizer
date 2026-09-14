@@ -11,7 +11,6 @@ _HEADERS = {
 }
 _ONLY_VERSION = "null"
 _WAN_COLLECTIONS = (
-    "sites",
     "homing-circuits",
     "fiber-segments",
     "wan-pops",
