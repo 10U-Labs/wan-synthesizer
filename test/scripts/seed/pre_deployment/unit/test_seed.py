@@ -43,9 +43,6 @@ backbone:
     circuits:
       - source: Luke, AZ
         target: Nellis, NV
-  wan_pop_count:
-    max: 3
-    min: 3
   number_of_diverse_circuits: 2
   prohibited:
     wan_pops:
@@ -472,13 +469,6 @@ def test_push_tenants_puts_the_backbone_number_of_diverse_circuits_resource(
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
     assert bodies["tenants/f-35/backbone-number-of-diverse-circuits"] == {"degree": 2}
-
-
-def test_push_tenants_puts_the_wan_pop_count_resource(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/wan-pop-count"] == {"max": 3, "min": 3}
 
 
 def test_push_tenants_puts_the_forced_wan_pops_resource(

@@ -27,7 +27,6 @@ TENANT_FILES = frozenset({
     "prohibited-wan-pops.json",
     "provider-regions.json",
     "settings.json",
-    "wan-pop-count.json",
     "wan-status.json",
     "wan.json",
 })
