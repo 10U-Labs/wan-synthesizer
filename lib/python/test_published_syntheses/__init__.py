@@ -17,7 +17,6 @@ COLLECTIONS = (
     "backbone-circuits",
     "tenant-sites",
     "provider-sites",
-    "homing-circuits",
 )
 
 
@@ -55,7 +54,6 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "tenant_sites": published.get("tenant-sites", []),
         "provider_regions": published.get("provider-sites", []),
         "circuits": published.get("backbone-circuits", []),
-        "homings": published.get("homing-circuits", []),
     }
 
 

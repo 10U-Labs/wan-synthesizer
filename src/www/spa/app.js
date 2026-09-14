@@ -188,12 +188,21 @@ function displayCoords(site) {
   return [site.latitude, nearLon(site.longitude)];
 }
 
-function indexByName(sites) {
-  const byName = {};
-  for (const site of sites) {
-    byName[site.name] = site;
+const HOMED_ROLE = {
+  tenant_to_backbone: "tenant",
+  provider_to_backbone: "provider",
+};
+
+function dotKey(tierRole, id) {
+  return `${tierRole}:${id}`;
+}
+
+function indexByKey(dots) {
+  const byKey = {};
+  for (const dot of dots) {
+    byKey[dotKey(dot.tier_role, dot.id)] = dot;
   }
-  return byName;
+  return byKey;
 }
 
 function vertices(rows, tierRole) {
@@ -228,16 +237,16 @@ function drawFiber(segments, crossing) {
   }
 }
 
-function drawLines(lines, byName, style, label) {
-  for (const line of lines) {
-    const source = byName[line.source_name];
-    const target = byName[line.target_name];
+function drawHomings(homings, byKey) {
+  for (const homing of homings) {
+    const source = byKey[dotKey(HOMED_ROLE[homing.homing_kind], homing.source_id)];
+    const target = byKey[dotKey("wan_pop", homing.target)];
     if (source && target) {
       add(L.polyline([displayCoords(source), displayCoords(target)], {
-        color: style.color,
-        weight: style.weight,
+        color: LINE_STYLE.homing.color,
+        weight: LINE_STYLE.homing.weight,
         opacity: 0.8,
-      }).bindTooltip(label(source, target), { sticky: true }));
+      }).bindTooltip(homingLabel(source, target), { sticky: true }));
     }
   }
 }
@@ -406,7 +415,7 @@ async function render(entry) {
         `${API_BASE}/wan-syntheses/${entry.synthesis}/hyperscale-cloud-service-provider-regions`,
       ),
       getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/fiber-segments`),
-      getJSON(`${API_BASE}/wan-synthesizer/tenants/${entry.tenant}/homing-circuits`),
+      getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/homing-circuits`),
       getJSON(`${API_BASE}/wan-synthesizer/tenants/${entry.tenant}/backbone-circuits`),
     ]);
   } catch (error) {
@@ -420,9 +429,8 @@ async function render(entry) {
   ];
   showCounts(dots);
 
-  const byName = indexByName(dots);
   drawFiber(fiber, circuitsBySegment(circuits));
-  drawLines(homings, byName, LINE_STYLE.homing, homingLabel);
+  drawHomings(homings, indexByKey(dots));
   const points = drawSites(dots);
 
   if (points.length) {

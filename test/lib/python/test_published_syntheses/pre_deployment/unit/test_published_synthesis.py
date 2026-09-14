@@ -33,7 +33,6 @@ _CIRCUIT = {
     "source_id": "ash", "target_id": "nyc", "distance_miles": 240.0,
     "route": ["ash", "nyc"],
 }
-_HOMING = {"source_id": "s1", "target_id": "ash", "distance_miles": 4.0}
 _SUCCEEDED = {
     "status": "success",
     "coverage": {"target_miles": 200, "met": True},
@@ -60,7 +59,6 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
         "tenants/daf/backbone-circuits": [_CIRCUIT],
         "tenants/daf/tenant-sites": [_SITE],
         "tenants/daf/provider-sites": [_REGION],
-        "tenants/daf/homing-circuits": [_HOMING],
     }))
     assert published_synthesis(DEFAULT_API, "daf", _CONFIG) == {
         "tenant": "daf",
@@ -76,7 +74,6 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
         "tenant_sites": [_SITE],
         "provider_regions": [_REGION],
         "circuits": [_CIRCUIT],
-        "homings": [_HOMING],
     }
 
 
@@ -88,8 +85,8 @@ def test_a_tenant_whose_build_has_not_published_is_read_with_no_network(
     synthesis = published_synthesis(DEFAULT_API, "daf", _CONFIG)
     assert [
         synthesis["wan_pops"], synthesis["tenant_sites"], synthesis["provider_regions"],
-        synthesis["circuits"], synthesis["homings"],
-    ] == [[], [], [], [], []]
+        synthesis["circuits"],
+    ] == [[], [], [], []]
 
 
 def test_a_build_the_service_refuses_to_serve_is_read_as_what_it_says_went_wrong(

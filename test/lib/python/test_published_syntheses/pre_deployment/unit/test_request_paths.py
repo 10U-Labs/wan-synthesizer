@@ -10,5 +10,4 @@ def test_the_build_state_is_asked_for_before_the_collections_it_gates() -> None:
         "tenants/daf/backbone-circuits",
         "tenants/daf/tenant-sites",
         "tenants/daf/provider-sites",
-        "tenants/daf/homing-circuits",
     ]
