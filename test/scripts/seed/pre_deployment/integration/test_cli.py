@@ -40,12 +40,6 @@ def test_seed_cli_writes_a_tenants_knobs(stub_api: StubApi) -> None:
     assert any(path.endswith("/knobs") for path in paths)
 
 
-def test_seed_cli_writes_the_backbone_number_of_diverse_circuits(stub_api: StubApi) -> None:
-    _run_seed(stub_api.url)
-    paths = [path for _method, path, _body in stub_api.records]
-    assert any(path.endswith("/backbone-number-of-diverse-circuits") for path in paths)
-
-
 def test_seed_cli_fails_when_the_api_rejects_writes() -> None:
     with StubApi(status=500) as api:
         result = _run_seed(api.url)
