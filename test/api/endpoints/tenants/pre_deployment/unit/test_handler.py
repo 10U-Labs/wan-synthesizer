@@ -93,11 +93,6 @@ def _stored_put(monkeypatch: pytest.MonkeyPatch, collection: str, body: Any) -> 
     return json.loads(stored[f"tenants/f-35/{collection}.json"])
 
 
-def test_tenant_put_persists_the_forced_homes_document(monkeypatch: pytest.MonkeyPatch) -> None:
-    homes = [{"source": "Luke, AZ", "target": "Nellis, NV"}]
-    assert _stored_put(monkeypatch, "forced-homes", homes) == homes
-
-
 def test_tenant_put_persists_the_degree_exempt_wan_pops_document(
         monkeypatch: pytest.MonkeyPatch) -> None:
     exempt = ["San Jose, CA"]

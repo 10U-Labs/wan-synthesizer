@@ -131,12 +131,9 @@ def push_tenants(api: str) -> list[str]:
             continue
         tid = _slug(path.stem)
         tenant_ids.append(tid)
-        homing = config["homing"]
         backbone = config["backbone"]
         prohibited = backbone.get("prohibited", {})
-        homes = homing.get("forced", [])
         print(f"tenant {tid}", flush=True)
-        _put(api, f"tenants/{tid}/forced-homes", homes)
         _put(api, f"tenants/{tid}/prohibited-wan-pops", prohibited.get("wan_pops", []))
         _put(api, f"tenants/{tid}/prohibited-circuits", prohibited.get("circuits", []))
         _put(api, f"tenants/{tid}/degree-exempt-wan-pops",

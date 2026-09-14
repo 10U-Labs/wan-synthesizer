@@ -3,6 +3,4 @@ backbone:
   prohibited:
     circuits: []
     wan_pops: []
-homing:
-  forced: []
 label: Minuteman

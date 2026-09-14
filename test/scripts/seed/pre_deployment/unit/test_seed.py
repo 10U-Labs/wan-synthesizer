@@ -37,10 +37,6 @@ backbone:
     circuits:
       - source: Luke, AZ
         target: Link, TX
-homing:
-  forced:
-    - source: Kirtland, NM
-      target: Nellis, NV
 label: F-35
 """
 
@@ -295,8 +291,8 @@ def test_post_json_encodes_the_json_body(urlopen_recorder: UrlopenRecorder) -> N
 @pytest.mark.usefixtures("urlopen_recorder")
 def test_put_records_the_key_it_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "WRITTEN", set())
-    _put("http://api", "tenants/t/forced-homes", {})
-    assert seed.WRITTEN == {"tenants/t/forced-homes.json"}
+    _put("http://api", "tenants/t/prohibited-wan-pops", {})
+    assert seed.WRITTEN == {"tenants/t/prohibited-wan-pops.json"}
 
 
 def test_push_carriers_puts_the_pops_path(
@@ -321,14 +317,6 @@ def test_push_providers_pushes_regions(
     _one_provider(tmp_path, monkeypatch)
     push_providers("http://api")
     assert "providers/regions" in put_recorder.nth(1)
-
-
-def test_push_tenants_puts_the_forced_homes_resource(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/forced-homes"] == [
-        {"source": "Kirtland, NM", "target": "Nellis, NV"}]
 
 
 def test_push_tenants_puts_the_prohibited_wan_pops_resource(
@@ -403,9 +391,11 @@ def test_prune_store_posts_the_prune(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_prune_store_sends_the_keys_this_run_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     sent = _prune_answering(monkeypatch, [])
-    monkeypatch.setattr(seed, "WRITTEN", {"tenants/t/forced-homes.json", "providers/regions.json"})
+    monkeypatch.setattr(
+        seed, "WRITTEN", {"tenants/t/prohibited-wan-pops.json", "providers/regions.json"})
     prune_store("http://api")
-    assert sent[0][2] == {"written": ["providers/regions.json", "tenants/t/forced-homes.json"]}
+    assert sent[0][2] == {
+        "written": ["providers/regions.json", "tenants/t/prohibited-wan-pops.json"]}
 
 
 def test_prune_store_names_every_key_that_went(
