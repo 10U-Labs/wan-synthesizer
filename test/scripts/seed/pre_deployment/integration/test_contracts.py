@@ -178,40 +178,6 @@ def _tenant_configs() -> dict[str, dict[str, Any]]:
     }
 
 
-def _backbone_blocks() -> dict[str, dict[str, Any]]:
-    return {tenant: config["backbone"] for tenant, config in _tenant_configs().items()}
-
-
-def _declared_coverage_targets() -> dict[str, int]:
-    return {
-        tenant: backbone["coverage_target_miles"]
-        for tenant, backbone in _backbone_blocks().items()
-    }
-
-
-def _knob(urlopen_recorder: UrlopenRecorder, key: str) -> dict[str, Any]:
-    return {
-        tenant: document[key]
-        for tenant, document in _written_by_tenant(urlopen_recorder, "knobs").items()
-    }
-
-
-def test_pipeline_writes_each_tenant_the_coverage_target_its_config_declares(
-        urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
-    _seed(urlopen_recorder, monkeypatch)
-    assert _knob(urlopen_recorder, "backbone_coverage_target_miles") == \
-        _declared_coverage_targets()
-
-
-def test_pipeline_writes_no_knob_the_synthesizer_does_not_read(
-        urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
-    _seed(urlopen_recorder, monkeypatch)
-    assert {
-        frozenset(document)
-        for document in _written_by_tenant(urlopen_recorder, "knobs").values()
-    } == {frozenset({"backbone_coverage_target_miles"})}
-
-
 def _configs_naming_a_providers_file() -> set[str]:
     return {
         tenant
@@ -284,7 +250,7 @@ def _tenants_written(paths: list[str], resource: str) -> int:
     return sum(1 for path in paths if re.fullmatch(rf"tenants/[^/]+/{resource}", path))
 
 
-@pytest.mark.parametrize("resource", ["forced-homes", "knobs", "provider-regions"])
+@pytest.mark.parametrize("resource", ["forced-homes", "settings", "provider-regions"])
 def test_pipeline_writes_a_document_for_every_tenant(
         resource: str, urlopen_recorder: UrlopenRecorder,
         monkeypatch: pytest.MonkeyPatch) -> None:

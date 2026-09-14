@@ -33,7 +33,6 @@ from seed import (
 
 _TENANT_YML = """\
 backbone:
-  coverage_target_miles: 500
   degree_exempt:
     - Nellis, NV
   forced:
@@ -414,8 +413,8 @@ def test_post_json_encodes_the_json_body(urlopen_recorder: UrlopenRecorder) -> N
 @pytest.mark.usefixtures("urlopen_recorder")
 def test_put_records_the_key_it_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "WRITTEN", set())
-    _put("http://api", "tenants/t/knobs", {})
-    assert seed.WRITTEN == {"tenants/t/knobs.json"}
+    _put("http://api", "tenants/t/settings", {})
+    assert seed.WRITTEN == {"tenants/t/settings.json"}
 
 
 def test_push_carriers_puts_the_pops_path(
@@ -478,13 +477,6 @@ def test_push_tenants_puts_the_prohibited_circuits_resource(
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
     assert bodies["tenants/f-35/prohibited-circuits"] == [
         {"source": "Luke, AZ", "target": "Link, TX"}]
-
-
-def test_push_tenants_builds_the_knobs_document_from_the_coverage_target(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/knobs"]["backbone_coverage_target_miles"] == 500
 
 
 def test_push_tenants_puts_the_settings_document(
@@ -591,9 +583,9 @@ def test_prune_store_posts_the_prune(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_prune_store_sends_the_keys_this_run_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     sent = _prune_answering(monkeypatch, [])
-    monkeypatch.setattr(seed, "WRITTEN", {"tenants/t/knobs.json", "providers/regions.json"})
+    monkeypatch.setattr(seed, "WRITTEN", {"tenants/t/settings.json", "providers/regions.json"})
     prune_store("http://api")
-    assert sent[0][2] == {"written": ["providers/regions.json", "tenants/t/knobs.json"]}
+    assert sent[0][2] == {"written": ["providers/regions.json", "tenants/t/settings.json"]}
 
 
 def test_prune_store_names_every_key_that_went(

@@ -1,6 +1,5 @@
 ---
 backbone:
-  coverage_target_miles: 745
   forced:
     circuits: []
     wan_pops:
