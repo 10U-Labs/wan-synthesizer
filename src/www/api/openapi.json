@@ -387,14 +387,6 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/backbone-number-of-diverse-circuits": {
-      "get": {
-        "summary": "A tenant's number of diverse circuits asked of every WAN PoP (input).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The number of diverse circuits." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      }
-    },
     "/wan-synthesizer/tenants/{tenant}/homing-degree": {
       "get": {
         "summary": "A tenant's homing degree (input).",
