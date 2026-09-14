@@ -387,14 +387,6 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/homing-degree": {
-      "get": {
-        "summary": "A tenant's homing degree (input).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The homing degree." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      }
-    },
     "/wan-synthesizer/tenants/{tenant}/knobs": {
       "get": {
         "summary": "A tenant's algorithm knobs (input).",
