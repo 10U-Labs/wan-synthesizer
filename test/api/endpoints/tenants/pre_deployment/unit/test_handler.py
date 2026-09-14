@@ -21,20 +21,20 @@ _LOCATIONS_ROW: dict[str, Any] = {
 
 _READER: dict[str, Any] = {
     "endpoint": "tenants",
-    "stored_key": "tenants/f-35/settings.json",
-    "stored": {"compass_sector_count": 12},
+    "stored_key": "tenants/f-35/forced-homes.json",
+    "stored": [{"source": "Luke, AZ", "target": "Nellis, NV"}],
     "serve_event": {
         "pathParameters": {"tenant": "f-35"},
-        "path": "/x/tenants/f-35/settings",
+        "path": "/x/tenants/f-35/forced-homes",
     },
-    "serve_expect": {"compass_sector_count": 12},
+    "serve_expect": [{"source": "Luke, AZ", "target": "Nellis, NV"}],
     "unknown_event": {
         "pathParameters": {"tenant": "f-35"},
         "path": "/x/tenants/f-35/bogus",
     },
     "notbuilt_event": {
         "pathParameters": {"tenant": "minuteman"},
-        "path": "/x/tenants/minuteman/settings",
+        "path": "/x/tenants/minuteman/forced-homes",
     },
 }
 
