@@ -10,9 +10,8 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_READ_ONLY: tuple[str, ...] = ()
+_READ_ONLY = ("prohibited-circuits",)
 _INPUTS = frozenset({
-    "prohibited-circuits",
     "degree-exempt-wan-pops",
 })
 def _s3() -> Any:

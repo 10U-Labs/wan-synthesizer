@@ -231,12 +231,6 @@
         "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
         "responses": { "200": { "description": "The prohibited circuits." } },
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      },
-      "put": {
-        "summary": "Replace a tenant's prohibited circuits (stores only).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The prohibited circuits were replaced." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
     "/wan-synthesizer/tenants/{tenant}": {

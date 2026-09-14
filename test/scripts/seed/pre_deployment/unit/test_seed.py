@@ -31,10 +31,6 @@ _TENANT_YML = """\
 backbone:
   degree_exempt:
     - Nellis, NV
-  prohibited:
-    circuits:
-      - source: Luke, AZ
-        target: Link, TX
 label: F-35
 """
 
@@ -289,8 +285,8 @@ def test_post_json_encodes_the_json_body(urlopen_recorder: UrlopenRecorder) -> N
 @pytest.mark.usefixtures("urlopen_recorder")
 def test_put_records_the_key_it_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "WRITTEN", set())
-    _put("http://api", "tenants/t/prohibited-circuits", {})
-    assert seed.WRITTEN == {"tenants/t/prohibited-circuits.json"}
+    _put("http://api", "tenants/t/degree-exempt-wan-pops", {})
+    assert seed.WRITTEN == {"tenants/t/degree-exempt-wan-pops.json"}
 
 
 def test_push_carriers_puts_the_pops_path(
@@ -317,14 +313,6 @@ def test_push_providers_pushes_regions(
     assert "providers/regions" in put_recorder.nth(1)
 
 
-def test_push_tenants_puts_the_prohibited_circuits_resource(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/prohibited-circuits"] == [
-        {"source": "Luke, AZ", "target": "Link, TX"}]
-
-
 @pytest.mark.usefixtures("put_recorder")
 def test_push_tenants_puts_the_degree_exempt_wan_pops_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
@@ -338,7 +326,7 @@ def test_push_tenants_puts_an_empty_degree_exempt_document_when_absent(
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(
         tmp_path, monkeypatch, put_recorder,
-        _TENANT_YML.replace("  degree_exempt:\n    - Nellis, NV\n", ""))
+        _TENANT_YML.replace("backbone:\n  degree_exempt:\n    - Nellis, NV\n", ""))
     assert bodies["tenants/f-35/degree-exempt-wan-pops"] == []
 
 
@@ -383,10 +371,10 @@ def test_prune_store_posts_the_prune(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_prune_store_sends_the_keys_this_run_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     sent = _prune_answering(monkeypatch, [])
     monkeypatch.setattr(
-        seed, "WRITTEN", {"tenants/t/prohibited-circuits.json", "providers/regions.json"})
+        seed, "WRITTEN", {"tenants/t/degree-exempt-wan-pops.json", "providers/regions.json"})
     prune_store("http://api")
     assert sent[0][2] == {
-        "written": ["providers/regions.json", "tenants/t/prohibited-circuits.json"]}
+        "written": ["providers/regions.json", "tenants/t/degree-exempt-wan-pops.json"]}
 
 
 def test_prune_store_names_every_key_that_went(

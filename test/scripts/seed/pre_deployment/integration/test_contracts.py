@@ -93,7 +93,7 @@ def _backbone_keys_seed_reads() -> set[str]:
 def test_no_tenant_declares_a_backbone_key_the_seed_does_not_read() -> None:
     declared: set[str] = set()
     for config in sorted((REPO_ROOT / "etc").glob("*.yml")):
-        declared |= set(yaml.safe_load(config.read_text(encoding="utf-8"))["backbone"])
+        declared |= set(yaml.safe_load(config.read_text(encoding="utf-8")).get("backbone", {}))
     assert declared <= _backbone_keys_seed_reads()
 
 
@@ -199,7 +199,7 @@ def _tenants_written(paths: list[str], resource: str) -> int:
     return sum(1 for path in paths if re.fullmatch(rf"tenants/[^/]+/{resource}", path))
 
 
-@pytest.mark.parametrize("resource", ["degree-exempt-wan-pops", "prohibited-circuits"])
+@pytest.mark.parametrize("resource", ["degree-exempt-wan-pops"])
 def test_pipeline_writes_a_document_for_every_tenant(
         resource: str, urlopen_recorder: UrlopenRecorder,
         monkeypatch: pytest.MonkeyPatch) -> None:
