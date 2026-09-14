@@ -20,13 +20,11 @@ _PAYLOAD = synthesis_payload(
 )
 
 _WAN_POP_FIELDS = ("id", "name", "kind", "coords")
-_SITE_FIELDS = (*_WAN_POP_FIELDS, "exempt_from_distance_constraint")
 
 
 def _subjects() -> list[tuple[str, list[dict[str, Any]], tuple[str, ...]]]:
     return [
         ("wan-pops", published.wan_pops(_PAYLOAD), _WAN_POP_FIELDS),
-        ("tenant-sites", published.tenant_sites(_PAYLOAD), _SITE_FIELDS),
     ]
 
 

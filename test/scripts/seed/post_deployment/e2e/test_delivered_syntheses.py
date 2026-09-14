@@ -11,7 +11,6 @@ from synthesizer.local_fiber import LOCAL_FIBER_HOMING_DEGREE, nearest_carrier_p
 from test_published_syntheses import (
     offered_diverse_circuits,
     site_from_row,
-    worst_haul,
 )
 
 
@@ -95,16 +94,6 @@ def test_every_city_a_tenant_pins_is_selected_into_its_published_backbone(
         if not set(synthesis["forced"]) <= _published_cities(synthesis)
     }
     assert unselected == {}
-
-
-def test_the_reported_worst_haul_is_the_one_the_published_network_delivers(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    mismeasured = [
-        (synthesis["tenant"], worst_haul(synthesis))
-        for synthesis in published_syntheses
-        if worst_haul(synthesis) != synthesis["status"]["coverage"]["worst_haul_miles"]
-    ]
-    assert mismeasured == []
 
 
 def test_no_synthesis_missed_its_coverage_target_below_the_wan_pops_it_was_allowed(
@@ -218,16 +207,3 @@ def _overstated_ceilings(syntheses: list[dict[str, Any]]) -> dict[str, list[str]
 def test_no_published_networks_ceiling_is_higher_than_the_circuits_its_carriers_can_offer(
         published_syntheses: list[dict[str, Any]]) -> None:
     assert not _overstated_ceilings(published_syntheses)
-
-
-def test_no_published_site_is_served_as_a_tenant_site_and_a_provider_region_both(
-        published_syntheses: list[dict[str, Any]]) -> None:
-    assert {
-        synthesis["tenant"]: sorted(
-            {row["id"] for row in synthesis["tenant_sites"]}
-            & {row["id"] for row in synthesis["provider_regions"]}
-        )
-        for synthesis in published_syntheses
-        if {row["id"] for row in synthesis["tenant_sites"]}
-        & {row["id"] for row in synthesis["provider_regions"]}
-    } == {}

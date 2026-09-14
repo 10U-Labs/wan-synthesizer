@@ -6,14 +6,13 @@ from typing import Any
 from urllib.error import HTTPError
 
 from seed import _get
-from synthesizer.input_graph import Site, haversine_miles
+from synthesizer.input_graph import Site
 
 
 UNFINISHED = frozenset({"creating", "synthesizing"})
 
 COLLECTIONS = (
     "wan-pops",
-    "tenant-sites",
     "provider-sites",
 )
 
@@ -49,7 +48,6 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "status": state,
         "lower_bound_miles": state.get("backbone_lower_bound_miles"),
         "wan_pops": published.get("wan-pops", []),
-        "tenant_sites": published.get("tenant-sites", []),
         "provider_regions": published.get("provider-sites", []),
     }
 
@@ -57,22 +55,6 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
 def site_from_row(row: dict[str, Any]) -> Site:
     latitude, longitude = row["coords"]
     return Site(row["id"], row["name"], row["kind"], (latitude, longitude))
-
-
-def homed_sites(synthesis: dict[str, Any]) -> list[dict[str, Any]]:
-    tenant_sites: list[dict[str, Any]] = synthesis["tenant_sites"]
-    provider_regions: list[dict[str, Any]] = synthesis["provider_regions"]
-    return tenant_sites + provider_regions
-
-
-def worst_haul(synthesis: dict[str, Any]) -> float:
-    wan_pop_sites = [site_from_row(row) for row in synthesis["wan_pops"]]
-    hauls: list[float] = [
-        min(haversine_miles(site_from_row(row), site) for site in wan_pop_sites)
-        for row in homed_sites(synthesis)
-        if not row["exempt_from_distance_constraint"]
-    ]
-    return round(max(hauls, default=0.0), 1)
 
 
 def _joined_to(pairs: list[tuple[str, str]]) -> dict[str, set[str]]:

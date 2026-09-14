@@ -27,7 +27,6 @@ _CONFIG: dict[str, Any] = {
     "homing": {"degree": 2},
 }
 _WAN_POP = {"id": "ash", "name": "Ashburn, VA", "kind": "PoP", "coords": [39.0, -77.5]}
-_SITE = {"id": "s1", "name": "Site", "kind": "Tenant site", "coords": [38.9, -77.0]}
 _REGION = {"id": "r1", "name": "us-east-1", "kind": "provider region", "coords": [39.0, -78.0]}
 _SUCCEEDED = {
     "status": "success",
@@ -52,7 +51,6 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
     monkeypatch.setattr(urllib.request, "urlopen", _answering({
         "tenants/daf/wan": _SUCCEEDED,
         "tenants/daf/wan-pops": [_WAN_POP],
-        "tenants/daf/tenant-sites": [_SITE],
         "tenants/daf/provider-sites": [_REGION],
     }))
     assert published_synthesis(DEFAULT_API, "daf", _CONFIG) == {
@@ -66,7 +64,6 @@ def test_a_published_network_is_read_beside_the_demands_its_config_makes(
         "status": _SUCCEEDED,
         "lower_bound_miles": 1250.0,
         "wan_pops": [_WAN_POP],
-        "tenant_sites": [_SITE],
         "provider_regions": [_REGION],
     }
 
@@ -78,8 +75,8 @@ def test_a_tenant_whose_build_has_not_published_is_read_with_no_network(
     }))
     synthesis = published_synthesis(DEFAULT_API, "daf", _CONFIG)
     assert [
-        synthesis["wan_pops"], synthesis["tenant_sites"], synthesis["provider_regions"],
-    ] == [[], [], []]
+        synthesis["wan_pops"], synthesis["provider_regions"],
+    ] == [[], []]
 
 
 def test_a_build_the_service_refuses_to_serve_is_read_as_what_it_says_went_wrong(

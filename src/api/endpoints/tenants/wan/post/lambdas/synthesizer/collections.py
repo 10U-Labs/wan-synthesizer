@@ -30,9 +30,5 @@ def wan_pops(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return _tier(payload, "wan_pop")
 
 
-def tenant_sites(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    return _tier(payload, "tenant")
-
-
 def provider_sites(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return _tier(payload, "provider")

@@ -12,7 +12,6 @@ _HEADERS = {
 _ONLY_VERSION = "null"
 _WAN_COLLECTIONS = (
     "wan-pops",
-    "tenant-sites",
     "provider-sites",
 )
 _INPUTS = frozenset({

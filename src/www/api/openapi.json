@@ -225,20 +225,6 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/tenant-sites": {
-      "get": {
-        "summary": "A tenant WAN's tenant-site demand, homed to the backbone.",
-        "parameters": [
-          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "200": { "description": "The tenant's own sites." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${TenantsHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
-      }
-    },
     "/wan-synthesizer/tenants/{tenant}/provider-sites": {
       "get": {
         "summary": "A tenant WAN's provider-region demand, homed to the backbone.",
