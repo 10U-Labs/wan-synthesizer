@@ -373,14 +373,6 @@
         "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/convergence-promotion": {
-      "get": {
-        "summary": "A tenant's convergence promotion policy (input).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The convergence promotion policy." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      }
-    },
     "/wan-synthesizer/tenants/{tenant}/knobs": {
       "get": {
         "summary": "A tenant's algorithm knobs (input).",
