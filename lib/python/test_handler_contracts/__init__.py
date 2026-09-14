@@ -65,14 +65,6 @@ class ReaderContract:
         assert response["headers"]["Access-Control-Allow-Origin"] == SPA_ORIGIN
 
 
-class ListingContract(ReaderContract):
-    def test_lists_the_stored_ids(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = load_handler(self.CFG["endpoint"], monkeypatch)
-        with patch("boto3.client", return_value=fake_s3({}, keys=self.CFG["list_keys"])):
-            response = module.lambda_handler({}, None)
-        assert json.loads(response["body"]) == self.CFG["ids"]
-
-
 class SharedWriteTests:
     CFG: dict[str, Any]
 

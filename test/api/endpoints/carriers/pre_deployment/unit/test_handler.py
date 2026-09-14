@@ -6,13 +6,11 @@ from unittest.mock import patch
 
 import pytest
 
-from test_handler_contracts import ListingContract, load_handler, write_clients
+from test_handler_contracts import ReaderContract, load_handler, write_clients
 from test_s3_store_mock import fake_s3
 
 _READER: dict[str, Any] = {
     "endpoint": "carriers",
-    "list_keys": ["carriers/lumen/pops.json", "carriers/zayo/pops.json"],
-    "ids": ["lumen", "zayo"],
     "stored_key": "carriers/lumen/pops.json",
     "stored": [{"id": "P"}],
     "serve_event": {
@@ -30,7 +28,8 @@ _READER: dict[str, Any] = {
     },
 }
 
-class TestCarriersReader(ListingContract):
+
+class TestCarriersReader(ReaderContract):
     CFG = _READER
 
 
@@ -54,16 +53,6 @@ def test_carrier_delete_leaves_another_carrier_alone(monkeypatch: pytest.MonkeyP
     stored = {"carriers/lumen/pops.json": b"[]", "carriers/zayo/pops.json": b"[]"}
     kept = list(_store_after_deleting(monkeypatch, stored, "lumen"))
     assert kept == ["carriers/zayo/pops.json"]
-
-
-def test_a_deleted_carrier_is_no_longer_listed(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = load_handler("carriers", monkeypatch)
-    stored = {"carriers/lumen/vertices.json": b"[]", "carriers/zayo/pops.json": b"[]"}
-    removal = {"httpMethod": "DELETE", "pathParameters": {"carrier": "lumen"}}
-    with patch("boto3.client", side_effect=write_clients(stored, [])):
-        module.lambda_handler(removal, None)
-        listed = module.lambda_handler({"httpMethod": "GET"}, None)
-    assert json.loads(listed["body"]) == ["zayo"]
 
 
 def test_carrier_delete_leaves_no_delete_marker(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -26,15 +26,6 @@ def _response(status: int, body: Any) -> dict[str, Any]:
     return {"statusCode": status, "headers": dict(_HEADERS), "body": json.dumps(body)}
 
 
-def _carrier_ids(client: Any) -> list[str]:
-    listing = client.list_objects_v2(Bucket=os.environ["STORE_BUCKET"], Prefix="carriers/")
-    ids = {
-        item["Key"].removeprefix("carriers/").split("/", 1)[0]
-        for item in listing.get("Contents", [])
-    }
-    return sorted(ids)
-
-
 def _read_collection(client: Any, carrier: str, collection: str) -> Any:
     key = f"carriers/{carrier}/{collection}.json"
     try:
@@ -44,9 +35,7 @@ def _read_collection(client: Any, carrier: str, collection: str) -> Any:
     return json.loads(body)
 
 
-def _get(client: Any, carrier: str | None, event: dict[str, Any]) -> dict[str, Any]:
-    if not carrier:
-        return _response(200, _carrier_ids(client))
+def _get(client: Any, carrier: str, event: dict[str, Any]) -> dict[str, Any]:
     collection = event.get("path", "").rsplit("/", 1)[-1]
     if collection not in ("pops", "fiber-segments"):
         return _response(404, {"error": collection})
@@ -68,10 +57,10 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     client = _s3()
     method = event.get("httpMethod", "GET")
     carrier = (event.get("pathParameters") or {}).get("carrier")
-    if method == "GET":
-        return _get(client, carrier, event)
     if not carrier:
         return _response(404, {"error": "carrier required"})
+    if method == "GET":
+        return _get(client, carrier, event)
     if method == "DELETE":
         return _delete(client, carrier)
     return _response(404, {"error": method})
