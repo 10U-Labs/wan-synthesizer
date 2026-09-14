@@ -28,7 +28,3 @@ def _tier(payload: dict[str, Any], tier_role: str) -> list[dict[str, Any]]:
 
 def wan_pops(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return _tier(payload, "wan_pop")
-
-
-def provider_sites(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    return _tier(payload, "provider")

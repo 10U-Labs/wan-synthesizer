@@ -13,7 +13,6 @@ UNFINISHED = frozenset({"creating", "synthesizing"})
 
 COLLECTIONS = (
     "wan-pops",
-    "provider-sites",
 )
 
 
@@ -48,7 +47,6 @@ def published_synthesis(api: str, tenant: str, config: dict[str, Any]) -> dict[s
         "status": state,
         "lower_bound_miles": state.get("backbone_lower_bound_miles"),
         "wan_pops": published.get("wan-pops", []),
-        "provider_regions": published.get("provider-sites", []),
     }
 
 
