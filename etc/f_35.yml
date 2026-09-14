@@ -2,8 +2,6 @@
 backbone:
   forced:
     circuits: []
-    wan_pops:
-      - Ashburn, VA
   prohibited:
     circuits: []
     wan_pops: []

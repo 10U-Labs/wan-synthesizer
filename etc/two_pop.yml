@@ -2,9 +2,6 @@
 backbone:
   forced:
     circuits: []
-    wan_pops:
-      - Ashburn, VA
-      - Salt Lake City, UT
   prohibited:
     circuits: []
     wan_pops: []

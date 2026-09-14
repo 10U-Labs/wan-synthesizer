@@ -2,16 +2,6 @@
 backbone:
   forced:
     circuits: []
-    wan_pops:
-      - Ashburn, VA
-      - Atlanta, GA
-      - Cheyenne, WY
-      - Dallas, TX
-      - Great Falls, MT
-      - Minot, ND
-      - RAF Molesworth
-      - Salt Lake City, UT
-      - Stuttgart, Germany
   prohibited:
     circuits: []
     wan_pops: []

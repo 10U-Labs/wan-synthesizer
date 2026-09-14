@@ -81,8 +81,8 @@ def test_tenant_put_persists_an_input(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
     objects: dict[str, bytes] = {}
     with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(_tenant_put("forced-wan-pops", []), None)
-    assert "tenants/f-35/forced-wan-pops.json" in objects
+        module.lambda_handler(_tenant_put("forced-circuits", []), None)
+    assert "tenants/f-35/forced-circuits.json" in objects
 
 
 def _stored_put(monkeypatch: pytest.MonkeyPatch, collection: str, body: Any) -> Any:
@@ -115,7 +115,7 @@ def test_tenant_put_does_not_trigger_a_build(monkeypatch: pytest.MonkeyPatch) ->
     module = _tenant(monkeypatch)
     invocations: list[dict[str, Any]] = []
     with patch("boto3.client", side_effect=write_clients({}, invocations)):
-        module.lambda_handler(_tenant_put("forced-wan-pops", []), None)
+        module.lambda_handler(_tenant_put("forced-circuits", []), None)
     assert not invocations
 
 

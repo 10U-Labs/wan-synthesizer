@@ -137,7 +137,6 @@ def push_tenants(api: str) -> list[str]:
         prohibited = backbone.get("prohibited", {})
         homes = homing.get("forced", [])
         print(f"tenant {tid}", flush=True)
-        _put(api, f"tenants/{tid}/forced-wan-pops", forced.get("wan_pops", []))
         _put(api, f"tenants/{tid}/forced-circuits", forced.get("circuits", []))
         _put(api, f"tenants/{tid}/forced-homes", homes)
         _put(api, f"tenants/{tid}/prohibited-wan-pops", prohibited.get("wan_pops", []))

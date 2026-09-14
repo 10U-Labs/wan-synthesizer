@@ -16,7 +16,6 @@ TENANT_FILES = frozenset({
     "degree-exempt-wan-pops.json",
     "forced-circuits.json",
     "forced-homes.json",
-    "forced-wan-pops.json",
     "prohibited-circuits.json",
     "prohibited-wan-pops.json",
     "wan-status.json",
