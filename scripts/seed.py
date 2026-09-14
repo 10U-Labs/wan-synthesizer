@@ -39,32 +39,6 @@ def _rows(path: Path) -> list[dict[str, Any]]:
         return rows
 
 
-def _city_key(row: dict[str, Any]) -> tuple[str, str]:
-    return str(row["municipality"]).casefold(), str(row["state"]).casefold()
-
-
-def _carrier_cities() -> set[tuple[str, str]]:
-    return {
-        _city_key(row)
-        for carrier in _carrier_names()
-        for row in _rows(DATA / "pops" / f"{carrier}.csv")
-    }
-
-
-def _off_net_rows(path: str) -> list[dict[str, Any]]:
-    rows = _rows(REPO_ROOT / path)
-    carriers = _carrier_cities()
-    on_net = sorted(
-        f"{row['municipality']}, {row['state']}"
-        for row in rows if _city_key(row) in carriers
-    )
-    if on_net:
-        raise ValueError(
-            f"off-net file {path} names cities a carrier already serves: "
-            f"{'; '.join(on_net)}")
-    return rows
-
-
 def _slug(stem: str) -> str:
     return stem.replace("_", "-")
 
@@ -157,16 +131,12 @@ def push_tenants(api: str) -> list[str]:
             continue
         tid = _slug(path.stem)
         tenant_ids.append(tid)
-        inputs = config.get("inputs", {})
         homing = config["homing"]
         backbone = config["backbone"]
         forced = backbone.get("forced", {})
         prohibited = backbone.get("prohibited", {})
         homes = homing.get("forced", [])
-        off_net_file = inputs.get("forced")
-        off_net = _off_net_rows(off_net_file) if off_net_file else []
-        print(f"tenant {tid}: {len(off_net)} off-net", flush=True)
-        _put(api, f"tenants/{tid}/off-net", off_net)
+        print(f"tenant {tid}", flush=True)
         _put(api, f"tenants/{tid}/forced-wan-pops", forced.get("wan_pops", []))
         _put(api, f"tenants/{tid}/forced-circuits", forced.get("circuits", []))
         _put(api, f"tenants/{tid}/forced-homes", homes)

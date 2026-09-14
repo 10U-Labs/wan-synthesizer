@@ -12,7 +12,7 @@ import yaml
 
 import seed
 from repo_utils import REPO_ROOT
-from seed import _carrier_cities, _carrier_names, _city_key, _rows
+from seed import _carrier_names, _rows
 from test_http_doubles import UrlopenRecorder
 from test_terraform_config import api_key_parameter_name
 
@@ -163,26 +163,6 @@ def test_seeding_seeds_only_on_the_conclusion_the_wait_job_reports() -> None:
     assert f"needs.{_WAIT_JOB}.outputs.apply == 'true'" in condition
 
 
-def _declared_off_net_paths() -> set[str]:
-    paths: set[str] = set()
-    for config in seed.ETC.glob("*.yml"):
-        declared = yaml.safe_load(config.read_text(encoding="utf-8"))
-        forced = declared.get("inputs", {}).get("forced")
-        if forced:
-            paths.add(forced)
-    return paths
-
-
-def test_no_declared_off_net_pop_is_a_city_a_carrier_already_serves() -> None:
-    carriers = _carrier_cities()
-    overlapping = sorted(
-        city
-        for path in _declared_off_net_paths()
-        for city in {_city_key(row) for row in _rows(REPO_ROOT / path)} & carriers
-    )
-    assert overlapping == []
-
-
 def test_every_carrier_has_both_a_points_file_and_a_fiber_file() -> None:
     points = sorted(p.stem for p in (seed.DATA / "pops").glob("*.csv"))
     assert points == _carrier_names()
@@ -219,7 +199,7 @@ def _tenants_written(paths: list[str], resource: str) -> int:
     return sum(1 for path in paths if re.fullmatch(rf"tenants/[^/]+/{resource}", path))
 
 
-@pytest.mark.parametrize("resource", ["forced-homes", "off-net", "forced-wan-pops"])
+@pytest.mark.parametrize("resource", ["forced-homes", "forced-circuits", "forced-wan-pops"])
 def test_pipeline_writes_a_document_for_every_tenant(
         resource: str, urlopen_recorder: UrlopenRecorder,
         monkeypatch: pytest.MonkeyPatch) -> None:

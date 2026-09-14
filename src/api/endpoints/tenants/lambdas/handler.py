@@ -10,9 +10,8 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_READ_ONLY: tuple[str, ...] = ()
+_READ_ONLY = ("off-net",)
 _INPUTS = frozenset({
-    "off-net",
     "forced-wan-pops",
     "forced-circuits",
     "forced-homes",
@@ -20,20 +19,6 @@ _INPUTS = frozenset({
     "prohibited-circuits",
     "degree-exempt-wan-pops",
 })
-_SITE_INPUT_FIELDS = {
-    "off-net": {"municipality", "state", "country", "latitude", "longitude"},
-}
-
-
-def _validate_rows(body: Any, required: set[str]) -> str | None:
-    if not isinstance(body, list):
-        return "expected a list of rows"
-    for row in body:
-        if not isinstance(row, dict) or not required.issubset(row):
-            return "each row must have at least: " + ", ".join(sorted(required))
-    return None
-
-
 def _s3() -> Any:
     if "s3" not in _CLIENTS:
         _CLIENTS["s3"] = boto3.client("s3", region_name="us-east-2")
@@ -75,11 +60,6 @@ def _put(client: Any, tenant: str, event: dict[str, Any]) -> dict[str, Any]:
     if collection not in _INPUTS:
         return _response(404, {"error": collection})
     document = json.loads(event["body"])
-    fields = _SITE_INPUT_FIELDS.get(collection)
-    if fields is not None:
-        error = _validate_rows(document, fields)
-        if error:
-            return _response(400, {"error": error})
     key = f"tenants/{tenant}/{collection}.json"
     client.put_object(
         Bucket=os.environ["STORE_BUCKET"], Key=key, Body=json.dumps(document).encode())

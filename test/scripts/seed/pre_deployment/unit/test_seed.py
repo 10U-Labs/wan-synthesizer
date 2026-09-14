@@ -12,10 +12,7 @@ import pytest
 import seed
 from test_http_doubles import CallRecorder, UrlopenRecorder
 from seed import (
-    _carrier_cities,
     _carrier_names,
-    _city_key,
-    _off_net_rows,
     _post,
     _post_json,
     _put,
@@ -50,8 +47,6 @@ homing:
   forced:
     - source: Kirtland, NM
       target: Nellis, NV
-inputs:
-  forced: offnet/off.csv
 label: F-35
 """
 
@@ -71,19 +66,6 @@ def _one_carrier(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         "Municipality,State", "Reston,VA", "Denver,CO")
 
 
-def _fiberless_carrier(data: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "DATA", data)
-    _write_csv(
-        data / "pops" / "lumen.csv", "Municipality,State", "Reston,VA")
-
-
-def _off_net_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *sites: str) -> str:
-    _one_carrier(tmp_path / "data", monkeypatch)
-    monkeypatch.setattr(seed, "REPO_ROOT", tmp_path)
-    _write_csv(tmp_path / "offnet" / "off.csv", "Municipality,State", *sites)
-    return "offnet/off.csv"
-
-
 def _one_provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "DATA", tmp_path)
     _write_csv(
@@ -91,7 +73,6 @@ def _one_provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _one_tenant(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, body: str) -> None:
-    _off_net_file(tmp_path, monkeypatch, "Link,TX")
     monkeypatch.setattr(seed, "ETC", tmp_path / "etc")
     (tmp_path / "etc").mkdir(parents=True, exist_ok=True)
     (tmp_path / "etc" / "f_35.yml").write_text(body, encoding="utf-8")
@@ -168,69 +149,6 @@ def test_carrier_names_ignores_non_csv_files(
     (tmp_path / "fiber_segments" / "terrestrial" / "notes.txt").write_text(
         "x", encoding="utf-8")
     assert _carrier_names() == ["lumen"]
-
-
-def test_city_key_casefolds_the_municipality_and_state() -> None:
-    assert _city_key({"municipality": "Dulles", "state": "VA"}) == ("dulles", "va")
-
-
-def test_carrier_cities_collects_every_point_a_carrier_file_lists(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _one_carrier(tmp_path, monkeypatch)
-    assert _carrier_cities() == {("reston", "va"), ("denver", "co")}
-
-
-def test_carrier_cities_ignores_a_carrier_with_no_fiber_file(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _fiberless_carrier(tmp_path, monkeypatch)
-    assert _carrier_cities() == set()
-
-
-def test_carrier_cities_is_empty_without_any_carrier_file(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "DATA", tmp_path)
-    assert _carrier_cities() == set()
-
-
-def test_off_net_rows_returns_every_site_no_carrier_serves(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    path = _off_net_file(tmp_path, monkeypatch, "Dulles,VA", "Laurel,MT")
-    assert len(_off_net_rows(path)) == 2
-
-
-def test_off_net_rows_refuses_a_site_a_carrier_already_serves(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    path = _off_net_file(tmp_path, monkeypatch, "Reston,VA")
-    with pytest.raises(ValueError, match="Reston, VA"):
-        _off_net_rows(path)
-
-
-def test_off_net_rows_names_every_on_net_site_it_refuses(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    path = _off_net_file(tmp_path, monkeypatch, "Reston,VA", "Denver,CO")
-    with pytest.raises(ValueError, match="Denver, CO; Reston, VA"):
-        _off_net_rows(path)
-
-
-def test_off_net_rows_refuses_a_site_spelled_in_another_case(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    path = _off_net_file(tmp_path, monkeypatch, "reston,va")
-    with pytest.raises(ValueError, match="reston, va"):
-        _off_net_rows(path)
-
-
-def test_off_net_rows_accepts_a_site_only_a_fiberless_carrier_has_a_point_in(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _fiberless_carrier(tmp_path / "data", monkeypatch)
-    monkeypatch.setattr(seed, "REPO_ROOT", tmp_path)
-    _write_csv(tmp_path / "offnet" / "off.csv", "Municipality,State", "Reston,VA")
-    assert len(_off_net_rows("offnet/off.csv")) == 1
-
-
-def test_off_net_rows_keeps_a_site_whose_state_differs(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    path = _off_net_file(tmp_path, monkeypatch, "Reston,TX")
-    assert _off_net_rows(path) == [{"municipality": "Reston", "state": "TX"}]
 
 
 def _reset() -> ConnectionResetError:
@@ -449,22 +367,7 @@ def test_push_tenants_puts_the_prohibited_circuits_resource(
         {"source": "Luke, AZ", "target": "Link, TX"}]
 
 
-def test_push_tenants_reads_off_net_when_present(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/off-net"] == [{"municipality": "Link", "state": "TX"}]
-
-
 @pytest.mark.usefixtures("put_recorder")
-def test_push_tenants_refuses_an_off_net_pop_a_carrier_already_serves(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _one_tenant(tmp_path, monkeypatch, _TENANT_YML)
-    _write_csv(tmp_path / "offnet" / "off.csv", "Municipality,State", "Reston,VA")
-    with pytest.raises(ValueError, match="Reston, VA"):
-        push_tenants("http://api")
-
-
 def test_push_tenants_puts_the_degree_exempt_wan_pops_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:
@@ -479,15 +382,6 @@ def test_push_tenants_puts_an_empty_degree_exempt_document_when_absent(
         tmp_path, monkeypatch, put_recorder,
         _TENANT_YML.replace("  degree_exempt:\n    - Nellis, NV\n", ""))
     assert bodies["tenants/f-35/degree-exempt-wan-pops"] == []
-
-
-def test_push_tenants_uses_empty_off_net_when_absent(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(
-        tmp_path, monkeypatch, put_recorder,
-        _TENANT_YML.replace("  forced: offnet/off.csv\n", ""))
-    assert bodies["tenants/f-35/off-net"] == []
 
 
 def test_push_tenants_skips_empty_config_files(

@@ -9,14 +9,6 @@ import pytest
 from test_handler_contracts import ReaderContract, load_handler, write_clients
 from test_s3_store_mock import fake_s3
 
-_OFF_NET_ROW: dict[str, Any] = {
-    "municipality": "Ashburn",
-    "state": "VA",
-    "country": "United States",
-    "latitude": 1.0,
-    "longitude": 2.0,
-}
-
 _READER: dict[str, Any] = {
     "endpoint": "tenants",
     "stored_key": "tenants/f-35/forced-homes.json",
@@ -76,26 +68,6 @@ def test_tenant_serves_the_backbone_circuits(monkeypatch: pytest.MonkeyPatch) ->
     assert json.loads(response["body"]) == circuits
 
 
-def test_tenant_accepts_a_well_formed_site_input(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = _tenant(monkeypatch)
-    objects: dict[str, bytes] = {}
-    row = dict(_OFF_NET_ROW)
-    with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(_tenant_put("off-net", [row]), None)
-    assert json.loads(objects["tenants/f-35/off-net.json"]) == [row]
-
-
-def test_tenant_accepts_a_site_row_with_an_extra_field(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    module = _tenant(monkeypatch)
-    objects: dict[str, bytes] = {}
-    row = dict(_OFF_NET_ROW, note="extra")
-    with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(_tenant_put("off-net", [row]), None)
-    assert json.loads(objects["tenants/f-35/off-net.json"]) == [row]
-
-
 def test_tenant_get_serves_an_input_document(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
     stored = {"tenants/f-35/off-net.json": json.dumps([{"municipality": "Luke"}]).encode()}
@@ -130,20 +102,6 @@ def test_tenant_put_persists_the_degree_exempt_wan_pops_document(
         monkeypatch: pytest.MonkeyPatch) -> None:
     exempt = ["San Jose, CA"]
     assert _stored_put(monkeypatch, "degree-exempt-wan-pops", exempt) == exempt
-
-
-def test_tenant_rejects_a_malformed_site_input(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = _tenant(monkeypatch)
-    with patch("boto3.client", side_effect=write_clients({}, [])):
-        response = module.lambda_handler(_tenant_put("off-net", [{"oops": 1}]), None)
-    assert response["statusCode"] == 400
-
-
-def test_tenant_rejects_a_non_list_site_input(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = _tenant(monkeypatch)
-    with patch("boto3.client", side_effect=write_clients({}, [])):
-        response = module.lambda_handler(_tenant_put("off-net", {"not": "a list"}), None)
-    assert response["statusCode"] == 400
 
 
 def test_tenant_put_404_for_unknown_collection(monkeypatch: pytest.MonkeyPatch) -> None:
