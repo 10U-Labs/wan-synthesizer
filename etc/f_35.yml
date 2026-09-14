@@ -8,7 +8,6 @@ backbone:
   prohibited:
     circuits: []
     wan_pops: []
-  promote_high_degree_convergences: false
 homing:
   forced: []
 inputs:

@@ -187,8 +187,6 @@ def push_tenants(api: str) -> list[str]:
         _put(api, f"tenants/{tid}/prohibited-circuits", prohibited.get("circuits", []))
         _put(api, f"tenants/{tid}/degree-exempt-wan-pops",
              backbone.get("degree_exempt", []))
-        _put(api, f"tenants/{tid}/convergence-promotion",
-             {"promote": backbone["promote_high_degree_convergences"]})
         _put(api, f"tenants/{tid}/knobs", {
             "backbone_coverage_target_miles": backbone["coverage_target_miles"],
         })
