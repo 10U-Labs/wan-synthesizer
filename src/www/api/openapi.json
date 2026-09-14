@@ -29,18 +29,6 @@
           "httpMethod": "POST",
           "type": "aws_proxy"
         }
-      },
-      "put": {
-        "summary": "Replace a carrier's PoPs (stores only).",
-        "parameters": [
-          { "name": "carrier", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "200": { "description": "The carrier's PoPs were replaced." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${CarriersHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
       }
     },
     "/wan-synthesizer/carriers/{carrier}/fiber-segments": {

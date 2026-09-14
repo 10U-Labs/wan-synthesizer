@@ -102,11 +102,8 @@ def _fiber_segment_rows(carrier: str) -> list[dict[str, Any]]:
 def push_carriers(api: str) -> None:
     for carrier in _carrier_names():
         cid = _slug(carrier)
-        pops = _rows(DATA / "pops" / f"{carrier}.csv")
         fiber_segments = _fiber_segment_rows(carrier)
-        print(f"carrier {cid}: {len(pops)} points, "
-              f"{len(fiber_segments)} fiber segments", flush=True)
-        _put(api, f"carriers/{cid}/pops", pops)
+        print(f"carrier {cid}: {len(fiber_segments)} fiber segments", flush=True)
         _put(api, f"carriers/{cid}/fiber-segments", fiber_segments)
 
 

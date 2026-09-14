@@ -7,10 +7,10 @@ from test_handler_contracts import WriterContract
 _CFG: dict[str, Any] = {
     "endpoint": "carriers",
     "param": "carrier",
-    "key": "carriers/telia/pops.json",
+    "key": "carriers/telia/fiber-segments.json",
     "id": "telia",
-    "valid": [{"municipality": "Reston", "state": "VA", "country": "United States",
-               "latitude": 38.96, "longitude": -77.34}],
+    "valid": [{"a_municipality": "Reston", "a_state": "VA", "z_municipality": "Denver",
+               "z_state": "CO", "submarine": False}],
 }
 
 

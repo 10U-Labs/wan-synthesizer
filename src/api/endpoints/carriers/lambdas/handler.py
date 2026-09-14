@@ -10,7 +10,6 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_SITE_FIELDS = {"municipality", "state", "country", "latitude", "longitude"}
 _LINK_FIELDS = {"a_municipality", "a_state", "z_municipality", "z_state", "submarine"}
 
 
@@ -69,10 +68,10 @@ def _get(client: Any, carrier: str | None, event: dict[str, Any]) -> dict[str, A
 
 def _put(client: Any, carrier: str, event: dict[str, Any]) -> dict[str, Any]:
     collection = event.get("path", "").rsplit("/", 1)[-1]
-    if collection not in ("pops", "fiber-segments"):
+    if collection != "fiber-segments":
         return _response(404, {"error": collection})
     rows = json.loads(event["body"])
-    error = _validate_rows(rows, _SITE_FIELDS if collection == "pops" else _LINK_FIELDS)
+    error = _validate_rows(rows, _LINK_FIELDS)
     if error:
         return _response(400, {"error": error})
     key = f"carriers/{carrier}/{collection}.json"

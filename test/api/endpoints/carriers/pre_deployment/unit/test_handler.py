@@ -38,10 +38,10 @@ _READER: dict[str, Any] = {
 _WRITER: dict[str, Any] = {
     "endpoint": "carriers",
     "param": "carrier",
-    "key": "carriers/lumen/pops.json",
+    "key": "carriers/lumen/fiber-segments.json",
     "id": "lumen",
-    "valid": [{"municipality": "Denver", "state": "CO", "country": "United States",
-               "latitude": 1.0, "longitude": 2.0}],
+    "valid": [{"a_municipality": "Reston", "a_state": "VA", "z_municipality": "Denver",
+               "z_state": "CO", "submarine": False}],
 }
 
 
@@ -53,26 +53,13 @@ class TestCarriersWriter(WriterContract):
     CFG = _WRITER
 
 
-def test_carrier_fiber_segments_accept_the_endpoint_columns(
-        monkeypatch: pytest.MonkeyPatch) -> None:
-    module = load_handler("carriers", monkeypatch)
-    objects: dict[str, bytes] = {}
-    row = {
-        "a_municipality": "A", "a_state": "X",
-        "z_municipality": "B", "z_state": "Y", "submarine": False,
-    }
-    with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(write_event(_WRITER, "fiber-segments", [row]), None)
-    assert json.loads(objects["carriers/lumen/fiber-segments.json"]) == [row]
-
-
 def test_carrier_put_leaves_the_other_collection_file(monkeypatch: pytest.MonkeyPatch) -> None:
     module = load_handler("carriers", monkeypatch)
-    objects = {"carriers/lumen/fiber-segments.json": json.dumps([{"e": 1}]).encode()}
-    event = write_event(_WRITER, "pops", _WRITER["valid"])
+    objects = {"carriers/lumen/pops.json": json.dumps([{"e": 1}]).encode()}
+    event = write_event(_WRITER, "fiber-segments", _WRITER["valid"])
     with patch("boto3.client", side_effect=write_clients(objects, [])):
         module.lambda_handler(event, None)
-    assert json.loads(objects["carriers/lumen/fiber-segments.json"]) == [{"e": 1}]
+    assert json.loads(objects["carriers/lumen/pops.json"]) == [{"e": 1}]
 
 
 def _store_after_deleting(

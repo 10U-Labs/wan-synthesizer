@@ -28,10 +28,10 @@ def test_seed_cli_exits_zero_against_the_stub(stub_api: StubApi) -> None:
     assert _run_seed(stub_api.url).returncode == 0
 
 
-def test_seed_cli_writes_carrier_pops(stub_api: StubApi) -> None:
+def test_seed_cli_writes_carrier_fiber_segments(stub_api: StubApi) -> None:
     _run_seed(stub_api.url)
     paths = [path for _method, path, _body in stub_api.records]
-    assert any("/carriers/" in path and path.endswith("/pops") for path in paths)
+    assert any("/carriers/" in path and path.endswith("/fiber-segments") for path in paths)
 
 
 def test_seed_cli_fails_when_the_api_rejects_writes() -> None:

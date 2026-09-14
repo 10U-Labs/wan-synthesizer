@@ -12,7 +12,7 @@ import yaml
 
 import seed
 from repo_utils import REPO_ROOT
-from seed import _carrier_names, _rows
+from seed import _rows
 from test_http_doubles import UrlopenRecorder
 from test_terraform_config import api_key_parameter_name
 
@@ -77,7 +77,7 @@ def test_every_requested_path_is_declared_in_openapi(
 def test_pipeline_writes_at_least_one_carrier(
         urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
     paths = _seed(urlopen_recorder, monkeypatch)
-    assert any(re.fullmatch(r"carriers/[^/]+/pops", path) for path in paths)
+    assert any(re.fullmatch(r"carriers/[^/]+/fiber-segments", path) for path in paths)
 
 
 def test_seeding_waits_for_every_check_the_workflow_runs() -> None:
@@ -139,11 +139,6 @@ def test_every_job_that_reaches_the_api_may_read_the_key() -> None:
 def test_seeding_seeds_only_on_the_conclusion_the_wait_job_reports() -> None:
     condition = _seed_workflow()["jobs"]["seeding"]["if"]
     assert f"needs.{_WAIT_JOB}.outputs.apply == 'true'" in condition
-
-
-def test_every_carrier_has_both_a_points_file_and_a_fiber_file() -> None:
-    points = sorted(p.stem for p in (seed.DATA / "pops").glob("*.csv"))
-    assert points == _carrier_names()
 
 
 def _fiber_file(directory: str) -> Path:

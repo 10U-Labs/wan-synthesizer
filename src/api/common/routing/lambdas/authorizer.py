@@ -16,7 +16,6 @@ BASE_PATH = "wan-synthesizer"
 SEED_WRITES: tuple[tuple[str, str], ...] = (
     ("POST", "store/prune"),
     ("PUT", "carriers/*/fiber-segments"),
-    ("PUT", "carriers/*/pops"),
     ("PUT", "providers/regions"),
 )
 
