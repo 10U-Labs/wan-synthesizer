@@ -10,9 +10,7 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_WAN_COLLECTIONS = (
-    "wan-pops",
-)
+_WAN_COLLECTIONS: tuple[str, ...] = ()
 _INPUTS = frozenset({
     "locations",
     "provider-regions",

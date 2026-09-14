@@ -7,7 +7,6 @@ from typing import Any
 
 import boto3
 
-from synthesizer import collections as published
 from synthesizer.codec import load_merged_carriers, load_off_net, load_regions, load_sites
 from synthesizer.config import app_config_from_parts
 from synthesizer.coverage import CoverageReport, coverage_report
@@ -20,7 +19,6 @@ from synthesizer.model import (
     is_carrier_pop,
 )
 from synthesizer.synthesize import synthesize_two_tier
-from synthesizer.output import synthesis_payload
 from synthesizer.overrides import apply_role_overrides
 from synthesizer.stages import dual_home, finalize
 
@@ -129,11 +127,8 @@ def _build_wan(client: Any, tenant: str) -> tuple[dict[str, Any], dict[str, Any]
     artifacts = SynthesisArtifacts(
         graph, fiber_segments, synthesis, validation, homed.fabricated_ids
     )
-    payload = synthesis_payload(artifacts)
     logger.info("Publishing WAN for %s", tenant)
-    return {
-        "wan-pops": published.wan_pops(payload),
-    }, _delivered(graph, synthesis, artifacts.validation, params, tenant)
+    return {}, _delivered(graph, synthesis, artifacts.validation, params, tenant)
 
 
 def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:

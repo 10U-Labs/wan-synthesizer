@@ -21,27 +21,20 @@ _LOCATIONS_ROW: dict[str, Any] = {
 
 _READER: dict[str, Any] = {
     "endpoint": "tenants",
-    "stored_key": "tenants/f-35/wan.json",
-    "stored": {
-        "sites": [],
-        "homing-circuits": [],
-        "fiber-segments": [],
-        "wan-pops": [{"id": "P"}],
-        "tenant-sites": [],
-        "provider-sites": [],
-    },
+    "stored_key": "tenants/f-35/label.json",
+    "stored": {"label": "F-35"},
     "serve_event": {
         "pathParameters": {"tenant": "f-35"},
-        "path": "/x/tenants/f-35/wan-pops",
+        "path": "/x/tenants/f-35/label",
     },
-    "serve_expect": [{"id": "P"}],
+    "serve_expect": {"label": "F-35"},
     "unknown_event": {
         "pathParameters": {"tenant": "f-35"},
         "path": "/x/tenants/f-35/bogus",
     },
     "notbuilt_event": {
         "pathParameters": {"tenant": "minuteman"},
-        "path": "/x/tenants/minuteman/fiber-segments",
+        "path": "/x/tenants/minuteman/label",
     },
 }
 

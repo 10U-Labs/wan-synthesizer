@@ -33,14 +33,6 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         params=SynthesisParams(),
         operator_circuits=OperatorCircuits(),
     )
-    payload = {
-        "sites": [{"id": "P", "tier_role": "wan_pop"}],
-        "homing_circuits": [],
-        "fiber_segments": [],
-        "drawn_circuits": [
-            {"purpose": "backbone_mesh", "source_name": "P", "target_name": "Q"}
-        ],
-    }
     monkeypatch.setattr(module, "load_merged_carriers", lambda *_a: (graph, {}))
     monkeypatch.setattr(module, "load_sites", lambda _p: [])
     monkeypatch.setattr(module, "load_regions", lambda _p: [])
@@ -67,7 +59,6 @@ def _stub_pipeline(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         "backbone_mesh_independence_deficient": [],
     }
     monkeypatch.setattr(module, "finalize", lambda *_a: (graph, {}, synthesis, validation))
-    monkeypatch.setattr(module, "synthesis_payload", lambda *_a: payload)
 
 
 def _inputs(module: Any) -> dict[str, bytes]:
@@ -109,14 +100,11 @@ def test_publishes_the_wan_on_success(synthesizer: Any, monkeypatch: pytest.Monk
     assert "tenants/f-35/wan.json" in objects
 
 
-def test_publishes_the_backbone_circuits_collection(
+def test_publishes_no_collection_since_the_api_serves_the_wan(
     synthesizer: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     objects = _run(synthesizer, monkeypatch)
-    wan = json.loads(objects["tenants/f-35/wan.json"])
-    assert wan["backbone-circuits"] == [
-        {"purpose": "backbone_mesh", "source_name": "P", "target_name": "Q"}
-    ]
+    assert json.loads(objects["tenants/f-35/wan.json"]) == {}
 
 
 def test_marks_the_status_success_on_a_good_build(
