@@ -5,7 +5,6 @@ backbone:
     circuits: []
     wan_pops:
       - Ashburn, VA
-  number_of_diverse_circuits: 2
   prohibited:
     circuits: []
     wan_pops: []

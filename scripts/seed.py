@@ -191,8 +191,6 @@ def push_tenants(api: str) -> list[str]:
         _put(api, f"tenants/{tid}/prohibited-circuits", prohibited.get("circuits", []))
         _put(api, f"tenants/{tid}/degree-exempt-wan-pops",
              backbone.get("degree_exempt", []))
-        _put(api, f"tenants/{tid}/backbone-number-of-diverse-circuits",
-             _degree_doc(backbone["number_of_diverse_circuits"]))
         _put(api, f"tenants/{tid}/homing-degree",
              _degree_doc(homing["degree"]))
         _put(api, f"tenants/{tid}/convergence-promotion",

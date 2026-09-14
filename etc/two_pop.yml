@@ -6,7 +6,6 @@ backbone:
     wan_pops:
       - Ashburn, VA
       - Salt Lake City, UT
-  number_of_diverse_circuits: 2
   prohibited:
     circuits: []
     wan_pops: []
