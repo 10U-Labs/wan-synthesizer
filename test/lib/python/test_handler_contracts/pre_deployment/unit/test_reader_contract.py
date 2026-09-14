@@ -9,7 +9,6 @@ _CFG: dict[str, Any] = {
     "list_keys": [
         "carriers/telia/pops.json",
         "carriers/arelion/pops.json",
-        "carriers/merge/pops.json",
     ],
     "ids": ["arelion", "telia"],
     "stored_key": "carriers/telia/pops.json",

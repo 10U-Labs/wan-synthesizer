@@ -19,7 +19,6 @@ output "lambda_handler_names" {
   value = {
     carriers   = "wan-synthesizer-carriers"
     providers  = "wan-synthesizer-providers"
-    merge      = "wan-synthesizer-merge"
     prune      = "wan-synthesizer-prune"
     authorizer = "wan-synthesizer-authorizer"
   }
@@ -30,7 +29,6 @@ output "store_principals" {
   value = [
     "TenULabsWanSynthesizerRole",
     "wan-synthesizer-carriers-lambda",
-    "wan-synthesizer-merge-lambda",
     "wan-synthesizer-providers-lambda",
     "wan-synthesizer-prune-lambda",
   ]

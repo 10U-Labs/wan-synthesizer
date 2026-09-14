@@ -209,8 +209,7 @@ jobs:
         run: npm install -g jscpd
       - name: Detect copy-paste in tests
         run: >-
-          jscpd --pattern "**/*.py" --threshold 0
-          --ignore "**/merge/**" --reporters console
+          jscpd --pattern "**/*.py" --threshold 0 --reporters console
           test/api/endpoints/carriers/
           test/lib/python/repo_utils
           test/lib/python/test_fixtures
@@ -502,9 +501,7 @@ on:
     branches: [main]
     paths:
       - src/api/endpoints/carriers/**
-      - '!src/api/endpoints/carriers/merge/**'
       - test/api/endpoints/carriers/**
-      - '!test/api/endpoints/carriers/merge/**'
       - lib/python/**
       - lib/opentofu/common/**
       - test/lib/python/**

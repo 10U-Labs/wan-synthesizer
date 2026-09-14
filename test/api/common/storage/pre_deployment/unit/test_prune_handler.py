@@ -13,7 +13,6 @@ from test_s3_store_mock import fake_s3
 _CURRENT = [
     "carriers/lumen/pops.json",
     "carriers/lumen/fiber-segments.json",
-    "carriers/merge/fiber-segments.json",
     "providers/regions.json",
 ]
 _STALE = [
@@ -21,7 +20,6 @@ _STALE = [
     "builds/daf/2026-08-20/graph.json",
     "carriers/lumen/vertices.json",
     "carriers/lumen/edges.json",
-    "carriers/merge/edges.json",
     "providers/vertices.json",
     "tenants/daf/wan.json",
     "tenants/daf/wan-status.json",

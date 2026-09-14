@@ -43,7 +43,7 @@ def _carrier_ids(client: Any) -> list[str]:
         item["Key"].removeprefix("carriers/").split("/", 1)[0]
         for item in listing.get("Contents", [])
     }
-    return sorted(ids - {"merge"})
+    return sorted(ids)
 
 
 def _read_collection(client: Any, carrier: str, collection: str) -> Any:
