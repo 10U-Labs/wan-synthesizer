@@ -22,7 +22,6 @@ output "lambda_handler_names" {
     tenants    = "wan-synthesizer-tenants"
     merge      = "wan-synthesizer-merge"
     prune      = "wan-synthesizer-prune"
-    wan        = "wan-synthesizer-wan"
     authorizer = "wan-synthesizer-authorizer"
   }
 }
@@ -32,12 +31,9 @@ output "store_principals" {
   value = [
     "TenULabsWanSynthesizerRole",
     "wan-synthesizer-carriers-lambda",
-    "wan-synthesizer-failure-handler",
     "wan-synthesizer-merge-lambda",
     "wan-synthesizer-providers-lambda",
     "wan-synthesizer-prune-lambda",
-    "wan-synthesizer-synthesizer",
     "wan-synthesizer-tenants-lambda",
-    "wan-synthesizer-wan-lambda",
   ]
 }

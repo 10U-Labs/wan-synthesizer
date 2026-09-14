@@ -22,8 +22,8 @@ def test_every_client_the_handler_builds_reaches_the_same_store() -> None:
 
 def test_an_invocation_reaches_the_list_the_case_reads() -> None:
     invocations: list[dict[str, Any]] = []
-    write_clients({}, invocations)("lambda").invoke(FunctionName="wan-synthesizer-wan")
-    assert invocations == [{"FunctionName": "wan-synthesizer-wan"}]
+    write_clients({}, invocations)("lambda").invoke(FunctionName="wan-synthesizer-merge")
+    assert invocations == [{"FunctionName": "wan-synthesizer-merge"}]
 
 
 def test_the_region_a_handler_asks_for_is_accepted() -> None:

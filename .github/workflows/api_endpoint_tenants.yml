@@ -505,9 +505,7 @@ on:
     branches: [main]
     paths:
       - src/api/endpoints/tenants/**
-      - '!src/api/endpoints/tenants/wan/**'
       - test/api/endpoints/tenants/**
-      - '!test/api/endpoints/tenants/wan/**'
       - lib/python/**
       - lib/opentofu/common/**
       - test/lib/python/**

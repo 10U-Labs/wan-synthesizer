@@ -380,7 +380,6 @@ jobs:
             api_endpoint_carriers_merge.yml
             api_endpoint_providers.yml
             api_endpoint_tenants.yml
-            api_endpoint_tenants_wan.yml
         id: deploys
         name: Wait for every deploy this commit started, so seeding runs against what it ships
         run: |

@@ -6,13 +6,12 @@ means B builds on A: every workflow assumes the role `api/common/identity`
 declares, so that stack sits ahead of every other and each reconciliation runs
 under the permissions it enumerates; every endpoint reads the common `storage`
 + `routing` state, and a carrier write cascades to its builder
-(`carriers/merge`). The synthesizer moved to `api.10ulabs.com`, so
-`tenants/wan` serves a run's status alone.
+(`carriers/merge`). The synthesizer and the runs moved to `api.10ulabs.com`.
 
 ```text
 api/common/identity ─┬─→ api/common/storage ─┐
                      └─→ api/common/routing ─┤
                                              ├─→ api/endpoints/carriers ─────→ api/endpoints/carriers/merge
                                              ├─→ api/endpoints/providers
-                                             └─→ api/endpoints/tenants ──────→ api/endpoints/tenants/wan
+                                             └─→ api/endpoints/tenants
 ```

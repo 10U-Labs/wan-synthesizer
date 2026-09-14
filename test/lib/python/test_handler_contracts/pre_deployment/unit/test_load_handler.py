@@ -25,11 +25,8 @@ def test_the_store_bucket_is_named_before_the_handler_reads_it(
 
 
 def test_further_environment_a_case_needs_is_set_too(monkeypatch: pytest.MonkeyPatch) -> None:
-    load_handler(
-        "tenants/wan", monkeypatch,
-        SYNTHESIZER_FUNCTION_NAME="wan-synthesizer-wan-synthesizer",
-    )
-    assert os.environ["SYNTHESIZER_FUNCTION_NAME"] == "wan-synthesizer-wan-synthesizer"
+    load_handler("carriers", monkeypatch, MERGE_FUNCTION_NAME="wan-synthesizer-merge")
+    assert os.environ["MERGE_FUNCTION_NAME"] == "wan-synthesizer-merge"
 
 
 def test_the_handler_starts_with_no_client_from_an_earlier_case(

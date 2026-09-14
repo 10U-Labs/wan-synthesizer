@@ -46,7 +46,6 @@ def _spec() -> dict[str, Any]:
             f"{_ROUTE}/wan-pops": {"get": {}},
             f"{_ROUTE}/locations": {"get": {}, "put": {}},
             f"{_ROUTE}/forced-circuits": {"get": {}, "put": {}},
-            f"{_ROUTE}/wan": {"get": {}, "post": {}},
             f"{_ROUTE}": {"delete": {}},
             "/wan-synthesizer/carriers": {"get": {}},
         }

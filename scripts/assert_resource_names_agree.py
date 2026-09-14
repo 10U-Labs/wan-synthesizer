@@ -12,7 +12,6 @@ OPENAPI = Path("src", "www", "api", "openapi.json")
 TENANTS = Path("src", "api", "endpoints", "tenants", "lambdas", "handler.py")
 SPA = Path("src", "www", "spa", "app.js")
 ROUTE = "/wan-synthesizer/tenants/{tenant}/"
-SYNTHESIS = "wan"
 COLLECTIONS = "_WAN_COLLECTIONS"
 INPUTS = "_INPUTS"
 ROUTES = "the routes it documents"
@@ -40,7 +39,7 @@ def documented_inputs(root: Path) -> frozenset[str]:
 
 
 def documented_collections(root: Path) -> frozenset[str]:
-    return _routes(root, "get") - documented_inputs(root) - {SYNTHESIS}
+    return _routes(root, "get") - documented_inputs(root)
 
 
 def _assigns(node: ast.Assign, name: str) -> bool:
