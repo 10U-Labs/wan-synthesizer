@@ -11,20 +11,20 @@ from test_s3_store_mock import fake_s3
 
 _READER: dict[str, Any] = {
     "endpoint": "tenants",
-    "stored_key": "tenants/f-35/forced-homes.json",
-    "stored": [{"source": "Luke, AZ", "target": "Nellis, NV"}],
+    "stored_key": "tenants/f-35/prohibited-wan-pops.json",
+    "stored": ["Link, TX"],
     "serve_event": {
         "pathParameters": {"tenant": "f-35"},
-        "path": "/x/tenants/f-35/forced-homes",
+        "path": "/x/tenants/f-35/prohibited-wan-pops",
     },
-    "serve_expect": [{"source": "Luke, AZ", "target": "Nellis, NV"}],
+    "serve_expect": ["Link, TX"],
     "unknown_event": {
         "pathParameters": {"tenant": "f-35"},
         "path": "/x/tenants/f-35/bogus",
     },
     "notbuilt_event": {
         "pathParameters": {"tenant": "minuteman"},
-        "path": "/x/tenants/minuteman/forced-homes",
+        "path": "/x/tenants/minuteman/prohibited-wan-pops",
     },
 }
 
@@ -125,7 +125,7 @@ def test_tenant_delete_removes_every_object(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_tenant_delete_leaves_no_delete_marker(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
-    fake = fake_s3({"tenants/f-35/forced-homes.json": b"[]", "tenants/f-35/wan.json": b"{}"})
+    fake = fake_s3({"tenants/f-35/prohibited-wan-pops.json": b"[]", "tenants/f-35/wan.json": b"{}"})
     event = {"httpMethod": "DELETE", "pathParameters": {"tenant": "f-35"}}
     with patch("boto3.client", return_value=fake):
         module.lambda_handler(event, None)

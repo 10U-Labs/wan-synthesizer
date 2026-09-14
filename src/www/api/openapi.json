@@ -211,14 +211,6 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/forced-homes": {
-      "get": {
-        "summary": "A tenant's forced homes (input).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The forced homes." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      }
-    },
     "/wan-synthesizer/tenants/{tenant}/prohibited-wan-pops": {
       "get": {
         "summary": "A tenant's prohibited WAN PoPs (input).",
