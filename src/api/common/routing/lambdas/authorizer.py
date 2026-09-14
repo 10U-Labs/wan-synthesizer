@@ -25,7 +25,6 @@ SEED_WRITES: tuple[tuple[str, str], ...] = (
     ("PUT", "tenants/*/forced-circuits"),
     ("PUT", "tenants/*/forced-homes"),
     ("PUT", "tenants/*/forced-wan-pops"),
-    ("PUT", "tenants/*/homing-degree"),
     ("PUT", "tenants/*/knobs"),
     ("PUT", "tenants/*/locations"),
     ("PUT", "tenants/*/off-net"),

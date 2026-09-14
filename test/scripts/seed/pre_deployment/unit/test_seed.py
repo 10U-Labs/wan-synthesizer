@@ -15,7 +15,6 @@ from seed import (
     _carrier_cities,
     _carrier_names,
     _city_key,
-    _degree_doc,
     _mapping_rows,
     _off_net_rows,
     _post,
@@ -51,7 +50,6 @@ backbone:
         target: Link, TX
   promote_high_degree_convergences: false
 homing:
-  degree: 1
   forced:
     - source: Kirtland, NM
       target: Nellis, NV
@@ -123,10 +121,6 @@ def test_slug_replaces_underscores_with_hyphens() -> None:
 
 def test_slug_leaves_a_plain_stem_unchanged() -> None:
     assert _slug("lumen") == "lumen"
-
-
-def test_degree_doc_wraps_the_value_under_degree() -> None:
-    assert _degree_doc(2) == {"degree": 2}
 
 
 def test_rows_lowercases_the_header_keys(tmp_path: Path) -> None:
@@ -454,13 +448,6 @@ def test_push_tenants_puts_the_convergence_promotion_resource(
         put_recorder: CallRecorder) -> None:
     bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
     assert bodies["tenants/f-35/convergence-promotion"] == {"promote": False}
-
-
-def test_push_tenants_puts_the_homing_degree_resource(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/homing-degree"] == {"degree": 1}
 
 
 def test_push_tenants_puts_the_forced_wan_pops_resource(

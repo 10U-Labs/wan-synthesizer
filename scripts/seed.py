@@ -126,10 +126,6 @@ def _post_json(api: str, path: str, body: Any) -> Any:
     return json.loads(_send(api, path, "POST", json.dumps(body).encode()))
 
 
-def _degree_doc(value: Any) -> dict[str, Any]:
-    return {"degree": value}
-
-
 def _carrier_names() -> list[str]:
     return sorted({path.stem for path in (DATA / FIBER_SEGMENTS).glob("*/*.csv")})
 
@@ -191,8 +187,6 @@ def push_tenants(api: str) -> list[str]:
         _put(api, f"tenants/{tid}/prohibited-circuits", prohibited.get("circuits", []))
         _put(api, f"tenants/{tid}/degree-exempt-wan-pops",
              backbone.get("degree_exempt", []))
-        _put(api, f"tenants/{tid}/homing-degree",
-             _degree_doc(homing["degree"]))
         _put(api, f"tenants/{tid}/convergence-promotion",
              {"promote": backbone["promote_high_degree_convergences"]})
         _put(api, f"tenants/{tid}/knobs", {

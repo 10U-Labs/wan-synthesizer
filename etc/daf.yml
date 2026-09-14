@@ -18,7 +18,6 @@ backbone:
     wan_pops: []
   promote_high_degree_convergences: false
 homing:
-  degree: 2
   forced: []
 inputs:
   locations:
