@@ -19,7 +19,7 @@ from assert_resource_names_agree import (
 )
 
 _ROUTE = "/wan-synthesizer/tenants/{tenant}"
-_TENANTS_SOURCE = '''_WAN_COLLECTIONS = (
+_TENANTS_SOURCE = '''_READ_ONLY = (
     "sites",
     "wan-pops",
 )
@@ -82,7 +82,7 @@ def test_documented_inputs_are_the_routes_a_caller_can_write(tmp_path: Path) -> 
 
 
 def test_named_strings_reads_every_string_of_a_tuple() -> None:
-    assert named_strings(_TENANTS_SOURCE, "_WAN_COLLECTIONS") == frozenset({"sites", "wan-pops"})
+    assert named_strings(_TENANTS_SOURCE, "_READ_ONLY") == frozenset({"sites", "wan-pops"})
 
 
 def test_named_strings_reads_every_string_of_a_frozenset() -> None:

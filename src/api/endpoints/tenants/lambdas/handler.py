@@ -10,7 +10,7 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_WAN_COLLECTIONS: tuple[str, ...] = ()
+_READ_ONLY = ("label",)
 _INPUTS = frozenset({
     "locations",
     "provider-regions",
@@ -27,7 +27,6 @@ _INPUTS = frozenset({
     "convergence-promotion",
     "knobs",
     "settings",
-    "label",
 })
 _SITE_FIELDS = {"name", "municipality", "state", "country", "latitude", "longitude"}
 _LOCATION_FIELDS = _SITE_FIELDS | {"exemptfromdistanceconstraint"}
@@ -78,9 +77,7 @@ def _serve(client: Any, tenant: str, key: str, field: str | None = None) -> dict
 
 def _get(client: Any, tenant: str, event: dict[str, Any]) -> dict[str, Any]:
     collection = event.get("path", "").rsplit("/", 1)[-1]
-    if collection in _WAN_COLLECTIONS:
-        return _serve(client, tenant, f"tenants/{tenant}/wan.json", collection)
-    if collection in _INPUTS:
+    if collection in _INPUTS or collection in _READ_ONLY:
         return _serve(client, tenant, f"tenants/{tenant}/{collection}.json")
     return _response(404, {"error": collection})
 

@@ -453,14 +453,6 @@ def test_push_providers_pushes_regions(
     assert "providers/regions" in put_recorder.nth(1)
 
 
-def test_push_tenants_puts_the_label_resource(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    _one_tenant(tmp_path, monkeypatch, _TENANT_YML)
-    push_tenants("http://api")
-    assert "tenants/f-35/label" in put_recorder.nth(1)
-
-
 def test_push_tenants_puts_the_convergence_promotion_resource(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
         put_recorder: CallRecorder) -> None:

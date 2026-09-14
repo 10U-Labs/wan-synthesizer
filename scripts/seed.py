@@ -202,7 +202,6 @@ def push_tenants(api: str) -> list[str]:
             "backbone_coverage_target_miles": backbone["coverage_target_miles"],
         })
         _put(api, f"tenants/{tid}/settings", config.get("settings", {}))
-        _put(api, f"tenants/{tid}/label", {"label": config.get("label", "")})
     return tenant_ids
 
 

@@ -34,10 +34,10 @@ def test_seed_cli_writes_carrier_pops(stub_api: StubApi) -> None:
     assert any("/carriers/" in path and path.endswith("/pops") for path in paths)
 
 
-def test_seed_cli_writes_a_tenant_label(stub_api: StubApi) -> None:
+def test_seed_cli_writes_a_tenants_knobs(stub_api: StubApi) -> None:
     _run_seed(stub_api.url)
     paths = [path for _method, path, _body in stub_api.records]
-    assert any(path.endswith("/label") for path in paths)
+    assert any(path.endswith("/knobs") for path in paths)
 
 
 def test_seed_cli_writes_the_backbone_number_of_diverse_circuits(stub_api: StubApi) -> None:
