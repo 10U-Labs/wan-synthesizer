@@ -195,7 +195,7 @@ def test_a_get_leaves_a_marker_where_it_is(prune_handler: Any) -> None:
 
 
 def test_a_second_prune_finds_no_marker_left_to_remove(prune_handler: Any) -> None:
-    fake = _marked(_store(), ["tenants/two-node/wan.json", "tenants/two-node/knobs.json"])
+    fake = _marked(_store(), ["tenants/two-node/wan.json", "tenants/two-node/csp-regions.json"])
     _markers_after_pruning(prune_handler, fake)
     with patch("boto3.client", return_value=fake):
         response = prune_handler.lambda_handler({"httpMethod": "POST"}, None)
