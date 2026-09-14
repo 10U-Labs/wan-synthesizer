@@ -121,17 +121,6 @@
         }
       }
     },
-    "/wan-synthesizer/carriers/merge/pops": {
-      "get": {
-        "summary": "The merged carriers' PoPs.",
-        "responses": { "200": { "description": "Merged carrier PoPs." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${MergeHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
-      }
-    },
     "/wan-synthesizer/carriers/merge/fiber-segments": {
       "get": {
         "summary": "The merged carriers' fiber segments.",

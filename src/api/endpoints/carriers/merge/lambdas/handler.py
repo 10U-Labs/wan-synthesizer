@@ -10,7 +10,6 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _MERGE_KEYS = {
-    "pops": "carriers/merge/pops.json",
     "fiber-segments": "carriers/merge/fiber-segments.json",
 }
 

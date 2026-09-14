@@ -13,7 +13,6 @@ from test_s3_store_mock import fake_s3
 _CURRENT = [
     "carriers/lumen/pops.json",
     "carriers/lumen/fiber-segments.json",
-    "carriers/merge/pops.json",
     "carriers/merge/fiber-segments.json",
     "providers/regions.json",
 ]
