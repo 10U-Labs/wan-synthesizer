@@ -16,7 +16,6 @@ from seed import (
     _carrier_names,
     _city_key,
     _degree_doc,
-    _delete,
     _get,
     _mapping_rows,
     _off_net_rows,
@@ -30,7 +29,6 @@ from seed import (
     build_tenants,
     main,
     prune_store,
-    prune_tenants,
     push_carriers,
     push_providers,
     push_tenants,
@@ -284,7 +282,7 @@ def _reset() -> ConnectionResetError:
 
 
 def _not_found() -> urllib.error.HTTPError:
-    return urllib.error.HTTPError("http://api/tenants", 404, "Not Found", Message(), None)
+    return urllib.error.HTTPError("http://api/carriers", 404, "Not Found", Message(), None)
 
 
 def _failing_urlopen(
@@ -297,7 +295,7 @@ def _failing_urlopen(
 def _attempts_made(monkeypatch: pytest.MonkeyPatch, failure: BaseException) -> int:
     recorder = _failing_urlopen(monkeypatch, failure)
     try:
-        _send("http://api", "tenants", "GET", None)
+        _send("http://api", "carriers", "GET", None)
     except OSError:
         pass
     return len(recorder.requests)
@@ -307,34 +305,34 @@ def _attempts_made(monkeypatch: pytest.MonkeyPatch, failure: BaseException) -> i
 def test_send_returns_the_body_when_a_reset_connection_is_tried_again(
         monkeypatch: pytest.MonkeyPatch) -> None:
     _failing_urlopen(monkeypatch, _reset())
-    assert _send("http://api", "tenants", "GET", None) == b'[{"id": "f-35"}]'
+    assert _send("http://api", "carriers", "GET", None) == b'[{"id": "f-35"}]'
 
 
 @pytest.mark.usefixtures("instant_retry")
 def test_send_tries_a_reset_connection_again_wherever_the_reset_was_raised(
         monkeypatch: pytest.MonkeyPatch) -> None:
     _failing_urlopen(monkeypatch, urllib.error.URLError(_reset()))
-    assert _send("http://api", "tenants", "GET", None) == b'[{"id": "f-35"}]'
+    assert _send("http://api", "carriers", "GET", None) == b'[{"id": "f-35"}]'
 
 
 @pytest.mark.usefixtures("instant_retry")
 def test_send_raises_when_every_attempt_is_reset(monkeypatch: pytest.MonkeyPatch) -> None:
     _failing_urlopen(monkeypatch, _reset(), _reset())
     with pytest.raises(ConnectionResetError):
-        _send("http://api", "tenants", "GET", None)
+        _send("http://api", "carriers", "GET", None)
 
 
 @pytest.mark.usefixtures("instant_retry")
 def test_send_says_it_is_trying_a_reset_connection_again(
         monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     _failing_urlopen(monkeypatch, _reset())
-    _send("http://api", "tenants", "GET", None)
+    _send("http://api", "carriers", "GET", None)
     assert "connection reset" in capsys.readouterr().out
 
 
 def test_send_makes_one_request_when_the_api_answers_first_time(
         urlopen_recorder: UrlopenRecorder) -> None:
-    _send("http://api", "tenants", "GET", None)
+    _send("http://api", "carriers", "GET", None)
     assert len(urlopen_recorder.requests) == 1
 
 
@@ -350,21 +348,21 @@ def test_send_does_not_try_a_url_error_that_is_not_a_reset_again(
 def test_send_carries_the_api_key_the_environment_holds(
         urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(seed.API_KEY_VARIABLE, "the-seed-key")
-    _send("http://api", "tenants", "GET", None)
+    _send("http://api", "carriers", "GET", None)
     assert urlopen_recorder.requests[0].get_header("Authorization") == "Bearer the-seed-key"
 
 
 def test_send_carries_no_token_when_the_environment_holds_no_key(
         urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv(seed.API_KEY_VARIABLE, raising=False)
-    _send("http://api", "tenants", "GET", None)
+    _send("http://api", "carriers", "GET", None)
     assert urlopen_recorder.requests[0].has_header("Authorization") is False
 
 
 def test_send_keeps_the_content_type_beside_the_key(
         urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(seed.API_KEY_VARIABLE, "the-seed-key")
-    _send("http://api", "tenants", "PUT", b"[]")
+    _send("http://api", "carriers", "PUT", b"[]")
     assert urlopen_recorder.requests[0].get_header("Content-type") == "application/json"
 
 
@@ -434,24 +432,19 @@ def test_put_records_the_key_it_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_get_uses_the_get_method(urlopen_recorder: UrlopenRecorder) -> None:
-    _get("http://api", "tenants")
+    _get("http://api", "carriers")
     assert urlopen_recorder.requests[0].method == "GET"
 
 
 def test_get_sends_no_body(urlopen_recorder: UrlopenRecorder) -> None:
-    _get("http://api", "tenants")
+    _get("http://api", "carriers")
     assert urlopen_recorder.requests[0].data is None
 
 
 def test_get_decodes_the_json_response(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         urllib.request, "urlopen", UrlopenRecorder(body=b'[{"id": "f-35"}]'))
-    assert _get("http://api", "tenants") == [{"id": "f-35"}]
-
-
-def test_delete_uses_the_delete_method(urlopen_recorder: UrlopenRecorder) -> None:
-    _delete("http://api", "tenants/f-35")
-    assert urlopen_recorder.requests[0].method == "DELETE"
+    assert _get("http://api", "carriers") == [{"id": "f-35"}]
 
 
 def test_push_carriers_puts_the_pops_path(
@@ -638,33 +631,6 @@ def test_push_tenants_returns_the_tenant_ids(
     assert push_tenants("http://api") == ["f-35"]
 
 
-def _stored_tenants(monkeypatch: pytest.MonkeyPatch, *ids: str) -> None:
-    listing = [{"id": tenant} for tenant in ids]
-    monkeypatch.setattr(seed, "_get", lambda _api, _path: listing)
-
-
-def test_prune_tenants_deletes_a_tenant_without_a_config(
-        monkeypatch: pytest.MonkeyPatch, delete_recorder: CallRecorder) -> None:
-    _stored_tenants(monkeypatch, "f-35-non-redundant")
-    prune_tenants("http://api", ["f-35"])
-    assert delete_recorder.calls == [("http://api", "tenants/f-35-non-redundant")]
-
-
-def test_prune_tenants_keeps_a_tenant_with_a_config(
-        monkeypatch: pytest.MonkeyPatch, delete_recorder: CallRecorder) -> None:
-    _stored_tenants(monkeypatch, "f-35")
-    prune_tenants("http://api", ["f-35"])
-    assert delete_recorder.calls == []
-
-
-@pytest.mark.usefixtures("delete_recorder")
-def test_prune_tenants_names_the_tenant_it_deletes(
-        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-    _stored_tenants(monkeypatch, "f-35-redundant")
-    prune_tenants("http://api", [])
-    assert "f-35-redundant" in capsys.readouterr().out
-
-
 def test_build_merged_carriers_posts_the_merge(post_recorder: CallRecorder) -> None:
     build_merged_carriers("http://api")
     assert post_recorder.calls == [("http://api", "carriers/merge")]
@@ -740,9 +706,6 @@ def _run_main(
     monkeypatch.setattr(seed, "push_providers", lambda api: calls.append(("providers", api)))
     monkeypatch.setattr(seed, "push_tenants", _push_tenants)
     monkeypatch.setattr(
-        seed, "prune_tenants",
-        lambda _api, tenants: calls.append(("prune", ",".join(tenants))))
-    monkeypatch.setattr(
         seed, "prune_store", lambda api: calls.append(("prune-store", api)))
     monkeypatch.setattr(
         seed, "build_tenants", lambda api, _tenants: calls.append(("build", api)))
@@ -761,9 +724,6 @@ def test_main_uses_the_cli_argument_when_given(monkeypatch: pytest.MonkeyPatch) 
 def test_main_seeds_inputs_then_triggers_builds_in_order(
         monkeypatch: pytest.MonkeyPatch) -> None:
     assert [name for name, _ in _run_main(monkeypatch, ["seed"])] == [
-        "carriers", "merge", "providers", "tenants", "prune", "prune-store", "build"]
+        "carriers", "merge", "providers", "tenants", "prune-store", "build"]
 
 
-def test_main_prunes_against_the_pushed_tenant_ids(
-        monkeypatch: pytest.MonkeyPatch) -> None:
-    assert ("prune", "t") in _run_main(monkeypatch, ["seed"])

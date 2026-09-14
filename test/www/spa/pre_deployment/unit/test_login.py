@@ -75,10 +75,11 @@ def _authorizer_variables() -> dict[str, Any]:
 
 
 def _fetched_routes() -> list[str]:
-    prefix = urlsplit(DEFAULT_API).path
+    prefix = urlsplit(DEFAULT_API).path.strip("/")
     return [
-        f"{prefix}/{path.replace('${tenantId}', '{tenant}')}"
+        f"/{path.replace('${tenantId}', '{tenant}')}"
         for path in _FETCHED.findall(_app_js())
+        if path.startswith(f"{prefix}/")
     ]
 
 
@@ -120,6 +121,14 @@ def test_the_page_offers_the_accounts_the_authorizer_admits() -> None:
 
 def test_the_map_fetches_something() -> None:
     assert _fetched_routes() != []
+
+
+def test_the_map_lists_the_syntheses_the_api_serves() -> None:
+    assert "wan-syntheses" in _FETCHED.findall(_app_js())
+
+
+def test_the_map_shows_each_synthesis_by_its_label() -> None:
+    assert "const entries = syntheses.map(({ label }) => {" in _app_js()
 
 
 def test_every_route_the_map_fetches_answers_the_browsers_preflight() -> None:

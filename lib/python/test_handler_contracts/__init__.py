@@ -41,12 +41,6 @@ def write_event(cfg: dict[str, Any], collection: str, body: Any) -> dict[str, An
 class ReaderContract:
     CFG: dict[str, Any]
 
-    def test_lists_the_stored_ids(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = load_handler(self.CFG["endpoint"], monkeypatch)
-        with patch("boto3.client", return_value=fake_s3({}, keys=self.CFG["list_keys"])):
-            response = module.lambda_handler({}, None)
-        assert json.loads(response["body"]) == self.CFG["ids"]
-
     def test_serves_a_stored_collection(self, monkeypatch: pytest.MonkeyPatch) -> None:
         module = load_handler(self.CFG["endpoint"], monkeypatch)
         stored = {self.CFG["stored_key"]: json.dumps(self.CFG["stored"]).encode()}
@@ -75,9 +69,17 @@ class ReaderContract:
 
     def test_answers_the_spas_origin_and_no_other(self, monkeypatch: pytest.MonkeyPatch) -> None:
         module = load_handler(self.CFG["endpoint"], monkeypatch)
-        with patch("boto3.client", return_value=fake_s3({}, keys=self.CFG["list_keys"])):
+        with patch("boto3.client", return_value=fake_s3({}, keys=[])):
             response = module.lambda_handler({}, None)
         assert response["headers"]["Access-Control-Allow-Origin"] == SPA_ORIGIN
+
+
+class ListingContract(ReaderContract):
+    def test_lists_the_stored_ids(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        module = load_handler(self.CFG["endpoint"], monkeypatch)
+        with patch("boto3.client", return_value=fake_s3({}, keys=self.CFG["list_keys"])):
+            response = module.lambda_handler({}, None)
+        assert json.loads(response["body"]) == self.CFG["ids"]
 
 
 class SharedWriteTests:

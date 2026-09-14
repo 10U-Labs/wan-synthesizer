@@ -4,7 +4,7 @@ const COUNTRY_STYLE = { color: "#aab4be", weight: 0.7, fillColor: "#f4f4f1", fil
 const COUNTRIES_ATTRIB = "Made with Natural Earth";
 const WORLD_COPIES = [-360, 0, 360];
 
-const API_BASE = "https://api.10ulabs.com/wan-synthesizer";
+const API_BASE = "https://api.10ulabs.com";
 
 const GOOGLE_CLIENT_ID = "846587722064-qjou8en4tk96n12ii3rgnpjshnbqovok.apps.googleusercontent.com";
 const HOSTED_DOMAIN = "10ulabs.com";
@@ -384,10 +384,10 @@ async function render(tenantId) {
   let circuits;
   try {
     [sites, fiber, homings, circuits] = await Promise.all([
-      getJSON(`${API_BASE}/tenants/${tenantId}/sites`),
-      getJSON(`${API_BASE}/tenants/${tenantId}/fiber-segments`),
-      getJSON(`${API_BASE}/tenants/${tenantId}/homing-circuits`),
-      getJSON(`${API_BASE}/tenants/${tenantId}/backbone-circuits`),
+      getJSON(`${API_BASE}/wan-synthesizer/tenants/${tenantId}/sites`),
+      getJSON(`${API_BASE}/wan-synthesizer/tenants/${tenantId}/fiber-segments`),
+      getJSON(`${API_BASE}/wan-synthesizer/tenants/${tenantId}/homing-circuits`),
+      getJSON(`${API_BASE}/wan-synthesizer/tenants/${tenantId}/backbone-circuits`),
     ]);
   } catch (error) {
     document.getElementById("counts").textContent = "WAN not synthesized yet";
@@ -415,11 +415,16 @@ function select(link, mapId) {
   return render(mapId);
 }
 
+function slug(label) {
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 async function start() {
   const nav = document.getElementById("tenants");
   nav.replaceChildren();
-  const tenants = await getJSON(`${API_BASE}/tenants`);
-  const entries = tenants.map(({ id, label }) => {
+  const syntheses = await getJSON(`${API_BASE}/wan-syntheses`);
+  const entries = syntheses.map(({ label }) => {
+    const id = slug(label);
     const link = document.createElement("a");
     link.href = "#";
     link.textContent = label;

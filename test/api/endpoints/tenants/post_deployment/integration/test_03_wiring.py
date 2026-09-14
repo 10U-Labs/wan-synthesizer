@@ -34,7 +34,7 @@ def test_role_may_delete_a_version(iam_client: Any, role_name: str) -> None:
 
 def test_an_answer_carrying_data_names_the_pages_origin_alone(api_key: str) -> None:
     headers = {"Authorization": f"Bearer {api_key}", "Origin": SPA_ORIGIN}
-    with urlopen(Request(f"{DEFAULT_API}/tenants", headers=headers), timeout=30) as response:
+    with urlopen(Request(f"{DEFAULT_API}/tenants/daf/label", headers=headers), timeout=30) as response:
         assert response.headers["Access-Control-Allow-Origin"] == SPA_ORIGIN
 
 

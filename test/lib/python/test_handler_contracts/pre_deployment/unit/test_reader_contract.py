@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from test_handler_contracts import ReaderContract
+from test_handler_contracts import ListingContract
 
 _CFG: dict[str, Any] = {
     "endpoint": "carriers",
@@ -30,5 +30,5 @@ _CFG: dict[str, Any] = {
 }
 
 
-class TestTheReadContract(ReaderContract):
+class TestTheReadContract(ListingContract):
     CFG = _CFG

@@ -37,7 +37,6 @@ _INPUTS = frozenset({
     "settings",
     "label",
 })
-_TENANT_MARKER = "label.json"
 _SITE_FIELDS = {"name", "municipality", "state", "country", "latitude", "longitude"}
 _LOCATION_FIELDS = _SITE_FIELDS | {"exemptfromdistanceconstraint"}
 _SITE_INPUT_FIELDS = {
@@ -70,21 +69,6 @@ def _response(status: int, body: Any) -> dict[str, Any]:
     return {"statusCode": status, "headers": dict(_HEADERS), "body": json.dumps(body)}
 
 
-def _tenants(client: Any) -> list[dict[str, str]]:
-    listing = client.list_objects_v2(
-        Bucket=os.environ["STORE_BUCKET"], Prefix="tenants/"
-    )
-    tenants = []
-    for item in listing.get("Contents", []):
-        key = item["Key"]
-        if not key.endswith(f"/{_TENANT_MARKER}"):
-            continue
-        tenant = key.removeprefix("tenants/").removesuffix(f"/{_TENANT_MARKER}")
-        label = _read_object(client, key) or {}
-        tenants.append({"id": tenant, "label": label.get("label") or tenant})
-    return tenants
-
-
 def _read_object(client: Any, key: str) -> Any:
     try:
         body = client.get_object(Bucket=os.environ["STORE_BUCKET"], Key=key)["Body"].read()
@@ -100,9 +84,7 @@ def _serve(client: Any, tenant: str, key: str, field: str | None = None) -> dict
     return _response(200, doc if field is None else doc[field])
 
 
-def _get(client: Any, tenant: str | None, event: dict[str, Any]) -> dict[str, Any]:
-    if not tenant:
-        return _response(200, _tenants(client))
+def _get(client: Any, tenant: str, event: dict[str, Any]) -> dict[str, Any]:
     collection = event.get("path", "").rsplit("/", 1)[-1]
     if collection in _WAN_COLLECTIONS:
         return _serve(client, tenant, f"tenants/{tenant}/wan.json", collection)
@@ -139,10 +121,10 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     client = _s3()
     method = event.get("httpMethod", "GET")
     tenant = (event.get("pathParameters") or {}).get("tenant")
-    if method == "GET":
-        return _get(client, tenant, event)
     if not tenant:
         return _response(404, {"error": "tenant required"})
+    if method == "GET":
+        return _get(client, tenant, event)
     if method == "DELETE":
         return _delete(client, tenant)
     return _put(client, tenant, event)

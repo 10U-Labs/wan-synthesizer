@@ -130,10 +130,6 @@ def _get(api: str, path: str) -> Any:
     return json.loads(_send(api, path, "GET", None))
 
 
-def _delete(api: str, path: str) -> None:
-    _send(api, path, "DELETE", None)
-
-
 def _degree_doc(value: Any) -> dict[str, Any]:
     return {"degree": value}
 
@@ -214,15 +210,6 @@ def push_tenants(api: str) -> list[str]:
     return tenant_ids
 
 
-def prune_tenants(api: str, tenants: list[str]) -> None:
-    for entry in _get(api, "tenants"):
-        tenant = entry["id"]
-        if tenant in tenants:
-            continue
-        print(f"tenant {tenant}: deleting (no config in etc/)", flush=True)
-        _delete(api, f"tenants/{tenant}")
-
-
 def prune_store(api: str) -> None:
     print("store: pruning collections nothing writes any more", flush=True)
     answer = _post_json(api, "store/prune", {"written": sorted(WRITTEN)})
@@ -248,6 +235,5 @@ def main() -> None:
     build_merged_carriers(api)
     push_providers(api)
     tenants = push_tenants(api)
-    prune_tenants(api, tenants)
     prune_store(api)
     build_tenants(api, tenants)

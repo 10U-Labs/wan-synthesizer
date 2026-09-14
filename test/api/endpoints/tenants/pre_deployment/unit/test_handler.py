@@ -21,8 +21,6 @@ _LOCATIONS_ROW: dict[str, Any] = {
 
 _READER: dict[str, Any] = {
     "endpoint": "tenants",
-    "list_keys": ["tenants/f-35/label.json", "tenants/minuteman/label.json"],
-    "ids": [{"id": "f-35", "label": "f-35"}, {"id": "minuteman", "label": "minuteman"}],
     "stored_key": "tenants/f-35/wan.json",
     "stored": {
         "sites": [],
@@ -65,36 +63,11 @@ def _tenant_put(collection: str, body: Any) -> dict[str, Any]:
     }
 
 
-def test_tenants_list_surfaces_each_label(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_get_without_a_tenant_answers_404(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
-    objects = {
-        "tenants/f-35/label.json": json.dumps({"label": "F-35"}).encode(),
-        "tenants/minuteman/label.json": json.dumps({"label": "Minuteman"}).encode(),
-    }
-    with patch("boto3.client", return_value=fake_s3(objects)):
-        response = module.lambda_handler({}, None)
-    assert json.loads(response["body"]) == [
-        {"id": "f-35", "label": "F-35"},
-        {"id": "minuteman", "label": "Minuteman"},
-    ]
-
-
-def test_tenants_list_falls_back_to_id_without_a_label(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = _tenant(monkeypatch)
-    with patch("boto3.client", return_value=fake_s3({"tenants/minuteman/label.json": b"{}"})):
-        response = module.lambda_handler({}, None)
-    assert json.loads(response["body"]) == [{"id": "minuteman", "label": "minuteman"}]
-
-
-def test_tenants_list_skips_non_label_objects(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = _tenant(monkeypatch)
-    objects = {
-        "tenants/minuteman/label.json": json.dumps({"label": "Minuteman"}).encode(),
-        "tenants/minuteman/wan.json": b"{}",
-    }
-    with patch("boto3.client", return_value=fake_s3(objects)):
-        response = module.lambda_handler({}, None)
-    assert json.loads(response["body"]) == [{"id": "minuteman", "label": "Minuteman"}]
+    with patch("boto3.client", return_value=fake_s3({})):
+        response = module.lambda_handler({"httpMethod": "GET"}, None)
+    assert response["statusCode"] == 404
 
 
 def test_tenant_serves_the_backbone_circuits(monkeypatch: pytest.MonkeyPatch) -> None:

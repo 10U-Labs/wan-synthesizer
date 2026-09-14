@@ -78,12 +78,12 @@ def test_a_request_is_answered_successfully_by_default() -> None:
 
 def test_the_body_answered_is_the_one_the_stub_was_built_with() -> None:
     with StubApi(body=b'[{"id": "f-35"}]') as api:
-        assert _send(api, "GET", "/tenants")[1] == b'[{"id": "f-35"}]'
+        assert _send(api, "GET", "/carriers")[1] == b'[{"id": "f-35"}]'
 
 
 def test_an_answer_nobody_shaped_is_an_empty_listing() -> None:
     with StubApi() as api:
-        assert _send(api, "GET", "/tenants")[1] == EMPTY_LISTING
+        assert _send(api, "GET", "/carriers")[1] == EMPTY_LISTING
 
 
 def test_a_request_the_stub_cannot_read_is_recorded_as_neither_method_nor_path() -> None:

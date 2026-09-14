@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from test_handler_contracts import (
-    ReaderContract,
+    ListingContract,
     WriterContract,
     load_handler,
     write_clients,
@@ -45,7 +45,7 @@ _WRITER: dict[str, Any] = {
 }
 
 
-class TestCarriersReader(ReaderContract):
+class TestCarriersReader(ListingContract):
     CFG = _READER
 
 

@@ -12,7 +12,7 @@ from test_handler_contracts import SPA_ORIGIN
 _ORIGIN_HEADER = "Access-Control-Allow-Origin"
 
 
-def _answer(headers: dict[str, str], method: str = "GET", path: str = "tenants") -> Any:
+def _answer(headers: dict[str, str], method: str = "GET", path: str = "carriers") -> Any:
     request = Request(f"{DEFAULT_API}/{path}", headers=headers, method=method)
     try:
         with urlopen(request, timeout=30) as response:
@@ -21,7 +21,7 @@ def _answer(headers: dict[str, str], method: str = "GET", path: str = "tenants")
         return refusal
 
 
-def _status(headers: dict[str, str], method: str = "GET", path: str = "tenants") -> int:
+def _status(headers: dict[str, str], method: str = "GET", path: str = "carriers") -> int:
     return int(_answer(headers, method, path).status)
 
 
