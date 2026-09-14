@@ -16,9 +16,6 @@ DEFAULT_API = "https://api.10ulabs.com/wan-synthesizer"
 API_KEY_VARIABLE = "WAN_SYNTHESIZER_API_KEY"
 RETRY_PAUSE_SECONDS = 1.0
 DATA = REPO_ROOT / "data"
-FIBER_SEGMENTS = "fiber_segments"
-TERRESTRIAL = "terrestrial"
-SUBMARINE = "submarine"
 WRITTEN: set[str] = set()
 
 
@@ -34,10 +31,6 @@ def _rows(path: Path) -> list[dict[str, Any]]:
                 row["longitude"] = float(row["longitude"])
             rows.append(row)
         return rows
-
-
-def _slug(stem: str) -> str:
-    return stem.replace("_", "-")
 
 
 def _is_dropped_connection(failure: OSError) -> bool:
@@ -85,28 +78,6 @@ def _post_json(api: str, path: str, body: Any) -> Any:
     return json.loads(_send(api, path, "POST", json.dumps(body).encode()))
 
 
-def _carrier_names() -> list[str]:
-    return sorted({path.stem for path in (DATA / FIBER_SEGMENTS).glob("*/*.csv")})
-
-
-def _fiber_segment_rows(carrier: str) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for water, directory in ((False, TERRESTRIAL), (True, SUBMARINE)):
-        path = DATA / FIBER_SEGMENTS / directory / f"{carrier}.csv"
-        if not path.exists():
-            continue
-        rows.extend({**row, "submarine": water} for row in _rows(path))
-    return rows
-
-
-def push_carriers(api: str) -> None:
-    for carrier in _carrier_names():
-        cid = _slug(carrier)
-        fiber_segments = _fiber_segment_rows(carrier)
-        print(f"carrier {cid}: {len(fiber_segments)} fiber segments", flush=True)
-        _put(api, f"carriers/{cid}/fiber-segments", fiber_segments)
-
-
 def push_providers(api: str) -> None:
     regions = _rows(DATA / "providers" / "providers.csv")
     print(f"providers: {len(regions)} regions", flush=True)
@@ -123,6 +94,5 @@ def prune_store(api: str) -> None:
 
 def main() -> None:
     api = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_API
-    push_carriers(api)
     push_providers(api)
     prune_store(api)

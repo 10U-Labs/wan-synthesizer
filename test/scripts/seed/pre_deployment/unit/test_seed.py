@@ -12,15 +12,12 @@ import pytest
 import seed
 from test_http_doubles import CallRecorder, UrlopenRecorder
 from seed import (
-    _carrier_names,
     _post_json,
     _put,
     _rows,
     _send,
-    _slug,
     main,
     prune_store,
-    push_carriers,
     push_providers,
 )
 
@@ -29,25 +26,10 @@ def _write_csv(path: Path, header: str, *rows: str) -> None:
     path.write_text("\n".join((header, *rows)) + "\n", encoding="utf-8")
 
 
-def _one_carrier(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "DATA", tmp_path)
-    _write_csv(
-        tmp_path / "fiber_segments" / "terrestrial" / "lumen.csv",
-        "a_city,z_city", "Reston,Denver")
-
-
 def _one_provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "DATA", tmp_path)
     _write_csv(
         tmp_path / "providers" / "providers.csv", "city,state", "Reston,VA")
-
-
-def test_slug_replaces_underscores_with_hyphens() -> None:
-    assert _slug("f_35") == "f-35"
-
-
-def test_slug_leaves_a_plain_stem_unchanged() -> None:
-    assert _slug("lumen") == "lumen"
 
 
 def test_rows_lowercases_the_header_keys(tmp_path: Path) -> None:
@@ -83,28 +65,6 @@ def test_rows_keeps_string_values_without_coordinates(tmp_path: Path) -> None:
 def test_rows_raises_for_a_missing_file(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="does not exist"):
         _rows(tmp_path / "missing.csv")
-
-
-def test_carrier_names_returns_sorted_stems(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "DATA", tmp_path)
-    _write_csv(
-        tmp_path / "fiber_segments" / "terrestrial" / "lumen.csv", "a_city,z_city", "X,Y")
-    _write_csv(
-        tmp_path / "fiber_segments" / "submarine" / "lumen.csv", "a_city,z_city", "X,Y")
-    _write_csv(
-        tmp_path / "fiber_segments" / "terrestrial" / "cogent.csv", "a_city,z_city", "X,Y")
-    assert _carrier_names() == ["cogent", "lumen"]
-
-
-def test_carrier_names_ignores_non_csv_files(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "DATA", tmp_path)
-    _write_csv(
-        tmp_path / "fiber_segments" / "terrestrial" / "lumen.csv", "a_city,z_city", "X,Y")
-    (tmp_path / "fiber_segments" / "terrestrial" / "notes.txt").write_text(
-        "x", encoding="utf-8")
-    assert _carrier_names() == ["lumen"]
 
 
 def _reset() -> ConnectionResetError:
@@ -197,28 +157,28 @@ def test_send_keeps_the_content_type_beside_the_key(
 
 
 def test_put_uses_the_put_method(urlopen_recorder: UrlopenRecorder) -> None:
-    _put("http://api", "carriers/lumen/fiber-segments", [{"city": "Reston"}])
+    _put("http://api", "providers/regions", [{"city": "Reston"}])
     assert urlopen_recorder.requests[0].method == "PUT"
 
 
 def test_put_targets_the_api_path(urlopen_recorder: UrlopenRecorder) -> None:
-    _put("http://api", "carriers/lumen/fiber-segments", [])
-    assert urlopen_recorder.requests[0].full_url == "http://api/carriers/lumen/fiber-segments"
+    _put("http://api", "providers/regions", [])
+    assert urlopen_recorder.requests[0].full_url == "http://api/providers/regions"
 
 
 def test_put_encodes_the_json_body(urlopen_recorder: UrlopenRecorder) -> None:
-    _put("http://api", "carriers/lumen/fiber-segments", [{"city": "Reston"}])
+    _put("http://api", "providers/regions", [{"city": "Reston"}])
     assert urlopen_recorder.requests[0].data == b'[{"city": "Reston"}]'
 
 
 def test_put_sets_the_json_content_type(urlopen_recorder: UrlopenRecorder) -> None:
-    _put("http://api", "carriers/lumen/fiber-segments", [])
+    _put("http://api", "providers/regions", [])
     assert urlopen_recorder.requests[0].get_header("Content-type") == "application/json"
 
 
 @pytest.mark.usefixtures("urlopen_recorder")
 def test_put_prints_the_response_status(capsys: pytest.CaptureFixture[str]) -> None:
-    _put("http://api", "carriers/lumen/fiber-segments", [])
+    _put("http://api", "providers/regions", [])
     assert "-> 200" in capsys.readouterr().out
 
 
@@ -237,16 +197,8 @@ def test_post_json_encodes_the_json_body(urlopen_recorder: UrlopenRecorder) -> N
 @pytest.mark.usefixtures("urlopen_recorder")
 def test_put_records_the_key_it_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "WRITTEN", set())
-    _put("http://api", "carriers/lumen/fiber-segments", {})
-    assert seed.WRITTEN == {"carriers/lumen/fiber-segments.json"}
-
-
-def test_push_carriers_puts_the_fiber_segments_path(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    _one_carrier(tmp_path, monkeypatch)
-    push_carriers("http://api")
-    assert "carriers/lumen/fiber-segments" in put_recorder.nth(1)
+    _put("http://api", "providers/regions", {})
+    assert seed.WRITTEN == {"providers/regions.json"}
 
 
 def test_push_providers_pushes_regions(
@@ -280,10 +232,10 @@ def test_prune_store_posts_the_prune(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_prune_store_sends_the_keys_this_run_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
     sent = _prune_answering(monkeypatch, [])
     monkeypatch.setattr(
-        seed, "WRITTEN", {"carriers/lumen/fiber-segments.json", "providers/regions.json"})
+        seed, "WRITTEN", {"providers/regions.json", "providers/regions.json"})
     prune_store("http://api")
     assert sent[0][2] == {
-        "written": ["providers/regions.json", "carriers/lumen/fiber-segments.json"]}
+        "written": ["providers/regions.json", "providers/regions.json"]}
 
 
 def test_prune_store_names_every_key_that_went(
@@ -312,7 +264,6 @@ def _run_main(
     calls: list[tuple[str, str]] = []
 
     monkeypatch.setattr(sys, "argv", argv)
-    monkeypatch.setattr(seed, "push_carriers", lambda api: calls.append(("carriers", api)))
     monkeypatch.setattr(seed, "push_providers", lambda api: calls.append(("providers", api)))
     monkeypatch.setattr(
         seed, "prune_store", lambda api: calls.append(("prune-store", api)))
@@ -321,7 +272,7 @@ def _run_main(
 
 
 def test_main_defaults_to_the_public_api(monkeypatch: pytest.MonkeyPatch) -> None:
-    assert _run_main(monkeypatch, ["seed"])[0] == ("carriers", seed.DEFAULT_API)
+    assert _run_main(monkeypatch, ["seed"])[0] == ("providers", seed.DEFAULT_API)
 
 
 def test_main_uses_the_cli_argument_when_given(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -331,4 +282,4 @@ def test_main_uses_the_cli_argument_when_given(monkeypatch: pytest.MonkeyPatch) 
 def test_main_seeds_inputs_then_triggers_builds_in_order(
         monkeypatch: pytest.MonkeyPatch) -> None:
     assert [name for name, _ in _run_main(monkeypatch, ["seed"])] == [
-        "carriers", "providers", "prune-store"]
+        "providers", "prune-store"]

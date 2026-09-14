@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 import sys
-from pathlib import Path
 from urllib.parse import urlsplit
 from typing import Any, cast
 
@@ -12,7 +11,6 @@ import yaml
 
 import seed
 from repo_utils import REPO_ROOT
-from seed import _rows
 from test_http_doubles import UrlopenRecorder
 from test_terraform_config import api_key_parameter_name
 
@@ -74,12 +72,6 @@ def test_every_requested_path_is_declared_in_openapi(
     assert undeclared == []
 
 
-def test_pipeline_writes_at_least_one_carrier(
-        urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
-    paths = _seed(urlopen_recorder, monkeypatch)
-    assert any(re.fullmatch(r"carriers/[^/]+/fiber-segments", path) for path in paths)
-
-
 def test_seeding_waits_for_every_check_the_workflow_runs() -> None:
     assert set(_needed_by(_seed_workflow()["jobs"]["seeding"])) == _gates_on_seeding()
 
@@ -139,30 +131,3 @@ def test_every_job_that_reaches_the_api_may_read_the_key() -> None:
 def test_seeding_seeds_only_on_the_conclusion_the_wait_job_reports() -> None:
     condition = _seed_workflow()["jobs"]["seeding"]["if"]
     assert f"needs.{_WAIT_JOB}.outputs.apply == 'true'" in condition
-
-
-def _fiber_file(directory: str) -> Path:
-    return seed.DATA / seed.FIBER_SEGMENTS / directory / "zayo.csv"
-
-
-def _carrier_fiber_written(
-    recorder: UrlopenRecorder, carrier: str
-) -> list[dict[str, Any]]:
-    return next(
-        cast("list[dict[str, Any]]", json.loads(cast("bytes", request.data)))
-        for request in recorder.requests
-        if request.full_url.endswith(f"/carriers/{carrier}/fiber-segments")
-    )
-
-
-def test_push_carriers_marks_each_fiber_row_by_the_directory_it_came_out_of(
-        urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
-    _seed(urlopen_recorder, monkeypatch)
-    written = _carrier_fiber_written(urlopen_recorder, "zayo")
-    assert {
-        water: sum(1 for row in written if row["submarine"] is water)
-        for water in (False, True)
-    } == {
-        False: len(_rows(_fiber_file(seed.TERRESTRIAL))),
-        True: len(_rows(_fiber_file(seed.SUBMARINE))),
-    }

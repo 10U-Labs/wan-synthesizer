@@ -6,13 +6,8 @@ from unittest.mock import patch
 
 import pytest
 
-from test_handler_contracts import (
-    ListingContract,
-    WriterContract,
-    load_handler,
-    write_clients,
-    write_event,
-)
+from test_handler_contracts import ListingContract, load_handler, write_clients
+from test_s3_store_mock import fake_s3
 
 _READER: dict[str, Any] = {
     "endpoint": "carriers",
@@ -35,31 +30,8 @@ _READER: dict[str, Any] = {
     },
 }
 
-_WRITER: dict[str, Any] = {
-    "endpoint": "carriers",
-    "param": "carrier",
-    "key": "carriers/lumen/fiber-segments.json",
-    "id": "lumen",
-    "valid": [{"a_municipality": "Reston", "a_state": "VA", "z_municipality": "Denver",
-               "z_state": "CO", "submarine": False}],
-}
-
-
 class TestCarriersReader(ListingContract):
     CFG = _READER
-
-
-class TestCarriersWriter(WriterContract):
-    CFG = _WRITER
-
-
-def test_carrier_put_leaves_the_other_collection_file(monkeypatch: pytest.MonkeyPatch) -> None:
-    module = load_handler("carriers", monkeypatch)
-    objects = {"carriers/lumen/pops.json": json.dumps([{"e": 1}]).encode()}
-    event = write_event(_WRITER, "fiber-segments", _WRITER["valid"])
-    with patch("boto3.client", side_effect=write_clients(objects, [])):
-        module.lambda_handler(event, None)
-    assert json.loads(objects["carriers/lumen/pops.json"]) == [{"e": 1}]
 
 
 def _store_after_deleting(
@@ -92,3 +64,27 @@ def test_a_deleted_carrier_is_no_longer_listed(monkeypatch: pytest.MonkeyPatch) 
         module.lambda_handler(removal, None)
         listed = module.lambda_handler({"httpMethod": "GET"}, None)
     assert json.loads(listed["body"]) == ["zayo"]
+
+
+def test_carrier_delete_leaves_no_delete_marker(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = load_handler("carriers", monkeypatch)
+    fake = fake_s3({"carriers/lumen/pops.json": b"[]"})
+    event = {"httpMethod": "DELETE", "pathParameters": {"carrier": "lumen"}}
+    with patch("boto3.client", return_value=fake):
+        module.lambda_handler(event, None)
+    assert fake.list_object_versions(Bucket="test-bucket")["DeleteMarkers"] == []
+
+
+def test_carrier_delete_404_when_no_carrier(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = load_handler("carriers", monkeypatch)
+    with patch("boto3.client", side_effect=write_clients({}, [])):
+        response = module.lambda_handler({"httpMethod": "DELETE"}, None)
+    assert response["statusCode"] == 404
+
+
+def test_carrier_put_404(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = load_handler("carriers", monkeypatch)
+    event = {"httpMethod": "PUT", "pathParameters": {"carrier": "lumen"}, "body": "[]"}
+    with patch("boto3.client", side_effect=write_clients({}, [])):
+        response = module.lambda_handler(event, None)
+    assert response["statusCode"] == 404

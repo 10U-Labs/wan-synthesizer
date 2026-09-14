@@ -14,13 +14,12 @@ from unittest.mock import patch
 import pytest
 
 from repo_utils import REPO_ROOT
-from seed import _carrier_names, _slug, main
+from seed import main
 from test_http_doubles import UrlopenRecorder
 
 _API_KEY = "the-seed-key"
 _API = "arn:aws:execute-api:us-east-2:781581267945:abc123"
 _STAGE = f"{_API}/prod"
-_STALE_TENANT = "stale"
 _EMAIL = "someone@10ulabs.com"
 _ANOTHER = "another@10ulabs.com"
 _AUTHORIZED = f"{_EMAIL}, {_ANOTHER}"
@@ -124,23 +123,14 @@ def _operations_served() -> set[tuple[str, str]]:
     }
 
 
-def _ids_the_seed_names() -> frozenset[str]:
-    return frozenset({_slug(name) for name in _carrier_names()} | {_STALE_TENANT})
-
-
-def _generalized(path: str, ids: frozenset[str]) -> str:
-    return "/".join("*" if segment in ids else segment for segment in path.split("/"))
-
-
 def _writes_the_seed_makes(monkeypatch: pytest.MonkeyPatch) -> set[tuple[str, str]]:
     api = "http://api"
-    recorder = UrlopenRecorder(body=json.dumps([{"id": _STALE_TENANT}]).encode())
+    recorder = UrlopenRecorder(body=b"{}")
     monkeypatch.setattr(urllib.request, "urlopen", recorder)
     monkeypatch.setattr(sys, "argv", ["seed", api])
     main()
-    ids = _ids_the_seed_names()
     return {
-        (request.get_method(), _generalized(path, ids))
+        (request.get_method(), path)
         for request, path in zip(recorder.requests, recorder.paths(api))
         if request.get_method() != "GET"
     }

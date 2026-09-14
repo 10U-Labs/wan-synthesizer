@@ -29,15 +29,6 @@ def write_clients(objects: dict[str, bytes], invocations: list[dict[str, Any]]) 
     return lambda service, **_kwargs: fakes[service]
 
 
-def write_event(cfg: dict[str, Any], collection: str, body: Any) -> dict[str, Any]:
-    return {
-        "httpMethod": "PUT",
-        "pathParameters": {cfg["param"]: cfg["id"]},
-        "path": f"/x/{cfg['endpoint']}/{cfg['id']}/{collection}",
-        "body": json.dumps(body),
-    }
-
-
 class ReaderContract:
     CFG: dict[str, Any]
 
@@ -148,17 +139,6 @@ class SharedWriteTests:
         with patch("boto3.client", return_value=fake):
             module.lambda_handler(self._delete_event(), None)
         assert fake.list_object_versions(Bucket="test-bucket")["DeleteMarkers"] == []
-
-
-class WriterContract(SharedWriteTests):
-    def _put_event(self, collection: str, body: Any) -> dict[str, Any]:
-        return write_event(self.CFG, collection, body)
-
-    def _delete_event(self) -> dict[str, Any]:
-        return {"httpMethod": "DELETE", "pathParameters": {self.CFG["param"]: self.CFG["id"]}}
-
-    def test_write_404_when_no_resource(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        assert self._status_of(monkeypatch, {"httpMethod": "DELETE"}) == 404
 
 
 class RegionsContract(SharedWriteTests):

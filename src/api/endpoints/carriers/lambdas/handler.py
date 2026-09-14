@@ -10,16 +10,6 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 _ONLY_VERSION = "null"
-_LINK_FIELDS = {"a_municipality", "a_state", "z_municipality", "z_state", "submarine"}
-
-
-def _validate_rows(body: Any, required: set[str]) -> str | None:
-    if not isinstance(body, list):
-        return "expected a list of rows"
-    for row in body:
-        if not isinstance(row, dict) or set(row) != required:
-            return "each row must have exactly: " + ", ".join(sorted(required))
-    return None
 
 
 def _s3() -> Any:
@@ -66,19 +56,6 @@ def _get(client: Any, carrier: str | None, event: dict[str, Any]) -> dict[str, A
     return _response(200, rows)
 
 
-def _put(client: Any, carrier: str, event: dict[str, Any]) -> dict[str, Any]:
-    collection = event.get("path", "").rsplit("/", 1)[-1]
-    if collection != "fiber-segments":
-        return _response(404, {"error": collection})
-    rows = json.loads(event["body"])
-    error = _validate_rows(rows, _LINK_FIELDS)
-    if error:
-        return _response(400, {"error": error})
-    key = f"carriers/{carrier}/{collection}.json"
-    client.put_object(Bucket=os.environ["STORE_BUCKET"], Key=key, Body=json.dumps(rows).encode())
-    return _response(200, {"updated": f"{carrier}/{collection}"})
-
-
 def _delete(client: Any, carrier: str) -> dict[str, Any]:
     bucket = os.environ["STORE_BUCKET"]
     listing = client.list_objects_v2(Bucket=bucket, Prefix=f"carriers/{carrier}/")
@@ -97,4 +74,4 @@ def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
         return _response(404, {"error": "carrier required"})
     if method == "DELETE":
         return _delete(client, carrier)
-    return _put(client, carrier, event)
+    return _response(404, {"error": method})
