@@ -31,10 +31,6 @@ _TENANT_YML = """\
 backbone:
   degree_exempt:
     - Nellis, NV
-  forced:
-    circuits:
-      - source: Luke, AZ
-        target: Nellis, NV
   prohibited:
     wan_pops:
       - Link, TX
@@ -325,14 +321,6 @@ def test_push_providers_pushes_regions(
     _one_provider(tmp_path, monkeypatch)
     push_providers("http://api")
     assert "providers/regions" in put_recorder.nth(1)
-
-
-def test_push_tenants_puts_the_forced_circuits_resource(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    bodies = _pushed_bodies(tmp_path, monkeypatch, put_recorder)
-    assert bodies["tenants/f-35/forced-circuits"] == [
-        {"source": "Luke, AZ", "target": "Nellis, NV"}]
 
 
 def test_push_tenants_puts_the_forced_homes_resource(

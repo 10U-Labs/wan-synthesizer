@@ -1,7 +1,5 @@
 ---
 backbone:
-  forced:
-    circuits: []
   prohibited:
     circuits: []
     wan_pops: []
