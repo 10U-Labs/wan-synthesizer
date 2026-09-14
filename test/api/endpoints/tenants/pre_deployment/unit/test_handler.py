@@ -70,8 +70,8 @@ def test_tenant_serves_the_backbone_circuits(monkeypatch: pytest.MonkeyPatch) ->
 
 def test_tenant_get_serves_an_input_document(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
-    stored = {"tenants/f-35/forced-wan-pops.json": json.dumps(["Luke, AZ"]).encode()}
-    event = {"pathParameters": {"tenant": "f-35"}, "path": "/x/tenants/f-35/forced-wan-pops"}
+    stored = {"tenants/f-35/prohibited-wan-pops.json": json.dumps(["Luke, AZ"]).encode()}
+    event = {"pathParameters": {"tenant": "f-35"}, "path": "/x/tenants/f-35/prohibited-wan-pops"}
     with patch("boto3.client", side_effect=write_clients(stored, [])):
         response = module.lambda_handler(event, None)
     assert json.loads(response["body"]) == ["Luke, AZ"]
@@ -130,7 +130,7 @@ def test_tenant_delete_removes_every_object(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_tenant_delete_leaves_no_delete_marker(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
-    fake = fake_s3({"tenants/f-35/forced-wan-pops.json": b"[]", "tenants/f-35/wan.json": b"{}"})
+    fake = fake_s3({"tenants/f-35/forced-circuits.json": b"[]", "tenants/f-35/wan.json": b"{}"})
     event = {"httpMethod": "DELETE", "pathParameters": {"tenant": "f-35"}}
     with patch("boto3.client", return_value=fake):
         module.lambda_handler(event, None)

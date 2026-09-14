@@ -211,14 +211,6 @@
         }
       }
     },
-    "/wan-synthesizer/tenants/{tenant}/forced-wan-pops": {
-      "get": {
-        "summary": "A tenant's forced WAN PoPs (input).",
-        "parameters": [ { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "responses": { "200": { "description": "The forced WAN PoPs." } },
-        "x-amazon-apigateway-integration": { "uri": "${TenantsHandlerArn}", "httpMethod": "POST", "type": "aws_proxy" }
-      }
-    },
     "/wan-synthesizer/tenants/{tenant}/forced-circuits": {
       "get": {
         "summary": "A tenant's forced circuits (input).",
