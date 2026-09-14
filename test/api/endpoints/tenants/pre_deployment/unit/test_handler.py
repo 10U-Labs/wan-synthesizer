@@ -99,11 +99,11 @@ def test_tenant_accepts_a_site_row_with_an_extra_field(
 
 def test_tenant_get_serves_an_input_document(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
-    stored = {"tenants/f-35/locations.json": json.dumps({"sites": [{"id": "S"}]}).encode()}
-    event = {"pathParameters": {"tenant": "f-35"}, "path": "/x/tenants/f-35/locations"}
+    stored = {"tenants/f-35/off-net.json": json.dumps([{"municipality": "Luke"}]).encode()}
+    event = {"pathParameters": {"tenant": "f-35"}, "path": "/x/tenants/f-35/off-net"}
     with patch("boto3.client", side_effect=write_clients(stored, [])):
         response = module.lambda_handler(event, None)
-    assert json.loads(response["body"]) == {"sites": [{"id": "S"}]}
+    assert json.loads(response["body"]) == [{"municipality": "Luke"}]
 
 
 def test_tenant_put_persists_an_input(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -173,7 +173,7 @@ def test_tenant_delete_removes_every_object(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_tenant_delete_leaves_no_delete_marker(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _tenant(monkeypatch)
-    fake = fake_s3({"tenants/f-35/locations.json": b"[]", "tenants/f-35/wan.json": b"{}"})
+    fake = fake_s3({"tenants/f-35/off-net.json": b"[]", "tenants/f-35/wan.json": b"{}"})
     event = {"httpMethod": "DELETE", "pathParameters": {"tenant": "f-35"}}
     with patch("boto3.client", return_value=fake):
         module.lambda_handler(event, None)
