@@ -54,15 +54,6 @@
           "type": "aws_proxy"
         }
       },
-      "put": {
-        "summary": "Replace the provider regions (stores only).",
-        "responses": { "200": { "description": "The provider regions were replaced." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${ProvidersHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
-      },
       "delete": {
         "summary": "Remove the provider regions.",
         "responses": { "200": { "description": "The provider regions were removed." } },

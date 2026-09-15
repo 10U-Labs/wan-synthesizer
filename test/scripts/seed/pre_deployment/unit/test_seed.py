@@ -4,68 +4,18 @@ import sys
 import urllib.error
 import urllib.request
 from email.message import Message
-from pathlib import Path
 from typing import Any
 
 import pytest
 
 import seed
-from test_http_doubles import CallRecorder, UrlopenRecorder
+from test_http_doubles import UrlopenRecorder
 from seed import (
     _post_json,
-    _put,
-    _rows,
     _send,
     main,
     prune_store,
-    push_providers,
 )
-
-def _write_csv(path: Path, header: str, *rows: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join((header, *rows)) + "\n", encoding="utf-8")
-
-
-def _one_provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "DATA", tmp_path)
-    _write_csv(
-        tmp_path / "providers" / "providers.csv", "city,state", "Reston,VA")
-
-
-def test_rows_lowercases_the_header_keys(tmp_path: Path) -> None:
-    path = tmp_path / "v.csv"
-    _write_csv(path, "City,State", "Reston,VA")
-    assert set(_rows(path)[0]) == {"city", "state"}
-
-
-def test_rows_parses_latitude_as_float(tmp_path: Path) -> None:
-    path = tmp_path / "v.csv"
-    _write_csv(path, "city,latitude,longitude", "Reston,38.95,-77.34")
-    assert _rows(path)[0]["latitude"] == 38.95
-
-
-def test_rows_parses_longitude_as_float(tmp_path: Path) -> None:
-    path = tmp_path / "v.csv"
-    _write_csv(path, "city,latitude,longitude", "Reston,38.95,-77.34")
-    assert _rows(path)[0]["longitude"] == -77.34
-
-
-def test_rows_strips_surrounding_whitespace(tmp_path: Path) -> None:
-    path = tmp_path / "v.csv"
-    _write_csv(path, "city,state", " Reston , VA ")
-    assert _rows(path)[0]["city"] == "Reston"
-
-
-def test_rows_keeps_string_values_without_coordinates(tmp_path: Path) -> None:
-    path = tmp_path / "e.csv"
-    _write_csv(path, "a_city,z_city", "Reston,Denver")
-    assert _rows(path)[0] == {"a_city": "Reston", "z_city": "Denver"}
-
-
-def test_rows_raises_for_a_missing_file(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="does not exist"):
-        _rows(tmp_path / "missing.csv")
-
 
 def _reset() -> ConnectionResetError:
     return ConnectionResetError(104, "Connection reset by peer")
@@ -156,32 +106,7 @@ def test_send_keeps_the_content_type_beside_the_key(
     assert urlopen_recorder.requests[0].get_header("Content-type") == "application/json"
 
 
-def test_put_uses_the_put_method(urlopen_recorder: UrlopenRecorder) -> None:
-    _put("http://api", "providers/regions", [{"city": "Reston"}])
-    assert urlopen_recorder.requests[0].method == "PUT"
-
-
-def test_put_targets_the_api_path(urlopen_recorder: UrlopenRecorder) -> None:
-    _put("http://api", "providers/regions", [])
-    assert urlopen_recorder.requests[0].full_url == "http://api/providers/regions"
-
-
-def test_put_encodes_the_json_body(urlopen_recorder: UrlopenRecorder) -> None:
-    _put("http://api", "providers/regions", [{"city": "Reston"}])
-    assert urlopen_recorder.requests[0].data == b'[{"city": "Reston"}]'
-
-
-def test_put_sets_the_json_content_type(urlopen_recorder: UrlopenRecorder) -> None:
-    _put("http://api", "providers/regions", [])
-    assert urlopen_recorder.requests[0].get_header("Content-type") == "application/json"
-
-
 @pytest.mark.usefixtures("urlopen_recorder")
-def test_put_prints_the_response_status(capsys: pytest.CaptureFixture[str]) -> None:
-    _put("http://api", "providers/regions", [])
-    assert "-> 200" in capsys.readouterr().out
-
-
 @pytest.mark.usefixtures("urlopen_recorder")
 def test_post_json_decodes_the_json_response(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
@@ -195,22 +120,6 @@ def test_post_json_encodes_the_json_body(urlopen_recorder: UrlopenRecorder) -> N
 
 
 @pytest.mark.usefixtures("urlopen_recorder")
-def test_put_records_the_key_it_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(seed, "WRITTEN", set())
-    _put("http://api", "providers/regions", {})
-    assert seed.WRITTEN == {"providers/regions.json"}
-
-
-def test_push_providers_pushes_regions(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        put_recorder: CallRecorder) -> None:
-    _one_provider(tmp_path, monkeypatch)
-    push_providers("http://api")
-    assert "providers/regions" in put_recorder.nth(1)
-
-
-@pytest.mark.usefixtures("put_recorder")
-@pytest.mark.usefixtures("put_recorder")
 def _prune_answering(
         monkeypatch: pytest.MonkeyPatch, deleted: list[str]) -> list[tuple[str, str, Any]]:
     sent: list[tuple[str, str, Any]] = []
@@ -227,15 +136,6 @@ def test_prune_store_posts_the_prune(monkeypatch: pytest.MonkeyPatch) -> None:
     sent = _prune_answering(monkeypatch, [])
     prune_store("http://api")
     assert [(api, path) for api, path, _body in sent] == [("http://api", "store/prune")]
-
-
-def test_prune_store_sends_the_keys_this_run_wrote(monkeypatch: pytest.MonkeyPatch) -> None:
-    sent = _prune_answering(monkeypatch, [])
-    monkeypatch.setattr(
-        seed, "WRITTEN", {"providers/regions.json", "providers/regions.json"})
-    prune_store("http://api")
-    assert sent[0][2] == {
-        "written": ["providers/regions.json", "providers/regions.json"]}
 
 
 def test_prune_store_names_every_key_that_went(
@@ -264,7 +164,6 @@ def _run_main(
     calls: list[tuple[str, str]] = []
 
     monkeypatch.setattr(sys, "argv", argv)
-    monkeypatch.setattr(seed, "push_providers", lambda api: calls.append(("providers", api)))
     monkeypatch.setattr(
         seed, "prune_store", lambda api: calls.append(("prune-store", api)))
     main()
@@ -272,7 +171,7 @@ def _run_main(
 
 
 def test_main_defaults_to_the_public_api(monkeypatch: pytest.MonkeyPatch) -> None:
-    assert _run_main(monkeypatch, ["seed"])[0] == ("providers", seed.DEFAULT_API)
+    assert _run_main(monkeypatch, ["seed"])[0] == ("prune-store", seed.DEFAULT_API)
 
 
 def test_main_uses_the_cli_argument_when_given(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -281,5 +180,4 @@ def test_main_uses_the_cli_argument_when_given(monkeypatch: pytest.MonkeyPatch) 
 
 def test_main_seeds_inputs_then_triggers_builds_in_order(
         monkeypatch: pytest.MonkeyPatch) -> None:
-    assert [name for name, _ in _run_main(monkeypatch, ["seed"])] == [
-        "providers", "prune-store"]
+    assert [name for name, _ in _run_main(monkeypatch, ["seed"])] == ["prune-store"]

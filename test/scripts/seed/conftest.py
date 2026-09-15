@@ -5,7 +5,7 @@ import urllib.request
 import pytest
 
 import seed
-from test_http_doubles import CallRecorder, UrlopenRecorder
+from test_http_doubles import UrlopenRecorder
 
 
 @pytest.fixture
@@ -18,10 +18,3 @@ def urlopen_recorder(monkeypatch: pytest.MonkeyPatch) -> UrlopenRecorder:
 @pytest.fixture
 def instant_retry(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(seed, "RETRY_PAUSE_SECONDS", 0)
-
-
-@pytest.fixture
-def put_recorder(monkeypatch: pytest.MonkeyPatch) -> CallRecorder:
-    recorder = CallRecorder()
-    monkeypatch.setattr(seed, "_put", recorder)
-    return recorder

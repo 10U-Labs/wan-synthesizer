@@ -29,7 +29,7 @@ def write_clients(objects: dict[str, bytes], invocations: list[dict[str, Any]]) 
     return lambda service, **_kwargs: fakes[service]
 
 
-class SharedWriteTests:
+class RegionsContract:
     CFG: dict[str, Any]
 
     def _handler(self, monkeypatch: pytest.MonkeyPatch) -> Any:
@@ -38,49 +38,11 @@ class SharedWriteTests:
     def _collection(self) -> str:
         return str(self.CFG["key"]).rsplit("/", 1)[-1].removesuffix(".json")
 
-    def _put_event(self, collection: str, body: Any) -> dict[str, Any]:
-        raise NotImplementedError
-
-    def _delete_event(self) -> dict[str, Any]:
-        raise NotImplementedError
-
     def _status_of(self, monkeypatch: pytest.MonkeyPatch, event: dict[str, Any]) -> int:
         module = self._handler(monkeypatch)
         with patch("boto3.client", side_effect=write_clients({}, [])):
             response = module.lambda_handler(event, None)
         return int(response["statusCode"])
-
-    def _stored_after_put(self, monkeypatch: pytest.MonkeyPatch, objects: dict[str, bytes]) -> Any:
-        module = self._handler(monkeypatch)
-        with patch("boto3.client", side_effect=write_clients(objects, [])):
-            module.lambda_handler(self._put_event(self._collection(), self.CFG["valid"]), None)
-        return json.loads(objects[self.CFG["key"]])
-
-    def test_write_persists_the_collection(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        assert self._stored_after_put(monkeypatch, {}) == self.CFG["valid"]
-
-    def test_write_replaces_an_existing_collection(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        stale = {self.CFG["key"]: json.dumps([{"stale": 1}]).encode()}
-        assert self._stored_after_put(monkeypatch, stale) == self.CFG["valid"]
-
-    def test_write_rejects_a_malformed_row(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        malformed = self._put_event(self._collection(), [{"oops": 1}])
-        assert self._status_of(monkeypatch, malformed) == 400
-
-    def test_write_rejects_a_non_list_body(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        malformed = self._put_event(self._collection(), {"not": "a list"})
-        assert self._status_of(monkeypatch, malformed) == 400
-
-    def test_write_404_for_unknown_collection(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        assert self._status_of(monkeypatch, self._put_event("bogus", [])) == 404
-
-    def test_write_does_not_trigger_a_build(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = self._handler(monkeypatch)
-        invocations: list[dict[str, Any]] = []
-        store = {"tenants/a/label.json": b"{}", "tenants/b/label.json": b"{}"}
-        with patch("boto3.client", side_effect=write_clients(store, invocations)):
-            module.lambda_handler(self._put_event(self._collection(), []), None)
-        assert not invocations
 
     def test_delete_removes_the_object(self, monkeypatch: pytest.MonkeyPatch) -> None:
         module = self._handler(monkeypatch)
@@ -96,20 +58,15 @@ class SharedWriteTests:
             module.lambda_handler(self._delete_event(), None)
         assert fake.list_object_versions(Bucket="test-bucket")["DeleteMarkers"] == []
 
+    def test_write_404(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        refused = {"httpMethod": "PUT", "path": self._path(self._collection()), "body": "[]"}
+        assert self._status_of(monkeypatch, refused) == 404
 
-class RegionsContract(SharedWriteTests):
     def _path(self, collection: str) -> str:
         return f"/x/{self.CFG['endpoint']}/{collection}"
 
     def _get(self, collection: str | None = None) -> dict[str, Any]:
         return {"httpMethod": "GET", "path": self._path(collection or self._collection())}
-
-    def _put_event(self, collection: str, body: Any) -> dict[str, Any]:
-        return {
-            "httpMethod": "PUT",
-            "path": self._path(collection),
-            "body": json.dumps(body),
-        }
 
     def _delete_event(self) -> dict[str, Any]:
         return {"httpMethod": "DELETE", "path": self._path(self._collection())}
