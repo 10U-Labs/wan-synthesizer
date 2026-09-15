@@ -20,7 +20,6 @@ jobs:
           --verbose
           .github/workflows
           lib
-          scripts
           src
           test
   assert-no-inline-directives:
@@ -156,7 +155,7 @@ jobs:
         run: pip install mypy pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on tests
         run: >-
-          MYPYPATH=lib/python:scripts
+          MYPYPATH=lib/python
           python3 -m mypy --strict --explicit-package-bases
           --ignore-missing-imports
           test/www/spa/
@@ -172,7 +171,7 @@ jobs:
         run: pip install pytest
       - name: Read the headers off the served SPA
         run: >-
-          PYTHONPATH=.:lib/python:scripts
+          PYTHONPATH=.:lib/python
           python3 -m pytest
           test/www/spa/post_deployment/e2e/
           --import-mode=importlib --confcutdir=test
@@ -186,7 +185,7 @@ jobs:
         run: pip install pylint pytest pyyaml 'python-hcl2<8'
       - name: Run pylint on tests
         run: >-
-          PYTHONPATH=.:lib/python:scripts
+          PYTHONPATH=.:lib/python
           python3 -m pylint --recursive=y
           test/www/spa/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
@@ -200,7 +199,7 @@ jobs:
         run: pip install pytest pyyaml 'python-hcl2<8'
       - name: Run unit tests
         run: >-
-          PYTHONPATH=.:lib/python:scripts
+          PYTHONPATH=.:lib/python
           python3 -m pytest
           test/www/spa/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
 
 
@@ -16,20 +15,3 @@ def find_repo_root() -> Path:
 
 
 REPO_ROOT = find_repo_root()
-
-
-def root_reading_parser(description: str) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=description)
-    parser.add_argument(
-        "--root",
-        default=REPO_ROOT,
-        type=Path,
-        help="The repository root to read (default: the one this file sits in).",
-    )
-    return parser
-
-
-def print_annotations(reported: list[str]) -> int:
-    for line in reported:
-        print(line)
-    return 1 if reported else 0

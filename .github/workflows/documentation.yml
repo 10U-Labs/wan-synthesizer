@@ -71,7 +71,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         name: Hold the repository to code scanning with the extended suite
         run: >-
-          PYTHONPATH=.:lib/python:scripts
+          PYTHONPATH=.:lib/python
           python3 -m pytest
           test/documentation/
           --import-mode=importlib --confcutdir=test
@@ -117,7 +117,7 @@ jobs:
         run: pip install mypy pytest pyyaml types-PyYAML
       - name: Run mypy on tests
         run: >-
-          MYPYPATH=lib/python:scripts
+          MYPYPATH=lib/python
           python3 -m mypy --strict --explicit-package-bases
           --ignore-missing-imports
           test/documentation/
@@ -129,7 +129,7 @@ jobs:
         run: pip install pylint pytest pyyaml
       - name: Run pylint on tests
         run: >-
-          PYTHONPATH=.:lib/python:scripts
+          PYTHONPATH=.:lib/python
           python3 -m pylint --recursive=y
           test/documentation/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring

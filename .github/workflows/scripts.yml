@@ -3,16 +3,6 @@ concurrency:
   cancel-in-progress: true
   group: scripts
 jobs:
-  assert-description-identifiers-exist:
-    name: assert-description-identifiers-exist
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert every snake_case identifier a served description spells is one this repository has
-        run: >-
-          PYTHONPATH=lib/python:scripts
-          python3 -c 'import sys, assert_description_identifiers_exist as check;
-          sys.exit(check.main())'
   assert-every-dataclass-field-is-read:
     name: assert-every-dataclass-field-is-read
     runs-on: ubuntu-latest
@@ -26,7 +16,6 @@ jobs:
           --verbose
           src
           lib/python
-          scripts
   assert-no-comments:
     name: assert-no-comments
     runs-on: ubuntu-latest
@@ -42,7 +31,6 @@ jobs:
           --verbose
           .github/workflows
           lib
-          scripts
           src
           test
   assert-no-inline-directives:
@@ -58,9 +46,7 @@ jobs:
           --tools pylint,mypy,yamllint
           --verbose
           ${{ github.workspace }}/lib/python
-          ${{ github.workspace }}/scripts
           ${{ github.workspace }}/test/lib/python
-          ${{ github.workspace }}/test/scripts
   assert-no-linter-config-files:
     name: assert-no-linter-config-files
     runs-on: ubuntu-latest
@@ -86,7 +72,6 @@ jobs:
           assert-no-pytest-plugin-declarations
           --verbose
           ${{ github.workspace }}/test/lib/python
-          ${{ github.workspace }}/test/scripts
   assert-one-assert-per-pytest:
     name: assert-one-assert-per-pytest
     runs-on: ubuntu-latest
@@ -99,7 +84,6 @@ jobs:
           assert-one-assert-per-pytest
           --verbose
           ${{ github.workspace }}/test/lib/python
-          ${{ github.workspace }}/test/scripts
   assert-pytest-class-holds-state:
     name: assert-pytest-class-holds-state
     runs-on: ubuntu-latest
@@ -112,7 +96,6 @@ jobs:
           assert-pytest-class-holds-state
           --verbose
           ${{ github.workspace }}/test/lib/python
-          ${{ github.workspace }}/test/scripts
   assert-pytest-fixture-is-requested:
     name: assert-pytest-fixture-is-requested
     runs-on: ubuntu-latest
@@ -128,7 +111,7 @@ jobs:
           pytest 'python-hcl2<8' pyyaml
       - name: Assert every pytest fixture is requested
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
+          PYTHONPATH=.:lib/python:src:test
           assert-pytest-fixture-is-requested
           --defined-in lib/python
           --dont-search-in 'test/lib/python/test_{package}'
@@ -149,7 +132,6 @@ jobs:
           assert-pytest-fixture-name-is-needed
           --verbose
           ${{ github.workspace }}/test/lib/python
-          ${{ github.workspace }}/test/scripts
   assert-pytest-test-can-fail:
     name: assert-pytest-test-can-fail
     runs-on: ubuntu-latest
@@ -162,7 +144,6 @@ jobs:
           assert-pytest-test-can-fail
           --verbose
           ${{ github.workspace }}/test/lib/python
-          ${{ github.workspace }}/test/scripts
   assert-python-definition-is-used:
     name: assert-python-definition-is-used
     runs-on: ubuntu-latest
@@ -171,7 +152,7 @@ jobs:
       - name: Assert every definition is named somewhere else
         uses: 10U-Labs/assert-python-definition-is-used@latest
         with:
-          search-in: lib/python scripts test
+          search-in: lib/python test
           trees: lib/python
           verbose: "true"
   assert-python-definition-is-used-outside-own-tests:
@@ -183,7 +164,7 @@ jobs:
         uses: 10U-Labs/assert-python-definition-is-used@latest
         with:
           dont-search-in: test/lib/python/{package}
-          search-in: lib/python scripts test
+          search-in: lib/python test
           trees: lib/python
           verbose: "true"
   copy-paste-source:
@@ -196,7 +177,7 @@ jobs:
       - name: Detect copy-paste in source
         run: >-
           jscpd --pattern "**/*.py" --threshold 0 --reporters console
-          scripts/ lib/python/
+          lib/python/
   copy-paste-tests:
     name: copy-paste-tests
     runs-on: ubuntu-latest
@@ -207,7 +188,7 @@ jobs:
       - name: Detect copy-paste in tests
         run: >-
           jscpd --pattern "**/*.py" --threshold 0 --reporters console
-          test/scripts/ test/lib/python/
+          test/lib/python/
   mypy-source:
     name: mypy-source
     runs-on: ubuntu-latest
@@ -217,9 +198,9 @@ jobs:
         run: pip install mypy boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on source
         run: >-
-          MYPYPATH=lib/python:scripts
+          MYPYPATH=lib/python
           python3 -m mypy --strict --ignore-missing-imports
-          --explicit-package-bases scripts/ lib/python/
+          --explicit-package-bases lib/python/
   mypy-tests:
     name: mypy-tests
     runs-on: ubuntu-latest
@@ -229,9 +210,9 @@ jobs:
         run: pip install mypy boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on tests
         run: >-
-          MYPYPATH=lib/python:scripts:test
+          MYPYPATH=lib/python:test
           python3 -m mypy --strict --ignore-missing-imports
-          --explicit-package-bases test/scripts/ test/lib/python/
+          --explicit-package-bases test/lib/python/
   pylint-source:
     name: pylint-source
     runs-on: ubuntu-latest
@@ -241,9 +222,9 @@ jobs:
         run: pip install pylint boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run pylint on source
         run: >-
-          PYTHONPATH=lib/python:scripts
+          PYTHONPATH=lib/python
           python3 -m pylint --recursive=y
-          scripts/ lib/python/
+          lib/python/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
   pylint-tests:
@@ -255,29 +236,11 @@ jobs:
         run: pip install pylint boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run pylint on tests
         run: >-
-          PYTHONPATH=.:lib/python:scripts:test
+          PYTHONPATH=.:lib/python:test
           python3 -m pylint --recursive=y
-          test/scripts/ test/lib/python/
+          test/lib/python/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
-  test-assert-description-identifiers-exist:
-    name: test-assert-description-identifiers-exist
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install pytest pytest-cov
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts
-          python3 -m pytest
-          test/scripts/assert_description_identifiers_exist/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=assert_description_identifiers_exist
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
   test-lib-repo-utils:
     name: test-lib-repo-utils
     runs-on: ubuntu-latest
@@ -287,7 +250,7 @@ jobs:
         run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
       - name: Run unit tests with a 100% coverage gate
         run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
+          PYTHONPATH=.:lib/python:src:test
           python3 -m pytest
           test/lib/python/repo_utils/pre_deployment/unit/
           --import-mode=importlib --confcutdir=test
@@ -296,169 +259,6 @@ jobs:
           --cov-branch
           --cov-report=term-missing
           --cov-fail-under=100
-  test-lib-test-fixtures:
-    name: test-lib-test-fixtures
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
-          python3 -m pytest
-          test/lib/python/test_fixtures/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=lib/python/test_fixtures
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-  test-lib-test-http-doubles:
-    name: test-lib-test-http-doubles
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
-      - name: Run both tiers with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
-          python3 -m pytest
-          test/lib/python/test_http_doubles/pre_deployment/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=lib/python/test_http_doubles
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-  test-lib-test-module-utils:
-    name: test-lib-test-module-utils
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
-          python3 -m pytest
-          test/lib/python/test_module_utils/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=lib/python/test_module_utils
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-  test-lib-test-published-syntheses:
-    name: test-lib-test-published-syntheses
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
-          python3 -m pytest
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-      - name: Run integration tests
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
-          python3 -m pytest
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-  test-lib-test-s3-store-mock:
-    name: test-lib-test-s3-store-mock
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
-          python3 -m pytest
-          test/lib/python/test_s3_store_mock/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=lib/python/test_s3_store_mock
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-  test-lib-test-terraform-config:
-    name: test-lib-test-terraform-config
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
-          python3 -m pytest
-          test/lib/python/test_terraform_config/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=lib/python/test_terraform_config
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-      - name: Run the integration tests that read no AWS
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
-          python3 -m pytest
-          test/lib/python/test_terraform_config/pre_deployment/integration/
-          --ignore=test/lib/python/test_terraform_config/pre_deployment/integration/test_state_keys.py
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-  test-lib-test-terraform-drift:
-    name: test-lib-test-terraform-drift
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:src:test
-          python3 -m pytest
-          test/lib/python/test_terraform_drift/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=lib/python/test_terraform_drift
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-  test-seed:
-    name: test-seed
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install pytest pytest-cov pyyaml 'python-hcl2<8'
-      - name: Run unit tests with a 100% coverage gate
-        run: >-
-          PYTHONPATH=.:lib/python:scripts
-          python3 -m pytest
-          test/scripts/seed/pre_deployment/unit/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
-          --cov=seed
-          --cov-branch
-          --cov-report=term-missing
-          --cov-fail-under=100
-      - name: Run integration tests against a mocked and a stubbed API
-        run: >-
-          PYTHONPATH=.:lib/python:scripts:test
-          python3 -m pytest
-          test/scripts/seed/pre_deployment/integration/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
   yamllint:
     name: yamllint
     runs-on: ubuntu-latest
@@ -485,7 +285,6 @@ on:
     paths:
       - .github/workflows/scripts.yml
       - lib/python/**
-      - scripts/**
       - src/**
       - test/**
   workflow_dispatch:

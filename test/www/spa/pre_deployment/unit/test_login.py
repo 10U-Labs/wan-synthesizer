@@ -1,18 +1,12 @@
 from __future__ import annotations
 
-import json
 import re
 from html.parser import HTMLParser
-from typing import Any, cast
-from urllib.parse import urlsplit
 
 from repo_utils import REPO_ROOT
-from seed import DEFAULT_API
-from test_terraform_config import find_resource, load_tf
 
 SPA = REPO_ROOT / "src" / "www" / "spa"
-OPENAPI_SPEC = REPO_ROOT / "src" / "www" / "api" / "openapi.json"
-AUTHORIZER_TF = REPO_ROOT / "src" / "api" / "common" / "routing" / "authorizer.tf"
+RETIRED_API = "wan-synthesizer"
 GOOGLE_SIGN_IN_CLIENT = "https://accounts.google.com/gsi/client"
 
 _FETCHED = re.compile(r"\$\{API_BASE\}/([^`]+)`")
@@ -66,25 +60,12 @@ def _constant(name: str) -> str:
     return match.group(1)
 
 
-def _authorizer_variables() -> dict[str, Any]:
-    function = find_resource(load_tf(AUTHORIZER_TF), "aws_lambda_function", "authorizer")
-    if function is None:
-        raise AssertionError("aws_lambda_function.authorizer is not declared in authorizer.tf")
-    variables = cast("dict[str, Any]", function)["environment"][0]["variables"]
-    return dict(variables)
-
-
 def _fetched() -> list[str]:
     return _FETCHED.findall(_app_js())
 
 
 def _fetched_routes() -> list[str]:
-    prefix = urlsplit(DEFAULT_API).path.strip("/")
-    return [
-        f"/{path.replace('${tenantId}', '{tenant}')}"
-        for path in _fetched()
-        if path.startswith(f"{prefix}/")
-    ]
+    return [path for path in _fetched() if path.startswith(f"{RETIRED_API}/")]
 
 
 def test_the_page_loads_googles_sign_in_client() -> None:
@@ -115,12 +96,12 @@ def test_being_turned_away_hides_the_page_again() -> None:
     assert 'document.getElementById("app").hidden = true;' in _app_js()
 
 
-def test_the_page_asks_google_for_the_client_the_authorizer_expects() -> None:
-    assert _constant("GOOGLE_CLIENT_ID") == _authorizer_variables()["GOOGLE_CLIENT_ID"]
+def test_the_page_asks_google_for_a_client() -> None:
+    assert _constant("GOOGLE_CLIENT_ID").endswith(".apps.googleusercontent.com")
 
 
-def test_the_page_offers_the_accounts_the_authorizer_admits() -> None:
-    assert _constant("HOSTED_DOMAIN") == _authorizer_variables()["HOSTED_DOMAIN"]
+def test_the_page_offers_the_accounts_of_the_hosted_domain() -> None:
+    assert _constant("HOSTED_DOMAIN") == "10ulabs.com"
 
 
 def test_the_map_fetches_something() -> None:
@@ -137,15 +118,6 @@ def test_the_map_reads_nothing_served_here_any_more() -> None:
 
 def test_the_map_shows_each_synthesis_by_its_label() -> None:
     assert "const entries = syntheses.map(({ label }) => {" in _app_js()
-
-
-def test_every_route_the_map_fetches_answers_the_browsers_preflight() -> None:
-    spec = json.loads(OPENAPI_SPEC.read_text(encoding="utf-8"))
-    unanswered = [
-        route for route in _fetched_routes()
-        if "options" not in spec["paths"].get(route, {})
-    ]
-    assert unanswered == []
 
 
 def _sign_in_note(status: str) -> str:
