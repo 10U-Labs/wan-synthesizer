@@ -10,6 +10,5 @@ under the permissions it enumerates; every endpoint reads the common `storage`
 ```text
 api/common/identity ─┬─→ api/common/storage ─┐
                      └─→ api/common/routing ─┤
-                                             ├─→ api/endpoints/carriers
                                              └─→ api/endpoints/providers
 ```

@@ -2,24 +2,10 @@
   "openapi": "3.0.1",
   "info": {
     "title": "wan-synthesizer",
-    "description": "Graphs as REST resources: carriers and providers. Inputs are writable; computed graphs are read-only. One JSON format throughout.",
+    "description": "Graphs as REST resources: providers. Inputs are writable; computed graphs are read-only. One JSON format throughout.",
     "version": "1.0.0"
   },
   "paths": {
-    "/wan-synthesizer/carriers/{carrier}": {
-      "delete": {
-        "summary": "Remove a carrier.",
-        "parameters": [
-          { "name": "carrier", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "200": { "description": "The carrier was removed." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${CarriersHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
-      }
-    },
     "/wan-synthesizer/store/prune": {
       "get": {
         "summary": "The objects stored under a name the product no longer writes.",

@@ -29,42 +29,6 @@ def write_clients(objects: dict[str, bytes], invocations: list[dict[str, Any]]) 
     return lambda service, **_kwargs: fakes[service]
 
 
-class ReaderContract:
-    CFG: dict[str, Any]
-
-    def test_serves_a_stored_collection(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = load_handler(self.CFG["endpoint"], monkeypatch)
-        stored = {self.CFG["stored_key"]: json.dumps(self.CFG["stored"]).encode()}
-        with patch("boto3.client", return_value=fake_s3(stored)):
-            response = module.lambda_handler(self.CFG["serve_event"], None)
-        assert json.loads(response["body"]) == self.CFG["serve_expect"]
-
-    def test_404_for_an_unknown_collection(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = load_handler(self.CFG["endpoint"], monkeypatch)
-        with patch("boto3.client", return_value=fake_s3({})):
-            response = module.lambda_handler(self.CFG["unknown_event"], None)
-        assert response["statusCode"] == 404
-
-    def test_404_when_the_resource_is_not_built(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = load_handler(self.CFG["endpoint"], monkeypatch)
-        with patch("boto3.client", return_value=fake_s3({})):
-            response = module.lambda_handler(self.CFG["notbuilt_event"], None)
-        assert response["statusCode"] == 404
-
-    def test_caches_the_s3_client(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = load_handler(self.CFG["endpoint"], monkeypatch)
-        with patch("boto3.client", return_value=fake_s3({}, keys=[])) as mock_client:
-            module.lambda_handler({}, None)
-            module.lambda_handler({}, None)
-        assert mock_client.call_count == 1
-
-    def test_answers_the_spas_origin_and_no_other(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = load_handler(self.CFG["endpoint"], monkeypatch)
-        with patch("boto3.client", return_value=fake_s3({}, keys=[])):
-            response = module.lambda_handler({}, None)
-        assert response["headers"]["Access-Control-Allow-Origin"] == SPA_ORIGIN
-
-
 class SharedWriteTests:
     CFG: dict[str, Any]
 

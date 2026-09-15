@@ -373,7 +373,6 @@ jobs:
             api_common_identity.yml
             api_common_routing.yml
             api_common_storage.yml
-            api_endpoint_carriers.yml
             api_endpoint_providers.yml
         id: deploys
         name: Wait for every deploy this commit started, so seeding runs against what it ships

@@ -13,8 +13,8 @@ def test_the_module_loaded_is_the_file_at_the_path_given(lambdas_dir: Path) -> N
 
 
 def test_the_module_carries_the_name_it_was_loaded_under(lambdas_dir: Path) -> None:
-    module = load_module_from_path("carriers_handler", lambdas_dir / "handler.py")
-    assert module.__name__ == "carriers_handler"
+    module = load_module_from_path("named_handler", lambdas_dir / "handler.py")
+    assert module.__name__ == "named_handler"
 
 
 def test_a_path_holding_no_file_is_reported(tmp_path: Path) -> None:

@@ -51,9 +51,9 @@ def test_a_request_carrying_a_made_up_token_is_turned_away() -> None:
     assert _status({"Authorization": "Bearer made-up"}) == 401
 
 
-def test_the_key_is_refused_the_delete_of_a_carrier(api_key: str) -> None:
+def test_the_key_is_refused_the_delete_of_the_provider_regions(api_key: str) -> None:
     headers = {"Authorization": f"Bearer {api_key}"}
-    assert _status(headers, "DELETE", "carriers/no-such-carrier") == 403
+    assert _status(headers, "DELETE") == 403
 
 
 def test_a_preflight_is_answered_with_the_pages_origin_alone() -> None:

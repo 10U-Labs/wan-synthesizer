@@ -53,7 +53,7 @@ def _event(token: str) -> dict[str, Any]:
     return {
         "type": "TOKEN",
         "authorizationToken": token,
-        "methodArn": f"{_STAGE}/GET/wan-synthesizer/carriers",
+        "methodArn": f"{_STAGE}/GET/wan-synthesizer/providers/regions",
     }
 
 
@@ -174,11 +174,6 @@ def test_every_grant_to_the_api_key_sits_under_the_base_path(authorizer: Any) ->
     resources = _resources(authorizer, f"Bearer {_API_KEY}")
     assert all(f"{_STAGE}/" in resource and f"/{authorizer.BASE_PATH}/" in resource
                for resource in resources)
-
-
-def test_the_api_key_cannot_delete_a_carrier(authorizer: Any) -> None:
-    resources = _resources(authorizer, f"Bearer {_API_KEY}")
-    assert not _granted(resources, "DELETE", f"{authorizer.BASE_PATH}/carriers/level3")
 
 
 def test_the_api_key_cannot_delete_the_provider_regions(authorizer: Any) -> None:
