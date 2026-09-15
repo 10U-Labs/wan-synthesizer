@@ -35,7 +35,7 @@ def _failing_urlopen(
 def _attempts_made(monkeypatch: pytest.MonkeyPatch, failure: BaseException) -> int:
     recorder = _failing_urlopen(monkeypatch, failure)
     try:
-        _send("http://api", "store/prune", "GET", None)
+        _send("http://api", "store/prune", "POST", b"{}")
     except OSError:
         pass
     return len(recorder.requests)
@@ -45,34 +45,34 @@ def _attempts_made(monkeypatch: pytest.MonkeyPatch, failure: BaseException) -> i
 def test_send_returns_the_body_when_a_reset_connection_is_tried_again(
         monkeypatch: pytest.MonkeyPatch) -> None:
     _failing_urlopen(monkeypatch, _reset())
-    assert _send("http://api", "store/prune", "GET", None) == b'[{"id": "f-35"}]'
+    assert _send("http://api", "store/prune", "POST", b"{}") == b'[{"id": "f-35"}]'
 
 
 @pytest.mark.usefixtures("instant_retry")
 def test_send_tries_a_reset_connection_again_wherever_the_reset_was_raised(
         monkeypatch: pytest.MonkeyPatch) -> None:
     _failing_urlopen(monkeypatch, urllib.error.URLError(_reset()))
-    assert _send("http://api", "store/prune", "GET", None) == b'[{"id": "f-35"}]'
+    assert _send("http://api", "store/prune", "POST", b"{}") == b'[{"id": "f-35"}]'
 
 
 @pytest.mark.usefixtures("instant_retry")
 def test_send_raises_when_every_attempt_is_reset(monkeypatch: pytest.MonkeyPatch) -> None:
     _failing_urlopen(monkeypatch, _reset(), _reset())
     with pytest.raises(ConnectionResetError):
-        _send("http://api", "store/prune", "GET", None)
+        _send("http://api", "store/prune", "POST", b"{}")
 
 
 @pytest.mark.usefixtures("instant_retry")
 def test_send_says_it_is_trying_a_reset_connection_again(
         monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     _failing_urlopen(monkeypatch, _reset())
-    _send("http://api", "store/prune", "GET", None)
+    _send("http://api", "store/prune", "POST", b"{}")
     assert "connection reset" in capsys.readouterr().out
 
 
 def test_send_makes_one_request_when_the_api_answers_first_time(
         urlopen_recorder: UrlopenRecorder) -> None:
-    _send("http://api", "store/prune", "GET", None)
+    _send("http://api", "store/prune", "POST", b"{}")
     assert len(urlopen_recorder.requests) == 1
 
 
@@ -88,14 +88,14 @@ def test_send_does_not_try_a_url_error_that_is_not_a_reset_again(
 def test_send_carries_the_api_key_the_environment_holds(
         urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(seed.API_KEY_VARIABLE, "the-seed-key")
-    _send("http://api", "store/prune", "GET", None)
+    _send("http://api", "store/prune", "POST", b"{}")
     assert urlopen_recorder.requests[0].get_header("Authorization") == "Bearer the-seed-key"
 
 
 def test_send_carries_no_token_when_the_environment_holds_no_key(
         urlopen_recorder: UrlopenRecorder, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv(seed.API_KEY_VARIABLE, raising=False)
-    _send("http://api", "store/prune", "GET", None)
+    _send("http://api", "store/prune", "POST", b"{}")
     assert urlopen_recorder.requests[0].has_header("Authorization") is False
 
 

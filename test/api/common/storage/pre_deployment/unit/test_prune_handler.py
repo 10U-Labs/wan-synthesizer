@@ -167,20 +167,6 @@ def test_the_prune_removes_a_marker_by_the_version_it_was_listed_with(
     assert named == [("providers/facilities.json", "3sL4kqtJ")]
 
 
-def test_a_get_names_the_key_a_marker_hides(prune_handler: Any) -> None:
-    fake = _marked({}, ["providers/facilities.json"])
-    with patch("boto3.client", return_value=fake):
-        response = prune_handler.lambda_handler({"httpMethod": "GET"}, None)
-    assert json.loads(response["body"])["stale"] == ["providers/facilities.json"]
-
-
-def test_a_get_leaves_a_marker_where_it_is(prune_handler: Any) -> None:
-    fake = _marked({}, ["providers/facilities.json"])
-    with patch("boto3.client", return_value=fake):
-        prune_handler.lambda_handler({"httpMethod": "GET"}, None)
-    assert len(fake.list_object_versions(Bucket="test-bucket")["DeleteMarkers"]) == 1
-
-
 def test_a_second_prune_finds_no_marker_left_to_remove(prune_handler: Any) -> None:
     fake = _marked(_store(), ["providers/facilities.json", "providers/edges.json"])
     _markers_after_pruning(prune_handler, fake)
@@ -198,20 +184,14 @@ def test_the_prune_removes_a_key_rather_than_tombstoning_it(prune_handler: Any) 
     assert named == ["null"]
 
 
-def test_a_get_says_what_would_go_without_deleting_it(prune_handler: Any) -> None:
-    objects = _store()
-    with patch("boto3.client", return_value=fake_s3(objects)):
-        prune_handler.lambda_handler({"httpMethod": "GET"}, None)
-    assert sorted(objects) == sorted(_STALE)
-
-
-def test_a_get_names_the_same_keys_the_prune_would_delete(prune_handler: Any) -> None:
-    with patch("boto3.client", return_value=fake_s3(_store())):
-        response = prune_handler.lambda_handler({"httpMethod": "GET"}, None)
-    assert json.loads(response["body"])["stale"] == sorted(_STALE)
-
-
 def test_the_prune_answers_the_spas_origin_and_no_other(prune_handler: Any) -> None:
     with patch("boto3.client", return_value=fake_s3(_store())):
         response = prune_handler.lambda_handler({"httpMethod": "POST"}, None)
     assert response["headers"]["Access-Control-Allow-Origin"] == SPA_ORIGIN
+
+
+def test_a_get_answers_404_and_deletes_nothing(prune_handler: Any) -> None:
+    objects = _store()
+    with patch("boto3.client", return_value=fake_s3(objects)):
+        response = prune_handler.lambda_handler({"httpMethod": "GET"}, None)
+    assert (response["statusCode"], sorted(objects)) == (404, sorted(_STALE))

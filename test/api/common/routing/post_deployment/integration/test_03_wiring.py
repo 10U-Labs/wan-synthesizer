@@ -15,8 +15,8 @@ _ORIGIN_HEADER = "Access-Control-Allow-Origin"
 _PROBED = "store/prune"
 
 
-def _answer(headers: dict[str, str], method: str = "GET", path: str = _PROBED) -> Any:
-    request = Request(f"{DEFAULT_API}/{path}", headers=headers, method=method)
+def _answer(headers: dict[str, str], method: str = "POST", path: str = _PROBED) -> Any:
+    request = Request(f"{DEFAULT_API}/{path}", data=b"{}", headers=headers, method=method)
     try:
         with urlopen(request, timeout=30) as response:
             return response
@@ -24,7 +24,7 @@ def _answer(headers: dict[str, str], method: str = "GET", path: str = _PROBED) -
         return refusal
 
 
-def _status(headers: dict[str, str], method: str = "GET", path: str = _PROBED) -> int:
+def _status(headers: dict[str, str], method: str = "POST", path: str = _PROBED) -> int:
     return int(_answer(headers, method, path).status)
 
 

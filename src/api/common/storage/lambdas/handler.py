@@ -24,13 +24,11 @@ def _response(status: int, body: Any) -> dict[str, Any]:
     return {"statusCode": status, "headers": dict(_HEADERS), "body": json.dumps(body)}
 
 
-def is_current(key: str, written: frozenset[str] = frozenset()) -> bool:
+def is_current(key: str, written: frozenset[str]) -> bool:
     return key in written
 
 
-def _stale_versions(
-    client: Any, bucket: str, written: frozenset[str] = frozenset()
-) -> list[tuple[str, str]]:
+def _stale_versions(client: Any, bucket: str, written: frozenset[str]) -> list[tuple[str, str]]:
     stale: list[tuple[str, str]] = []
     for page in client.get_paginator("list_object_versions").paginate(Bucket=bucket):
         stale += [
@@ -57,7 +55,7 @@ def _prune(client: Any, written: frozenset[str]) -> dict[str, Any]:
 
 def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     client = _s3()
-    if event.get("httpMethod") == "POST":
+    method = event.get("httpMethod")
+    if method == "POST":
         return _response(200, _prune(client, _written(event)))
-    stale = _stale_versions(client, os.environ["STORE_BUCKET"])
-    return _response(200, {"stale": [key for key, _version in stale]})
+    return _response(404, {"error": method})

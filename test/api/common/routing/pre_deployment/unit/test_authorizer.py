@@ -53,7 +53,7 @@ def _event(token: str) -> dict[str, Any]:
     return {
         "type": "TOKEN",
         "authorizationToken": token,
-        "methodArn": f"{_STAGE}/GET/wan-synthesizer/store/prune",
+        "methodArn": f"{_STAGE}/POST/wan-synthesizer/store/prune",
     }
 
 
