@@ -10,12 +10,6 @@ _HEADERS = {
     "Access-Control-Allow-Origin": "https://www.10ulabs.com",
 }
 
-PROVIDER_FILES = frozenset({"regions.json"})
-_KEPT_BY_PREFIX = {
-    "providers": PROVIDER_FILES,
-}
-
-
 def _s3() -> Any:
     if "s3" not in _CLIENTS:
         _CLIENTS["s3"] = boto3.client("s3", region_name="us-east-2")
@@ -31,13 +25,7 @@ def _response(status: int, body: Any) -> dict[str, Any]:
 
 
 def is_current(key: str, written: frozenset[str] = frozenset()) -> bool:
-    if key in written:
-        return True
-    prefix, _, rest = key.partition("/")
-    kept = _KEPT_BY_PREFIX.get(prefix)
-    if kept is None or not rest:
-        return False
-    return rest.rsplit("/", 1)[-1] in kept
+    return key in written
 
 
 def _stale_versions(

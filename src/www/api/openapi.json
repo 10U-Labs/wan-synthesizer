@@ -2,7 +2,7 @@
   "openapi": "3.0.1",
   "info": {
     "title": "wan-synthesizer",
-    "description": "Graphs as REST resources: providers. Inputs are writable; computed graphs are read-only. One JSON format throughout.",
+    "description": "The store prune, the last route this API serves. One JSON format throughout.",
     "version": "1.0.0"
   },
   "paths": {
@@ -39,17 +39,6 @@
         "responses": { "200": { "description": "The keys that went." } },
         "x-amazon-apigateway-integration": {
           "uri": "${PruneHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
-      }
-    },
-    "/wan-synthesizer/providers/regions": {
-      "delete": {
-        "summary": "Remove the provider regions.",
-        "responses": { "200": { "description": "The provider regions were removed." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${ProvidersHandlerArn}",
           "httpMethod": "POST",
           "type": "aws_proxy"
         }

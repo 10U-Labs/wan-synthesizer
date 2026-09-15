@@ -176,11 +176,6 @@ def test_every_grant_to_the_api_key_sits_under_the_base_path(authorizer: Any) ->
                for resource in resources)
 
 
-def test_the_api_key_cannot_delete_the_provider_regions(authorizer: Any) -> None:
-    resources = _resources(authorizer, f"Bearer {_API_KEY}")
-    assert not _granted(resources, "DELETE", f"{authorizer.BASE_PATH}/providers/regions")
-
-
 def test_every_route_the_api_serves_sits_under_the_base_path(authorizer: Any) -> None:
     assert all(path.startswith(f"{authorizer.BASE_PATH}/") for _, path in _operations_served())
 

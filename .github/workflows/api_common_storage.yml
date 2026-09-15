@@ -389,7 +389,6 @@ jobs:
           python3 -m pytest
           test/lib/python/repo_utils/pre_deployment/unit/
           test/lib/python/test_fixtures/pre_deployment/unit/
-          test/lib/python/test_handler_contracts/pre_deployment/unit/
           test/lib/python/test_http_doubles/pre_deployment/unit/
           test/lib/python/test_module_utils/pre_deployment/unit/
           test/lib/python/test_s3_store_mock/pre_deployment/unit/
@@ -399,7 +398,6 @@ jobs:
           --verbose --pythonwarnings=error
           --cov=lib/python/repo_utils
           --cov=lib/python/test_fixtures
-          --cov=lib/python/test_handler_contracts
           --cov=lib/python/test_module_utils
           --cov=lib/python/test_s3_store_mock
           --cov=lib/python/test_terraform_config
@@ -411,7 +409,6 @@ jobs:
         run: >-
           PYTHONPATH=.:lib/python:scripts:src:test
           python3 -m pytest
-          test/lib/python/test_handler_contracts/pre_deployment/integration/
           test/lib/python/test_http_doubles/pre_deployment/
           test/lib/python/test_terraform_config/pre_deployment/integration/
           --import-mode=importlib --confcutdir=test

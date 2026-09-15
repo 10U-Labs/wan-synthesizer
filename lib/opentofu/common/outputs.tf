@@ -17,7 +17,6 @@ output "state_bucket" {
 output "lambda_handler_names" {
   description = "Deterministic Lambda function names, one per REST resource, and the authorizer in front of them all."
   value = {
-    providers  = "wan-synthesizer-providers"
     prune      = "wan-synthesizer-prune"
     authorizer = "wan-synthesizer-authorizer"
   }
@@ -27,7 +26,6 @@ output "store_principals" {
   description = "Every role that reads or writes the store, the handlers' and the deploy role; the store's bucket policy denies every other principal."
   value = [
     "TenULabsWanSynthesizerRole",
-    "wan-synthesizer-providers-lambda",
     "wan-synthesizer-prune-lambda",
   ]
 }

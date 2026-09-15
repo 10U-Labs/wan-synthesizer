@@ -7,13 +7,11 @@ from unittest.mock import patch
 
 import pytest
 
-from test_handler_contracts import SPA_ORIGIN
+from test_fixtures import SPA_ORIGIN
 from test_s3_store_mock import fake_s3
 
-_CURRENT = [
-    "providers/regions.json",
-]
 _STALE = [
+    "providers/regions.json",
     "source/carriers/lumen.csv",
     "builds/daf/2026-08-20/graph.json",
     "carriers/lumen/fiber-segments.json",
@@ -27,7 +25,7 @@ _STALE = [
 
 
 def _store() -> dict[str, bytes]:
-    return {key: b"[]" for key in _CURRENT + _STALE}
+    return {key: b"[]" for key in _STALE}
 
 
 def _prune(handler: Any, objects: dict[str, bytes]) -> Any:
@@ -69,7 +67,7 @@ def test_the_prune_deletes_every_stale_object(prune_handler: Any) -> None:
 def test_the_prune_leaves_every_current_object_where_it_is(prune_handler: Any) -> None:
     objects = _store()
     _prune(prune_handler, objects)
-    assert sorted(objects) == sorted(_CURRENT)
+    assert not objects
 
 
 @pytest.mark.parametrize("key", [
@@ -136,18 +134,13 @@ def _markers_after_pruning(handler: Any, fake: Any) -> list[dict[str, Any]]:
     return markers
 
 
-def test_the_prune_removes_a_marker_over_a_current_key(prune_handler: Any) -> None:
-    fake = _marked(_store(), ["providers/regions.json"])
-    assert _markers_after_pruning(prune_handler, fake) == []
-
-
 def test_the_prune_removes_a_marker_over_a_stale_key(prune_handler: Any) -> None:
     fake = _marked(_store(), ["tenants/daf/wan.json"])
     assert _markers_after_pruning(prune_handler, fake) == []
 
 
 def test_the_prune_names_the_key_a_marker_hid(prune_handler: Any) -> None:
-    fake = _marked({key: b"[]" for key in _CURRENT}, ["providers/regions.json"])
+    fake = _marked({}, ["providers/regions.json"])
     with patch("boto3.client", return_value=fake):
         response = prune_handler.lambda_handler({"httpMethod": "POST"}, None)
     assert json.loads(response["body"])["deleted"] == ["providers/regions.json"]
@@ -157,7 +150,7 @@ def test_the_prune_leaves_every_current_object_beside_a_marker(prune_handler: An
     objects = _store()
     marked = _marked(objects, ["providers/facilities.json"])
     _markers_after_pruning(prune_handler, marked)
-    assert sorted(objects) == sorted(_CURRENT)
+    assert not objects
 
 
 def test_the_prune_removes_a_marker_by_the_version_it_was_listed_with(
@@ -175,7 +168,7 @@ def test_the_prune_removes_a_marker_by_the_version_it_was_listed_with(
 
 
 def test_a_get_names_the_key_a_marker_hides(prune_handler: Any) -> None:
-    fake = _marked({key: b"[]" for key in _CURRENT}, ["providers/facilities.json"])
+    fake = _marked({}, ["providers/facilities.json"])
     with patch("boto3.client", return_value=fake):
         response = prune_handler.lambda_handler({"httpMethod": "GET"}, None)
     assert json.loads(response["body"])["stale"] == ["providers/facilities.json"]
@@ -209,7 +202,7 @@ def test_a_get_says_what_would_go_without_deleting_it(prune_handler: Any) -> Non
     objects = _store()
     with patch("boto3.client", return_value=fake_s3(objects)):
         prune_handler.lambda_handler({"httpMethod": "GET"}, None)
-    assert sorted(objects) == sorted(_CURRENT + _STALE)
+    assert sorted(objects) == sorted(_STALE)
 
 
 def test_a_get_names_the_same_keys_the_prune_would_delete(prune_handler: Any) -> None:

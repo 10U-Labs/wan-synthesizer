@@ -68,11 +68,3 @@ def fake_s3(objects: dict[str, bytes], keys: list[str] | None = None) -> Any:
         get_paginator=get_paginator,
         exceptions=SimpleNamespace(NoSuchKey=NoSuchKey),
     )
-
-
-def fake_lambda(invocations: list[dict[str, Any]]) -> Any:
-    def invoke(**kwargs: Any) -> dict[str, Any]:
-        invocations.append(kwargs)
-        return {"StatusCode": 202}
-
-    return SimpleNamespace(invoke=invoke)

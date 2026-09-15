@@ -111,17 +111,6 @@ def test_public_access_is_blocked(
     assert response["PublicAccessBlockConfiguration"][setting] is True
 
 
-def test_the_store_holds_the_product_it_is_supposed_to_hold(
-        s3_client: Any, store_bucket_name: str) -> None:
-    prefixes = ("providers/",)
-    empty = [
-        prefix for prefix in prefixes
-        if not s3_client.list_objects_v2(
-            Bucket=store_bucket_name, Prefix=prefix, MaxKeys=1).get("Contents")
-    ]
-    assert empty == []
-
-
 def test_no_stored_object_expires_on_a_clock(
         live_lifecycle_rules: dict[str, Any]) -> None:
     assert [

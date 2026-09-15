@@ -4,7 +4,7 @@ import json
 from typing import Any
 
 from repo_utils import REPO_ROOT
-from test_handler_contracts import SPA_ORIGIN
+from test_fixtures import SPA_ORIGIN
 
 _HEADER = "Access-Control-Allow-Origin"
 
