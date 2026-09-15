@@ -65,36 +65,21 @@ class RegionsContract:
     def _path(self, collection: str) -> str:
         return f"/x/{self.CFG['endpoint']}/{collection}"
 
-    def _get(self, collection: str | None = None) -> dict[str, Any]:
-        return {"httpMethod": "GET", "path": self._path(collection or self._collection())}
-
     def _delete_event(self) -> dict[str, Any]:
         return {"httpMethod": "DELETE", "path": self._path(self._collection())}
 
-    def test_serves_the_stored_regions(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_a_get_answers_404(self, monkeypatch: pytest.MonkeyPatch) -> None:
         module = self._handler(monkeypatch)
         stored = {self.CFG["key"]: json.dumps(self.CFG["valid"]).encode()}
         with patch("boto3.client", return_value=fake_s3(stored)):
-            response = module.lambda_handler(self._get(), None)
-        assert json.loads(response["body"]) == self.CFG["valid"]
-
-    def test_404_for_an_unknown_collection(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = self._handler(monkeypatch)
-        with patch("boto3.client", return_value=fake_s3({})):
-            response = module.lambda_handler(self._get("bogus"), None)
-        assert response["statusCode"] == 404
-
-    def test_404_when_the_resource_is_not_built(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        module = self._handler(monkeypatch)
-        with patch("boto3.client", return_value=fake_s3({})):
-            response = module.lambda_handler(self._get(), None)
+            response = module.lambda_handler({"path": self._path(self._collection())}, None)
         assert response["statusCode"] == 404
 
     def test_caches_the_s3_client(self, monkeypatch: pytest.MonkeyPatch) -> None:
         module = self._handler(monkeypatch)
         with patch("boto3.client", return_value=fake_s3({})) as mock_client:
-            module.lambda_handler(self._get(), None)
-            module.lambda_handler(self._get(), None)
+            module.lambda_handler({}, None)
+            module.lambda_handler({}, None)
         assert mock_client.call_count == 1
 
     def test_delete_404_for_unknown_collection(self, monkeypatch: pytest.MonkeyPatch) -> None:

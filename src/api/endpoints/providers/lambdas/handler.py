@@ -27,29 +27,9 @@ def _response(status: int, body: Any) -> dict[str, Any]:
     return {"statusCode": status, "headers": dict(_HEADERS), "body": json.dumps(body)}
 
 
-def _read_regions(client: Any) -> Any:
-    try:
-        body = client.get_object(Bucket=os.environ["STORE_BUCKET"], Key=_KEY)["Body"].read()
-    except client.exceptions.NoSuchKey:
-        return None
-    return json.loads(body)
-
-
-def _get(client: Any, event: dict[str, Any]) -> dict[str, Any]:
-    collection = event.get("path", "").rsplit("/", 1)[-1]
-    if collection != "regions":
-        return _response(404, {"error": collection})
-    rows = _read_regions(client)
-    if rows is None:
-        return _response(404, {"error": "not built: providers"})
-    return _response(200, rows)
-
-
 def lambda_handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     client = _s3()
     method = event.get("httpMethod", "GET")
-    if method == "GET":
-        return _get(client, event)
     collection = event.get("path", "").rsplit("/", 1)[-1]
     if collection != "regions":
         return _response(404, {"error": collection})

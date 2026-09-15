@@ -45,15 +45,6 @@
       }
     },
     "/wan-synthesizer/providers/regions": {
-      "get": {
-        "summary": "The provider regions.",
-        "responses": { "200": { "description": "The provider regions." } },
-        "x-amazon-apigateway-integration": {
-          "uri": "${ProvidersHandlerArn}",
-          "httpMethod": "POST",
-          "type": "aws_proxy"
-        }
-      },
       "delete": {
         "summary": "Remove the provider regions.",
         "responses": { "200": { "description": "The provider regions were removed." } },

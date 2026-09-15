@@ -12,7 +12,7 @@ from test_handler_contracts import SPA_ORIGIN
 _ORIGIN_HEADER = "Access-Control-Allow-Origin"
 
 
-_PROBED = "providers/regions"
+_PROBED = "store/prune"
 
 
 def _answer(headers: dict[str, str], method: str = "GET", path: str = _PROBED) -> Any:
@@ -53,7 +53,7 @@ def test_a_request_carrying_a_made_up_token_is_turned_away() -> None:
 
 def test_the_key_is_refused_the_delete_of_the_provider_regions(api_key: str) -> None:
     headers = {"Authorization": f"Bearer {api_key}"}
-    assert _status(headers, "DELETE") == 403
+    assert _status(headers, "DELETE", "providers/regions") == 403
 
 
 def test_a_preflight_is_answered_with_the_pages_origin_alone() -> None:
