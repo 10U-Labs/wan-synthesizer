@@ -1,0 +1,104 @@
+---
+concurrency:
+  cancel-in-progress: true
+  group: www-identity-${{ github.ref }}
+env:
+  AWS_USE_FIPS_ENDPOINT: "true"
+jobs:
+  assert-no-comments:
+    name: assert-no-comments
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-no-comments
+      - name: Assert nothing this repository publishes carries a comment
+        run: >-
+          assert-no-comments
+          --annotate
+          --exclude 'src/www/spa/vendor/*'
+          --verbose
+          .github/workflows
+          lib
+          src
+          test
+  assert-opentofu-resource-is-used:
+    name: assert-opentofu-resource-is-used
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install assert-opentofu-resource-is-used
+      - name: Assert every OpenTofu resource is reached by something
+        run: >-
+          assert-opentofu-resource-is-used
+          --search-in .
+          --verbose
+          src/www/identity
+          lib/opentofu/common
+  lint-yaml:
+    name: lint-yaml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install yamllint
+      - name: Lint YAML
+        run: |
+          EMPTY='empty-lines: {max: 0, max-start: 0, max-end: 1}'
+          KEY='key-ordering: enable'
+          LL='line-length: disable'
+          NL='new-line-at-end-of-file: enable'
+          TR='truthy: {allowed-values: ["true", "false", "on"]}'
+          RULES="$EMPTY, $KEY, $LL, $NL, $TR"
+          yamllint --strict \
+            --config-data \
+            "{extends: default, rules: {$RULES}}" \
+            .github/workflows/www_identity.yml
+  reconciliation:
+    name: reconciliation
+    needs:
+      - assert-no-comments
+      - assert-opentofu-resource-is-used
+      - lint-yaml
+      - validate-stack
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_wrapper: false
+      - name: Reconcile the stack to its declared state
+        run: |
+          tofu -chdir=src/www/identity init -input=false
+          tofu -chdir=src/www/identity apply -auto-approve -input=false
+  validate-stack:
+    name: validate-stack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_wrapper: false
+      - name: Validate the stack
+        run: |
+          tofu -chdir=src/www/identity init -backend=false -input=false
+          tofu -chdir=src/www/identity validate
+name: www_identity
+'on':
+  push:
+    branches: [main]
+    paths:
+      - src/www/identity/**
+      - .github/workflows/www_identity.yml
+  workflow_dispatch: {}
