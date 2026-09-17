@@ -22,6 +22,7 @@ class FakeRegions:
         self.requests: list[tuple[str, str]] = []
         self.faults = {REFUSALS: 0, STALE_READS: 0, FAILING_DELETES: 0}
         self._stale = self.listing()
+        self._next = max([*seeded, 0]) + 1
 
     def faulted(self, fault: str) -> bool:
         if not self.faults[fault]:
@@ -35,7 +36,8 @@ class FakeRegions:
         return [{"id": key, **body} for key, body in sorted(self.regions.items())]
 
     def create(self, body: dict[str, Any]) -> dict[str, Any]:
-        created = max([*self.regions, 0]) + 1
+        created = self._next
+        self._next += 1
         self.regions[created] = body
         return {"id": created, **body}
 

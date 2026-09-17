@@ -53,8 +53,8 @@ class Api:
     def post(self, path: str, body: Any) -> Any:
         return self._call("POST", path, body)
 
-    def delete(self, path: str) -> None:
-        self._call("DELETE", path)
+    def delete(self, path: str) -> Any:
+        return self._call("DELETE", path)
 
 
 def key() -> str:

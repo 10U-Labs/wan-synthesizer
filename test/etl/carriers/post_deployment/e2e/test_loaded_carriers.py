@@ -7,8 +7,9 @@ from typing import Any
 
 import pytest
 
+from loader import DEFAULT_API
 from repo_utils import REPO_ROOT
-from etl.carriers.load_carriers import DEFAULT_API, every_carrier, fiber_segments_of, pops_of
+from etl.carriers.load_carriers import every_carrier, fiber_segments_of, pops_of
 
 CARRIERS = sorted(every_carrier(REPO_ROOT))
 

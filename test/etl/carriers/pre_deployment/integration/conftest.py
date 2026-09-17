@@ -26,6 +26,7 @@ class FakeCarriers:
         self.faults = {REFUSALS: 0, STALE_READS: 0, FAILING_DELETES: 0}
         self._phantoms = dict(phantoms)
         self._stale = self.listing()
+        self._next = max([*seeded, *phantoms, 0]) + 1
 
     def faulted(self, fault: str) -> bool:
         if not self.faults[fault]:
@@ -40,7 +41,8 @@ class FakeCarriers:
         return [{"id": key, "name": name} for key, name in sorted(listed.items())]
 
     def create(self, name: str) -> dict[str, Any]:
-        created = max([*self.carriers, *self._phantoms, 0]) + 1
+        created = self._next
+        self._next += 1
         self.carriers[created] = name
         return {"id": created, "name": name}
 
