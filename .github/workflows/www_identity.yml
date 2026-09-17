@@ -169,7 +169,7 @@ jobs:
           aws-region: us-east-2
           role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
       - name: Install tools
-        run: pip install boto3 pytest
+        run: pip install --upgrade boto3 pytest
       - name: Read the API key under the role the stack reconciled
         run: >-
           PYTHONPATH=.:lib/python
