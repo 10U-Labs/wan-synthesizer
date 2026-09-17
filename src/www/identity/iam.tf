@@ -6,6 +6,7 @@ locals {
   site_bucket  = "arn:aws:s3:::www-10ulabs-com"
   distribution = "arn:aws:cloudfront::${local.account}:distribution/E2QC507LFNT58H"
   self         = "arn:aws:iam::${local.account}:role/${local.role_name}"
+  api_key      = "arn:aws:ssm:${local.region}:${local.account}:parameter/api.10ulabs.com/api-key"
 }
 
 data "aws_iam_policy_document" "state" {
@@ -86,6 +87,14 @@ data "aws_iam_policy_document" "self" {
   }
 }
 
+data "aws_iam_policy_document" "api" {
+  statement {
+    sid       = "ReadTheApiKey"
+    actions   = ["ssm:GetParameter"]
+    resources = [local.api_key]
+  }
+}
+
 resource "aws_iam_role_policy" "state" {
   name   = "State"
   role   = aws_iam_role.deploy.id
@@ -102,4 +111,10 @@ resource "aws_iam_role_policy" "self" {
   name   = "Self"
   role   = aws_iam_role.deploy.id
   policy = data.aws_iam_policy_document.self.json
+}
+
+resource "aws_iam_role_policy" "api" {
+  name   = "Api"
+  role   = aws_iam_role.deploy.id
+  policy = data.aws_iam_policy_document.api.json
 }

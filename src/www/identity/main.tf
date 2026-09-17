@@ -41,7 +41,7 @@ data "aws_iam_policy_document" "trust" {
 
 resource "aws_iam_role" "deploy" {
   name                 = local.role_name
-  description          = "The role every workflow of 10U-Labs/wan-synthesizer assumes: pushes to main alone, over the site it publishes and the role itself."
+  description          = "The role every workflow of 10U-Labs/wan-synthesizer assumes: pushes to main alone, over the site it publishes, the key that admits it to api.10ulabs.com, and the role itself."
   assume_role_policy   = data.aws_iam_policy_document.trust.json
   max_session_duration = 3600
 }
@@ -59,5 +59,6 @@ resource "aws_iam_role_policies_exclusive" "deploy" {
     aws_iam_role_policy.state.name,
     aws_iam_role_policy.site.name,
     aws_iam_role_policy.self.name,
+    aws_iam_role_policy.api.name,
   ]
 }
