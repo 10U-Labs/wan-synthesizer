@@ -17,6 +17,7 @@
   - [Third-party code](#third-party-code)
   - [Verification](#verification)
   - [Vocabulary](#vocabulary)
+  - [ETLs](#etls)
 
 ## Overview
 
@@ -97,3 +98,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 - [a-way-out-is-a-circuit](a-way-out-is-a-circuit.md) — a way out of a site or a WAN PoP is a circuit, its route is the carrier PoPs it runs through, `path` survives only for files on disk and two graph walks, and ordering and cost are outside the vocabulary
 - [the-over-water-rule-holds-one-hop-at-a-time](the-over-water-rule-holds-one-hop-at-a-time.md) — a crossing never arrives on the shore its hop started from, and that is all the rule says; a WAN spanning two shores is two-vertex-connected the long way round, so a floor row never asks a pair two circuits over land, and `SeparationQuestion.barred` is how a row bars an arc rather than a segment
 - [a-circuit-is-owned-one-segment-at-a-time](a-circuit-is-owned-one-segment-at-a-time.md) — a fiber segment is one carrier's when it has a PoP at both ends and a circuit hands off between carriers at any PoP both have; the synthesizer works over the merged fiber for that reason, and a one-carrier-per-circuit rule is never restated
+
+### ETLs
+
+- [an-etl-is-a-program-beside-its-data](an-etl-is-a-program-beside-its-data.md) — a dataset under `data/` or `etc/` reaches `api.10ulabs.com` through one program under `src/etl/<dataset>/` that `etl_<dataset>.yml` invokes with the key from SSM, masked and in the environment; the program reads what changed off `git diff` since the last successful run, builds before it deletes, retries a throttled call, and polls the cached listing until it agrees before exiting
