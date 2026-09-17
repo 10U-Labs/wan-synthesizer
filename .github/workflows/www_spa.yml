@@ -250,3 +250,5 @@ name: www_spa
       - test/www/spa/**
       - .github/workflows/www_spa.yml
   workflow_dispatch: {}
+permissions:
+  contents: read

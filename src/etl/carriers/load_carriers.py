@@ -204,7 +204,7 @@ def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
     args = _parse(argv)
     key = os.environ.get(API_KEY_VARIABLE, "")
     if not key:
-        print(f"{API_KEY_VARIABLE} is not set", file=sys.stderr, flush=True)
+        print("the environment carries no key for the API", file=sys.stderr, flush=True)
         return 2
     api = Api(args.api, key, sleep)
     listing = api.get(CARRIERS)

@@ -181,3 +181,5 @@ on:
       - .github/workflows/documentation.yml
       - test/documentation/**
   workflow_dispatch: {}
+permissions:
+  contents: read

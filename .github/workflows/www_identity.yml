@@ -263,3 +263,5 @@ name: www_identity
       - test/www/identity/**
       - .github/workflows/www_identity.yml
   workflow_dispatch: {}
+permissions:
+  contents: read

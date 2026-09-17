@@ -317,3 +317,5 @@ name: etl_carriers
         description: Load every carrier, changed or not.
         required: false
         type: boolean
+permissions:
+  contents: read

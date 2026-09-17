@@ -288,3 +288,5 @@ on:
       - src/**
       - test/**
   workflow_dispatch:
+permissions:
+  contents: read
