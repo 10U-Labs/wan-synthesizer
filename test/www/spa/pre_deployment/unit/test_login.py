@@ -117,7 +117,7 @@ def test_the_map_reads_nothing_served_here_any_more() -> None:
 
 
 def test_the_map_shows_each_synthesis_by_its_label() -> None:
-    assert "const entries = syntheses.map(({ label }) => {" in _app_js()
+    assert "    link.textContent = label;" in _app_js()
 
 
 def _sign_in_note(status: str) -> str:
