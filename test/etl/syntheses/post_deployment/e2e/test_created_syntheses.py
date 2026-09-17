@@ -65,4 +65,3 @@ def test_the_newest_synthesis_of_each_run_was_given_its_forced_wan_pops(
     served = _served(f"{SYNTHESES}/{newest}/forced-wan-pops")
     forced = CONFIGURATIONS[name]["backbone"]["forced"]["wan_pops"]
     assert [one["name"] for one in served] == forced
-
