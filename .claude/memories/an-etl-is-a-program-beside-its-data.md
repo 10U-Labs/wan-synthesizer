@@ -14,7 +14,13 @@ Since 2026-09-17 (GitHub issue #248, `b090312c`) `data/pops` and
 `data/fiber_segments` reach `api.10ulabs.com` through
 `src/etl/carriers/load_carriers.py`, which `etl_carriers.yml` invokes
 as `python3 -c 'from etl.carriers import load_carriers; ...main(...)'`
-with `PYTHONPATH=src:lib/python`. `api.10ulabs.com` serves routes and
+with `PYTHONPATH=src:lib/python`; `data/providers/providers.csv`
+through `src/etl/regions/load_regions.py` and `etl_regions.yml` the
+same way (GitHub issue #249). What the programs share — the `Api`
+client with its retries, `changed_paths` over `git diff`, `rows`,
+`key` and the `settled` poll — is `lib/python/loader`, tested to 100%
+by `test-lib-loader` in `scripts.yml`, whose definition-liveness jobs
+search `src` as well as `lib/python` and `test` for that reason. `api.10ulabs.com` serves routes and
 loads nothing ([[the-store-holds-only-what-the-product-writes]] is the
 old store; the API's memory `this-repo-serves-routes-and-loads-nothing`
 is the other half of this rule).

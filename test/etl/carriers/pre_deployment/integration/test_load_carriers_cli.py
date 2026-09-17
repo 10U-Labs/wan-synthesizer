@@ -7,10 +7,9 @@ from typing import Any
 
 import pytest
 
+from loader import ATTEMPTS, SETTLE_PAUSE_SECONDS
 from repo_utils import REPO_ROOT
-from etl.carriers.load_carriers import (
-    ATTEMPTS, SETTLE_PAUSE_SECONDS, changed_carriers, fiber_segments_of, main, pops_of,
-)
+from etl.carriers.load_carriers import changed_carriers, fiber_segments_of, main, pops_of
 
 VISION_NET = ["--carrier", "vision_net"]
 AT_ONCE = ["--settle-seconds", "0"]

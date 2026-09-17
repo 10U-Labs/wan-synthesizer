@@ -152,7 +152,7 @@ jobs:
       - name: Assert every definition is named somewhere else
         uses: 10U-Labs/assert-python-definition-is-used@latest
         with:
-          search-in: lib/python test
+          search-in: lib/python src test
           trees: lib/python
           verbose: "true"
   assert-python-definition-is-used-outside-own-tests:
@@ -164,7 +164,7 @@ jobs:
         uses: 10U-Labs/assert-python-definition-is-used@latest
         with:
           dont-search-in: test/lib/python/{package}
-          search-in: lib/python test
+          search-in: lib/python src test
           trees: lib/python
           verbose: "true"
   copy-paste-source:
@@ -241,6 +241,24 @@ jobs:
           test/lib/python/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
+  test-lib-loader:
+    name: test-lib-loader
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install --upgrade pytest pytest-cov
+      - name: Run the loader's unit tests with a 100% coverage gate
+        run: >-
+          PYTHONPATH=.:lib/python:src:test
+          python3 -m pytest
+          test/lib/python/loader/pre_deployment/unit/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
+          --cov=lib/python/loader
+          --cov-branch
+          --cov-report=term-missing
+          --cov-fail-under=100
   test-lib-repo-utils:
     name: test-lib-repo-utils
     runs-on: ubuntu-latest
