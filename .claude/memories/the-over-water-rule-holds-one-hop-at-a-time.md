@@ -35,5 +35,5 @@ every WAN PoP stands on the near PoP's shore, since then every hop starts
 there; a WAN on two shores bars nothing between a pair. A WAN whose only way
 round a PoP is under water to a transit PoP on an island and back is still
 refused as split, because that hop arrives back on the shore it left.
-Measure the seeded tenants before and after, per
-[measure-a-change-over-the-seeded-tenants](measure-a-change-over-the-seeded-tenants.md).
+The synthesizer and the measurement of its tenants live in
+`10U-Labs/api.10ulabs.com` since the API migration.

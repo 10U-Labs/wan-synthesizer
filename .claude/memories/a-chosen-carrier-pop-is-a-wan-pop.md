@@ -23,6 +23,10 @@ metadata:
 
 ## Overview
 
+The synthesizer these identifiers live in moved to `10U-Labs/api.10ulabs.com`
+with the API migration (2026-09-17); the words hold here for the SPA, the data
+under `data/` and `etc/`, and the issues.
+
 The synthesizer's central decision is which of the carriers' PoPs a tenant's WAN
 runs through. An offered one is a `carrier_pop`; a chosen one is a **`wan_pop`**;
 one a circuit merely crosses is a `transit_pop`. The three share a word on
@@ -98,9 +102,8 @@ became `validation.capped_wan_pops`, `circuits_clear_of_a_capped_wan_pop` and
 *site* rather than *select*, because building a local-fiber twin is not the
 selection the directive names.
 
-No published resource name moved — the five hits in `openapi.json` were prose
-inside `summary` and `description` — so it was a read-and-rename commit rather
-than a re-seed. One test name was written rather than substituted:
+No published resource name moved — the five hits in the spec were prose
+inside `summary` and `description` — so it was a read-and-rename commit. One test name was written rather than substituted:
 `test_no_synthesis_stopped_short_of_its_target_with_a_seat_left_to_spend` was
 built on the countable-slot sense, and it is now
 `test_no_synthesis_missed_its_coverage_target_below_the_wan_pops_it_was_allowed`,
@@ -125,8 +128,8 @@ A candidate set is still a backbone, so `backbone_set` went to `wan_pop_set` but
 
 Twice, both of them graph algorithms rather than networks: `_Node` and its
 `_Residual`, `_Miles` and `_Arc` companions in `synthesizer.ceiling`, which are
-vertices of a unit-capacity flow network, and the `ast` nodes
-`scripts/assert_description_identifiers_exist.py` walks. The same exemption
+vertices of a unit-capacity flow network, and the `ast` nodes a description
+check once walked. The same exemption
 `reconstruct_path` and `_augmenting_path` hold for `path` — see
 [a-way-out-is-a-circuit](a-way-out-is-a-circuit.md). The two
 served collections `/tenant-nodes` and `/provider-nodes` still say it and are
@@ -139,16 +142,12 @@ Five published resources were renamed and every caller has to move:
 `backbone-nodes` → `wan-pops`, `forced-backbone-nodes` → `forced-wan-pops`,
 `prohibited-backbone-nodes` → `prohibited-wan-pops`,
 `degree-exempt-backbone-nodes` → `degree-exempt-wan-pops`, and
-`backbone-node-count` → `wan-pop-count`. The last four are also object keys under
-`tenants/{tenant}/` in the store and keys in `etc/`, so the migration is a
-re-seed: `push_tenants` PUTs the new keys, `TENANT_FILES` in the store handler no
-longer lists the old ones, and `prune_store` deletes them on the same run. The
-`etc/` keys moved with them — `backbone.forced.wan_pops`,
+`backbone-node-count` → `wan-pop-count`. The last four are also keys in `etc/`,
+which moved with them — `backbone.forced.wan_pops`,
 `backbone.prohibited.wan_pops`, `backbone.wan_pop_count`, and the `settings` keys
 `wan_pop_search_memory_share` and `bytes_per_wan_pop_combination`. One tenant was
 named for the word: `etc/two_node.yml` became `etc/two_pop.yml`, label `Two-PoP`,
-tenant id `two-pop`, with `data/tenants/two_pop.csv` beside it, so `prune_tenants`
-deletes the old `two-node` tenant on the next seed.
+with `data/tenants/two_pop.csv` beside it.
 
 ### Nothing mechanical checks this
 

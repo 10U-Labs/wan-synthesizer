@@ -21,9 +21,9 @@ lists under both loops. The user chose closing with the finding over the
 refactor.
 
 **How to apply:** before authoring the red test an issue calls for, check that
-the defect can happen — by argument over the code, and by
-[measure-a-change-over-the-seeded-tenants](measure-a-change-over-the-seeded-tenants.md)
-where a run settles it. If it cannot, `gh issue close N --comment` with the
+the defect can happen — by argument over the code, and by a measurement
+where a run settles it; the synthesizer and its measurements live in
+`10U-Labs/api.10ulabs.com` since the API migration. If it cannot, `gh issue close N --comment` with the
 argument and the figures, reason `not planned`. This is the one case
 [an-issue-is-closed-by-its-commit](an-issue-is-closed-by-its-commit.md) does not
 reach, since there is no commit to carry the line.

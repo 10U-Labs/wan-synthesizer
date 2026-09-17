@@ -33,9 +33,9 @@ that goes red on it, per
 and a tool nobody runs finds nothing.
 
 **How to apply:** a fixture is a function named for itself,
-`@pytest.fixture def routing_dir()`, unless something in its file binds
+`@pytest.fixture def stub_api()`, unless something in its file binds
 that name — a test's parameter, another fixture's parameter — in which
-case it is `@pytest.fixture(name="routing_dir") def routing_dir_fixture()`,
+case it is `@pytest.fixture(name="pauses") def pauses_fixture()`,
 which is also what keeps pylint's `redefined-outer-name` quiet. A new
 workflow copies the five pytest jobs and, for a stack, the OpenTofu
 one, and lists them in its deploying job's `needs`.

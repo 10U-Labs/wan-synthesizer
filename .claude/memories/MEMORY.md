@@ -8,13 +8,10 @@
   - [Comments](#comments)
   - [Commits](#commits)
   - [Issues](#issues)
-  - [Measurement](#measurement)
   - [Login](#login)
   - [Identity](#identity)
   - [Memories](#memories)
-  - [Storage](#storage)
   - [Tests](#tests)
-  - [Third-party code](#third-party-code)
   - [Verification](#verification)
   - [Vocabulary](#vocabulary)
   - [ETLs](#etls)
@@ -27,12 +24,9 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 
 ### CI workflows
 
-- [seeding-races-the-routing-deploy](seeding-races-the-routing-deploy.md) — a new per-tenant store resource can fail the first `seed` run on the new PUT, and `HTTP 403` and `HTTP 404` say which deploy is behind; a synthesizer change instead fails nothing and grades WANs the old Lambda built, where `--failed` is the wrong re-run; the prune keeps every key the run wrote, so a rename never races it
-- [seeding-waits-for-every-deploy](seeding-waits-for-every-deploy.md) — `seeding` runs after every workflow on the same commit that deploys something it talks to, through a wait job copied from `10ulabs.com`, so a seed never grades WANs the previous Lambda built
-- [seed-tests-every-push](seed-tests-every-push.md) — every push that starts `seed.yml` runs every tier, and how a new check is wired into `reconciliation` and `seeding`
-- [shared-modules-are-tested-first](shared-modules-are-tested-first.md) — `test-repo-libraries` runs every module's tests ahead of every job whose tests import them
+- [shared-modules-are-tested-first](shared-modules-are-tested-first.md) — every `lib/python` module has a `test-lib-<module>` job in `scripts.yml` under a 100% coverage gate, its definitions are named outside its own tests, and a workflow whose program imports it lists `lib/python/**`
 - [every-workflow-runs-the-assert-tools](every-workflow-runs-the-assert-tools.md) — the six `assert-*` tools `10ulabs.com` runs and this repository did not now run here, four per workflow beside `assert-one-assert-per-pytest`, the OpenTofu one per stack, fixture liveness over the whole tree in `scripts.yml`; a fixture takes a `name=` only where its file binds that name
-- [aws-is-called-over-fips-endpoints](aws-is-called-over-fips-endpoints.md) — every function's environment and every role-assuming workflow's `env` set `AWS_USE_FIPS_ENDPOINT` to `true`, held tree-wide by `test_fips_endpoints.py` in every `test-repo-libraries`
+- [aws-is-called-over-fips-endpoints](aws-is-called-over-fips-endpoints.md) — every role-assuming workflow's `env` sets `AWS_USE_FIPS_ENDPOINT` to `true`; nothing in the tree holds that since the API migration, so a new workflow copies the block
 - [code-scanning-is-held-on-by-a-test](code-scanning-is-held-on-by-a-test.md) — CodeQL default setup runs the extended suite over the Python and the JavaScript, `test/documentation` holds a fresh analysis of each language and zero results on the newest through the API the workflow token can read, and an alert it raises is fixed in the session that sees it
 - [where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md) — a test runs in the workflow the change it guards arrives on, and one that already runs in two needs no cross-listed `paths`
 
@@ -52,39 +46,25 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 ### Issues
 
 - [why-static-analysis-is-asked-separately](why-static-analysis-is-asked-separately.md) — a job refuses a shape everywhere at once where a tier catches one occurrence
-- [the-description-check-reads-only-identifiers](the-description-check-reads-only-identifiers.md) — `assert-description-identifiers-exist` holds a served description that spells a snake_case identifier the tree lost, and a description naming a retired field in prose is held by reading
-
-### Measurement
-
-- [measure-a-change-over-the-seeded-tenants](measure-a-change-over-the-seeded-tenants.md) — every tenant's miles and floor are reproducible from `data/` and `etc/` with no deploy, which is where a commit message's before/after table comes from
 
 ### Login
 
-- [the-api-admits-a-google-account-or-the-seed-key](the-api-admits-a-google-account-or-the-seed-key.md) — every operation but a preflight sits behind the routing stack's authorizer, which admits a Google ID token for a `10ulabs.com` account named in `/wan-synthesizer/authorized-accounts` (set through the repository variable `WAN_SYNTHESIZER_AUTHORIZED_ACCOUNTS`) or the API key CI reads from SSM as `WAN_SYNTHESIZER_API_KEY`, which is granted every read and only the writes `seed.py` makes, tabled as `SEED_WRITES`; the SPA and `authorizer.tf` must agree on the OAuth client, every operation but an `options` mock resolves to the bearer and every `options` to nothing, held by a routing unit test; every route the map fetches needs an `options` mock, the page opens on the sign-in screen alone, and the name in Google's chooser is the Cloud project's branding; the `prod` stage throttles `*/*` to 20 requests a second with a burst of 40; the SPA ends a session through one `endSession` on sign-out, at the token's `exp`, or after 15 idle minutes; the key is written write-only from an ephemeral password, so the routing state never records it, and rewritten when the repository variable `WAN_SYNTHESIZER_API_KEY_ROTATION` changes, held to 180 days by a routing post-deployment test that a weekly schedule runs; the SPA's HSTS, `nosniff`, referrer policy and framing denial come from `10ulabs.com`'s website distribution and are read off the served SPA after every deploy, and the page's `<meta>` CSP admits scripts from itself and Google alone, held to the exact source list by a unit test
+- [the-spa-signs-in-with-a-google-account](the-spa-signs-in-with-a-google-account.md) — the map opens on a Google sign-in card for a `10ulabs.com` account, sends the ID token as a bearer to `api.10ulabs.com`, ends a session through one `endSession` on sign-out, at the token's `exp` or after 15 idle minutes, and is served with `10ulabs.com`'s security headers and its own `<meta>` CSP, each held by a unit or e2e test; the API side of the login lives in `api.10ulabs.com`
 
 ### Identity
 
-- [a-lambda-role-writes-its-own-log-group-alone](a-lambda-role-writes-its-own-log-group-alone.md) — no stack attaches a managed policy; every function's role holds an inline `Logs` policy on the one log group its `logging_config` names, held tree-wide by `test_lambda_roles.py` in every `test-repo-libraries` and live by each stack's wiring tests
 - [the-state-bucket-admits-only-the-principals-that-write-state](the-state-bucket-admits-only-the-principals-that-write-state.md) — `10ulabs-terraform-state-us-east-2` lives in `10U-Labs/10ulabs.com`'s bootstrap, denies every principal but the account, the admin user and the two deploy roles, and versions every state for 90 days; a new state-writing role is admitted there, in the `Deny`'s exception list and never the `Allow`
-- [the-deploy-role-is-narrowed-by-its-own-stack](the-deploy-role-is-narrowed-by-its-own-stack.md) — `TenULabsWanSynthesizerRole` is declared in `src/api/common/identity` and applied by itself, so a missing grant is measured by dispatching every workflow and fixed forward; the trust names GitHub's immutable subject, `DescribeLogGroups` is evaluated against `log-group::log-stream:`, the OIDC provider is read by ARN, and `seed.yml` assumes `TenULabsWanSynthesizerSeedRole` (`vars.SEED_ROLE_ARN`), which the same stack grants one `ssm:GetParameter` and nothing else
+- [the-deploy-role-is-narrowed-by-its-own-stack](the-deploy-role-is-narrowed-by-its-own-stack.md) — `TenULabsWanSynthesizerRole` is declared in `src/www/identity` and applied by itself with four inline policies and no managed one, so a missing grant is fixed forward in `iam.tf`; the trust names GitHub's immutable subject, the OIDC provider is read by ARN, and the `Api` policy is the one read of `/api.10ulabs.com/api-key` the ETLs need
 
 ### Memories
 
 - [a-memory-line-never-opens-with-an-issue-number](a-memory-line-never-opens-with-an-issue-number.md) — markdownlint reads a line opening with `#N` as a heading missing its space, so wrap a memory until no line starts with a hash
-
-### Storage
-
-- [the-store-holds-only-what-the-product-writes](the-store-holds-only-what-the-product-writes.md) — the store bucket has no working area, so a new prefix joins `_KEPT_BY_PREFIX` in the same commit as its writer or the next seed's prune deletes it; versioning is suspended, so every delete names `VersionId="null"` or leaves a marker the prune has to clear; the store is SSE-S3 at rest and its policy denies every plaintext request, which the post-deployment tier probes with a `use_ssl=False` client; the store's policy also denies every principal but the account and the roles `module.common.store_principals` names, held to the tree's grants by `test_store_principals.py` in every `test-repo-libraries`
 
 ### Tests
 
 - [write-the-test-first](write-the-test-first.md) — the test is authored before the code, and red and green are observed in CI
 - [cover-every-tier-the-change-touches](cover-every-tier-the-change-touches.md) — unit tests alone are not sufficient, one assert per pytest
 - [the-test-tree-splits-on-deployment-phase](the-test-tree-splits-on-deployment-phase.md) — `pre_deployment/{unit,integration}` and `post_deployment/{integration,e2e}` under every subsystem
-
-### Third-party code
-
-- [third-party-code-ships-as-a-layer](third-party-code-ships-as-a-layer.md) — a package the synthesizer needs at runtime ships as a Lambda layer, never unpacked under `src/`
 
 ### Verification
 

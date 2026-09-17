@@ -19,7 +19,7 @@ metadata:
 
 ## Overview
 
-The word **building** names nothing in this program. It appears nowhere in `src/`, `lib/`, `test/`, `data/`, `etc/` or `scripts/` — the one hit in the tree is the verb in `scripts/seed.py:226`, `"merge: rebuilding the merged carriers"`. Every other occurrence is prose written in a GitHub issue by a session here, nine issues in all: eight of them name a building as a thing this model holds, and one corrects them.
+The word **building** names nothing in this program. It appears nowhere in `src/`, `lib/`, `test/`, `data/` or `etc/`. Every other occurrence is prose written in a GitHub issue by a session here, nine issues in all: eight of them name a building as a thing this model holds, and one corrects them.
 
 What the program models is a **named place with a coordinate**. A tenant's site, a provider region, a carrier PoP and an off-net city that becomes a WAN PoP are four kinds of that one thing, and nothing smaller than a named place is modelled anywhere. Only the first is a **site**: the operator settled on 2026-09-12 that this program has one kind of site, a tenant's, and that a carrier PoP is a PoP and a provider region is a region (GitHub issue #224). The rulebook said four kinds of site until then, and the code is held to the rulebook, so the word moved here first.
 

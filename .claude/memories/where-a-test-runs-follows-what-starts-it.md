@@ -11,9 +11,9 @@ metadata:
 
 - [Overview](#overview)
 - [Conventions](#conventions)
-  - [A test about a rebuilt WAN runs in seed.yml](#a-test-about-a-rebuilt-wan-runs-in-seedyml)
-  - [A test about an API behaviour or its deployment runs in that endpoint workflow](#a-test-about-an-api-behaviour-or-its-deployment-runs-in-that-endpoint-workflow)
-  - [A test over shared machinery runs in every workflow that imports it](#a-test-over-shared-machinery-runs-in-every-workflow-that-imports-it)
+  - [A test about loaded data runs in that data's ETL workflow](#a-test-about-loaded-data-runs-in-that-datas-etl-workflow)
+  - [A test about a stack or its deployment runs in that stack's workflow](#a-test-about-a-stack-or-its-deployment-runs-in-that-stacks-workflow)
+  - [A test over shared machinery runs where the module is tested](#a-test-over-shared-machinery-runs-where-the-module-is-tested)
   - [The consequence that is accepted](#the-consequence-that-is-accepted)
   - [A test in two workflows needs no cross-listed paths](#a-test-in-two-workflows-needs-no-cross-listed-paths)
   - [The directory and the workflow are separate questions](#the-directory-and-the-workflow-are-separate-questions)
@@ -24,26 +24,26 @@ A test is worth nothing in a workflow the change it guards does not trigger. So 
 
 ## Conventions
 
-### A test about a rebuilt WAN runs in seed.yml
+### A test about loaded data runs in that data's ETL workflow
 
-`test/scripts/seed/post_deployment/e2e/test_delivered_syntheses.py` measures each tenant's published network against the `backbone` block of its `etc/*.yml`. What breaks it is an edit to `etc/`, and a push touching `etc/` alone starts `seed.yml` and nothing else. `seed.yml` is also the workflow that delivers the edit: its `seeding` job runs `scripts/seed.py`, which PUTs the inputs and then POSTs one build per tenant. Deliver, rebuild and measure are three steps of one thing, and they run in one workflow in that order.
+`test/etl/carriers/post_deployment/e2e/test_loaded_carriers.py` reads every carrier back from `api.10ulabs.com` and holds its PoPs and fiber segments to `data/pops` and `data/fiber_segments`. What breaks it is an edit to those CSVs, and a push touching them starts `etl_carriers.yml` and nothing else. That workflow is also what delivers the edit: its `load` job runs the carriers ETL. Deliver and measure are two steps of one thing, and they run in one workflow in that order; the regions and the syntheses are the same shape in `etl_regions.yml` and `etl_syntheses.yml`, and `test/etl/syntheses/pre_deployment/unit/test_configurations.py` holds `etc/` to `data/tenants` in the workflow a push to either starts.
 
-### A test about an API behaviour or its deployment runs in that endpoint workflow
+### A test about a stack or its deployment runs in that stack's workflow
 
-`test_01_existence.py`, `test_02_configuration.py` and `test_03_wiring.py` under `test/api/endpoints/tenants/wan/post/post_deployment/integration/` ask whether the synthesizer Lambda exists, whether its runtime and memory match the declaration, and whether its role can reach the store. Each breaks when `src/api/endpoints/tenants/wan/post/**` changes, which is what `api_endpoint_tenants_wan_post.yml` triggers on, and each runs there after `reconciliation` applies the stack.
+`test/www/identity/pre_deployment/unit/` holds the identity stack's declaration to the grants the workflows need, and `test/www/identity/post_deployment/integration/` reads the API key under the reconciled role. Each breaks when `src/www/identity/**` changes, which is what `www_identity.yml` triggers on, and the second runs there after `reconciliation` applies the stack. `test/www/spa/` and `www_spa.yml` are the same for the SPA.
 
-### A test over shared machinery runs in every workflow that imports it
+### A test over shared machinery runs where the module is tested
 
-The nine modules in `lib/python/` have no workflow of their own and no single consumer, so the rule above picks out no one workflow. The import that decides it is the transitive one: `test_handler_contracts` imports `test_module_utils` and `test_s3_store_mock`, and `test_fixtures.aws` and `test_terraform_drift` import `test_terraform_config`, which imports `repo_utils` — so a defect in `test_module_utils` breaks workflows whose test files never name it.
+`lib/python/loader` is imported by every ETL and by nothing else in particular, so no one ETL workflow is where it is tested: `scripts.yml` runs `test/lib/python/loader/` under its own coverage gate on every push to `lib/python/**` or `test/**`, and each ETL workflow lists `lib/python/**` so the same push also runs the programs' own tiers; see [shared-modules-are-tested-first](shared-modules-are-tested-first.md).
 
 ### A test in two workflows needs no cross-listed paths
 
-`test/www/spa/pre_deployment/unit/test_login.py` holds `app.js` to `authorizer.tf`, so it runs in `www_spa.yml` and in the routing `unit-tests` job. That is already every push that can break it; adding `src/www/spa/**` to the routing workflow's `paths` on top made a style change apply the routing stack, and was taken out in `f457a791`. List a directory under a workflow's `paths` only when a change there breaks something that workflow alone runs.
+A test that already runs in every workflow a change can break needs no further `paths` entry anywhere. Listing a directory under a second workflow's `paths` on top of that once made a style change apply an unrelated stack (`f457a791`). List a directory under a workflow's `paths` only when a change there breaks something that workflow alone runs.
 
 ### The consequence that is accepted
 
-A synthesizer change deploys in `api_endpoint_tenants_wan_post.yml` but is not measured against a rebuild until the next push that touches something `seed.yml` triggers on. Moving `reconciliation` into `seed.yml` was offered as the alternative and declined.
+A change to the API in `10U-Labs/api.10ulabs.com` is not measured against the data here until the next push that touches something an ETL workflow triggers on, or a `workflow_dispatch` of one.
 
 ### The directory and the workflow are separate questions
 
-Which directory the file sits in is answered by what the test checks rather than by what runs it, and the two agreeing is the ordinary case. Where they land apart — `test/lib/python/test_published_syntheses/**` sits with the module it covers and is run by workflows that do not own it — the workflow must list that file and its whole conftest chain in its `paths`, or a change to the test does not run the test. One entry, `test/lib/python/**`, is what that costs, because it covers the conftests too.
+Which directory the file sits in is answered by what the test checks rather than by what runs it, and the two agreeing is the ordinary case. Where they land apart, the workflow must list that file and its whole conftest chain in its `paths`, or a change to the test does not run the test.

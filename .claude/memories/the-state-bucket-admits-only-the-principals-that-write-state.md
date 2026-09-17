@@ -21,8 +21,9 @@ old copy back, since a state history is the change record NIST SP
 the state. The bootstrap stack let go of `TenULabsWanSynthesizerRole`
 in the same commit through `removed` blocks, since
 [the-deploy-role-is-narrowed-by-its-own-stack](the-deploy-role-is-narrowed-by-its-own-stack.md)
-had made `src/api/common/identity` its declaration and a bootstrap apply
-would have re-attached `AdministratorAccess`.
+had made this repository's identity stack (today `src/www/identity`) its
+declaration and a bootstrap apply would have re-attached
+`AdministratorAccess`.
 
 **Why:** a same-account bucket-policy `Allow` is additive with a role's
 identity policy, so naming the wan-synthesizer role in the `Allow` would

@@ -21,9 +21,8 @@ client with its retries, `changed_paths` over `git diff`, `rows`,
 `key` and the `settled` poll — is `lib/python/loader`, tested to 100%
 by `test-lib-loader` in `scripts.yml`, whose definition-liveness jobs
 search `src` as well as `lib/python` and `test` for that reason. `api.10ulabs.com` serves routes and
-loads nothing ([[the-store-holds-only-what-the-product-writes]] is the
-old store; the API's memory `this-repo-serves-routes-and-loads-nothing`
-is the other half of this rule).
+loads nothing; its memory `this-repo-serves-routes-and-loads-nothing`
+is the other half of this rule.
 
 **Why:** the loading job that used to sit in the API's own workflow
 made the repository that creates REST APIs the keeper of the CSVs and a

@@ -22,7 +22,7 @@ Static analysis is the half of CI that reads the source without running it, and 
 
 ### Which checks are the jobs
 
-The linters and the type checkers over source and over tests, the duplicate detector, the YAML and markdown linters, and the `assert-*` checks that carry the rules written here and that no off-the-shelf analyser has. `deploy`, `reconciliation` and `seeding` are not among them, however early they run: they plan and apply against AWS, which makes them the opposite of static.
+The linters and the type checkers over source and over tests, the duplicate detector, the YAML and markdown linters, and the `assert-*` checks that carry the rules written here and that no off-the-shelf analyser has. `deploy`, `reconciliation` and `load` are not among them, however early they run: they plan and apply against AWS, which makes them the opposite of static.
 
 ### Answering the section
 
