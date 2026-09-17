@@ -26,7 +26,7 @@ homing:
   forced: []
 inputs:
   sites:
-    DAF: data/sites/daf.csv
+    DAF: data/tenants/daf.csv
 label: DAF
 settings:
   bytes_per_wan_pop_combination: 160

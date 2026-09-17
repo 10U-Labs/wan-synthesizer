@@ -18,7 +18,7 @@ homing:
   forced: []
 inputs:
   sites:
-    F-35: data/sites/f_35.csv
+    F-35: data/tenants/f_35.csv
 label: F-35
 settings:
   bytes_per_wan_pop_combination: 160

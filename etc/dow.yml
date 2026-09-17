@@ -24,7 +24,7 @@ homing:
   forced: []
 inputs:
   sites:
-    DoW: data/sites/dow.csv
+    DoW: data/tenants/dow.csv
 label: DoW
 settings:
   bytes_per_wan_pop_combination: 160

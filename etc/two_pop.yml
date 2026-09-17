@@ -19,7 +19,7 @@ homing:
   forced: []
 inputs:
   sites:
-    Two-PoP: data/sites/two_pop.csv
+    Two-PoP: data/tenants/two_pop.csv
 label: Two-PoP
 settings:
   bytes_per_wan_pop_combination: 160

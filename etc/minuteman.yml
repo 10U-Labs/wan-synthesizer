@@ -22,7 +22,7 @@ homing:
   forced: []
 inputs:
   sites:
-    Minuteman: data/sites/minuteman.csv
+    Minuteman: data/tenants/minuteman.csv
 label: Minuteman
 settings:
   bytes_per_wan_pop_combination: 160
