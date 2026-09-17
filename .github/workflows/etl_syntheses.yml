@@ -34,6 +34,7 @@ jobs:
           assert-no-inline-directives
           --tools pylint,mypy,yamllint
           --verbose
+          ${{ github.workspace }}/src/etl/syntheses
           ${{ github.workspace }}/test/etl/syntheses
   assert-no-pytest-plugin-declarations:
     name: assert-no-pytest-plugin-declarations
@@ -95,6 +96,17 @@ jobs:
           assert-pytest-test-can-fail
           --verbose
           ${{ github.workspace }}/test/etl/syntheses
+  copy-paste-source:
+    name: copy-paste-source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: npm install -g jscpd
+      - name: Detect copy-paste in source
+        run: >-
+          jscpd --pattern "**/*.py" --threshold 0
+          --reporters console src/etl/syntheses/
   copy-paste-tests:
     name: copy-paste-tests
     runs-on: ubuntu-latest
@@ -106,6 +118,95 @@ jobs:
         run: >-
           jscpd --pattern "**/*.py" --threshold 0
           --reporters console test/etl/syntheses/
+  load:
+    if: github.ref == 'refs/heads/main'
+    name: load
+    needs:
+      - assert-no-comments
+      - assert-no-inline-directives
+      - assert-no-pytest-plugin-declarations
+      - assert-one-assert-per-pytest
+      - assert-pytest-class-holds-state
+      - assert-pytest-fixture-name-is-needed
+      - assert-pytest-test-can-fail
+      - copy-paste-source
+      - copy-paste-tests
+      - mypy-source
+      - mypy-tests
+      - pre-deployment-tests
+      - pylint-source
+      - pylint-tests
+      - yamllint
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Install tools
+        run: pip install pyyaml
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        name: Wait for the regions load on this commit, if one is running
+        run: |
+          RUNS="repos/$GITHUB_REPOSITORY/actions/workflows/etl_regions.yml/runs"
+          for ATTEMPT in $(seq 1 60); do
+            RUNNING=$(gh api "$RUNS?head_sha=$GITHUB_SHA&per_page=10" \
+              --jq '[.workflow_runs[] | select(.status != "completed")] | length')
+            if [ "$RUNNING" = "0" ]; then
+              echo "No regions load is running on $GITHUB_SHA."
+              exit 0
+            fi
+            echo "A regions load is running on $GITHUB_SHA; waiting ($ATTEMPT)."
+            sleep 30
+          done
+          echo "The regions load on $GITHUB_SHA has not finished in thirty minutes."
+          exit 1
+      - env:
+          ALL: ${{ inputs.all }}
+          BEFORE: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
+        name: Create a synthesis for every run whose configuration changed since the last load
+        run: |
+          RUNS="repos/$GITHUB_REPOSITORY/actions/workflows/etl_syntheses.yml/runs"
+          SINCE=$(gh api "$RUNS?branch=main&status=success&per_page=1" \
+            --jq '.workflow_runs[0].head_sha // empty')
+          if [ -z "$SINCE" ]; then
+            SINCE=$BEFORE
+          fi
+          if [ "$ALL" = "true" ]; then
+            SINCE=""
+            echo "Creating a synthesis for every run."
+          else
+            echo "Creating a synthesis for every run whose configuration changed since $SINCE."
+          fi
+          KEY=$(aws ssm get-parameter --name /api.10ulabs.com/api-key \
+            --with-decryption --query Parameter.Value --output text)
+          echo "::add-mask::$KEY"
+          API_KEY="$KEY" PYTHONPATH=src:lib/python python3 -c \
+            'import sys; from etl.syntheses import load_syntheses; sys.exit(load_syntheses.main(sys.argv[1:]))' \
+            --since "$SINCE"
+  mypy-source:
+    name: mypy-source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install mypy pyyaml types-PyYAML
+      - name: Run mypy on source
+        run: >-
+          MYPYPATH=lib/python:src
+          python3 -m mypy --strict --explicit-package-bases
+          --ignore-missing-imports
+          src/etl/syntheses/
   mypy-tests:
     name: mypy-tests
     runs-on: ubuntu-latest
@@ -119,20 +220,65 @@ jobs:
           python3 -m mypy --strict --explicit-package-bases
           --ignore-missing-imports
           test/etl/syntheses/
+  post-deployment-e2e-tests:
+    if: github.ref == 'refs/heads/main'
+    name: post-deployment-e2e-tests
+    needs:
+      - load
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ vars.OIDC_ROLE_ARN }}
+      - name: Install tools
+        run: pip install pytest pyyaml
+      - name: Read the syntheses back and hold them to their configurations
+        run: |
+          KEY=$(aws ssm get-parameter --name /api.10ulabs.com/api-key \
+            --with-decryption --query Parameter.Value --output text)
+          echo "::add-mask::$KEY"
+          API_KEY="$KEY" PYTHONPATH=.:lib/python:src python3 -m pytest \
+            test/etl/syntheses/post_deployment/e2e/ \
+            --import-mode=importlib --confcutdir=test \
+            --verbose --pythonwarnings=error
   pre-deployment-tests:
     name: pre-deployment-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pytest pyyaml
-      - name: Hold the configurations to the tree
+        run: pip install pytest pytest-cov pyyaml
+      - name: Run the unit and integration tiers with a full coverage gate
         run: >-
           PYTHONPATH=.:lib/python:src
           python3 -m pytest
           test/etl/syntheses/pre_deployment/
           --import-mode=importlib --confcutdir=test
           --verbose --pythonwarnings=error
+          --cov=src/etl/syntheses
+          --cov-branch
+          --cov-report=term-missing
+          --cov-fail-under=100
+  pylint-source:
+    name: pylint-source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install pylint pyyaml
+      - name: Run pylint on source
+        run: >-
+          PYTHONPATH=lib/python:src
+          python3 -m pylint --recursive=y
+          src/etl/syntheses/
+          --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
+          --fail-on=C,R,W --fail-under=10.0
   pylint-tests:
     name: pylint-tests
     runs-on: ubuntu-latest
@@ -179,8 +325,16 @@ name: etl_syntheses
     paths:
       - etc/**
       - data/tenants/**
+      - src/etl/syntheses/**
       - test/etl/syntheses/**
+      - lib/python/**
       - .github/workflows/etl_syntheses.yml
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      all:
+        default: false
+        description: Create a synthesis for every run, changed or not.
+        required: false
+        type: boolean
 permissions:
   contents: read

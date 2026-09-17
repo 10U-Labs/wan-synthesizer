@@ -48,3 +48,9 @@ def test_every_tenants_file_is_named_by_a_configuration() -> None:
     named = {path for configuration in CONFIGURATIONS for path in _sites_named(configuration)}
     assert sorted(path.relative_to(REPO_ROOT) for path in (REPO_ROOT / TENANTS).glob("*.csv")) == (
         sorted(named))
+
+
+@pytest.mark.parametrize("configuration", CONFIGURATIONS, ids=lambda path: str(path.stem))
+def test_a_configuration_takes_sites_and_no_other_input(configuration: Path) -> None:
+    loaded: dict[str, Any] = yaml.safe_load(configuration.read_text(encoding="utf-8"))
+    assert list(loaded["inputs"]) == ["sites"]
