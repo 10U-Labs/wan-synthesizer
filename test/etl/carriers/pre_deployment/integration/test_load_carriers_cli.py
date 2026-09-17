@@ -7,10 +7,10 @@ from typing import Any
 
 import pytest
 
+from repo_utils import REPO_ROOT
 from etl.carriers.load_carriers import (
     ATTEMPTS, SETTLE_PAUSE_SECONDS, changed_carriers, fiber_segments_of, main, pops_of,
 )
-from repo_utils import REPO_ROOT
 
 VISION_NET = ["--carrier", "vision_net"]
 AT_ONCE = ["--settle-seconds", "0"]
@@ -71,13 +71,13 @@ def test_the_stale_copies_are_gone_and_the_new_one_is_listed(
 @pytest.mark.usefixtures("the_key")
 def test_the_pops_loaded_are_the_csv(stub_api: Any, sleep: Any) -> None:
     _run(stub_api, sleep, *VISION_NET, *AT_ONCE)
-    assert stub_api.fake.pops[7] == pops_of(REPO_ROOT, "vision_net")
+    assert stub_api.fake.members["pops"][7] == pops_of(REPO_ROOT, "vision_net")
 
 
 @pytest.mark.usefixtures("the_key")
 def test_the_fiber_segments_loaded_are_the_csv(stub_api: Any, sleep: Any) -> None:
     _run(stub_api, sleep, *VISION_NET, *AT_ONCE)
-    assert stub_api.fake.fiber_segments[7] == fiber_segments_of(REPO_ROOT, "vision_net")
+    assert stub_api.fake.members["fiber-segments"][7] == fiber_segments_of(REPO_ROOT, "vision_net")
 
 
 @pytest.mark.usefixtures("the_key")
@@ -127,7 +127,7 @@ def test_the_carriers_changed_are_read_off_the_diff_deletions_included(repositor
 @pytest.mark.usefixtures("the_key")
 def test_a_throttled_call_is_tried_again_after_a_growing_pause(
         stub_api: Any, sleep: Any, pauses: list[float]) -> None:
-    stub_api.fake.refusals = 2
+    stub_api.fake.faults["refusals"] = 2
     _run(stub_api, sleep, *VISION_NET, *AT_ONCE)
     assert pauses == [1.0, 2.0]
 
@@ -135,7 +135,7 @@ def test_a_throttled_call_is_tried_again_after_a_growing_pause(
 @pytest.mark.usefixtures("the_key")
 def test_a_call_throttled_every_time_is_given_up(
         stub_api: Any, sleep: Any) -> None:
-    stub_api.fake.refusals = ATTEMPTS
+    stub_api.fake.faults["refusals"] = ATTEMPTS
     with pytest.raises(urllib.error.HTTPError):
         _run(stub_api, sleep, *VISION_NET, *AT_ONCE)
 
@@ -143,7 +143,7 @@ def test_a_call_throttled_every_time_is_given_up(
 @pytest.mark.usefixtures("the_key")
 def test_a_delete_the_api_fails_stops_the_load(
         stub_api: Any, sleep: Any) -> None:
-    stub_api.fake.failing_deletes = 1
+    stub_api.fake.faults["failing_deletes"] = 1
     with pytest.raises(urllib.error.HTTPError):
         _run(stub_api, sleep, *VISION_NET, *AT_ONCE)
 
@@ -164,7 +164,7 @@ def test_a_missing_key_is_exit_two(
 @pytest.mark.usefixtures("the_key")
 def test_a_listing_still_catching_up_is_read_again_after_a_pause(
         stub_api: Any, sleep: Any, pauses: list[float]) -> None:
-    stub_api.fake.stale_reads = 2
+    stub_api.fake.faults["stale_reads"] = 2
     _run(stub_api, sleep, *VISION_NET, "--settle-seconds", "10")
     assert pauses == [SETTLE_PAUSE_SECONDS]
 
@@ -172,5 +172,5 @@ def test_a_listing_still_catching_up_is_read_again_after_a_pause(
 @pytest.mark.usefixtures("the_key")
 def test_a_listing_that_never_catches_up_is_exit_one(
         stub_api: Any, sleep: Any) -> None:
-    stub_api.fake.stale_reads = 99
+    stub_api.fake.faults["stale_reads"] = 99
     assert _run(stub_api, sleep, *VISION_NET, *AT_ONCE) == 1

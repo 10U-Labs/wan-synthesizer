@@ -46,7 +46,7 @@ class Api:
             answer = response.read()
         return json.loads(answer) if answer else None
 
-    def call(self, method: str, path: str, body: Any = None) -> Any:
+    def _call(self, method: str, path: str, body: Any = None) -> Any:
         encoded = None if body is None else json.dumps(body).encode()
         for attempt in range(ATTEMPTS - 1):
             try:
@@ -57,6 +57,15 @@ class Api:
                 print(f"  {method} /{path} -> {refusal.code}, trying again", flush=True)
                 self._sleep(RETRY_PAUSE_SECONDS * 2 ** attempt)
         return self._once(method, path, encoded)
+
+    def get(self, path: str) -> Any:
+        return self._call("GET", path)
+
+    def post(self, path: str, body: Any) -> Any:
+        return self._call("POST", path, body)
+
+    def delete(self, path: str) -> None:
+        self._call("DELETE", path)
 
 
 def carriers_in(paths: Iterable[str]) -> set[str]:
@@ -126,22 +135,22 @@ def fiber_segments_of(repository: Path, name: str) -> list[dict[str, Any]]:
 
 
 def _create(api: Api, repository: Path, name: str) -> int:
-    created = int(api.call("POST", CARRIERS, {"name": name})["id"])
+    created = int(api.post(CARRIERS, {"name": name})["id"])
     print(f"{name}: created carrier {created}", flush=True)
     pops = pops_of(repository, name)
     for pop in pops:
-        api.call("POST", f"{CARRIERS}/{created}/pops", pop)
+        api.post(f"{CARRIERS}/{created}/pops", pop)
     print(f"{name}: added {len(pops)} PoPs", flush=True)
     segments = fiber_segments_of(repository, name)
     for segment in segments:
-        api.call("POST", f"{CARRIERS}/{created}/fiber-segments", segment)
+        api.post(f"{CARRIERS}/{created}/fiber-segments", segment)
     print(f"{name}: added {len(segments)} fiber segments", flush=True)
     return created
 
 
 def _delete(api: Api, name: str, carrier_id: int) -> None:
     try:
-        api.call("DELETE", f"{CARRIERS}/{carrier_id}")
+        api.delete(f"{CARRIERS}/{carrier_id}")
     except urllib.error.HTTPError as refusal:
         if refusal.code != 404:
             raise
@@ -163,7 +172,7 @@ def _ids_named(listing: Listing, name: str) -> list[int]:
 
 def settled(api: Api, expected: dict[str, list[int]], settle_seconds: float, sleep: Sleep) -> bool:
     for _ in range(int(settle_seconds // SETTLE_PAUSE_SECONDS) + 1):
-        listing = api.call("GET", CARRIERS)
+        listing = api.get(CARRIERS)
         if all(_ids_named(listing, name) == ids for name, ids in expected.items()):
             return True
         print("the listing has not caught up yet", flush=True)
@@ -198,7 +207,7 @@ def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
         print(f"{API_KEY_VARIABLE} is not set", file=sys.stderr, flush=True)
         return 2
     api = Api(args.api, key, sleep)
-    listing = api.call("GET", CARRIERS)
+    listing = api.get(CARRIERS)
     expected: dict[str, list[int]] = {}
     for name in sorted(_named(args)):
         expected[name] = load_carrier(api, args.repository, name, _ids_named(listing, name))

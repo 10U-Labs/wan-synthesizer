@@ -11,34 +11,37 @@ import pytest
 
 CARRIER = re.compile(r"^/carriers/(\d+)$")
 UNDER = re.compile(r"^/carriers/(\d+)/(pops|fiber-segments)$")
+POPS = "pops"
+FIBER_SEGMENTS = "fiber-segments"
+REFUSALS = "refusals"
+STALE_READS = "stale_reads"
+FAILING_DELETES = "failing_deletes"
 
 
 class FakeCarriers:
     def __init__(self, seeded: dict[int, str], phantoms: dict[int, str]) -> None:
         self.carriers: dict[int, str] = dict(seeded)
-        self.pops: dict[int, list[dict[str, Any]]] = {}
-        self.fiber_segments: dict[int, list[dict[str, Any]]] = {}
+        self.members: dict[str, dict[int, list[dict[str, Any]]]] = {POPS: {}, FIBER_SEGMENTS: {}}
         self.requests: list[tuple[str, str]] = []
-        self.refusals = 0
-        self.stale_reads = 0
-        self.failing_deletes = 0
+        self.faults = {REFUSALS: 0, STALE_READS: 0, FAILING_DELETES: 0}
         self._phantoms = dict(phantoms)
         self._stale = self.listing()
-        self._next = max([*seeded, *phantoms, 0]) + 1
+
+    def faulted(self, fault: str) -> bool:
+        if not self.faults[fault]:
+            return False
+        self.faults[fault] -= 1
+        return True
 
     def listing(self) -> list[dict[str, Any]]:
-        if self.stale_reads:
-            self.stale_reads -= 1
+        if self.faulted(STALE_READS):
             return list(self._stale)
         listed = {**self.carriers, **self._phantoms}
         return [{"id": key, "name": name} for key, name in sorted(listed.items())]
 
     def create(self, name: str) -> dict[str, Any]:
-        created = self._next
-        self._next += 1
+        created = max([*self.carriers, *self._phantoms, 0]) + 1
         self.carriers[created] = name
-        self.pops[created] = []
-        self.fiber_segments[created] = []
         return {"id": created, "name": name}
 
     def delete(self, carrier_id: int) -> bool:
@@ -49,8 +52,7 @@ class FakeCarriers:
     def add(self, carrier_id: int, kind: str, body: dict[str, Any]) -> bool:
         if carrier_id not in self.carriers:
             return False
-        held = self.pops if kind == "pops" else self.fiber_segments
-        held.setdefault(carrier_id, []).append(body)
+        self.members[kind].setdefault(carrier_id, []).append(body)
         return True
 
 
@@ -73,8 +75,7 @@ class _Handler(BaseHTTPRequestHandler):
     def _refused(self) -> bool:
         fake = self._fake()
         fake.requests.append((self.command, self.path))
-        if fake.refusals:
-            fake.refusals -= 1
+        if fake.faulted(REFUSALS):
             self._answer(429, {"message": "Too Many Requests"})
             return True
         if self.headers.get("Authorization") != "Bearer the-key":
@@ -105,8 +106,7 @@ class _Handler(BaseHTTPRequestHandler):
         if self._refused():
             return
         matched = CARRIER.match(self.path)
-        if self._fake().failing_deletes:
-            self._fake().failing_deletes -= 1
+        if self._fake().faulted(FAILING_DELETES):
             self._answer(500, {"message": "Failed to delete the carrier"})
         elif matched and self._fake().delete(int(matched.group(1))):
             self._answer(204)

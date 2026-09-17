@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
+from repo_utils import REPO_ROOT
 from etl.carriers.load_carriers import (
     carrier_files, carriers_in, every_carrier, fiber_segment_body, fiber_segments_of, pop_body,
     pops_of,
 )
-from repo_utils import REPO_ROOT
 
 SIX_CARRIERS = ["cogent", "dcn", "lumen", "uniti", "vision_net", "zayo"]
 
@@ -61,7 +61,7 @@ def test_zayo_is_three_files() -> None:
 
 
 def test_an_unknown_carrier_is_no_files() -> None:
-    assert carrier_files(REPO_ROOT, "nobody") == []
+    assert not carrier_files(REPO_ROOT, "nobody")
 
 
 def test_the_pops_of_a_carrier_are_every_row_of_its_csv() -> None:
@@ -69,7 +69,7 @@ def test_the_pops_of_a_carrier_are_every_row_of_its_csv() -> None:
 
 
 def test_a_carrier_without_a_pops_csv_has_no_pops(tmp_path: Path) -> None:
-    assert pops_of(tmp_path, "vision_net") == []
+    assert not pops_of(tmp_path, "vision_net")
 
 
 def test_the_fiber_segments_of_a_carrier_are_terrestrial_then_submarine() -> None:
@@ -78,4 +78,4 @@ def test_the_fiber_segments_of_a_carrier_are_terrestrial_then_submarine() -> Non
 
 
 def test_a_carrier_without_a_fiber_segments_csv_has_no_fiber_segments(tmp_path: Path) -> None:
-    assert fiber_segments_of(tmp_path, "zayo") == []
+    assert not fiber_segments_of(tmp_path, "zayo")
