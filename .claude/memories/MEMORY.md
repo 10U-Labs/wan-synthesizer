@@ -46,6 +46,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 - [push-over-ssh-not-https](push-over-ssh-not-https.md) — an HTTPS push carrying a workflow file is refused for want of the `workflow` scope, and the fix is the remote URL rather than the token
 - [an-issue-is-closed-by-its-commit](an-issue-is-closed-by-its-commit.md) — a `Closes #N` line in the commit that solves it, one line per issue; naming an issue in prose references it without closing it
 - [an-issue-whose-premise-is-false-is-closed-with-the-finding](an-issue-whose-premise-is-false-is-closed-with-the-finding.md) — a defect the code cannot produce is closed by a comment with the argument and the measurement, never by a behaviour-identical refactor whose test cannot go red
+- [an-issue-follows-its-code-across-repositories](an-issue-follows-its-code-across-repositories.md) — an issue about code that moved to `api.10ulabs.com` is re-read against the code there and transferred with `gh issue transfer` if it still holds, or closed here with the finding if the move dissolved it; create any missing label there first, and read an issue through `gh api` since `gh issue view --comments` prints nothing
 
 ### Issues
 
