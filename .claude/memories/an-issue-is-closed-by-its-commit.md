@@ -29,6 +29,14 @@ pushed, answer it forward the way any other rejected push is answered, per
 [a-rejected-push-is-fixed-forward](a-rejected-push-is-fixed-forward.md): carry
 the lines in the next commit rather than amending a pushed message.
 
+Nine words close an issue: `fix`, `fixes`, `fixed`, `close`, `closes`,
+`closed`, `resolve`, `resolves` and `resolved`, in any case, from anywhere
+in the message, the subject included. Brackets do not stop them, so a
+subject ending `fixes the loader (#N)` closes that issue. A commit that only
+mentions an issue writes `Refs #N` and keeps those nine words away from the
+number. Once the runs are clean, check that the issues did close, per
+[confirming-a-push-closed-its-issues](confirming-a-push-closed-its-issues.md).
+
 The rule is stated outside this repository too — `.claude/memories/commits-go-straight-to-main.md`
 in `10ulabs.com` and the `One closing line per issue` section of `CLAUDE.md` in
 `assert-no-comments` — which is why a session working here can meet it for the

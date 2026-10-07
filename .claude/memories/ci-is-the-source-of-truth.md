@@ -7,7 +7,7 @@ metadata:
 
 # CI is the source of truth
 
-Do not run tests, linters or builds locally to verify a change — write the code and the tests, commit, push to `main`, and read the run with `gh run list` / `gh run watch` / `gh run view --log-failed`. Local runs cost tokens; CI is free and checks every gate at once.
+Do not run tests, linters or builds locally to verify a change — write the code and the tests, commit, push to `main`, and read the run with `gh run list` and `gh run view --log-failed`. The wait for the run is a background call, never a foreground `gh run watch`, per [a-wait-runs-in-the-background](a-wait-runs-in-the-background.md). Local runs cost tokens; CI is free and checks every gate at once.
 
 A push can trigger several path-filtered workflows. The change is done when each workflow that fired is green, not when the first one is.
 

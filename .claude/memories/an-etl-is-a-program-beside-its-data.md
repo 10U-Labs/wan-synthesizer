@@ -61,10 +61,6 @@ one tool that carries it lives here, one per dataset.
 - The runner's system `botocore` is old and calls `utcnow()`, so a job
   that runs boto3 under `--pythonwarnings=error` does `pip install
   --upgrade boto3`.
-- A wait for CI longer than a minute runs in the background (`sleep`
-  loops in a `run_in_background` shell), so the autopilot reminders
-  keep firing; the API's memory `a-wait-runs-in-the-background` says
-  the same.
 
-Related: [[write-the-test-first]], [[cover-every-tier-the-change-touches]],
-[[where-a-test-runs-follows-what-starts-it]].
+Related: [write-the-test-first](write-the-test-first.md), [cover-every-tier-the-change-touches](cover-every-tier-the-change-touches.md),
+[where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md).

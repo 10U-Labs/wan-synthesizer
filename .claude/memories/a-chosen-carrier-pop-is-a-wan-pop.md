@@ -18,7 +18,6 @@ metadata:
   - [The verb is select, not seat](#the-verb-is-select-not-seat)
   - [Where backbone survives](#where-backbone-survives)
   - [Where node survives](#where-node-survives)
-  - [What this cost on the wire](#what-this-cost-on-the-wire)
   - [Nothing mechanical checks this](#nothing-mechanical-checks-this)
 
 ## Overview
@@ -88,26 +87,9 @@ GitHub issue #147 established a directive word has to: the prime directive read
 issue #161 settled when `/tenant-nodes` and `/provider-nodes` became
 `/tenant-sites` and `/provider-regions`.
 
-**The code has moved.** GitHub issue #186 closed this on 2026-09-11 and `seat`
-now appears nowhere outside the city of Seattle. The knob `seat_cap` took the
-published name it is assigned from, `max_wan_pop_count`, through `search_plan`,
-`backbone`, `survivable`, `ceiling` and `test_published_syntheses`; the nouns
-became `validation.capped_wan_pops`, `circuits_clear_of_a_capped_wan_pop` and
-`survivable._wan_pops_the_carriers_can_give_two_circuits`; the verbs at
-`synthesize.py:59`, `synthesize.py:290`, `validation.py:299` and
-`coverage.py:152` became *select*; and `offnet.SeatedOffNetSites` became
-`RealizedOffNetSites` carrying `off_net_ids` (and `RealizedOffNetPops` under GitHub issue #229 once a site was a tenant's alone), taking its shape from the sibling
-`on_net_fabrication.FabricatedOnNetPops` and its `on_net_ids` that
-`stages.dual_home` calls beside it. Off-net prose took `codec.OFF_NET_KIND`'s word
-*site* rather than *select*, because building a local-fiber twin is not the
-selection the directive names.
-
-No published resource name moved — the five hits in the spec were prose
-inside `summary` and `description` — so it was a read-and-rename commit. One test name was written rather than substituted:
-`test_no_synthesis_stopped_short_of_its_target_with_a_seat_left_to_spend` was
-built on the countable-slot sense, and it is now
-`test_no_synthesis_missed_its_coverage_target_below_the_wan_pops_it_was_allowed`,
-which is what it asserts.
+`seat` now appears nowhere outside the city of Seattle. Off-net prose takes
+`codec.OFF_NET_KIND`'s word rather than *select*, because building a
+local-fiber twin is not the selection the directive names.
 
 ### Where backbone survives
 
@@ -135,19 +117,6 @@ check once walked. The same exemption
 served collections `/tenant-nodes` and `/provider-nodes` still say it and are
 wrong under any answer, because a tenant's site is not a PoP at all; that is
 GitHub issue #161 and it is open.
-
-### What this cost on the wire
-
-Five published resources were renamed and every caller has to move:
-`backbone-nodes` → `wan-pops`, `forced-backbone-nodes` → `forced-wan-pops`,
-`prohibited-backbone-nodes` → `prohibited-wan-pops`,
-`degree-exempt-backbone-nodes` → `degree-exempt-wan-pops`, and
-`backbone-node-count` → `wan-pop-count`. The last four are also keys in `etc/`,
-which moved with them — `backbone.forced.wan_pops`,
-`backbone.prohibited.wan_pops`, `backbone.wan_pop_count`, and the `settings` keys
-`wan_pop_search_memory_share` and `bytes_per_wan_pop_combination`. One tenant was
-named for the word: `etc/two_node.yml` became `etc/two_pop.yml`, label `Two-PoP`,
-with `data/tenants/two_pop.csv` beside it.
 
 ### Nothing mechanical checks this
 
