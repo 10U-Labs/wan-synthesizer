@@ -38,6 +38,6 @@ Some changes go in a push of their own and are never batched:
 
 - A change under a path that several workflows fire on or read: `lib/python/`, `test/conftest.py`, `test/lib/` or `.github/workflows/`. Such a change alters what verifies every stack, so its fallout would hide the batch's own results.
 - The fix for a red run.
-- A problem met outside the batch's stack, which the autopilot solves rather than files: it is fixed in a push of its own once the batch has landed.
+- A problem met outside the batch's stack that the batch cannot move forward without. It is filed, then solved in a push of its own before the batch, per [solving-what-a-session-finds](solving-what-a-session-finds.md). One that does not block is filed and left to the loop.
 
 A change under `.claude/`, such as a memory or a skill, can join any batch, since only the Markdown lint reads it.

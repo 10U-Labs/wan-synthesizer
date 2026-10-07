@@ -59,9 +59,11 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 - [issues-have-no-house-style](issues-have-no-house-style.md) — no fixed sections; a part of the body takes a `##` heading, never a bold lead sentence
 - [issues-define-their-terms](issues-define-their-terms.md) — written for a reader who opens it from the list, each name and figure tied to the problem
 - [issues-state-conclusions-not-the-trail](issues-state-conclusions-not-the-trail.md) — a settled question is rewritten as its answer, and the options it ruled out are cut
-- [what-does-not-get-filed](what-does-not-get-filed.md) — a problem met while working is solved, a defect the commit fixes is stated in it, and one an open issue covers is cited
+- [solving-what-a-session-finds](solving-what-a-session-finds.md) — file what a session finds, one problem per issue, and solve one now only if the work in hand cannot move forward without it
+- [what-does-not-get-filed](what-does-not-get-filed.md) — a defect the commit fixes is stated in it, and one an open issue covers is cited
 - [research-lives-in-issues](research-lives-in-issues.md) — a plan of discovery that outlasts the session is filed as it goes, with its method
 - [an-analysis-issue-asks-for-analysis-only](an-analysis-issue-asks-for-analysis-only.md) — results in a comment, and nothing filed or changed on a finding without a go-ahead
+- [code-is-changed-only-in-this-repository](code-is-changed-only-in-this-repository.md) — no edit, commit or push in another repository and no reading its runs; an issue can be filed or transferred there
 - [file-an-issue-where-it-belongs](file-an-issue-where-it-belongs.md) — in the repository that owns the code or resource, which for the synthesizer and its routes is `api.10ulabs.com`
 - [no-wrapping-outside-md-files](no-wrapping-outside-md-files.md) — an issue body or comment has one line per paragraph
 - [a-new-check-is-its-own-assert-repository](a-new-check-is-its-own-assert-repository.md) — a rule nothing checks is answered by a new `assert-*` repository cloned from the newest, which a person creates
@@ -105,6 +107,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 ### Sessions
 
 - [long-running-commands-in-the-background](long-running-commands-in-the-background.md) — anything past a minute runs in the background with a time limit and its output in the scratchpad, never followed by a foreground wait
+- [every-task-is-indivisible](every-task-is-indivisible.md) — a task on the list names one action, counted from its subject rather than its purpose, and is split before work starts
 - [writing-code-in-the-main-session](writing-code-in-the-main-session.md) — the reminders reach only the main session, so subagents do read-only searches and nothing else
 
 ### Infrastructure
