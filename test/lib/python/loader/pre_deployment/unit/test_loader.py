@@ -168,44 +168,48 @@ def test_a_missing_key_is_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     assert key() == ""
 
 
-def test_the_options_default_to_the_live_api_over_the_whole_repository() -> None:
-    parsed, _ = started([], [].append, "load-test", "Test the shared options.")
+def test_the_options_default_to_the_live_api_over_the_whole_repository(
+        pauses: list[float]) -> None:
+    parsed, _ = started([], pauses.append, "load-test", "Test the shared options.")
     assert (parsed.api, parsed.repository, parsed.since, parsed.settle_seconds) == (
         DEFAULT_API, REPO_ROOT, "", DEFAULT_SETTLE_SECONDS)
 
 
-def test_the_settle_seconds_are_read_as_a_number() -> None:
-    parsed, _ = started(["--settle-seconds", "7"], [].append, "load-test", "Test the options.")
+def test_the_settle_seconds_are_read_as_a_number(pauses: list[float]) -> None:
+    parsed, _ = started(["--settle-seconds", "7"], pauses.append, "load-test", "Test the options.")
     assert parsed.settle_seconds == 7.0
 
 
-def test_an_appended_option_collects_every_value_given() -> None:
+def test_an_appended_option_collects_every_value_given(pauses: list[float]) -> None:
     parsed, _ = started(
-        ["--carrier", "zayo", "--carrier", "lumen"], [].append, "load-test", "Test the options.",
-        ["--carrier"])
+        ["--carrier", "zayo", "--carrier", "lumen"], pauses.append, "load-test",
+        "Test the options.", ["--carrier"])
     assert parsed.carrier == ["zayo", "lumen"]
 
 
-def test_the_start_is_keyed_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_start_is_keyed_from_the_environment(
+        monkeypatch: pytest.MonkeyPatch, pauses: list[float]) -> None:
     monkeypatch.setenv(API_KEY_VARIABLE, "the-key")
-    assert isinstance(started([], [].append, "load-test", "Test the options.")[1], Api)
+    assert isinstance(started([], pauses.append, "load-test", "Test the options.")[1], Api)
 
 
-def test_a_missing_key_gives_no_api(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_missing_key_gives_no_api(
+        monkeypatch: pytest.MonkeyPatch, pauses: list[float]) -> None:
     monkeypatch.delenv(API_KEY_VARIABLE, raising=False)
-    assert keyed_api(BASE, [].append) is None
+    assert keyed_api(BASE, pauses.append) is None
 
 
 def test_a_missing_key_is_said_on_stderr(
-        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+        pauses: list[float]) -> None:
     monkeypatch.delenv(API_KEY_VARIABLE, raising=False)
-    keyed_api(BASE, [].append)
+    keyed_api(BASE, pauses.append)
     assert capsys.readouterr().err == "the environment carries no key for the API\n"
 
 
-def test_a_key_gives_an_api(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_key_gives_an_api(monkeypatch: pytest.MonkeyPatch, pauses: list[float]) -> None:
     monkeypatch.setenv(API_KEY_VARIABLE, "the-key")
-    assert isinstance(keyed_api(BASE, [].append), Api)
+    assert isinstance(keyed_api(BASE, pauses.append), Api)
 
 
 def test_a_place_row_becomes_its_six_location_fields() -> None:
