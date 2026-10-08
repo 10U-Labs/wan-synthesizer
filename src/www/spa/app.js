@@ -88,8 +88,8 @@ function showLegendTenant(label) {
   }
 }
 
-function styleFor(site) {
-  return ROLE_STYLE[site.tier_role] || null;
+function styleFor(vertex) {
+  return ROLE_STYLE[vertex.tier_role] || null;
 }
 
 const TIER_PREFIX = {
@@ -100,21 +100,21 @@ function cityOf(name) {
   return name.replace(/,\s*[^,]+$/, "");
 }
 
-function cityName(site) {
-  return cityOf(site.name);
+function cityName(vertex) {
+  return cityOf(vertex.name);
 }
 
-function displayName(site) {
-  const prefix = TIER_PREFIX[site.tier_role];
-  return prefix ? `${prefix} ${cityName(site)}` : site.name;
+function displayName(vertex) {
+  const prefix = TIER_PREFIX[vertex.tier_role];
+  return prefix ? `${prefix} ${cityName(vertex)}` : vertex.name;
 }
 
-function siteLabel(site) {
-  const region = site.country === "United States" ? site.state : site.country;
-  const located = site.municipality && region
-    ? `<br>${site.municipality}, ${region}`
+function vertexLabel(vertex) {
+  const region = vertex.country === "United States" ? vertex.state : vertex.country;
+  const located = vertex.municipality && region
+    ? `<br>${vertex.municipality}, ${region}`
     : "";
-  return `<strong>${displayName(site)}</strong>${located}`;
+  return `<strong>${displayName(vertex)}</strong>${located}`;
 }
 
 function homingLabel(source, target) {
@@ -161,8 +161,8 @@ function add(layer) {
   drawn.push(layer);
 }
 
-function siteMarker(site, coords) {
-  const style = styleFor(site);
+function vertexMarker(vertex, coords) {
+  const style = styleFor(vertex);
   if (!style) {
     return null;
   }
@@ -172,7 +172,7 @@ function siteMarker(site, coords) {
     fillColor: style.color,
     fillOpacity: 0.85,
     weight: 1,
-  }).bindTooltip(siteLabel(site));
+  }).bindTooltip(vertexLabel(vertex));
 }
 
 function nearLon(lon) {
@@ -186,8 +186,8 @@ function nearLon(lon) {
   return shifted;
 }
 
-function displayCoords(site) {
-  return [site.latitude, nearLon(site.longitude)];
+function displayCoords(vertex) {
+  return [vertex.latitude, nearLon(vertex.longitude)];
 }
 
 const HOMED_ROLE = {
@@ -211,11 +211,11 @@ function vertices(rows, tierRole) {
   return rows.map((row) => ({ ...row, tier_role: tierRole }));
 }
 
-function drawSites(sites) {
+function drawVertices(dots) {
   const coords = [];
-  for (const site of sites) {
-    const at = displayCoords(site);
-    const marker = siteMarker(site, at);
+  for (const vertex of dots) {
+    const at = displayCoords(vertex);
+    const marker = vertexMarker(vertex, at);
     if (marker) {
       add(marker);
       coords.push(at);
@@ -387,12 +387,12 @@ async function getJSON(path) {
   return response.json();
 }
 
-function showCounts(sites) {
+function showCounts(dots) {
   const counts = document.getElementById("counts");
   const tally = { wan_pop: 0, tenant: 0, provider: 0 };
-  for (const site of sites) {
-    if (tally[site.tier_role] !== undefined) {
-      tally[site.tier_role] += 1;
+  for (const vertex of dots) {
+    if (tally[vertex.tier_role] !== undefined) {
+      tally[vertex.tier_role] += 1;
     }
   }
   counts.textContent =
@@ -434,7 +434,7 @@ async function render(entry) {
   const byKey = indexByKey(dots);
   drawFiber(fiber, circuitsBySegment(circuits), byKey);
   drawHomings(homings, byKey);
-  const points = drawSites(dots);
+  const points = drawVertices(dots);
 
   if (points.length) {
     map.fitBounds(points, { padding: [30, 30] });
