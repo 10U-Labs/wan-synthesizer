@@ -211,7 +211,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pytest 'python-hcl2<8' pyyaml
+        run: pip install pytest 'python-hcl2<8'
       - name: Hold the declaration to the grants the workflows need
         run: >-
           PYTHONPATH=.:lib/python

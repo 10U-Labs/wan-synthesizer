@@ -240,7 +240,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install --upgrade boto3 pytest pytest-cov 'python-hcl2<8' pyyaml
+        run: pip install --upgrade pytest pytest-cov
       - name: Run unit tests with a 100% coverage gate
         run: >-
           PYTHONPATH=.:lib/python:src:test

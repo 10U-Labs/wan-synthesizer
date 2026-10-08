@@ -216,7 +216,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pytest pytest-cov pyyaml
+        run: pip install pytest pytest-cov
       - name: Run the unit and integration tiers with a full coverage gate
         run: >-
           PYTHONPATH=.:lib/python:src

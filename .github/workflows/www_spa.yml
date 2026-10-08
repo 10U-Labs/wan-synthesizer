@@ -179,7 +179,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pytest pyyaml 'python-hcl2<8'
+        run: pip install pytest
       - name: Run unit tests
         run: >-
           PYTHONPATH=.:lib/python
