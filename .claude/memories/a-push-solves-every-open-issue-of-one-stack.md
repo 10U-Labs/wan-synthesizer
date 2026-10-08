@@ -20,7 +20,7 @@ beside `scripts.yml`:
 | `etl_syntheses.yml` | `etc/`, `data/tenants/`, `src/etl/syntheses/`, `test/etl/syntheses/` |
 | `www_identity.yml` | `src/www/identity/`, `test/www/identity/` |
 | `www_spa.yml` | `src/www/spa/`, `test/www/spa/` |
-| `documentation.yml` | the Markdown outside `.claude/`, `test/documentation/` |
+| `documentation.yml` | the Markdown outside `.claude/` |
 
 **Why:**
 
