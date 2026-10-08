@@ -8,7 +8,7 @@ metadata:
 # A memory line never opens with an issue number
 
 A line in a memory that opens with `#170` or `#190` is read by markdownlint
-as an atx heading with no space after the hash, and the `documentation`
+as an atx heading with no space after the hash, and the `markdownlint`
 run goes red on `MD018`.
 
 **Why:** it happened on 6c504ad3, in

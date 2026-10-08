@@ -1,7 +1,7 @@
 ---
 concurrency:
   cancel-in-progress: true
-  group: documentation-${{ github.ref }}
+  group: markdownlint-${{ github.ref }}
 jobs:
   assert-no-inline-directives:
     runs-on: ubuntu-latest
@@ -45,16 +45,16 @@ jobs:
             line-length: disable,
             new-line-at-end-of-file: enable,
             truthy: {allowed-values: ["true", "false", "on"]}}}
-          file_or_dir: .github/workflows/documentation.yml
+          file_or_dir: .github/workflows/markdownlint.yml
           strict: "true"
-name: documentation
+name: markdownlint
 on:
   push:
     branches: [main]
     paths:
       - '**/*.md'
       - .claude/**/*.md
-      - .github/workflows/documentation.yml
+      - .github/workflows/markdownlint.yml
   workflow_dispatch: {}
 permissions:
   contents: read

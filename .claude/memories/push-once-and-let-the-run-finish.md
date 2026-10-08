@@ -11,7 +11,7 @@ Before pushing, check `gh run list --limit 1` and wait for any run still in
 progress, per [a-wait-runs-in-the-background](a-wait-runs-in-the-background.md).
 Read a run only once `gh run view <id> --json status` says `completed`.
 
-**Why:** `documentation.yml`, `scripts.yml`, `www_identity.yml` and
+**Why:** `markdownlint.yml`, `scripts.yml`, `www_identity.yml` and
 `www_spa.yml` set `cancel-in-progress: true`, so a second push while one of them
 runs cancels the first commit's run, and that commit is never verified or, for
 `www_identity` and `www_spa`, never deployed by its own run. The three ETL

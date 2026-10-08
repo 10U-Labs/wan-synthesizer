@@ -26,7 +26,7 @@ wrapped line open with something Markdown reads as a block marker: a `#`, per
 [a-memory-line-never-opens-with-an-issue-number](a-memory-line-never-opens-with-an-issue-number.md),
 a `>`, a lone `-`, `+` or `*`, or a number followed by a full stop.
 markdownlint's MD013 cannot tell a paragraph from a list item, so
-`documentation.yml` keeps it disabled with `--disable MD013` rather than
+`markdownlint.yml` keeps it disabled with `--disable MD013` rather than
 satisfying it by rewrapping everything. Nothing checks the width yet, so it
 holds only as long as each change keeps it, and issue #269 asks for the
 `assert-*` repository that would.
