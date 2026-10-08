@@ -1,6 +1,6 @@
 ---
 name: a-push-solves-every-open-issue-of-one-stack
-description: "A batch is every open issue whose fix lands in one workflow's stack, solved in the working tree and pushed as one commit with one Closes line per issue; lib/python, test/conftest.py, test/lib and .github/workflows go in a push of their own, as does a red-run fix, except a new lib/python definition whose first caller is the batch"
+description: "A batch is every open issue whose fix lands in one workflow's stack, solved in the working tree and pushed as one commit with one Closes line per issue; a red-run fix goes in a push of its own"
 metadata:
   type: feedback
 ---
@@ -42,7 +42,6 @@ reminder.
 
 Some changes go in a push of their own and are never batched:
 
-- A change under a path that several workflows fire on or read: `lib/python/`, `test/conftest.py`, `test/lib/` or `.github/workflows/`. Such a change alters what verifies every stack, so its fallout would hide the batch's own results. The one exception is a new `lib/python` definition whose first caller is the batch, such as the `Api.put` the carriers ETL needed for issues #253 and #254: it ships with that caller, since `assert-python-definition-is-used-outside-own-tests` refuses a definition nothing outside `test/lib/python/<module>` names, and a definition nothing called yet can break no other stack.
 - The fix for a red run.
 - A problem met outside the batch's stack that the batch cannot move forward without. It is filed, then solved in a push of its own before the batch, per [solving-what-a-session-finds](solving-what-a-session-finds.md). One that does not block is filed and left to the loop.
 

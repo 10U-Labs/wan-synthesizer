@@ -14,8 +14,9 @@ tested by a `test-lib-<module>` job in `scripts.yml` running
 `test/lib/python/<module>/` alone with `--cov=lib/python/<module>` at
 `--cov-fail-under=100`, so a module that loses coverage fails by name
 rather than being carried by a consumer's numbers. `scripts.yml` fires
-on `lib/python/**` and `test/**`, and its `mypy-source`,
-`pylint-source` and `copy-paste-source` jobs read `lib/python` alone.
+on `lib/python/**` and `test/**`, and its lint jobs read `lib/python`
+beside `src/` or `test/`, per
+[lint-jobs-take-whole-roots](lint-jobs-take-whole-roots.md).
 
 **Why:** run a module's tests only inside the `pytest` command of the
 tests that import it and a defect in the module reaches the reader as a

@@ -24,7 +24,7 @@ to undo the copy. The rule comes from `deltahdl` and was adopted here on
 **How to apply:** before staging, look for the counterpart of each function or
 test the change touched, above all the same file in a sibling ETL. If the change
 leaves a run of lines equal in both, move it into one function both call; code
-two stacks share goes under `lib/python/`, in a push of its own, per
-[shared-modules-are-tested-first](shared-modules-are-tested-first.md) and
-[a-push-solves-every-open-issue-of-one-stack](a-push-solves-every-open-issue-of-one-stack.md).
+two stacks share goes under `lib/python/`, per
+[shared-modules-are-tested-first](shared-modules-are-tested-first.md), in the
+same commit as its callers.
 For tests, share the fixture rather than the assertions.
