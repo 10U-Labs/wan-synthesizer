@@ -2,7 +2,10 @@
 name: an-action-is-preferred-to-a-package-install
 description: "A workflow step runs a tool through its published action, as every assert-* tool and yamllint do, and keeps a pip or npm install only where no action takes what the job needs, as for markdownlint-cli, jscpd, mypy, pylint and pytest"
 metadata:
+  node_type: memory
   type: feedback
+  originSessionId: 202eeb82-aaa0-4ef8-aa11-fa6a10e426e4
+  modified: 2026-10-08T01:22:44.326Z
 ---
 
 # An action is preferred to a package install
@@ -32,6 +35,4 @@ dependency a tool imports, such as the `boto3` and `pytest` that
 `assert-pytest-fixture-is-requested` collects with, is installed in an earlier
 step and an `env:` on the action's step carries a `PYTHONPATH`.
 `ibiqlik/action-yamllint` runs the `yamllint` the runner image carries and
-installs nothing. Each workflow's unit tests hold that no step installs an
-`assert-*` tool or `yamllint` with pip, except `scripts.yml`, which has no
-workflow test file.
+installs nothing.

@@ -1,6 +1,6 @@
 ---
 name: a-written-plan-is-decided
-description: An issue is labelled needs decision only when CLAUDE.md, the memories, the issue, its linked issues and the code leave a real choice open; a plan the issue already states is decided, and so is a question of order
+description: "An issue is labelled needs decision only when it needs a person, for a choice CLAUDE.md, the memories, the issue, its linked issues and the code leave open or for a step a session cannot take; a plan the issue already states is decided, and so is a question of order"
 metadata:
   type: feedback
 ---
@@ -13,6 +13,12 @@ decision` only for a choice that CLAUDE.md's prime directive, the memories in
 this directory, the issue itself, the issues it links and the code all leave
 open. A question they answer is acted on, with its answer and what the answer
 rests on written into the issue.
+
+The label means the issue needs a person, which is the same thing as needing a
+decision. So it also marks an issue whose plan is settled but has a step only a
+person can take, such as creating a new `assert-*` repository per
+[a-new-check-is-its-own-assert-repository](a-new-check-is-its-own-assert-repository.md).
+No separate label exists for that case. The body says what the person has to do.
 
 **Why:** a question the rules already answer has its answer. Labelled `needs
 decision`, it parks the issue on a person who can only restate that answer. On
@@ -27,11 +33,12 @@ had just filed already settled. Questions of order are the usual case: the
 here on 2026-10-07 under issue #255.
 
 **How to apply:** before labelling, read the issue's title and body: if they
-name the outcome, the label is wrong. Test the question against the directive
-first, then the memories, then the code. Test its premise as well as its
-options: a question about how two things relate does not arise if one of them is
-only an artifact of the implementation, and then the issue is a defect. That the
-work changes live data or carries a small cost is not on its own a reason to
-label it; a consequence the plan carries belongs in the body as a note, not as a
-question. Once a person does decide, the decision rewrites the issue, per
+name the outcome and a session can take every step, the label is wrong. Test the
+question against the directive first, then the memories, then the code. Test its
+premise as well as its options: a question about how two things relate does not
+arise if one of them is only an artifact of the implementation, and then the
+issue is a defect. That the work changes live data or carries a small cost is
+not on its own a reason to label it; a consequence the plan carries belongs in
+the body as a note, not as a question. Once a person does decide, the decision
+rewrites the issue, per
 [a-decision-rewrites-the-issue](a-decision-rewrites-the-issue.md).

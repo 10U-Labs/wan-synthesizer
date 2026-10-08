@@ -1,8 +1,11 @@
 ---
 name: an-assert-is-its-own-job
-description: Each assert-* check runs in a job of its own named after its tool, one job per tool per workflow, and a linter job holds only its lint step
+description: "Each assert-* check runs in a job of its own named after its tool, one job per tool per workflow, and a linter job holds only its lint step"
 metadata:
+  node_type: memory
   type: feedback
+  originSessionId: 202eeb82-aaa0-4ef8-aa11-fa6a10e426e4
+  modified: 2026-10-08T01:22:40.488Z
 ---
 
 # An assert is its own job
@@ -24,7 +27,5 @@ here on 2026-10-07 under issue #262, when seven assert steps came out of the
 
 **How to apply:** a new assert, or a new linter an existing assert should guard,
 goes in the tool's job, which is created when the workflow has none. A job that
-deploys or loads lists the new job in its `needs`. Each workflow's unit tests
-hold that no job but one named for an `assert-*` tool runs an `assert-*` action,
-except `scripts.yml`, which has no workflow test file. How the assert runs is
+deploys or loads lists the new job in its `needs`. How the assert runs is
 [an-action-is-preferred-to-a-package-install](an-action-is-preferred-to-a-package-install.md).

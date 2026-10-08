@@ -40,6 +40,7 @@ and a line in this index.
 - [an-action-is-preferred-to-a-package-install](an-action-is-preferred-to-a-package-install.md) — every `assert-*` tool runs as `10U-Labs/<tool>@latest` and every YAML lint as `ibiqlik/action-yamllint@v3`; `markdownlint-cli`, `jscpd`, `mypy`, `pylint` and `pytest` stay installs because no action takes what their jobs need
 - [an-assert-is-its-own-job](an-assert-is-its-own-job.md) — each `assert-*` check runs in a job named after its tool, one per tool per workflow, and a linter job holds only its lint step
 - [where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md) — a test runs in the workflow the change it guards arrives on, and one that already runs in two needs no cross-listed `paths`
+- [github-workflows-have-no-yaml-tests](github-workflows-have-no-yaml-tests.md) — no pytest file reads a workflow's YAML to check its triggers, jobs or steps; the programs a workflow runs are what get tested
 
 ### Comments
 
@@ -63,7 +64,7 @@ and a line in this index.
 ### Issues
 
 - [an-issue-is-split-by-problem-not-by-fix](an-issue-is-split-by-problem-not-by-fix.md) — one indivisible problem per issue, never merged to cut the count; batches bring issues together
-- [a-written-plan-is-decided](a-written-plan-is-decided.md) — `needs decision` only for a choice the directive, the memories, the issue and the code leave open; a plan the issue states is decided
+- [a-written-plan-is-decided](a-written-plan-is-decided.md) — `needs decision` marks an issue that needs a person, for a choice the directive, the memories, the issue and the code leave open or for a step a session cannot take; a plan the issue states is decided
 - [a-decision-rewrites-the-issue](a-decision-rewrites-the-issue.md) — a person's decision goes into the title and body and the label comes off, never a comment
 - [issues-have-no-house-style](issues-have-no-house-style.md) — no fixed sections; a part of the body takes a `##` heading, never a bold lead sentence
 - [issues-define-their-terms](issues-define-their-terms.md) — written for a reader who opens it from the list, each name and figure tied to the problem
