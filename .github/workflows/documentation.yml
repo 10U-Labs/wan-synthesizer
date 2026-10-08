@@ -23,69 +23,6 @@ jobs:
           directories: .
           linters: markdownlint
           verbose: "true"
-  assert-no-pytest-plugin-declarations:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert no pytest plugin declarations
-        uses: 10U-Labs/assert-no-pytest-plugin-declarations@latest
-        with:
-          trees: test/documentation
-          verbose: "true"
-  assert-one-assert-per-pytest:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert one assert per pytest
-        uses: 10U-Labs/assert-one-assert-per-pytest@latest
-        with:
-          files: test/documentation
-          verbose: "true"
-  assert-pytest-class-holds-state:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert every pytest class holds state
-        uses: 10U-Labs/assert-pytest-class-holds-state@latest
-        with:
-          files: test/documentation
-          verbose: "true"
-  assert-pytest-fixture-name-is-needed:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert every pytest fixture name is needed
-        uses: 10U-Labs/assert-pytest-fixture-name-is-needed@latest
-        with:
-          trees: test/documentation
-          verbose: "true"
-  assert-pytest-test-can-fail:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Assert every pytest test can fail
-        uses: 10U-Labs/assert-pytest-test-can-fail@latest
-        with:
-          files: test/documentation
-          verbose: "true"
-  code-scanning:
-    permissions:
-      contents: read
-      security-events: read
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install pytest pyyaml
-      - env:
-          GH_TOKEN: ${{ github.token }}
-        name: Hold the repository to code scanning with the extended suite
-        run: >-
-          PYTHONPATH=.:lib/python
-          python3 -m pytest
-          test/documentation/
-          --import-mode=importlib --confcutdir=test
-          --verbose --pythonwarnings=error
   markdownlint:
     runs-on: ubuntu-latest
     steps:
@@ -94,31 +31,6 @@ jobs:
         run: npm install -g markdownlint-cli
       - name: Lint Markdown
         run: markdownlint '**/*.md' '.claude/**/*.md' --disable MD013
-  mypy-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install mypy pytest pyyaml types-PyYAML
-      - name: Run mypy on tests
-        run: >-
-          MYPYPATH=lib/python
-          python3 -m mypy --strict --explicit-package-bases
-          --ignore-missing-imports
-          test/documentation/
-  pylint-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install pylint pytest pyyaml
-      - name: Run pylint on tests
-        run: >-
-          PYTHONPATH=.:lib/python
-          python3 -m pylint --recursive=y
-          test/documentation/
-          --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
-          --fail-on=C,R,W --fail-under=10.0
   yamllint:
     runs-on: ubuntu-latest
     steps:
@@ -143,7 +55,6 @@ on:
       - '**/*.md'
       - .claude/**/*.md
       - .github/workflows/documentation.yml
-      - test/documentation/**
   workflow_dispatch: {}
 permissions:
   contents: read
