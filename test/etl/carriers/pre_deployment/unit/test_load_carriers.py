@@ -6,8 +6,7 @@ import pytest
 
 from repo_utils import REPO_ROOT
 from etl.carriers.load_carriers import (
-    carrier_files, carriers_in, every_carrier, fiber_segment_body, fiber_segments_of, pop_body,
-    pops_of,
+    carrier_files, carriers_in, every_carrier, fiber_segment_body, fiber_segments_of, pops_of,
 )
 
 SIX_CARRIERS = ["cogent", "dcn", "lumen", "uniti", "vision_net", "zayo"]
@@ -34,13 +33,6 @@ def test_a_path_outside_the_carrier_data_names_no_carrier(path: str) -> None:
 
 def test_the_data_names_six_carriers() -> None:
     assert sorted(every_carrier(REPO_ROOT)) == SIX_CARRIERS
-
-
-def test_a_pop_row_becomes_the_body_the_api_takes() -> None:
-    row = {"Municipality": "Akron", "State": "OH", "Country": "United States",
-           "Latitude": "41.0814", "Longitude": "-81.5190"}
-    assert pop_body(row) == {"municipality": "Akron", "state": "OH", "country": "United States",
-                             "latitude": 41.0814, "longitude": -81.519}
 
 
 @pytest.mark.parametrize("submarine", [True, False])

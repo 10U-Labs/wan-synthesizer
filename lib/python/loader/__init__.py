@@ -95,15 +95,18 @@ def started(
     return args, keyed_api(args.api, sleep)
 
 
-def place_body(row: dict[str, str]) -> dict[str, Any]:
+def location_body(row: dict[str, str]) -> dict[str, Any]:
     return {
-        "name": row["Name"],
         "municipality": row["Municipality"],
         "state": row["State"],
         "country": row["Country"],
         "latitude": float(row["Latitude"]),
         "longitude": float(row["Longitude"]),
     }
+
+
+def place_body(row: dict[str, str]) -> dict[str, Any]:
+    return {"name": row["Name"], **location_body(row)}
 
 
 def sorted_without_ids(listed: list[dict[str, Any]]) -> list[str]:

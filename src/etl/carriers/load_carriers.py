@@ -8,7 +8,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-from loader import NO_KEY, Api, Sleep, changed_paths, rows, settled, started
+from loader import NO_KEY, Api, Sleep, changed_paths, location_body, rows, settled, started
 
 CARRIERS = "carriers"
 POPS = Path("data") / "pops"
@@ -37,16 +37,6 @@ def changed_carriers(repository: Path, since: str) -> set[str]:
     return every_carrier(repository) if changed is None else carriers_in(changed)
 
 
-def pop_body(row: dict[str, str]) -> dict[str, Any]:
-    return {
-        "municipality": row["Municipality"],
-        "state": row["State"],
-        "country": row["Country"],
-        "latitude": float(row["Latitude"]),
-        "longitude": float(row["Longitude"]),
-    }
-
-
 def fiber_segment_body(row: dict[str, str], submarine: bool) -> dict[str, Any]:
     return {
         "a_municipality": row["A_Municipality"],
@@ -65,7 +55,7 @@ def carrier_files(repository: Path, name: str) -> list[Path]:
 
 def pops_of(repository: Path, name: str) -> list[dict[str, Any]]:
     path = repository / POPS / f"{name}.csv"
-    return [pop_body(row) for row in rows(path)] if path.exists() else []
+    return [location_body(row) for row in rows(path)] if path.exists() else []
 
 
 def fiber_segments_of(repository: Path, name: str) -> list[dict[str, Any]]:

@@ -14,8 +14,8 @@ import pytest
 
 from loader import (
     API_KEY_VARIABLE, ATTEMPTS, DEFAULT_API, DEFAULT_SETTLE_SECONDS, NO_COMMIT, RETRIED,
-    RETRY_PAUSE_SECONDS, SETTLE_PAUSE_SECONDS, Api, changed_paths, key, keyed_api, place_body, rows,
-    settled, sorted_without_ids, started,
+    RETRY_PAUSE_SECONDS, SETTLE_PAUSE_SECONDS, Api, changed_paths, key, keyed_api, location_body,
+    place_body, rows, settled, sorted_without_ids, started,
 )
 from repo_utils import REPO_ROOT
 
@@ -225,6 +225,14 @@ def test_a_place_row_becomes_its_six_location_fields() -> None:
     assert place_body(row) == {
         "name": "Provider A", "municipality": "Columbus", "state": "OH",
         "country": "United States", "latitude": 39.9612, "longitude": -82.9988}
+
+
+def test_a_pop_row_becomes_its_five_location_fields() -> None:
+    row = {"Municipality": "Akron", "State": "OH", "Country": "United States",
+           "Latitude": "41.0814", "Longitude": "-81.5190"}
+    assert location_body(row) == {
+        "municipality": "Akron", "state": "OH", "country": "United States",
+        "latitude": 41.0814, "longitude": -81.519}
 
 
 def test_rows_compare_without_their_ids_in_a_fixed_order() -> None:
