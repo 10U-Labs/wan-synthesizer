@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import sys
+import argparse
 import time
-import urllib.error
 from collections.abc import Iterable, Sequence
 from functools import partial
 from pathlib import Path
 from typing import Any
 
-from loader import NO_KEY, Api, Sleep, changed_paths, location_body, rows, settled, started
+from loader import (
+    GONE, Api, Loaded, Program, Sleep, changed_paths, location_body, removed, rows, run,
+)
 
 CARRIERS = "carriers"
 POPS = Path("data") / "pops"
@@ -82,14 +83,10 @@ def _create(api: Api, repository: Path, name: str) -> int:
 
 
 def _delete(api: Api, name: str, carrier_id: int) -> None:
-    try:
-        api.delete(f"{CARRIERS}/{carrier_id}")
-    except urllib.error.HTTPError as refusal:
-        if refusal.code != 404:
-            raise
+    if removed(api, f"{CARRIERS}/{carrier_id}") == GONE:
         print(f"{name}: carrier {carrier_id} was already gone", flush=True)
-        return
-    print(f"{name}: deleted carrier {carrier_id}", flush=True)
+    else:
+        print(f"{name}: deleted carrier {carrier_id}", flush=True)
 
 
 def load_carrier(api: Api, repository: Path, name: str, stale: Sequence[int]) -> list[int]:
@@ -107,20 +104,19 @@ def _agrees(expected: dict[str, list[int]], listing: Listing) -> bool:
     return all(_ids_named(listing, name) == ids for name, ids in expected.items())
 
 
-def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
-    args, api = started(
-        argv, sleep, "load-carriers",
-        "Make the API's carriers match data/pops and data/fiber_segments.", ["--carrier"])
-    if api is None:
-        return NO_KEY
+def _load(args: argparse.Namespace, api: Api) -> Loaded:
     listing = api.get(CARRIERS)
     names = set(args.carrier) or changed_carriers(args.repository, args.since)
     expected: dict[str, list[int]] = {}
     for name in sorted(names):
         expected[name] = load_carrier(api, args.repository, name, _ids_named(listing, name))
-    listed = partial(api.get, CARRIERS)
-    if not settled(listed, partial(_agrees, expected), args.settle_seconds, sleep):
-        print("the listing has not caught up", file=sys.stderr, flush=True)
-        return 1
-    print(f"loaded {len(expected)} carriers", flush=True)
-    return 0
+    return Loaded(CARRIERS, partial(_agrees, expected), f"loaded {len(expected)} carriers")
+
+
+PROGRAM = Program(
+    "load-carriers", "Make the API's carriers match data/pops and data/fiber_segments.",
+    _load, ["--carrier"])
+
+
+def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
+    return run(PROGRAM, argv, sleep)

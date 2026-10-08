@@ -282,6 +282,7 @@ name: etl_carriers
       - data/fiber_segments/**
       - src/etl/carriers/**
       - test/etl/carriers/**
+      - test/conftest.py
       - lib/python/**
       - .github/workflows/etl_carriers.yml
   workflow_dispatch:

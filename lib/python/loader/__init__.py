@@ -8,7 +8,9 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
+from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +25,9 @@ RETRY_PAUSE_SECONDS = 1.0
 SETTLE_PAUSE_SECONDS = 5.0
 DEFAULT_SETTLE_SECONDS = 300.0
 NO_KEY = 2
+UNSETTLED = 1
+DELETED = 204
+GONE = 404
 
 Sleep = Callable[[float], None]
 
@@ -138,3 +143,42 @@ def settled(
         print("the listing has not caught up yet", flush=True)
         sleep(SETTLE_PAUSE_SECONDS)
     return False
+
+
+def removed(api: Api, path: str, tolerated: Collection[int] = (GONE,)) -> int:
+    try:
+        api.delete(path)
+    except urllib.error.HTTPError as refusal:
+        if refusal.code not in tolerated:
+            raise
+        return refusal.code
+    return DELETED
+
+
+@dataclass(frozen=True)
+class Loaded:
+    route: str
+    agrees: Callable[[Any], bool]
+    summary: str
+
+
+@dataclass(frozen=True)
+class Program:
+    name: str
+    description: str
+    load: Callable[[argparse.Namespace, Api], Loaded | None]
+    appended: Sequence[str] = ()
+
+
+def run(program: Program, argv: Sequence[str], sleep: Sleep) -> int:
+    args, api = started(argv, sleep, program.name, program.description, program.appended)
+    if api is None:
+        return NO_KEY
+    loaded = program.load(args, api)
+    if loaded is None:
+        return 0
+    if not settled(partial(api.get, loaded.route), loaded.agrees, args.settle_seconds, sleep):
+        print("the listing has not caught up", file=sys.stderr, flush=True)
+        return UNSETTLED
+    print(loaded.summary, flush=True)
+    return 0

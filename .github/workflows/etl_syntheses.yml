@@ -301,6 +301,7 @@ name: etl_syntheses
       - data/tenants/**
       - src/etl/syntheses/**
       - test/etl/syntheses/**
+      - test/conftest.py
       - lib/python/**
       - .github/workflows/etl_syntheses.yml
   workflow_dispatch:

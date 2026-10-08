@@ -1,180 +1,65 @@
 from __future__ import annotations
 
-import json
 import re
-import threading
-from collections.abc import Callable, Iterator
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, cast
+from collections.abc import Iterator
+from typing import Any
 
 import pytest
 
+from stub_api import Answer, FakeApi, Listing, StubApi
+
+CARRIERS = "/carriers"
 CARRIER = re.compile(r"^/carriers/(\d+)$")
 UNDER = re.compile(r"^/carriers/(\d+)/(pops|fiber-segments)$")
 POPS = "pops"
 FIBER_SEGMENTS = "fiber-segments"
-REFUSALS = "refusals"
-STALE_READS = "stale_reads"
-FAILING_DELETES = "failing_deletes"
 
 
-class FakeCarriers:
+class FakeCarriers(FakeApi):
     def __init__(self, seeded: dict[int, str], phantoms: dict[int, str]) -> None:
         self.carriers: dict[int, str] = dict(seeded)
         self.members: dict[str, dict[int, list[dict[str, Any]]]] = {POPS: {}, FIBER_SEGMENTS: {}}
-        self.requests: list[tuple[str, str]] = []
-        self.faults = {REFUSALS: 0, STALE_READS: 0, FAILING_DELETES: 0}
         self._phantoms = dict(phantoms)
-        self._stale = self.listing()
         self._next = max([*seeded, *phantoms, 0]) + 1
+        super().__init__(self._held, self._routed)
 
-    def faulted(self, fault: str) -> bool:
-        if not self.faults[fault]:
-            return False
-        self.faults[fault] -= 1
-        return True
-
-    def listing(self) -> list[dict[str, Any]]:
-        if self.faulted(STALE_READS):
-            return list(self._stale)
+    def _held(self) -> Listing:
         listed = {**self.carriers, **self._phantoms}
         return [{"id": key, "name": name} for key, name in sorted(listed.items())]
 
-    def create(self, name: str) -> dict[str, Any]:
+    def _create(self, name: str) -> dict[str, Any]:
         created = self._next
         self._next += 1
         self.carriers[created] = name
         return {"id": created, "name": name}
 
-    def delete(self, carrier_id: int) -> bool:
+    def _delete(self, carrier_id: int) -> bool:
         if self._phantoms.pop(carrier_id, None) is not None:
             return False
         return self.carriers.pop(carrier_id, None) is not None
 
-    def replace(self, carrier_id: int, kind: str, bodies: list[dict[str, Any]]) -> bool:
+    def _replace(self, carrier_id: int, kind: str, bodies: list[dict[str, Any]]) -> bool:
         if carrier_id not in self.carriers:
             return False
         self.members[kind][carrier_id] = list(bodies)
         return True
 
-
-class _Handler(BaseHTTPRequestHandler):
-    def _fake(self) -> FakeCarriers:
-        return cast("_Server", self.server).fake
-
-    def _answer(self, status: int, body: Any = None) -> None:
-        encoded = b"" if body is None else json.dumps(body).encode()
-        self.send_response(status)
-        self.send_header("Content-Length", str(len(encoded)))
-        self.end_headers()
-        self.wfile.write(encoded)
-
-    def _body(self) -> Any:
-        length = int(self.headers.get("Content-Length", "0"))
-        return json.loads(self.rfile.read(length))
-
-    def _refused(self) -> bool:
-        fake = self._fake()
-        fake.requests.append((self.command, self.path))
-        if fake.faulted(REFUSALS):
-            self._answer(429, {"message": "Too Many Requests"})
-            return True
-        if self.headers.get("Authorization") != "Bearer the-key":
-            self._answer(401, {"message": "Unauthorized"})
-            return True
-        return False
-
-    def _get(self) -> None:
-        if self._refused():
-            return
-        if self.path == "/carriers":
-            self._answer(200, self._fake().listing())
-        else:
-            self._answer(404, {"message": "No such route"})
-
-    def _post(self) -> None:
-        if self._refused():
-            return
-        if self.path == "/carriers":
-            self._answer(201, self._fake().create(self._body()["name"]))
-        else:
-            self._answer(404, {"message": "No such route"})
-
-    def _put(self) -> None:
-        if self._refused():
-            return
-        under = UNDER.match(self.path)
-        bodies = self._body()
-        if under and self._fake().replace(int(under.group(1)), under.group(2), bodies):
-            self._answer(200, [{"id": at, **body} for at, body in enumerate(bodies, start=1)])
-        else:
-            self._answer(404, {"message": "No such carrier"})
-
-    def _delete(self) -> None:
-        if self._refused():
-            return
-        matched = CARRIER.match(self.path)
-        if self._fake().faulted(FAILING_DELETES):
-            self._answer(500, {"message": "Failed to delete the carrier"})
-        elif matched and self._fake().delete(int(matched.group(1))):
-            self._answer(204)
-        else:
-            self._answer(404, {"message": "No such carrier"})
-
-    do_GET = _get
-    do_POST = _post
-    do_PUT = _put
-    do_DELETE = _delete
-
-
-class _Server(ThreadingHTTPServer):
-    allow_reuse_address = True
-
-    def __init__(self, fake: FakeCarriers) -> None:
-        self.fake = fake
-        super().__init__(("127.0.0.1", 0), _Handler)
-
-
-class StubApi:
-    def __init__(self, seeded: dict[int, str], phantoms: dict[int, str]) -> None:
-        self.fake = FakeCarriers(seeded, phantoms)
-        self._server = _Server(self.fake)
-        self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
-
-    @property
-    def url(self) -> str:
-        address = cast("tuple[str, int]", self._server.server_address)
-        return f"http://127.0.0.1:{address[1]}"
-
-    @property
-    def requests(self) -> list[tuple[str, str]]:
-        return self.fake.requests
-
-    def __enter__(self) -> StubApi:
-        self._thread.start()
-        return self
-
-    def __exit__(self, *_exc: object) -> None:
-        self._server.shutdown()
-        self._server.server_close()
+    def _routed(self, method: str, path: str, body: Any) -> Answer:
+        if (method, path) == ("GET", CARRIERS):
+            return 200, self.listing()
+        if (method, path) == ("POST", CARRIERS):
+            return 201, self._create(body["name"])
+        under = UNDER.match(path)
+        if method == "PUT" and under and self._replace(int(under.group(1)), under.group(2), body):
+            return 200, [{"id": at, **one} for at, one in enumerate(body, start=1)]
+        carrier = CARRIER.match(path)
+        if method == "DELETE" and carrier and self._delete(int(carrier.group(1))):
+            return 204, None
+        return 404, {"message": "No such carrier"}
 
 
 @pytest.fixture
 def stub_api() -> Iterator[StubApi]:
-    with StubApi({3: "vision_net", 5: "vision_net", 6: "dcn"}, {4: "vision_net"}) as api:
+    fake = FakeCarriers({3: "vision_net", 5: "vision_net", 6: "dcn"}, {4: "vision_net"})
+    with StubApi(fake) as api:
         yield api
-
-
-@pytest.fixture
-def the_key(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("API_KEY", "the-key")
-
-
-@pytest.fixture(name="pauses")
-def pauses_fixture() -> list[float]:
-    return []
-
-
-@pytest.fixture
-def sleep(pauses: list[float]) -> Callable[[float], None]:
-    return pauses.append

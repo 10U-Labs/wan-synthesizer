@@ -7,15 +7,17 @@ metadata:
 
 # The shared modules are tested before the tests that stand on them
 
-When a shared module is wrong, the run that fails should name the
-module. The modules under `lib/python/` — `repo_utils`, which finds the
-repository root, and `loader`, which the ETLs are built on — are each
-tested by a `test-lib-<module>` job in `scripts.yml` running
-`test/lib/python/<module>/` alone with `--cov=lib/python/<module>` at
-`--cov-fail-under=100`, so a module that loses coverage fails by name
-rather than being carried by a consumer's numbers. `scripts.yml` fires
-on `lib/python/**` and `test/**`, and its lint jobs read `lib/python`
-beside `src/` or `test/`, per
+When a shared module is wrong, the run that fails should name the module. The
+modules under `lib/python/` — `repo_utils`, which finds the repository root;
+`loader`, which the ETLs are built on; `stub_api`, the fake of the API the ETLs'
+integration tiers serve; and `throwaway_repository`, the git helpers tests build
+a repository with — are each tested by a `test-lib-<module>` job in
+`scripts.yml` running `test/lib/python/<module>/` alone with
+`--cov=lib/python/<module>` at `--cov-fail-under=100`, so a module that loses
+coverage fails by name rather than being carried by a consumer's numbers. A
+module used only by tests lives here all the same, since a test helper that two
+stacks share is shared code. `scripts.yml` fires on `lib/python/**` and
+`test/**`, and its lint jobs read `lib/python` beside `src/` or `test/`, per
 [lint-jobs-take-whole-roots](lint-jobs-take-whole-roots.md).
 
 **Why:** run a module's tests only inside the `pytest` command of the

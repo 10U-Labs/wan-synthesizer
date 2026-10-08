@@ -17,11 +17,15 @@ Since 2026-09-17 (GitHub issue #248, `b090312c`) `data/pops` and
 `PYTHONPATH=src:lib/python`; `data/providers/providers.csv` through
 `src/etl/regions/load_regions.py` and `etl_regions.yml` the same way (GitHub
 issue #249). What the programs share — the `Api` client with its retries,
-`changed_paths` over `git diff`, `rows`, `key` and the `settled` poll — is
+`changed_paths` over `git diff`, `rows`, `key`, the `settled` poll, `removed`,
+which deletes and tolerates the codes it is given, and `run`, which holds the
+key check, the settle and the exit codes around each program's own load — is
 `lib/python/loader`, tested to 100% by `test-lib-loader` in `scripts.yml`, whose
 definition-liveness jobs search `src` as well as `lib/python` and `test` for
-that reason. `api.10ulabs.com` serves routes and loads nothing; its memory
-`this-repo-serves-routes-and-loads-nothing` is the other half of this rule.
+that reason. A program's `main` is one call to `run` with its `Program`, so its
+own tests hold only what its dataset does. `api.10ulabs.com` serves routes and
+loads nothing; its memory `this-repo-serves-routes-and-loads-nothing` is the
+other half of this rule.
 
 **Why:** the loading job that used to sit in the API's own workflow
 made the repository that creates REST APIs the keeper of the CSVs and a
@@ -51,9 +55,10 @@ one tool that carries it lives here, one per dataset.
   agrees with what it wrote (`--settle-seconds`, 300 by default) and
   exits 1 if it never does. A post-deployment tier can then read once.
 - The pre-deployment integration tier drives `main()` in process
-  against a fake of the verbs (`conftest.py` beside the tests), with
-  `time.sleep` injected so the retry and settle pauses are recorded
-  rather than slept; the post-deployment e2e tier reads every member
+  against a fake of the verbs built on `lib/python/stub_api`, its
+  dataset's routes in the `conftest.py` beside the tests and the
+  `the_key`, `sleep` and `pauses` fixtures in `test/conftest.py`, with
+  `time.sleep` injected so pauses are recorded rather than slept; the post-deployment e2e tier reads every member
   back from the live API and holds it to its CSVs. The workflow copies
   the pytest jobs of `www_spa.yml` and gates coverage of the program
   at 100%.

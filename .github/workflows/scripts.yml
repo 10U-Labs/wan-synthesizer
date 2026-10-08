@@ -252,6 +252,42 @@ jobs:
           --cov-branch
           --cov-report=term-missing
           --cov-fail-under=100
+  test-lib-stub-api:
+    name: test-lib-stub-api
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install --upgrade pytest pytest-cov
+      - name: Run the stub API's tests with a 100% coverage gate
+        run: >-
+          PYTHONPATH=.:lib/python:src:test
+          python3 -m pytest
+          test/lib/python/stub_api/pre_deployment/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
+          --cov=lib/python/stub_api
+          --cov-branch
+          --cov-report=term-missing
+          --cov-fail-under=100
+  test-lib-throwaway-repository:
+    name: test-lib-throwaway-repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: pip install --upgrade pytest pytest-cov
+      - name: Run the throwaway repository's unit tests with a 100% coverage gate
+        run: >-
+          PYTHONPATH=.:lib/python:src:test
+          python3 -m pytest
+          test/lib/python/throwaway_repository/pre_deployment/unit/
+          --import-mode=importlib --confcutdir=test
+          --verbose --pythonwarnings=error
+          --cov=lib/python/throwaway_repository
+          --cov-branch
+          --cov-report=term-missing
+          --cov-fail-under=100
   yamllint:
     name: yamllint
     runs-on: ubuntu-latest

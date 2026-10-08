@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import argparse
-import sys
 import time
-import urllib.error
 from collections.abc import Iterable, Sequence
 from functools import partial
 from pathlib import Path
@@ -12,7 +10,7 @@ from typing import Any
 import yaml
 
 from loader import (
-    NO_KEY, Api, Sleep, changed_paths, place_body, rows, settled, started,
+    GONE, Api, Loaded, Program, Sleep, changed_paths, place_body, removed, rows, run,
 )
 
 SYNTHESES = "wan-syntheses"
@@ -103,17 +101,14 @@ def _ids_labelled(listing: Listing, label: str) -> list[int]:
 
 
 def _delete(api: Api, synthesis_id: int) -> bool:
-    try:
-        api.delete(f"{SYNTHESES}/{synthesis_id}")
-    except urllib.error.HTTPError as refusal:
-        if refusal.code == STILL_RUNNING:
-            print(f"synthesis {synthesis_id} is still running and stays", flush=True)
-            return True
-        if refusal.code != 404:
-            raise
+    code = removed(api, f"{SYNTHESES}/{synthesis_id}", (GONE, STILL_RUNNING))
+    if code == STILL_RUNNING:
+        print(f"synthesis {synthesis_id} is still running and stays", flush=True)
+        return True
+    if code == GONE:
         print(f"synthesis {synthesis_id} was already gone", flush=True)
-        return False
-    print(f"deleted synthesis {synthesis_id}", flush=True)
+    else:
+        print(f"deleted synthesis {synthesis_id}", flush=True)
     return False
 
 
@@ -137,16 +132,11 @@ def _named(args: argparse.Namespace) -> list[Path]:
     return changed_configurations(args.repository, args.since)
 
 
-def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
-    args, api = started(
-        argv, sleep, "load-syntheses",
-        "Create a wan synthesis for every run whose configuration changed.", ["--configuration"])
-    if api is None:
-        return NO_KEY
+def _load(args: argparse.Namespace, api: Api) -> Loaded | None:
     paths = _named(args)
     if not paths:
         print(f"no configuration changed since {args.since}", flush=True)
-        return 0
+        return None
     listing = api.get(SYNTHESES)
     regions = api.get(REGIONS)
     expected: dict[str, list[int]] = {}
@@ -154,9 +144,13 @@ def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
         label, created = _create(api, args.repository, path, regions)
         kept = [one for one in _ids_labelled(listing, label) if _delete(api, one)]
         expected[label] = sorted([*kept, created])
-    listed = partial(api.get, SYNTHESES)
-    if not settled(listed, partial(_agrees, expected), args.settle_seconds, sleep):
-        print("the listing has not caught up", file=sys.stderr, flush=True)
-        return 1
-    print(f"created {len(expected)} syntheses", flush=True)
-    return 0
+    return Loaded(SYNTHESES, partial(_agrees, expected), f"created {len(expected)} syntheses")
+
+
+PROGRAM = Program(
+    "load-syntheses", "Create a wan synthesis for every run whose configuration changed.",
+    _load, ["--configuration"])
+
+
+def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
+    return run(PROGRAM, argv, sleep)

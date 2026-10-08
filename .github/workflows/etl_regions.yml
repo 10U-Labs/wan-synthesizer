@@ -281,6 +281,7 @@ name: etl_regions
       - data/providers/**
       - src/etl/regions/**
       - test/etl/regions/**
+      - test/conftest.py
       - lib/python/**
       - .github/workflows/etl_regions.yml
   workflow_dispatch:

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import argparse
 import io
 import json
-import subprocess
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -13,11 +13,13 @@ from typing import Any
 import pytest
 
 from loader import (
-    API_KEY_VARIABLE, ATTEMPTS, DEFAULT_API, DEFAULT_SETTLE_SECONDS, NO_COMMIT, RETRIED,
-    RETRY_PAUSE_SECONDS, SETTLE_PAUSE_SECONDS, Api, changed_paths, key, keyed_api, location_body,
-    place_body, rows, settled, sorted_without_ids, started,
+    API_KEY_VARIABLE, ATTEMPTS, DEFAULT_API, DEFAULT_SETTLE_SECONDS, DELETED, GONE, NO_COMMIT,
+    NO_KEY, RETRIED, RETRY_PAUSE_SECONDS, SETTLE_PAUSE_SECONDS, UNSETTLED, Api, Loaded, Program,
+    changed_paths, key, keyed_api, location_body, place_body, removed, rows, run, settled,
+    sorted_without_ids, started,
 )
 from repo_utils import REPO_ROOT
+from throwaway_repository import commit, git
 
 BASE = "https://api.example.test"
 
@@ -39,11 +41,6 @@ def sent_fixture(monkeypatch: pytest.MonkeyPatch, answers: list[Any]) -> list[An
         return io.BytesIO(answer)
     monkeypatch.setattr(urllib.request, "urlopen", urlopen)
     return sent
-
-
-@pytest.fixture(name="pauses")
-def pauses_fixture() -> list[float]:
-    return []
 
 
 @pytest.fixture(name="api")
@@ -241,31 +238,19 @@ def test_rows_compare_without_their_ids_in_a_fixed_order() -> None:
         '{"name": "a", "state": "OH"}', '{"name": "b", "state": ""}']
 
 
-def _git(repository: Path, *arguments: str) -> str:
-    completed = subprocess.run(
-        ["git", *arguments], cwd=repository, capture_output=True, text=True, check=True)
-    return completed.stdout.strip()
-
-
-def _commit(repository: Path, message: str) -> str:
-    _git(repository, "add", "--all")
-    _git(repository, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", message)
-    return _git(repository, "rev-parse", "HEAD")
-
-
 @pytest.fixture(name="history")
 def history_fixture(tmp_path: Path) -> tuple[Path, str]:
-    _git(tmp_path, "init", "-q")
+    git(tmp_path, "init", "-q")
     (tmp_path / "data").mkdir()
     (tmp_path / "data" / "a.csv").write_text("A\n1\n", encoding="utf-8")
     (tmp_path / "data" / "b.csv").write_text("B\n1\n", encoding="utf-8")
     (tmp_path / "etc").mkdir()
     (tmp_path / "etc" / "c.yml").write_text("c: 1\n", encoding="utf-8")
-    first = _commit(tmp_path, "first")
+    first = commit(tmp_path, "first")
     (tmp_path / "data" / "a.csv").unlink()
     (tmp_path / "data" / "b.csv").write_text("B\n2\n", encoding="utf-8")
     (tmp_path / "etc" / "c.yml").write_text("c: 2\n", encoding="utf-8")
-    _commit(tmp_path, "second")
+    commit(tmp_path, "second")
     return tmp_path, first
 
 
@@ -311,3 +296,126 @@ def test_a_listing_that_never_catches_up_is_not_settled(pauses: list[float]) -> 
 def test_the_polls_are_the_settle_seconds_over_the_pause_plus_one(pauses: list[float]) -> None:
     settled(_reads([[0]] * 4), lambda listing: listing == [1], 10, pauses.append)
     assert len(pauses) == 3
+
+
+@pytest.mark.usefixtures("sent")
+def test_a_delete_answered_is_deleted(api: Api, answers: list[Any]) -> None:
+    answers.append(b"")
+    assert removed(api, "carriers/3") == DELETED
+
+
+@pytest.mark.usefixtures("sent")
+def test_a_path_already_gone_is_gone(api: Api, answers: list[Any]) -> None:
+    answers.append(_refusal(GONE))
+    assert removed(api, "carriers/3") == GONE
+
+
+@pytest.mark.usefixtures("sent")
+def test_a_refusal_tolerated_is_answered_by_its_code(api: Api, answers: list[Any]) -> None:
+    answers.append(_refusal(409))
+    assert removed(api, "wan-syntheses/3", (GONE, 409)) == 409
+
+
+@pytest.mark.usefixtures("sent")
+def test_a_refusal_not_tolerated_stops_the_delete(api: Api, answers: list[Any]) -> None:
+    answers.append(_refusal(500))
+    with pytest.raises(urllib.error.HTTPError):
+        removed(api, "carriers/3")
+
+
+def _agrees(listing: Any) -> bool:
+    return bool(listing == [1])
+
+
+@pytest.fixture(name="loads")
+def loads_fixture() -> list[argparse.Namespace]:
+    return []
+
+
+@pytest.fixture(name="program")
+def program_fixture(loads: list[argparse.Namespace]) -> Program:
+    def load(args: argparse.Namespace, _api: Api) -> Loaded:
+        loads.append(args)
+        return Loaded("things", _agrees, "loaded 1 thing")
+    return Program("load-test", "Test the run.", load, ["--thing"])
+
+
+@pytest.fixture(name="idle")
+def idle_fixture() -> Program:
+    return Program("load-test", "Test the run.", lambda _args, _api: None)
+
+
+def test_a_run_without_a_key_is_exit_two(
+        program: Program, pauses: list[float], monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv(API_KEY_VARIABLE, raising=False)
+    assert run(program, [], pauses.append) == NO_KEY
+
+
+def test_a_run_without_a_key_loads_nothing(
+        program: Program, loads: list[argparse.Namespace], pauses: list[float],
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv(API_KEY_VARIABLE, raising=False)
+    run(program, [], pauses.append)
+    assert loads == []
+
+
+@pytest.mark.usefixtures("the_key", "sent")
+def test_the_load_is_given_the_options_parsed(
+        program: Program, loads: list[argparse.Namespace], answers: list[Any],
+        pauses: list[float]) -> None:
+    answers.append(b"[1]")
+    run(program, ["--thing", "zayo", "--settle-seconds", "0"], pauses.append)
+    assert loads[0].thing == ["zayo"]
+
+
+@pytest.mark.usefixtures("the_key", "sent")
+def test_a_run_whose_listing_agrees_is_exit_zero(
+        program: Program, answers: list[Any], pauses: list[float]) -> None:
+    answers.append(b"[1]")
+    assert run(program, ["--settle-seconds", "0"], pauses.append) == 0
+
+
+@pytest.mark.usefixtures("the_key")
+def test_the_listing_read_is_the_route_the_load_names(
+        program: Program, answers: list[Any], sent: list[Any], pauses: list[float]) -> None:
+    answers.append(b"[1]")
+    run(program, ["--settle-seconds", "0"], pauses.append)
+    assert sent[0][0].full_url == f"{DEFAULT_API}/things"
+
+
+@pytest.mark.usefixtures("the_key", "sent")
+def test_a_run_whose_listing_agrees_says_what_it_loaded(
+        program: Program, answers: list[Any], pauses: list[float],
+        capsys: pytest.CaptureFixture[str]) -> None:
+    answers.append(b"[1]")
+    run(program, ["--settle-seconds", "0"], pauses.append)
+    assert capsys.readouterr().out == "loaded 1 thing\n"
+
+
+@pytest.mark.usefixtures("the_key", "sent")
+def test_a_run_whose_listing_never_agrees_is_exit_one(
+        program: Program, answers: list[Any], pauses: list[float]) -> None:
+    answers.append(b"[0]")
+    assert run(program, ["--settle-seconds", "0"], pauses.append) == UNSETTLED
+
+
+@pytest.mark.usefixtures("the_key", "sent")
+def test_a_run_whose_listing_never_agrees_says_so_on_stderr(
+        program: Program, answers: list[Any], pauses: list[float],
+        capsys: pytest.CaptureFixture[str]) -> None:
+    answers.append(b"[0]")
+    run(program, ["--settle-seconds", "0"], pauses.append)
+    assert capsys.readouterr().err == "the listing has not caught up\n"
+
+
+@pytest.mark.usefixtures("the_key", "sent")
+def test_a_run_whose_load_found_nothing_changed_is_exit_zero(
+        idle: Program, pauses: list[float]) -> None:
+    assert run(idle, [], pauses.append) == 0
+
+
+@pytest.mark.usefixtures("the_key")
+def test_a_run_whose_load_found_nothing_changed_reads_no_listing(
+        idle: Program, sent: list[Any], pauses: list[float]) -> None:
+    run(idle, [], pauses.append)
+    assert sent == []
