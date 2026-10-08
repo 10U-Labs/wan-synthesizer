@@ -51,10 +51,10 @@ class FakeCarriers:
             return False
         return self.carriers.pop(carrier_id, None) is not None
 
-    def add(self, carrier_id: int, kind: str, body: dict[str, Any]) -> bool:
+    def replace(self, carrier_id: int, kind: str, bodies: list[dict[str, Any]]) -> bool:
         if carrier_id not in self.carriers:
             return False
-        self.members[kind].setdefault(carrier_id, []).append(body)
+        self.members[kind][carrier_id] = list(bodies)
         return True
 
 
@@ -69,10 +69,9 @@ class _Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
-    def _body(self) -> dict[str, Any]:
+    def _body(self) -> Any:
         length = int(self.headers.get("Content-Length", "0"))
-        loaded: dict[str, Any] = json.loads(self.rfile.read(length))
-        return loaded
+        return json.loads(self.rfile.read(length))
 
     def _refused(self) -> bool:
         fake = self._fake()
@@ -96,11 +95,18 @@ class _Handler(BaseHTTPRequestHandler):
     def _post(self) -> None:
         if self._refused():
             return
-        under = UNDER.match(self.path)
         if self.path == "/carriers":
             self._answer(201, self._fake().create(self._body()["name"]))
-        elif under and self._fake().add(int(under.group(1)), under.group(2), self._body()):
-            self._answer(201, {})
+        else:
+            self._answer(404, {"message": "No such route"})
+
+    def _put(self) -> None:
+        if self._refused():
+            return
+        under = UNDER.match(self.path)
+        bodies = self._body()
+        if under and self._fake().replace(int(under.group(1)), under.group(2), bodies):
+            self._answer(200, [{"id": at, **body} for at, body in enumerate(bodies, start=1)])
         else:
             self._answer(404, {"message": "No such carrier"})
 
@@ -117,6 +123,7 @@ class _Handler(BaseHTTPRequestHandler):
 
     do_GET = _get
     do_POST = _post
+    do_PUT = _put
     do_DELETE = _delete
 
 

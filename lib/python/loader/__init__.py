@@ -53,6 +53,9 @@ class Api:
     def post(self, path: str, body: Any) -> Any:
         return self._call("POST", path, body)
 
+    def put(self, path: str, body: Any) -> Any:
+        return self._call("PUT", path, body)
+
     def delete(self, path: str) -> Any:
         return self._call("DELETE", path)
 

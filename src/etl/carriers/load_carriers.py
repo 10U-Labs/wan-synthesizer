@@ -85,12 +85,12 @@ def _create(api: Api, repository: Path, name: str) -> int:
     created = int(api.post(CARRIERS, {"name": name})["id"])
     print(f"{name}: created carrier {created}", flush=True)
     pops = pops_of(repository, name)
-    for pop in pops:
-        api.post(f"{CARRIERS}/{created}/pops", pop)
+    if pops:
+        api.put(f"{CARRIERS}/{created}/pops", pops)
     print(f"{name}: added {len(pops)} PoPs", flush=True)
     segments = fiber_segments_of(repository, name)
-    for segment in segments:
-        api.post(f"{CARRIERS}/{created}/fiber-segments", segment)
+    if segments:
+        api.put(f"{CARRIERS}/{created}/fiber-segments", segments)
     print(f"{name}: added {len(segments)} fiber segments", flush=True)
     return created
 

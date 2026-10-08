@@ -13,6 +13,8 @@ from etl.carriers.load_carriers import changed_carriers, fiber_segments_of, main
 
 VISION_NET = ["--carrier", "vision_net"]
 AT_ONCE = ["--settle-seconds", "0"]
+AKRON_POP = ("Municipality,State,Country,Latitude,Longitude\n"
+             "Akron,OH,United States,41.0814,-81.5190\n")
 
 
 def _run(api: Any, sleep: Any, *arguments: str) -> int:
@@ -40,8 +42,7 @@ def _write(repository: Path, relative: str, text: str) -> None:
 @pytest.fixture(name="repository")
 def repository_fixture(tmp_path: Path) -> Path:
     _git(tmp_path, "init", "-q")
-    _write(tmp_path, "data/pops/alpha.csv", "Municipality,State,Country,Latitude,Longitude\n"
-           "Akron,OH,United States,41.0814,-81.5190\n")
+    _write(tmp_path, "data/pops/alpha.csv", AKRON_POP)
     _write(tmp_path, "data/fiber_segments/terrestrial/beta.csv",
            "A_Municipality,A_State,Z_Municipality,Z_State\nLeeds,AL,Memphis,TN\n")
     _write(tmp_path, "data/providers/providers.csv", "Name\n")
@@ -80,6 +81,22 @@ def test_the_fiber_segments_loaded_are_the_csv(stub_api: Any, sleep: Any) -> Non
 
 
 @pytest.mark.usefixtures("the_key")
+@pytest.mark.parametrize("route", ["/carriers/7/pops", "/carriers/7/fiber-segments"])
+def test_a_carriers_list_is_sent_in_one_put(stub_api: Any, sleep: Any, route: str) -> None:
+    _run(stub_api, sleep, *VISION_NET, *AT_ONCE)
+    assert [request for request in stub_api.requests if request[1] == route] == [("PUT", route)]
+
+
+@pytest.mark.usefixtures("the_key")
+def test_a_carrier_without_fiber_segments_sends_none(
+        stub_api: Any, sleep: Any, tmp_path: Path) -> None:
+    _write(tmp_path, "data/pops/gamma.csv", AKRON_POP)
+    _run(stub_api, sleep, "--carrier", "gamma", "--repository", str(tmp_path), *AT_ONCE)
+    assert [request for request in stub_api.requests if request[0] == "PUT"] == [
+        ("PUT", "/carriers/7/pops")]
+
+
+@pytest.mark.usefixtures("the_key")
 def test_the_new_carrier_is_built_before_the_old_ones_are_deleted(
         stub_api: Any, sleep: Any) -> None:
     _run(stub_api, sleep, *VISION_NET, *AT_ONCE)
@@ -106,9 +123,8 @@ def test_only_the_carriers_changed_since_the_commit_are_loaded(
         stub_api: Any, sleep: Any, repository: Path) -> None:
     since = (repository / "since").read_text(encoding="utf-8")
     _run(stub_api, sleep, "--repository", str(repository), "--since", since, *AT_ONCE)
-    assert [request for request in stub_api.requests if request[0] == "POST"] == [
-        ("POST", "/carriers"), ("POST", "/carriers/7/fiber-segments"),
-        ("POST", "/carriers/7/fiber-segments")]
+    assert [request for request in stub_api.requests if request[0] in ("POST", "PUT")] == [
+        ("POST", "/carriers"), ("PUT", "/carriers/7/fiber-segments")]
 
 
 @pytest.mark.usefixtures("the_key")

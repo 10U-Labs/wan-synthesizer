@@ -90,6 +90,12 @@ def test_a_post_answers_what_the_api_sends(api: Api, answers: list[Any]) -> None
     assert api.post("carriers", {"name": "zayo"}) == {"id": 2}
 
 
+def test_a_put_is_sent_as_a_put(api: Api, answers: list[Any], sent: list[Any]) -> None:
+    answers.append(b"[]")
+    api.put("carriers/2/pops", [])
+    assert sent[0][0].get_method() == "PUT"
+
+
 def test_a_delete_is_sent_as_a_delete(api: Api, answers: list[Any], sent: list[Any]) -> None:
     answers.append(b"")
     api.delete("carriers/2")
