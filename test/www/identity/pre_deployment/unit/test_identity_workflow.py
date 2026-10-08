@@ -47,3 +47,10 @@ def test_the_unit_tests_job_runs_the_identity_pre_deployment_unit_tier() -> None
 
 def test_a_change_to_the_identity_tests_starts_the_workflow() -> None:
     assert "test/www/identity/**" in _workflow()["on"]["push"]["paths"]
+
+
+def test_no_step_installs_a_tool_its_action_runs() -> None:
+    assert [
+        run for job in _workflow()["jobs"] for run in _runs(job)
+        if "pip install" in run and ("assert-" in run or "yamllint" in run)
+    ] == []

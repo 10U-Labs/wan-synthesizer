@@ -10,92 +10,74 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install assert-no-comments
       - name: Assert nothing this repository publishes carries a comment
-        run: >-
-          assert-no-comments
-          --annotate
-          --exclude 'src/www/spa/vendor/*'
-          --verbose
-          .github/workflows
-          lib
-          src
-          test
+        uses: 10U-Labs/assert-no-comments@latest
+        with:
+          annotate: "true"
+          exclude: src/www/spa/vendor/*
+          trees: .github/workflows lib src test
+          verbose: "true"
   assert-no-inline-directives:
     name: assert-no-inline-directives
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install assert-no-inline-directives
       - name: Assert no inline directives
-        run: >-
-          assert-no-inline-directives
-          --tools pylint,mypy,yamllint
-          --verbose
-          ${{ github.workspace }}/src/etl/carriers
-          ${{ github.workspace }}/test/etl/carriers
+        uses: 10U-Labs/assert-no-inline-directives@latest
+        with:
+          files: src/etl/carriers test/etl/carriers
+          tools: pylint,mypy,yamllint
+          verbose: "true"
   assert-no-pytest-plugin-declarations:
     name: assert-no-pytest-plugin-declarations
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install assert-no-pytest-plugin-declarations
       - name: Assert no pytest plugin declarations
-        run: >-
-          assert-no-pytest-plugin-declarations
-          --verbose
-          ${{ github.workspace }}/test/etl/carriers
+        uses: 10U-Labs/assert-no-pytest-plugin-declarations@latest
+        with:
+          trees: test/etl/carriers
+          verbose: "true"
   assert-one-assert-per-pytest:
     name: assert-one-assert-per-pytest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install assert-one-assert-per-pytest
       - name: Assert one assert per pytest
-        run: >-
-          assert-one-assert-per-pytest
-          --verbose
-          ${{ github.workspace }}/test/etl/carriers
+        uses: 10U-Labs/assert-one-assert-per-pytest@latest
+        with:
+          files: test/etl/carriers
+          verbose: "true"
   assert-pytest-class-holds-state:
     name: assert-pytest-class-holds-state
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install assert-pytest-class-holds-state
       - name: Assert every pytest class holds state
-        run: >-
-          assert-pytest-class-holds-state
-          --verbose
-          ${{ github.workspace }}/test/etl/carriers
+        uses: 10U-Labs/assert-pytest-class-holds-state@latest
+        with:
+          files: test/etl/carriers
+          verbose: "true"
   assert-pytest-fixture-name-is-needed:
     name: assert-pytest-fixture-name-is-needed
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install assert-pytest-fixture-name-is-needed
       - name: Assert every pytest fixture name is needed
-        run: >-
-          assert-pytest-fixture-name-is-needed
-          --verbose
-          ${{ github.workspace }}/test/etl/carriers
+        uses: 10U-Labs/assert-pytest-fixture-name-is-needed@latest
+        with:
+          trees: test/etl/carriers
+          verbose: "true"
   assert-pytest-test-can-fail:
     name: assert-pytest-test-can-fail
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install assert-pytest-test-can-fail
       - name: Assert every pytest test can fail
-        run: >-
-          assert-pytest-test-can-fail
-          --verbose
-          ${{ github.workspace }}/test/etl/carriers
+        uses: 10U-Labs/assert-pytest-test-can-fail@latest
+        with:
+          files: test/etl/carriers
+          verbose: "true"
   copy-paste-source:
     name: copy-paste-source
     runs-on: ubuntu-latest
@@ -279,26 +261,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install tools
-        run: pip install assert-no-inline-directives yamllint
       - name: Assert no inline yamllint disables
-        run: >-
-          assert-no-inline-directives
-          --tools yamllint
-          --verbose
-          .github/workflows/etl_carriers.yml
+        uses: 10U-Labs/assert-no-inline-directives@latest
+        with:
+          files: .github/workflows/etl_carriers.yml
+          tools: yamllint
+          verbose: "true"
       - name: Lint YAML
-        run: |
-          EMPTY='empty-lines: {max: 0, max-start: 0, max-end: 1}'
-          KEY='key-ordering: enable'
-          LL='line-length: disable'
-          NL='new-line-at-end-of-file: enable'
-          TR='truthy: {allowed-values: ["true", "false", "on"]}'
-          RULES="$EMPTY, $KEY, $LL, $NL, $TR"
-          yamllint --strict \
-            --config-data \
-            "{extends: default, rules: {$RULES}}" \
-            .github/workflows/etl_carriers.yml
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          config_data: >-
+            {extends: default, rules: {
+            empty-lines: {max: 0, max-start: 0, max-end: 1},
+            key-ordering: enable,
+            line-length: disable,
+            new-line-at-end-of-file: enable,
+            truthy: {allowed-values: ["true", "false", "on"]}}}
+          file_or_dir: .github/workflows/etl_carriers.yml
+          strict: "true"
 name: etl_carriers
 'on':
   push:

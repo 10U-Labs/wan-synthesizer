@@ -92,3 +92,10 @@ def test_a_change_to_the_runs_the_program_or_its_tests_starts_the_workflow(path:
 
 def test_the_workflow_can_be_told_to_create_every_synthesis() -> None:
     assert _loaded()["on"]["workflow_dispatch"]["inputs"]["all"]["type"] == "boolean"
+
+
+def test_no_step_installs_a_tool_its_action_runs() -> None:
+    assert [
+        run for job in _loaded()["jobs"] for run in _steps(job)
+        if "pip install" in run and ("assert-" in run or "yamllint" in run)
+    ] == []

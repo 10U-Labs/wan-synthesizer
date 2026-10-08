@@ -28,3 +28,10 @@ def test_the_code_scanning_job_runs_the_tests_over_the_repository_settings() -> 
         step for step in _loaded()["jobs"][JOB]["steps"]
         if "test/documentation/" in str(step.get("run", ""))
     ] != []
+
+
+def test_no_step_installs_a_tool_its_action_runs() -> None:
+    runs = [str(step.get("run", "")) for job in _loaded()["jobs"].values() for step in job["steps"]]
+    assert [
+        run for run in runs if "pip install" in run and ("assert-" in run or "yamllint" in run)
+    ] == []

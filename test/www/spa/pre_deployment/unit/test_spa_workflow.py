@@ -32,3 +32,11 @@ def test_the_deploy_waits_for_its_invalidation_before_the_e2e_tier_reads_the_pag
         step for step in _job("deploy")["steps"]
         if "aws cloudfront wait invalidation-completed" in str(step.get("run", ""))
     ] != []
+
+
+def test_no_step_installs_a_tool_its_action_runs() -> None:
+    loaded: dict[Any, Any] = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+    runs = [str(step.get("run", "")) for job in loaded["jobs"].values() for step in job["steps"]]
+    assert [
+        run for run in runs if "pip install" in run and ("assert-" in run or "yamllint" in run)
+    ] == []
