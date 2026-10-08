@@ -23,6 +23,9 @@ const SIGN_IN_NOTES = {
 
 const DEFAULT_MAP_ID = "daf";
 
+const UNREADABLE_NOTE = "The WAN could not be read";
+const NOT_SYNTHESIZED_NOTE = "No WAN synthesized yet";
+
 const ROLE_STYLE = {
   wan_pop: { color: "#6a1b9a", radius: 8 },
   tenant: { color: "#1565c0", radius: 4 },
@@ -387,6 +390,10 @@ async function getJSON(path) {
   return response.json();
 }
 
+function showNote(note) {
+  document.getElementById("counts").textContent = note;
+}
+
 function showCounts(dots) {
   const counts = document.getElementById("counts");
   const tally = { wan_pop: 0, tenant: 0, provider: 0 };
@@ -420,8 +427,8 @@ async function render(entry) {
       getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/homing-circuits`),
       getJSON(`${API_BASE}/wan-syntheses/${entry.synthesis}/backbone-circuits`),
     ]);
-  } catch (error) {
-    document.getElementById("counts").textContent = "WAN not synthesized yet";
+  } catch {
+    showNote(UNREADABLE_NOTE);
     return;
   }
   const dots = [
@@ -456,7 +463,13 @@ function slug(label) {
 async function start() {
   const nav = document.getElementById("tenants");
   nav.replaceChildren();
-  const syntheses = await getJSON(`${API_BASE}/wan-syntheses`);
+  let syntheses;
+  try {
+    syntheses = await getJSON(`${API_BASE}/wan-syntheses`);
+  } catch {
+    showNote(UNREADABLE_NOTE);
+    return;
+  }
   const entries = syntheses.map(({ id, label }) => {
     const entry = { synthesis: id, tenant: slug(label) };
     const link = document.createElement("a");
@@ -472,6 +485,8 @@ async function start() {
   const start = entries.find(({ entry }) => entry.tenant === DEFAULT_MAP_ID) || entries[0];
   if (start) {
     await select(start.link, start.entry);
+  } else {
+    showNote(NOT_SYNTHESIZED_NOTE);
   }
 }
 
