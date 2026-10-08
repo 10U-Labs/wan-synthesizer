@@ -88,7 +88,7 @@ jobs:
       - name: Detect copy-paste in source
         run: >-
           jscpd --pattern "**/*.py" --threshold 0
-          --reporters console src/etl/syntheses/
+          --reporters console src/ lib/
   copy-paste-tests:
     name: copy-paste-tests
     runs-on: ubuntu-latest
@@ -99,7 +99,7 @@ jobs:
       - name: Detect copy-paste in tests
         run: >-
           jscpd --pattern "**/*.py" --threshold 0
-          --reporters console test/etl/syntheses/
+          --reporters console test/ lib/
   load:
     if: github.ref == 'refs/heads/main'
     name: load
@@ -188,20 +188,20 @@ jobs:
           MYPYPATH=lib/python:src
           python3 -m mypy --strict --explicit-package-bases
           --ignore-missing-imports
-          src/etl/syntheses/
+          src/ lib/
   mypy-tests:
     name: mypy-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install mypy pytest pyyaml types-PyYAML
+        run: pip install mypy pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on tests
         run: >-
           MYPYPATH=lib/python:src
           python3 -m mypy --strict --explicit-package-bases
           --ignore-missing-imports
-          test/etl/syntheses/
+          test/ lib/
   post-deployment-e2e-tests:
     if: github.ref == 'refs/heads/main'
     name: post-deployment-e2e-tests
@@ -258,7 +258,7 @@ jobs:
         run: >-
           PYTHONPATH=lib/python:src
           python3 -m pylint --recursive=y
-          src/etl/syntheses/
+          src/ lib/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
   pylint-tests:
@@ -267,12 +267,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pylint pytest pyyaml
+        run: pip install pylint pytest pyyaml 'python-hcl2<8' boto3
       - name: Run pylint on tests
         run: >-
           PYTHONPATH=.:lib/python:src
           python3 -m pylint --recursive=y
-          test/etl/syntheses/
+          test/ lib/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
   yamllint:

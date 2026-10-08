@@ -88,7 +88,7 @@ jobs:
       - name: Detect copy-paste in tests
         run: >-
           jscpd --pattern "**/*.py" --threshold 0
-          --reporters console test/www/spa/
+          --reporters console test/ lib/
   deploy:
     if: github.ref == 'refs/heads/main'
     needs:
@@ -138,10 +138,10 @@ jobs:
         run: pip install mypy pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on tests
         run: >-
-          MYPYPATH=lib/python
+          MYPYPATH=lib/python:src
           python3 -m mypy --strict --explicit-package-bases
           --ignore-missing-imports
-          test/www/spa/
+          test/ lib/
   post-deployment-e2e-tests:
     if: github.ref == 'refs/heads/main'
     name: post-deployment-e2e-tests
@@ -165,12 +165,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pylint pytest pyyaml 'python-hcl2<8'
+        run: pip install pylint pytest pyyaml 'python-hcl2<8' boto3
       - name: Run pylint on tests
         run: >-
-          PYTHONPATH=.:lib/python
+          PYTHONPATH=.:lib/python:src
           python3 -m pylint --recursive=y
-          test/www/spa/
+          test/ lib/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
   unit-tests:

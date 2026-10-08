@@ -40,6 +40,7 @@ and a line in this index.
 - [an-assert-is-its-own-job](an-assert-is-its-own-job.md) — each `assert-*` check runs in a job named after its tool, one per tool per workflow, and a linter job holds only its lint step
 - [where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md) — a test runs in the workflow the change it guards arrives on, and one that already runs in two needs no cross-listed `paths`
 - [github-workflows-have-no-yaml-tests](github-workflows-have-no-yaml-tests.md) — no pytest file reads a workflow's YAML to check its triggers, jobs or steps; the programs a workflow runs are what get tested
+- [lint-jobs-take-whole-roots](lint-jobs-take-whole-roots.md) — every Python lint job takes `src/ lib/` or `test/ lib/`, never one stack's paths, so jscpd and pylint's `R0801` see every stack at once; each job installs what its whole root imports, and the `paths` triggers stay per stack
 
 ### Comments
 
@@ -101,6 +102,7 @@ and a line in this index.
 - [discriminating-test-inputs](discriminating-test-inputs.md) — choose literals so wrong code gives a different answer
 - [a-raise-expected-in-a-test-is-raised-in-a-fixture](a-raise-expected-in-a-test-is-raised-in-a-fixture.md) — `pytest.raises` counts as an assert, so the raising call goes in a fixture
 - [fixture-liveness-is-a-collection-question](fixture-liveness-is-a-collection-question.md) — never call a fixture dead from a grep; `assert-pytest-fixture-is-requested` answers it
+- [whole-tree-collection-needs-importlib](whole-tree-collection-needs-importlib.md) — a pytest run over `test/` whole passes `--import-mode=importlib`, since `conftest.py` repeats and no test directory has an `__init__.py`; every pytest call here already does
 - [share-code-a-change-mirrors](share-code-a-change-mirrors.md) — the jscpd jobs run at threshold 0, so two bodies a change makes equal are shared before pushing
 - [no-test-writes-data](no-test-writes-data.md) — a post-deployment test only reads the deployed API, here or in `api.10ulabs.com`, and a row a foreign test left in a listing is filed against the test that wrote it, never skipped
 - [pylint-refactor-messages-are-hard-failures](pylint-refactor-messages-are-hard-failures.md) — `--fail-on=C,R,W` makes the default argument, local, branch and statement limits hard, and the way out is to split

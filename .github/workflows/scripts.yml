@@ -152,7 +152,7 @@ jobs:
       - name: Detect copy-paste in source
         run: >-
           jscpd --pattern "**/*.py" --threshold 0 --reporters console
-          lib/python/
+          src/ lib/
   copy-paste-tests:
     name: copy-paste-tests
     runs-on: ubuntu-latest
@@ -163,43 +163,43 @@ jobs:
       - name: Detect copy-paste in tests
         run: >-
           jscpd --pattern "**/*.py" --threshold 0 --reporters console
-          test/lib/python/
+          test/ lib/
   mypy-source:
     name: mypy-source
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install mypy boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
+        run: pip install mypy pyyaml types-PyYAML
       - name: Run mypy on source
         run: >-
-          MYPYPATH=lib/python
+          MYPYPATH=lib/python:src
           python3 -m mypy --strict --ignore-missing-imports
-          --explicit-package-bases lib/python/
+          --explicit-package-bases src/ lib/
   mypy-tests:
     name: mypy-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install mypy boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
+        run: pip install mypy pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on tests
         run: >-
-          MYPYPATH=lib/python:test
+          MYPYPATH=lib/python:src
           python3 -m mypy --strict --ignore-missing-imports
-          --explicit-package-bases test/lib/python/
+          --explicit-package-bases test/ lib/
   pylint-source:
     name: pylint-source
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pylint boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
+        run: pip install pylint pyyaml
       - name: Run pylint on source
         run: >-
-          PYTHONPATH=lib/python
+          PYTHONPATH=lib/python:src
           python3 -m pylint --recursive=y
-          lib/python/
+          src/ lib/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
   pylint-tests:
@@ -208,12 +208,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pylint boto3 boto3-stubs botocore-stubs pytest pyyaml 'python-hcl2<8' types-PyYAML
+        run: pip install pylint pytest pyyaml 'python-hcl2<8' boto3
       - name: Run pylint on tests
         run: >-
-          PYTHONPATH=.:lib/python:test
+          PYTHONPATH=.:lib/python:src
           python3 -m pylint --recursive=y
-          test/lib/python/
+          test/ lib/
           --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
           --fail-on=C,R,W --fail-under=10.0
   test-lib-loader:
