@@ -103,6 +103,7 @@ and a line in this index.
 - [a-raise-expected-in-a-test-is-raised-in-a-fixture](a-raise-expected-in-a-test-is-raised-in-a-fixture.md) — `pytest.raises` counts as an assert, so the raising call goes in a fixture
 - [fixture-liveness-is-a-collection-question](fixture-liveness-is-a-collection-question.md) — never call a fixture dead from a grep; `assert-pytest-fixture-is-requested` answers it
 - [share-code-a-change-mirrors](share-code-a-change-mirrors.md) — the jscpd jobs run at threshold 0, so two bodies a change makes equal are shared before pushing
+- [no-test-writes-data](no-test-writes-data.md) — a post-deployment test only reads the deployed API, here or in `api.10ulabs.com`, and a row a foreign test left in a listing is filed against the test that wrote it, never skipped
 - [pylint-refactor-messages-are-hard-failures](pylint-refactor-messages-are-hard-failures.md) — `--fail-on=C,R,W` makes the default argument, local, branch and statement limits hard, and the way out is to split
 
 ### Verification
