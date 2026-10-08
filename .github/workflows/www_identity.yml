@@ -25,7 +25,7 @@ jobs:
       - name: Assert no inline directives
         uses: 10U-Labs/assert-no-inline-directives@latest
         with:
-          files: test/www/identity
+          files: .github/workflows/www_identity.yml test/www/identity
           tools: pylint,mypy,yamllint
           verbose: "true"
   assert-no-pytest-plugin-declarations:

@@ -33,7 +33,7 @@ jobs:
       - name: Assert no inline directives
         uses: 10U-Labs/assert-no-inline-directives@latest
         with:
-          files: lib/python test/lib/python
+          files: .github/workflows/scripts.yml lib/python test/lib/python
           tools: pylint,mypy,yamllint
           verbose: "true"
   assert-no-linter-config-files:
