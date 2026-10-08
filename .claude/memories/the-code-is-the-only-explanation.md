@@ -17,18 +17,39 @@ metadata:
 
 ## Overview
 
-Nothing here explains the code except the code. There are no docstrings and no comments in `src/`, `lib/python/`, `test/`, the `.tf` files, the files under `.github/workflows/` or `src/www/spa/app.js`, and the `assert-no-comments` job fails the run when one appears. A name, a signature and the shape of a function are the whole of what a reader gets, and when that is not enough to say what something holds or does, the thing is named or shaped wrong rather than under-explained.
+Nothing here explains the code except the code. There are no docstrings and no
+comments in `src/`, `lib/python/`, `test/`, the `.tf` files, the files under
+`.github/workflows/` or `src/www/spa/app.js`, and the `assert-no-comments` job
+fails the run when one appears. A name, a signature and the shape of a function
+are the whole of what a reader gets, and when that is not enough to say what
+something holds or does, the thing is named or shaped wrong rather than
+under-explained.
 
 ## Conventions
 
 ### Prose beside code is never checked
 
-So it stops being true and nothing says when. A test fails when the code it covers changes; a sentence above that code does not. The reader who believes it — usually a Claude session, which treats a comment as evidence — works from a program that no longer exists. Where two mechanisms answer the same question and only one is reachable, the unreachable one is deleted rather than documented, because a sentence saying which is dead stops being true the same way.
+So it stops being true and nothing says when. A test fails when the code it
+covers changes; a sentence above that code does not. The reader who believes it
+— usually a Claude session, which treats a comment as evidence — works from a
+program that no longer exists. Where two mechanisms answer the same question and
+only one is reachable, the unreachable one is deleted rather than documented,
+because a sentence saying which is dead stops being true the same way.
 
 ### Vendored code keeps its comments
 
-`src/www/spa/vendor/leaflet.js` keeps them: it is somebody else's code, nobody here can edit it without unpinning it, and a finding against it is answerable by nobody. `assert-no-comments` skips that directory, named in the job's `--exclude 'src/www/spa/vendor/*'`, and reads no `.md` file, where prose is the content rather than a gloss on it.
+`src/www/spa/vendor/leaflet.js` keeps them: it is somebody else's code, nobody
+here can edit it without unpinning it, and a finding against it is answerable by
+nobody. `assert-no-comments` skips that directory, named in the job's `--exclude
+'src/www/spa/vendor/*'`, and reads no `.md` file, where prose is the content
+rather than a gloss on it.
 
 ### Write a new program without a main guard
 
-Each ETL under `src/etl/` ends at `main(argv, sleep)`, with no `if __name__ == "__main__":` guard: coverage.py offers no command-line flag for excluding one, so a guard body pytest never runs would fail the `--cov-fail-under=100` gates. The workflows name the entry point as `python3 -c 'import sys; from etl.<dataset> import load_<dataset>; sys.exit(load_<dataset>.main(sys.argv[1:]))'`, and the integration tier calls `main` in process.
+Each ETL under `src/etl/` ends at `main(argv, sleep)`, with no `if __name__ ==
+"__main__":` guard: coverage.py offers no command-line flag for excluding one,
+so a guard body pytest never runs would fail the `--cov-fail-under=100` gates.
+The workflows name the entry point as `python3 -c 'import sys; from
+etl.<dataset> import load_<dataset>;
+sys.exit(load_<dataset>.main(sys.argv[1:]))'`, and the integration tier calls
+`main` in process.

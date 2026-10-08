@@ -27,8 +27,8 @@ All six run now:
   many workflows, so it runs in `scripts.yml`, whose `paths` now cover
   `test/**`.
 
-**Why:** a check that runs where the change arrives is the only one
-that goes red on it, per
+**Why:** a check that runs where the change arrives is the only one that goes
+red on it, per
 [where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md),
 and a tool nobody runs finds nothing.
 

@@ -18,8 +18,8 @@ message. One line per issue: GitHub binds the keyword to a single reference, so
 [commit-straight-to-main](commit-straight-to-main.md), so the commit message is
 the only place the link can live. Naming the issue in prose, as "GitHub
 issue #114.", references it without closing it, which is what leaves a solved
-issue open and waiting for somebody to notice. Closing by hand afterwards, with a
-comment saying which commit did it, is a second record of what the message
+issue open and waiting for somebody to notice. Closing by hand afterwards, with
+a comment saying which commit did it, is a second record of what the message
 already says and it is not how this repository works.
 
 **How to apply:** put the `Closes #N` lines in the message of the commit that
@@ -37,7 +37,8 @@ mentions an issue writes `Refs #N` and keeps those nine words away from the
 number. Once the runs are clean, check that the issues did close, per
 [confirming-a-push-closed-its-issues](confirming-a-push-closed-its-issues.md).
 
-The rule is stated outside this repository too — `.claude/memories/commits-go-straight-to-main.md`
-in `10ulabs.com` and the `One closing line per issue` section of `CLAUDE.md` in
-`assert-no-comments` — which is why a session working here can meet it for the
-first time in another repository's rulebook.
+The rule is stated outside this repository too —
+`.claude/memories/commits-go-straight-to-main.md` in `10ulabs.com` and the `One
+closing line per issue` section of `CLAUDE.md` in `assert-no-comments` — which
+is why a session working here can meet it for the first time in another
+repository's rulebook.

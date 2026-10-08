@@ -5,9 +5,12 @@ description: Start, restart or stop the autopilot reminders. Use when the user s
 
 # Autopilot
 
-Fetch `CronCreate`, `CronList`, `CronDelete`, `TaskCreate` and `TaskUpdate` with `ToolSearch` first.
+Fetch `CronCreate`, `CronList`, `CronDelete`, `TaskCreate` and `TaskUpdate` with
+`ToolSearch` first.
 
-Each standing rule gets a reminder of its own, so no rule can be quietly dropped from a merged block of text, and each reminder has its own minute of a fifteen-minute cycle, so they arrive one at a time.
+Each standing rule gets a reminder of its own, so no rule can be quietly dropped
+from a merged block of text, and each reminder has its own minute of a
+fifteen-minute cycle, so they arrive one at a time.
 
 ## Standing reminders
 
@@ -49,9 +52,14 @@ REMINDER: Run gh issue list --state open --label '{L}' --search '-label:"needs d
 
 ## Start and restart
 
-Each `--skip-label <label>` adds `-label:"<label>"` to the loop command's `--search` and appends `An issue labelled '<label>' is left to a person, whatever else it carries.` to its reminder.
+Each `--skip-label <label>` adds `-label:"<label>"` to the loop command's
+`--search` and appends `An issue labelled '<label>' is left to a person,
+whatever else it carries.` to its reminder.
 
-An issue is blocked while `gh api repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by` lists an open issue, wherever that issue lives. A blocker in another repository is read, never worked: the issue here waits for it.
+An issue is blocked while `gh api
+repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by` lists an open
+issue, wherever that issue lives. A blocker in another repository is read, never
+worked: the issue here waits for it.
 
 1. Unless `reminders-only`, run the loop command once; if it names no issue, schedule the standing reminders only.
 2. Call `CronList`. On `start`, `CronDelete` each job on one of the form's slots whose prompt differs from that slot's. On `restart`, `CronDelete` every job that is not one of the form's reminders, keeping one per slot.
@@ -61,8 +69,14 @@ An issue is blocked while `gh api repos/{owner}/{repo}/issues/{number}/dependenc
 
 ## Writing a blocked_by edge
 
-`gh api repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by -F issue_id=<id>`, where `{number}` is the issue that waits and `<id>` is the blocker's numeric id from `gh api repos/{owner}/{repo}/issues/{n} --jq .id`, not the node id `gh issue view --json id` returns. Sent with `-f` instead of `-F`, it is rejected with HTTP 422.
+`gh api repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by -F
+issue_id=<id>`, where `{number}` is the issue that waits and `<id>` is the
+blocker's numeric id from `gh api repos/{owner}/{repo}/issues/{n} --jq .id`, not
+the node id `gh issue view --json id` returns. Sent with `-f` instead of `-F`,
+it is rejected with HTTP 422.
 
 ## Stop
 
-`CronDelete` every job `CronList` returns, then call `CronList` again to confirm it is empty and report how many jobs were deleted. A `CronList` that returns nothing is not a failure; say the schedule was already empty.
+`CronDelete` every job `CronList` returns, then call `CronList` again to confirm
+it is empty and report how many jobs were deleted. A `CronList` that returns
+nothing is not a failure; say the schedule was already empty.

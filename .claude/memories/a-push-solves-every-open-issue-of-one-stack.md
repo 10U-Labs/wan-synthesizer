@@ -7,7 +7,11 @@ metadata:
 
 # A push solves every open issue of one stack
 
-A batch is every open issue that shares one matter, and the matter bounds it, never a count. Two issues share a matter when their fixes land in the same workflow's stack. `scripts.yml` fires on all of `src/**`, `test/**` and `lib/python/**`, so a stack here is the set of paths one workflow fires on beside `scripts.yml`:
+A batch is every open issue that shares one matter, and the matter bounds it,
+never a count. Two issues share a matter when their fixes land in the same
+workflow's stack. `scripts.yml` fires on all of `src/**`, `test/**` and
+`lib/python/**`, so a stack here is the set of paths one workflow fires on
+beside `scripts.yml`:
 
 | Workflow | Stack |
 | --- | --- |
@@ -24,7 +28,9 @@ A batch is every open issue that shares one matter, and the matter bounds it, ne
 - **Waiting.** Each push waits out its runs, and nothing else happens while they run. A batch of n issues shares that wait n ways.
 - **Shared reading.** Issues of one stack are fixed in the same program, the same tests and the same workflow, so the reading done for the first serves the rest.
 
-The rule comes from `10ulabs.com` and `api.10ulabs.com`, and was adopted here on 2026-10-07 under issue #255, in place of the autopilot's one-issue-per-push reminder.
+The rule comes from `10ulabs.com` and `api.10ulabs.com`, and was adopted here on
+2026-10-07 under issue #255, in place of the autopilot's one-issue-per-push
+reminder.
 
 **How to apply:**
 
@@ -40,4 +46,5 @@ Some changes go in a push of their own and are never batched:
 - The fix for a red run.
 - A problem met outside the batch's stack that the batch cannot move forward without. It is filed, then solved in a push of its own before the batch, per [solving-what-a-session-finds](solving-what-a-session-finds.md). One that does not block is filed and left to the loop.
 
-A change under `.claude/`, such as a memory or a skill, can join any batch, since only the Markdown lint reads it.
+A change under `.claude/`, such as a memory or a skill, can join any batch,
+since only the Markdown lint reads it.

@@ -7,9 +7,18 @@ metadata:
 
 # Solving what a session finds
 
-File what you find as issues, each documenting one indivisible problem. Solve one now only if the work in hand cannot move forward without it; otherwise move on.
+File what you find as issues, each documenting one indivisible problem. Solve
+one now only if the work in hand cannot move forward without it; otherwise move
+on.
 
-**Why:** this is the autopilot's `:08` reminder, and the rulebook has to say what the reminder says or a session runs under two rules. An issue makes a finding durable, where the task list and the scratchpad are not ([research-lives-in-issues](research-lives-in-issues.md)). Solving every finding on the spot pulls the session off the work in hand for each one, while a filed issue is picked up by the loop in its turn. The rule comes from `deltahdl`, and the user adopted it here on 2026-10-07 under issue #256, reversing 1afa1aa9, which had every problem solved in the session that met it.
+**Why:** this is the autopilot's `:08` reminder, and the rulebook has to say
+what the reminder says or a session runs under two rules. An issue makes a
+finding durable, where the task list and the scratchpad are not
+([research-lives-in-issues](research-lives-in-issues.md)). Solving every finding
+on the spot pulls the session off the work in hand for each one, while a filed
+issue is picked up by the loop in its turn. The rule comes from `deltahdl`, and
+the user adopted it here on 2026-10-07 under issue #256, reversing 1afa1aa9,
+which had every problem solved in the session that met it.
 
 **How to apply:**
 

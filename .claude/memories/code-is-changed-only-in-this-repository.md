@@ -7,9 +7,21 @@ metadata:
 
 # Code is changed only in this repository
 
-A session here edits, commits and pushes only in `wan-synthesizer`. It does not change another repository's code, read its workflows or runs, or wait on them. What it can do in another repository is file an issue there ([file-an-issue-where-it-belongs](file-an-issue-where-it-belongs.md)) or transfer an issue there ([an-issue-follows-its-code-across-repositories](an-issue-follows-its-code-across-repositories.md)), since neither changes code.
+A session here edits, commits and pushes only in `wan-synthesizer`. It does not
+change another repository's code, read its workflows or runs, or wait on them.
+What it can do in another repository is file an issue there
+([file-an-issue-where-it-belongs](file-an-issue-where-it-belongs.md)) or
+transfer an issue there
+([an-issue-follows-its-code-across-repositories](an-issue-follows-its-code-across-repositories.md)),
+since neither changes code.
 
-**Why:** the user decided on 2026-10-07, under issue #256, that a session may open issues in other repositories but may only write code in this one. Before that the autopilot followed `blocked_by` links into any repository, worked the issues it reached there and committed in that repository under this rulebook. It adapts `api.10ulabs.com`'s reminder that nothing but the repository the session runs in matters, keeping its rule about other repositories' code and runs while still letting a session file issues there.
+**Why:** the user decided on 2026-10-07, under issue #256, that a session may
+open issues in other repositories but may only write code in this one. Before
+that the autopilot followed `blocked_by` links into any repository, worked the
+issues it reached there and committed in that repository under this rulebook. It
+adapts `api.10ulabs.com`'s reminder that nothing but the repository the session
+runs in matters, keeping its rule about other repositories' code and runs while
+still letting a session file issues there.
 
 **How to apply:**
 

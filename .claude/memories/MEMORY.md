@@ -21,7 +21,13 @@
 
 ## Overview
 
-This directory is the rulebook. One memory holds one rule, so a session can recall the one it needs without reading the rest, and each file carries the reasoning behind its rule rather than only the instruction. This index is read at the start of every session and the memories themselves are recalled by relevance, so each line below says enough to know whether the file behind it is the one to open. A convention learned in a session belongs here, as a new memory and a line in this index.
+This directory is the rulebook. One memory holds one rule, so a session can
+recall the one it needs without reading the rest, and each file carries the
+reasoning behind its rule rather than only the instruction. This index is read
+at the start of every session and the memories themselves are recalled by
+relevance, so each line below says enough to know whether the file behind it is
+the one to open. A convention learned in a session belongs here, as a new memory
+and a line in this index.
 
 ## Conventions
 
@@ -67,6 +73,7 @@ This directory is the rulebook. One memory holds one rule, so a session can reca
 - [code-is-changed-only-in-this-repository](code-is-changed-only-in-this-repository.md) — no edit, commit or push in another repository and no reading its runs; an issue can be filed or transferred there
 - [file-an-issue-where-it-belongs](file-an-issue-where-it-belongs.md) — in the repository that owns the code or resource, which for the synthesizer and its routes is `api.10ulabs.com`
 - [no-wrapping-outside-md-files](no-wrapping-outside-md-files.md) — an issue body or comment has one line per paragraph
+- [md-paragraphs-wrap-at-80](md-paragraphs-wrap-at-80.md) — in a tracked `.md` file prose paragraphs wrap at 80, while list items, headings, tables, link lines and code blocks run long; MD013 stays disabled and nothing checks the width
 - [a-new-check-is-its-own-assert-repository](a-new-check-is-its-own-assert-repository.md) — a rule nothing checks is answered by a new `assert-*` repository cloned from the newest, which a person creates
 - [why-static-analysis-is-asked-separately](why-static-analysis-is-asked-separately.md) — a job refuses a shape everywhere at once where a tier catches one occurrence
 

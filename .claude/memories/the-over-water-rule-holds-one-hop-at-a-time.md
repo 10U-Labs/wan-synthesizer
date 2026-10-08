@@ -7,12 +7,12 @@ metadata:
 
 # The over-water rule holds one hop at a time
 
-The rule is about one drawn circuit: a circuit between two WAN PoPs on the
-same shore runs over land, and a circuit to a PoP across the water crosses
-once and stays there, which `ceiling._without_crossings_home` proves by
-dropping every submarine arc that arrives on the shore the site stands on
-and keeping the rest. `test_no_published_pair_joined_over_land_is_drawn_a_circuit_under_water`
-holds the published circuits to it, pair by pair.
+The rule is about one drawn circuit: a circuit between two WAN PoPs on the same
+shore runs over land, and a circuit to a PoP across the water crosses once and
+stays there, which `ceiling._without_crossings_home` proves by dropping every
+submarine arc that arrives on the shore the site stands on and keeping the rest.
+`test_no_published_pair_joined_over_land_is_drawn_a_circuit_under_water` holds
+the published circuits to it, pair by pair.
 
 It is not a rule about the two circuits the directive asks between every
 pair. A pair joined over land is two-vertex-connected the long way round

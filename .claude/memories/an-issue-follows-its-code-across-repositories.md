@@ -12,11 +12,12 @@ metadata:
 
 When the thing an issue describes has moved to another repository of the
 organization, the issue is transferred there, not closed here and rewritten
-there and not left here pointing across. Before the transfer it is read
-against the code where it now lives: an issue the move made false is closed
-here with the finding, as [an-issue-whose-premise-is-false-is-closed-with-the-finding](an-issue-whose-premise-is-false-is-closed-with-the-finding.md)
-says, and one that still holds is transferred and then its paths, counts
-and cross-references are corrected in place.
+there and not left here pointing across. Before the transfer it is read against
+the code where it now lives: an issue the move made false is closed here with
+the finding, as
+[an-issue-whose-premise-is-false-is-closed-with-the-finding](an-issue-whose-premise-is-false-is-closed-with-the-finding.md)
+says, and one that still holds is transferred and then its paths, counts and
+cross-references are corrected in place.
 
 **Why:** asked on 2026-09-17 whether the synthesizer issues should move to
 `api.10ulabs.com`, the user held that each be analyzed in depth first and
@@ -27,5 +28,6 @@ back before editing a reference in it.
 
 **How to apply:** `gh label create` any label the target lacks first, or the
 transfer drops it. `gh issue view --comments` prints nothing in this
-environment; read an issue through `gh api repos/{owner}/{repo}/issues/N`
-and its `/comments` instead. Related: [an-issue-is-closed-by-its-commit](an-issue-is-closed-by-its-commit.md).
+environment; read an issue through `gh api repos/{owner}/{repo}/issues/N` and
+its `/comments` instead. Related:
+[an-issue-is-closed-by-its-commit](an-issue-is-closed-by-its-commit.md).

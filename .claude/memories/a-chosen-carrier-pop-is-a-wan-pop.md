@@ -27,12 +27,13 @@ with the API migration (2026-09-17); the words hold here for the SPA, the data
 under `data/` and `etc/`, and the issues.
 
 The synthesizer's central decision is which of the carriers' PoPs a tenant's WAN
-runs through. An offered one is a `carrier_pop`; a chosen one is a **`wan_pop`**;
-one a circuit merely crosses is a `transit_pop`. The three share a word on
-purpose, because the whole of the difference between them is which ones the
-synthesis chose, and a reader who cannot see that from the names cannot follow
-the program's subject. GitHub issue #147 settled this on 2026-09-10, against
-`backbone_node`, which shared no word with the `carrier_pop` it is one of.
+runs through. An offered one is a `carrier_pop`; a chosen one is a
+**`wan_pop`**; one a circuit merely crosses is a `transit_pop`. The three share
+a word on purpose, because the whole of the difference between them is which
+ones the synthesis chose, and a reader who cannot see that from the names cannot
+follow the program's subject. GitHub issue #147 settled this on 2026-09-10,
+against `backbone_node`, which shared no word with the `carrier_pop` it is one
+of.
 
 `wan_pop` was chosen over `backbone_pop` by the operator, knowingly: it reads as
 *a PoP the WAN runs through*, which CLAUDE.md's second clause says a transit PoP
@@ -61,9 +62,9 @@ circuits run over. Both are **selection**. The fiber side already said so —
 `survivable.select_fiber` returns a `FiberSelection` built from a
 `SegmentSelection`, and `backbone._Drawn` holds `selected` and
 `selected_by_carrier` — and the PoP side already spoke the first half of the
-pair, in `_SearchPlan.wan_pop_candidates`, `SynthesisInputs.eligible_wan_pop_ids`
-and `strength`'s `candidate_ids`. The word that completes *candidate* is
-*selected*.
+pair, in `_SearchPlan.wan_pop_candidates`,
+`SynthesisInputs.eligible_wan_pop_ids` and `strength`'s `candidate_ids`. The
+word that completes *candidate* is *selected*.
 
 `seat` was the second verb for the PoP half, and it resolved no ambiguity that
 naming the object does not. This repository had already settled that question
@@ -76,9 +77,9 @@ between them.
 `seat` was also a second **noun** for a `wan_pop`, and it pointed at the wrong
 object. A seat reads as a slot inside a facility, which is the resolution
 [a-site-is-a-named-place-not-a-building](a-site-is-a-named-place-not-a-building.md)
-says this program does not model. A capped WAN PoP was never the WAN being sold one
-slot in a Minot facility; it is the merged carriers' fiber out of the *city* of
-Minot carrying one diverse circuit.
+says this program does not model. A capped WAN PoP was never the WAN being sold
+one slot in a Minot facility; it is the merged carriers' fiber out of the *city*
+of Minot carrying one diverse circuit.
 
 The operator settled this on 2026-09-11 and CLAUDE.md changed first, the way
 GitHub issue #147 established a directive word has to: the prime directive read
@@ -94,17 +95,18 @@ local-fiber twin is not the selection the directive names.
 ### Where backbone survives
 
 `backbone` still names **the mesh those PoPs form, and the tier demand sites
-home into** — never a PoP. It survives in `synthesizer.backbone`, `BackboneMesh`,
-`backbone_mesh` as a circuit's `purpose`, `backbone_lower_bound_miles`, the
-`tenant_to_backbone` and `provider_to_backbone` kinds, every `backbone_*` key of
-the served validation report, the `backbone` and `removed_backbone` fields of
-`OperatorCircuits` and `ForcedCircuits` with the `forced_backbone_pairs` and
-`removed_backbone_pairs` helpers that read them, the served `backbone-circuits`
-collection, and the `backbone:` block of each `etc/*.yml` with the two knobs
-named for it — `backbone_coverage_target_miles` and
-`backbone_number_of_diverse_circuits`, the latter also a published resource.
-A candidate set is still a backbone, so `backbone_set` went to `wan_pop_set` but
-`meshed_backbone_synthesis` and `split_backbone_synthesis` did not.
+home into** — never a PoP. It survives in `synthesizer.backbone`,
+`BackboneMesh`, `backbone_mesh` as a circuit's `purpose`,
+`backbone_lower_bound_miles`, the `tenant_to_backbone` and
+`provider_to_backbone` kinds, every `backbone_*` key of the served validation
+report, the `backbone` and `removed_backbone` fields of `OperatorCircuits` and
+`ForcedCircuits` with the `forced_backbone_pairs` and `removed_backbone_pairs`
+helpers that read them, the served `backbone-circuits` collection, and the
+`backbone:` block of each `etc/*.yml` with the two knobs named for it —
+`backbone_coverage_target_miles` and `backbone_number_of_diverse_circuits`, the
+latter also a published resource. A candidate set is still a backbone, so
+`backbone_set` went to `wan_pop_set` but `meshed_backbone_synthesis` and
+`split_backbone_synthesis` did not.
 
 ### Where node survives
 
@@ -124,6 +126,6 @@ No job reads this file and no tier can fail on a word, for the reason
 [why-static-analysis-is-asked-separately](why-static-analysis-is-asked-separately.md)
 gives: a tier runs the program and judges what comes back, and which word an
 identifier uses is not something a running program produces. Recording the
-settled words somewhere a job can open is GitHub issue #158, and a check that the
-five hand-written lists of resource names agree is GitHub issue #159. Both are
-open, so this rename is held only by whoever reads next.
+settled words somewhere a job can open is GitHub issue #158, and a check that
+the five hand-written lists of resource names agree is GitHub issue #159. Both
+are open, so this rename is held only by whoever reads next.
