@@ -55,6 +55,10 @@ class Api:
     def get(self, path: str) -> Any:
         return self._call("GET", path)
 
+    def listing(self, path: str) -> list[dict[str, Any]]:
+        listed: list[dict[str, Any]] = self.get(path)
+        return listed
+
     def post(self, path: str, body: Any) -> Any:
         return self._call("POST", path, body)
 
@@ -100,6 +104,12 @@ def place_body(row: dict[str, str]) -> dict[str, Any]:
         "latitude": float(row["Latitude"]),
         "longitude": float(row["Longitude"]),
     }
+
+
+def sorted_without_ids(listed: list[dict[str, Any]]) -> list[str]:
+    return sorted(
+        json.dumps({name: value for name, value in row.items() if name != "id"}, sort_keys=True)
+        for row in listed)
 
 
 def rows(path: Path) -> list[dict[str, str]]:

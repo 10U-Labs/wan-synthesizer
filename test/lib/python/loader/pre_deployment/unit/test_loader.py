@@ -15,7 +15,7 @@ import pytest
 from loader import (
     API_KEY_VARIABLE, ATTEMPTS, DEFAULT_API, DEFAULT_SETTLE_SECONDS, NO_COMMIT, RETRIED,
     RETRY_PAUSE_SECONDS, SETTLE_PAUSE_SECONDS, Api, changed_paths, key, keyed_api, place_body, rows,
-    settled, started,
+    settled, sorted_without_ids, started,
 )
 from repo_utils import REPO_ROOT
 
@@ -59,6 +59,12 @@ def _refusal(code: int) -> urllib.error.HTTPError:
 def test_a_get_answers_the_json_the_api_sends(api: Api, answers: list[Any]) -> None:
     answers.append(b'[{"id": 1}]')
     assert api.get("carriers") == [{"id": 1}]
+
+
+@pytest.mark.usefixtures("sent")
+def test_a_listing_answers_the_rows_the_api_sends(api: Api, answers: list[Any]) -> None:
+    answers.append(b'[{"id": 1, "name": "zayo"}]')
+    assert api.listing("carriers") == [{"id": 1, "name": "zayo"}]
 
 
 def test_a_get_is_sent_to_the_base_less_its_trailing_slash(
@@ -219,6 +225,12 @@ def test_a_place_row_becomes_its_six_location_fields() -> None:
     assert place_body(row) == {
         "name": "Provider A", "municipality": "Columbus", "state": "OH",
         "country": "United States", "latitude": 39.9612, "longitude": -82.9988}
+
+
+def test_rows_compare_without_their_ids_in_a_fixed_order() -> None:
+    served = [{"id": 9, "name": "b", "state": ""}, {"id": 3, "state": "OH", "name": "a"}]
+    assert sorted_without_ids(served) == [
+        '{"name": "a", "state": "OH"}', '{"name": "b", "state": ""}']
 
 
 def _git(repository: Path, *arguments: str) -> str:
