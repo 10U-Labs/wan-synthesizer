@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import json
 import urllib.request
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator, Sequence
 from typing import Any
 
 import pytest
 
-from stub_api import KEY, Answer, FakeApi, StubApi
+from stub_api import KEY, Answer, FakeApi, StubApi, run_against
+
+Heard = list[tuple[Sequence[str], Callable[[float], None]]]
 
 
 def _route(method: str, path: str, body: Any) -> Answer:
@@ -20,6 +22,19 @@ def _route(method: str, path: str, body: Any) -> Answer:
 def served_fixture() -> Iterator[StubApi]:
     with StubApi(FakeApi(lambda: [], _route)) as served:
         yield served
+
+
+@pytest.fixture(name="heard")
+def heard_fixture() -> Heard:
+    return []
+
+
+@pytest.fixture(name="ran")
+def ran_fixture(served: StubApi, heard: Heard) -> int:
+    def main(argv: Sequence[str], sleep: Callable[[float], None]) -> int:
+        heard.append((argv, sleep))
+        return 7
+    return run_against(main, served, print, "--carrier", "dcn")
 
 
 def _call(served: StubApi, method: str, body: Any = None) -> bytes:
@@ -51,3 +66,13 @@ def test_an_answer_of_nothing_has_an_empty_body(served: StubApi) -> None:
 def test_the_requests_served_are_the_fakes_log(served: StubApi) -> None:
     _call(served, "GET")
     assert served.requests == [("GET", "/things")]
+
+
+def test_a_program_run_against_the_stub_is_pointed_at_its_url(
+        served: StubApi, ran: int, heard: Heard) -> None:
+    assert (ran, heard[0][0]) == (7, ["--api", served.url, "--carrier", "dcn"])
+
+
+@pytest.mark.usefixtures("ran")
+def test_a_program_run_against_the_stub_is_handed_the_sleep(heard: Heard) -> None:
+    assert heard[0][1] is print

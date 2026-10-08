@@ -96,3 +96,9 @@ class StubApi:
     def __exit__(self, *_exc: object) -> None:
         self._server.shutdown()
         self._server.server_close()
+
+
+def run_against(
+        main: Callable[..., int], api: StubApi, sleep: Callable[[float], None],
+        *arguments: str) -> int:
+    return main(["--api", api.url, *arguments], sleep=sleep)

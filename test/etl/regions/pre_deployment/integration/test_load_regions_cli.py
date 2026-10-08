@@ -5,17 +5,14 @@ from typing import Any
 
 import pytest
 
+from loader import NO_COMMIT
 from repo_utils import REPO_ROOT
-from stub_api import STALE_READS
+from stub_api import STALE_READS, run_against
 from throwaway_repository import commit, git
 from etl.regions.load_regions import PROVIDERS, main, regions_of
 
 AT_ONCE = ["--settle-seconds", "0"]
 ROUTE = "/hyperscale-cloud-service-provider-regions"
-
-
-def _run(api: Any, sleep: Any, *arguments: str) -> int:
-    return main(["--api", api.url, *arguments], sleep=sleep)
 
 
 @pytest.fixture(name="repository")
@@ -40,25 +37,25 @@ def repository_fixture(tmp_path: Path) -> Path:
 
 @pytest.mark.usefixtures("the_key")
 def test_the_regions_are_loaded(stub_api: Any, sleep: Any) -> None:
-    assert _run(stub_api, sleep, *AT_ONCE) == 0
+    assert run_against(main, stub_api, sleep, *AT_ONCE) == 0
 
 
 @pytest.mark.usefixtures("the_key")
 def test_the_regions_loaded_are_the_csv(stub_api: Any, sleep: Any) -> None:
-    _run(stub_api, sleep, *AT_ONCE)
+    run_against(main, stub_api, sleep, *AT_ONCE)
     assert list(stub_api.fake.regions.values()) == regions_of(REPO_ROOT)
 
 
 @pytest.mark.usefixtures("the_key")
 def test_the_old_regions_are_gone(stub_api: Any, sleep: Any) -> None:
-    _run(stub_api, sleep, *AT_ONCE)
+    run_against(main, stub_api, sleep, *AT_ONCE)
     assert sorted(stub_api.fake.regions) == list(range(10, 20))
 
 
 @pytest.mark.usefixtures("the_key")
 def test_the_new_regions_are_built_before_the_old_ones_are_deleted(
         stub_api: Any, sleep: Any) -> None:
-    _run(stub_api, sleep, *AT_ONCE)
+    run_against(main, stub_api, sleep, *AT_ONCE)
     requests = stub_api.requests
     assert requests.index(("POST", ROUTE)) < requests.index(("DELETE", f"{ROUTE}/4"))
 
@@ -67,7 +64,7 @@ def test_the_new_regions_are_built_before_the_old_ones_are_deleted(
 def test_a_file_changed_since_the_commit_is_loaded(
         stub_api: Any, sleep: Any, repository: Path) -> None:
     since = (repository / "unrelated").read_text(encoding="utf-8")
-    _run(stub_api, sleep, "--repository", str(repository), "--since", since, *AT_ONCE)
+    run_against(main, stub_api, sleep, "--repository", str(repository), "--since", since, *AT_ONCE)
     assert [body["name"] for body in stub_api.fake.regions.values()] == [
         "Provider A", "Provider B"]
 
@@ -75,14 +72,15 @@ def test_a_file_changed_since_the_commit_is_loaded(
 @pytest.mark.usefixtures("the_key")
 def test_a_file_unchanged_since_the_commit_touches_nothing(
         stub_api: Any, sleep: Any, repository: Path) -> None:
-    _run(stub_api, sleep, "--repository", str(repository), "--since", "HEAD", *AT_ONCE)
+    run_against(main, stub_api, sleep, "--repository", str(repository), "--since", "HEAD", *AT_ONCE)
     assert stub_api.requests == []
 
 
 @pytest.mark.usefixtures("the_key")
 def test_the_null_commit_means_the_file_is_loaded(
         stub_api: Any, sleep: Any, repository: Path) -> None:
-    _run(stub_api, sleep, "--repository", str(repository), "--since", "0" * 40, *AT_ONCE)
+    run_against(
+        main, stub_api, sleep, "--repository", str(repository), "--since", NO_COMMIT, *AT_ONCE)
     assert len(stub_api.fake.regions) == 2
 
 
@@ -90,4 +88,4 @@ def test_the_null_commit_means_the_file_is_loaded(
 def test_a_region_already_gone_is_no_failure(stub_api: Any, sleep: Any) -> None:
     stub_api.fake.faults[STALE_READS] = 1
     del stub_api.fake.regions[9]
-    assert _run(stub_api, sleep, *AT_ONCE) == 0
+    assert run_against(main, stub_api, sleep, *AT_ONCE) == 0
