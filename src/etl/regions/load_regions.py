@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import sys
 import time
 import urllib.error
@@ -10,9 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from loader import (
-    DEFAULT_API, DEFAULT_SETTLE_SECONDS, Api, Sleep, changed_paths, key, rows, settled,
+    NO_KEY, Api, Sleep, changed_paths, place_body, rows, settled, started,
 )
-from repo_utils import REPO_ROOT
 
 REGIONS = "hyperscale-cloud-service-provider-regions"
 PROVIDERS = Path("data") / "providers" / "providers.csv"
@@ -20,19 +18,8 @@ PROVIDERS = Path("data") / "providers" / "providers.csv"
 Listing = list[dict[str, Any]]
 
 
-def region_body(row: dict[str, str]) -> dict[str, Any]:
-    return {
-        "name": row["Name"],
-        "municipality": row["Municipality"],
-        "state": row["State"],
-        "country": row["Country"],
-        "latitude": float(row["Latitude"]),
-        "longitude": float(row["Longitude"]),
-    }
-
-
 def regions_of(repository: Path) -> list[dict[str, Any]]:
-    return [region_body(row) for row in rows(repository / PROVIDERS)]
+    return [place_body(row) for row in rows(repository / PROVIDERS)]
 
 
 def changed(repository: Path, since: str) -> bool:
@@ -55,27 +42,14 @@ def _ids(listing: Listing) -> list[int]:
     return sorted(int(region["id"]) for region in listing)
 
 
-def _parse(argv: Sequence[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        prog="load-regions",
-        description=f"Make the API's {REGIONS} match {PROVIDERS.as_posix()}.")
-    parser.add_argument("--api", default=DEFAULT_API)
-    parser.add_argument("--repository", type=Path, default=REPO_ROOT)
-    parser.add_argument("--since", default="")
-    parser.add_argument("--settle-seconds", type=float, default=DEFAULT_SETTLE_SECONDS)
-    return parser.parse_args(argv)
-
-
 def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
-    args = _parse(argv)
-    bearer = key()
-    if not bearer:
-        print("the environment carries no key for the API", file=sys.stderr, flush=True)
-        return 2
+    args, api = started(
+        argv, sleep, "load-regions", f"Make the API's {REGIONS} match {PROVIDERS.as_posix()}.")
+    if api is None:
+        return NO_KEY
     if not changed(args.repository, args.since):
         print(f"{PROVIDERS.as_posix()} is unchanged since {args.since}", flush=True)
         return 0
-    api = Api(args.api, bearer, sleep)
     stale = _ids(api.get(REGIONS))
     created = sorted(int(api.post(REGIONS, body)["id"]) for body in regions_of(args.repository))
     print(f"created {len(created)} regions", flush=True)

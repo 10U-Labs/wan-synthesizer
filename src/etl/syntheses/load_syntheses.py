@@ -12,9 +12,8 @@ from typing import Any
 import yaml
 
 from loader import (
-    DEFAULT_API, DEFAULT_SETTLE_SECONDS, Api, Sleep, changed_paths, key, rows, settled,
+    NO_KEY, Api, Sleep, changed_paths, place_body, rows, settled, started,
 )
-from repo_utils import REPO_ROOT
 
 SYNTHESES = "wan-syntheses"
 REGIONS = "hyperscale-cloud-service-provider-regions"
@@ -46,12 +45,7 @@ def sites_paths(configuration: Configuration) -> list[Path]:
 
 def site_body(row: dict[str, str]) -> dict[str, Any]:
     return {
-        "name": row["Name"],
-        "municipality": row["Municipality"],
-        "state": row["State"],
-        "country": row["Country"],
-        "latitude": float(row["Latitude"]),
-        "longitude": float(row["Longitude"]),
+        **place_body(row),
         "exempt_from_distance_constraint": (
             row["ExemptFromDistanceConstraint"].strip().lower() == YES),
     }
@@ -137,18 +131,6 @@ def _agrees(expected: dict[str, list[int]], listing: Listing) -> bool:
     return all(_ids_labelled(listing, label) == ids for label, ids in expected.items())
 
 
-def _parse(argv: Sequence[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        prog="load-syntheses",
-        description="Create a wan synthesis for every run whose configuration changed.")
-    parser.add_argument("--api", default=DEFAULT_API)
-    parser.add_argument("--repository", type=Path, default=REPO_ROOT)
-    parser.add_argument("--since", default="")
-    parser.add_argument("--configuration", action="append", default=[])
-    parser.add_argument("--settle-seconds", type=float, default=DEFAULT_SETTLE_SECONDS)
-    return parser.parse_args(argv)
-
-
 def _named(args: argparse.Namespace) -> list[Path]:
     if args.configuration:
         return [configuration_named(args.repository, name) for name in args.configuration]
@@ -156,16 +138,15 @@ def _named(args: argparse.Namespace) -> list[Path]:
 
 
 def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
-    args = _parse(argv)
-    bearer = key()
-    if not bearer:
-        print("the environment carries no key for the API", file=sys.stderr, flush=True)
-        return 2
+    args, api = started(
+        argv, sleep, "load-syntheses",
+        "Create a wan synthesis for every run whose configuration changed.", ["--configuration"])
+    if api is None:
+        return NO_KEY
     paths = _named(args)
     if not paths:
         print(f"no configuration changed since {args.since}", flush=True)
         return 0
-    api = Api(args.api, bearer, sleep)
     listing = api.get(SYNTHESES)
     regions = api.get(REGIONS)
     expected: dict[str, list[int]] = {}

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import os
 import subprocess
+import sys
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
+
+from repo_utils import REPO_ROOT
 
 DEFAULT_API = "https://api.10ulabs.com"
 API_KEY_VARIABLE = "API_KEY"
@@ -18,6 +22,7 @@ ATTEMPTS = 5
 RETRY_PAUSE_SECONDS = 1.0
 SETTLE_PAUSE_SECONDS = 5.0
 DEFAULT_SETTLE_SECONDS = 300.0
+NO_KEY = 2
 
 Sleep = Callable[[float], None]
 
@@ -62,6 +67,39 @@ class Api:
 
 def key() -> str:
     return os.environ.get(API_KEY_VARIABLE, "")
+
+
+def keyed_api(base: str, sleep: Sleep) -> Api | None:
+    bearer = key()
+    if not bearer:
+        print("the environment carries no key for the API", file=sys.stderr, flush=True)
+        return None
+    return Api(base, bearer, sleep)
+
+
+def started(
+        argv: Sequence[str], sleep: Sleep, prog: str, description: str,
+        appended: Sequence[str] = ()) -> tuple[argparse.Namespace, Api | None]:
+    parser = argparse.ArgumentParser(prog=prog, description=description)
+    parser.add_argument("--api", default=DEFAULT_API)
+    parser.add_argument("--repository", type=Path, default=REPO_ROOT)
+    parser.add_argument("--since", default="")
+    parser.add_argument("--settle-seconds", type=float, default=DEFAULT_SETTLE_SECONDS)
+    for option in appended:
+        parser.add_argument(option, action="append", default=[])
+    args = parser.parse_args(argv)
+    return args, keyed_api(args.api, sleep)
+
+
+def place_body(row: dict[str, str]) -> dict[str, Any]:
+    return {
+        "name": row["Name"],
+        "municipality": row["Municipality"],
+        "state": row["State"],
+        "country": row["Country"],
+        "latitude": float(row["Latitude"]),
+        "longitude": float(row["Longitude"]),
+    }
 
 
 def rows(path: Path) -> list[dict[str, str]]:

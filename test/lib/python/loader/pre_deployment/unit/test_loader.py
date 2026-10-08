@@ -13,9 +13,11 @@ from typing import Any
 import pytest
 
 from loader import (
-    API_KEY_VARIABLE, ATTEMPTS, NO_COMMIT, RETRIED, RETRY_PAUSE_SECONDS, SETTLE_PAUSE_SECONDS, Api,
-    changed_paths, key, rows, settled,
+    API_KEY_VARIABLE, ATTEMPTS, DEFAULT_API, DEFAULT_SETTLE_SECONDS, NO_COMMIT, RETRIED,
+    RETRY_PAUSE_SECONDS, SETTLE_PAUSE_SECONDS, Api, changed_paths, key, keyed_api, place_body, rows,
+    settled, started,
 )
+from repo_utils import REPO_ROOT
 
 BASE = "https://api.example.test"
 
@@ -164,6 +166,55 @@ def test_the_key_is_read_from_the_environment(monkeypatch: pytest.MonkeyPatch) -
 def test_a_missing_key_is_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv(API_KEY_VARIABLE, raising=False)
     assert key() == ""
+
+
+def test_the_options_default_to_the_live_api_over_the_whole_repository() -> None:
+    parsed, _ = started([], [].append, "load-test", "Test the shared options.")
+    assert (parsed.api, parsed.repository, parsed.since, parsed.settle_seconds) == (
+        DEFAULT_API, REPO_ROOT, "", DEFAULT_SETTLE_SECONDS)
+
+
+def test_the_settle_seconds_are_read_as_a_number() -> None:
+    parsed, _ = started(["--settle-seconds", "7"], [].append, "load-test", "Test the options.")
+    assert parsed.settle_seconds == 7.0
+
+
+def test_an_appended_option_collects_every_value_given() -> None:
+    parsed, _ = started(
+        ["--carrier", "zayo", "--carrier", "lumen"], [].append, "load-test", "Test the options.",
+        ["--carrier"])
+    assert parsed.carrier == ["zayo", "lumen"]
+
+
+def test_the_start_is_keyed_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(API_KEY_VARIABLE, "the-key")
+    assert isinstance(started([], [].append, "load-test", "Test the options.")[1], Api)
+
+
+def test_a_missing_key_gives_no_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv(API_KEY_VARIABLE, raising=False)
+    assert keyed_api(BASE, [].append) is None
+
+
+def test_a_missing_key_is_said_on_stderr(
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    monkeypatch.delenv(API_KEY_VARIABLE, raising=False)
+    keyed_api(BASE, [].append)
+    assert capsys.readouterr().err == "the environment carries no key for the API\n"
+
+
+def test_a_key_gives_an_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(API_KEY_VARIABLE, "the-key")
+    assert isinstance(keyed_api(BASE, [].append), Api)
+
+
+def test_a_place_row_becomes_its_six_location_fields() -> None:
+    row = {"Name": "Provider A", "Municipality": "Columbus", "State": "OH",
+           "Country": "United States", "Latitude": "39.9612", "Longitude": "-82.9988",
+           "ExemptFromDistanceConstraint": "yes"}
+    assert place_body(row) == {
+        "name": "Provider A", "municipality": "Columbus", "state": "OH",
+        "country": "United States", "latitude": 39.9612, "longitude": -82.9988}
 
 
 def _git(repository: Path, *arguments: str) -> str:

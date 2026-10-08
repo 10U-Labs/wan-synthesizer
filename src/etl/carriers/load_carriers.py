@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import sys
 import time
 import urllib.error
@@ -9,10 +8,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-from loader import (
-    DEFAULT_API, DEFAULT_SETTLE_SECONDS, Api, Sleep, changed_paths, key, rows, settled,
-)
-from repo_utils import REPO_ROOT
+from loader import NO_KEY, Api, Sleep, changed_paths, rows, settled, started
 
 CARRIERS = "carriers"
 POPS = Path("data") / "pops"
@@ -121,25 +117,12 @@ def _agrees(expected: dict[str, list[int]], listing: Listing) -> bool:
     return all(_ids_named(listing, name) == ids for name, ids in expected.items())
 
 
-def _parse(argv: Sequence[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        prog="load-carriers",
-        description="Make the API's carriers match data/pops and data/fiber_segments.")
-    parser.add_argument("--api", default=DEFAULT_API)
-    parser.add_argument("--repository", type=Path, default=REPO_ROOT)
-    parser.add_argument("--since", default="")
-    parser.add_argument("--carrier", action="append", default=[])
-    parser.add_argument("--settle-seconds", type=float, default=DEFAULT_SETTLE_SECONDS)
-    return parser.parse_args(argv)
-
-
 def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
-    args = _parse(argv)
-    bearer = key()
-    if not bearer:
-        print("the environment carries no key for the API", file=sys.stderr, flush=True)
-        return 2
-    api = Api(args.api, bearer, sleep)
+    args, api = started(
+        argv, sleep, "load-carriers",
+        "Make the API's carriers match data/pops and data/fiber_segments.", ["--carrier"])
+    if api is None:
+        return NO_KEY
     listing = api.get(CARRIERS)
     names = set(args.carrier) or changed_carriers(args.repository, args.since)
     expected: dict[str, list[int]] = {}
