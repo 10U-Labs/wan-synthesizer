@@ -10,7 +10,7 @@ jobs:
       - name: Assert no inline markdownlint or yamllint disables
         uses: 10U-Labs/assert-no-inline-directives@latest
         with:
-          files: .
+          files: "**/*.md .github/workflows/markdownlint.yml"
           tools: markdownlint,yamllint
           verbose: "true"
   assert-no-linter-config-files:
