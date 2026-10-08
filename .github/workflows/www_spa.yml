@@ -25,7 +25,7 @@ jobs:
       - name: Assert no inline directives
         uses: 10U-Labs/assert-no-inline-directives@latest
         with:
-          files: test/www/spa
+          files: .github/workflows/www_spa.yml test/www/spa
           tools: pylint,mypy,yamllint
           verbose: "true"
   assert-no-pytest-plugin-declarations:
@@ -191,12 +191,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Assert no inline yamllint disables
-        uses: 10U-Labs/assert-no-inline-directives@latest
-        with:
-          files: .github/workflows/www_spa.yml
-          tools: yamllint
-          verbose: "true"
       - name: Lint YAML
         uses: ibiqlik/action-yamllint@v3
         with:

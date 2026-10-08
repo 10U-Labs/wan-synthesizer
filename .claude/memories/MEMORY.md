@@ -38,6 +38,7 @@ and a line in this index.
 - [aws-is-called-over-fips-endpoints](aws-is-called-over-fips-endpoints.md) — every role-assuming workflow's `env` sets `AWS_USE_FIPS_ENDPOINT` to `true`; nothing in the tree holds that since the API migration, so a new workflow copies the block
 - [code-scanning-is-held-on-by-a-test](code-scanning-is-held-on-by-a-test.md) — CodeQL default setup runs the extended suite over the Python and the JavaScript, `test/documentation` holds a fresh analysis of each language and zero results on the newest through the API the workflow token can read, and an alert it raises is fixed in the session that sees it
 - [an-action-is-preferred-to-a-package-install](an-action-is-preferred-to-a-package-install.md) — every `assert-*` tool runs as `10U-Labs/<tool>@latest` and every YAML lint as `ibiqlik/action-yamllint@v3`; `markdownlint-cli`, `jscpd`, `mypy`, `pylint` and `pytest` stay installs because no action takes what their jobs need
+- [an-assert-is-its-own-job](an-assert-is-its-own-job.md) — each `assert-*` check runs in a job named after its tool, one per tool per workflow, and a linter job holds only its lint step
 - [where-a-test-runs-follows-what-starts-it](where-a-test-runs-follows-what-starts-it.md) — a test runs in the workflow the change it guards arrives on, and one that already runs in two needs no cross-listed `paths`
 
 ### Comments

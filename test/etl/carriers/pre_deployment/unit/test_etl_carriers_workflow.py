@@ -94,3 +94,11 @@ def test_no_step_installs_a_tool_its_action_runs() -> None:
         run for job in _loaded()["jobs"] for run in _steps(job)
         if "pip install" in run and ("assert-" in run or "yamllint" in run)
     ] == []
+
+
+def test_only_a_job_named_for_an_assert_tool_runs_one() -> None:
+    assert [
+        name for name, job in _loaded()["jobs"].items()
+        if not name.startswith("assert-")
+        and any(str(step.get("uses", "")).startswith("10U-Labs/assert-") for step in job["steps"])
+    ] == []
