@@ -9,6 +9,7 @@ from repo_utils import REPO_ROOT
 
 SITE = "10ulabs.com"
 INDEX = REPO_ROOT / "src" / "www" / "spa" / "index.html"
+APP = REPO_ROOT / "src" / "www" / "spa" / "app.js"
 SPA_PATH = "/wan-synthesizer/"
 ONE_YEAR_SECONDS = 31536000
 
@@ -19,10 +20,19 @@ def served_fixture() -> dict[str, str]:
         return {key.lower(): value for key, value in response.getheaders()}
 
 
+def _read(path: str) -> str:
+    with urlopen(f"https://{SITE}{SPA_PATH}{path}", timeout=30) as response:
+        return str(response.read().decode("utf-8"))
+
+
 @pytest.fixture(name="page", scope="module")
 def page_fixture() -> str:
-    with urlopen(f"https://{SITE}{SPA_PATH}", timeout=30) as response:
-        return str(response.read().decode("utf-8"))
+    return _read("")
+
+
+@pytest.fixture(name="script", scope="module")
+def script_fixture() -> str:
+    return _read(APP.name)
 
 
 @pytest.fixture(name="over_http", scope="module")
@@ -64,3 +74,7 @@ def test_the_spa_denies_framing(served: dict[str, str]) -> None:
 def test_the_page_served_is_the_page_in_the_tree_with_its_content_security_policy(
         page: str) -> None:
     assert page == INDEX.read_text(encoding="utf-8")
+
+
+def test_the_script_served_is_the_script_in_the_tree(script: str) -> None:
+    assert script == APP.read_text(encoding="utf-8")

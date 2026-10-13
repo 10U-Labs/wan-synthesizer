@@ -460,6 +460,10 @@ function slug(label) {
   return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function byLabel(left, right) {
+  return left.label.localeCompare(right.label);
+}
+
 async function start() {
   const nav = document.getElementById("tenants");
   nav.replaceChildren();
@@ -470,7 +474,7 @@ async function start() {
     showNote(UNREADABLE_NOTE);
     return;
   }
-  const entries = syntheses.map(({ id, label }) => {
+  const entries = syntheses.sort(byLabel).map(({ id, label }) => {
     const entry = { synthesis: id, tenant: slug(label) };
     const link = document.createElement("a");
     link.href = "#";
