@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 import time
 from collections.abc import Iterable, Sequence
 from functools import partial
@@ -19,10 +20,17 @@ REGIONS_INPUT = "hyperscale_cloud_service_provider_regions"
 ETC = Path("etc")
 TENANTS = Path("data") / "tenants"
 STILL_RUNNING = 409
+STILL_RUNNING_SECONDS = 1200.0
+STILL_RUNNING_PAUSE_SECONDS = 30.0
+STILL_RUNNING_EXIT = 3
 YES = "yes"
 
 Configuration = dict[str, Any]
 Listing = list[dict[str, Any]]
+
+
+class StillRunning(Exception):
+    pass
 
 
 def configurations(repository: Path) -> list[Path]:
@@ -109,16 +117,27 @@ def _ids_labelled(listing: Listing, label: str) -> list[int]:
     return sorted(int(one["id"]) for one in listing if one["label"] == label)
 
 
-def _delete(api: Api, synthesis_id: int) -> bool:
-    code = removed(api, f"{SYNTHESES}/{synthesis_id}", (GONE, STILL_RUNNING))
-    if code == STILL_RUNNING:
-        print(f"synthesis {synthesis_id} is still running and stays", flush=True)
-        return True
-    if code == GONE:
-        print(f"synthesis {synthesis_id} was already gone", flush=True)
-    else:
-        print(f"deleted synthesis {synthesis_id}", flush=True)
-    return False
+def _newest(listing: Listing, created: dict[str, int]) -> dict[str, int]:
+    listed = {str(one["label"]): max(_ids_labelled(listing, one["label"])) for one in listing}
+    return {**listed, **created}
+
+
+def stale(listing: Listing, created: dict[str, int]) -> list[int]:
+    newest = _newest(listing, created)
+    return sorted(int(one["id"]) for one in listing if int(one["id"]) != newest[one["label"]])
+
+
+def _delete(api: Api, synthesis_id: int, sleep: Sleep) -> None:
+    for _ in range(int(STILL_RUNNING_SECONDS // STILL_RUNNING_PAUSE_SECONDS) + 1):
+        code = removed(api, f"{SYNTHESES}/{synthesis_id}", (GONE, STILL_RUNNING))
+        if code != STILL_RUNNING:
+            gone = f"synthesis {synthesis_id} was already gone"
+            print(gone if code == GONE else f"deleted synthesis {synthesis_id}", flush=True)
+            return
+        print(f"synthesis {synthesis_id} is still running; waiting to delete it", flush=True)
+        sleep(STILL_RUNNING_PAUSE_SECONDS)
+    raise StillRunning(
+        f"synthesis {synthesis_id} was still running after {STILL_RUNNING_SECONDS:.0f} seconds")
 
 
 def _create(api: Api, repository: Path, path: Path, regions: Listing) -> tuple[str, int]:
@@ -131,8 +150,8 @@ def _create(api: Api, repository: Path, path: Path, regions: Listing) -> tuple[s
     return label, synthesis_id
 
 
-def _agrees(expected: dict[str, list[int]], listing: Listing) -> bool:
-    return all(_ids_labelled(listing, label) == ids for label, ids in expected.items())
+def _agrees(expected: dict[str, int], listing: Listing) -> bool:
+    return all(_ids_labelled(listing, label) == [one] for label, one in expected.items())
 
 
 def _named(args: argparse.Namespace) -> list[Path]:
@@ -141,25 +160,34 @@ def _named(args: argparse.Namespace) -> list[Path]:
     return changed_configurations(args.repository, args.since)
 
 
-def _load(args: argparse.Namespace, api: Api) -> Loaded | None:
-    paths = _named(args)
+def _created(args: argparse.Namespace, api: Api, paths: list[Path]) -> dict[str, int]:
     if not paths:
         print(f"no configuration changed since {args.since}", flush=True)
-        return None
-    listing = api.get(SYNTHESES)
+        return {}
     regions = api.get(REGIONS)
-    expected: dict[str, list[int]] = {}
-    for path in paths:
-        label, created = _create(api, args.repository, path, regions)
-        kept = [one for one in _ids_labelled(listing, label) if _delete(api, one)]
-        expected[label] = sorted([*kept, created])
-    return Loaded(SYNTHESES, partial(_agrees, expected), f"created {len(expected)} syntheses")
+    return dict(_create(api, args.repository, path, regions) for path in paths)
 
 
-PROGRAM = Program(
-    "load-syntheses", "Create a wan synthesis for every run whose configuration changed.",
-    _load, ["--configuration"])
+def _load(args: argparse.Namespace, api: Api, sleep: Sleep) -> Loaded:
+    listing = api.get(SYNTHESES)
+    created = _created(args, api, _named(args))
+    swept = stale(listing, created)
+    for synthesis_id in swept:
+        _delete(api, synthesis_id, sleep)
+    return Loaded(
+        SYNTHESES, partial(_agrees, _newest(listing, created)),
+        f"created {len(created)} syntheses and deleted {len(swept)}")
+
+
+def _program(sleep: Sleep) -> Program:
+    return Program(
+        "load-syntheses", "Create a wan synthesis for every run whose configuration changed.",
+        partial(_load, sleep=sleep), ["--configuration"])
 
 
 def main(argv: Sequence[str], sleep: Sleep = time.sleep) -> int:
-    return run(PROGRAM, argv, sleep)
+    try:
+        return run(_program(sleep), argv, sleep)
+    except StillRunning as running:
+        print(running, file=sys.stderr, flush=True)
+        return STILL_RUNNING_EXIT

@@ -16,11 +16,11 @@ REGION = {"id": 1, "name": "Provider A", "municipality": "Columbus", "state": "O
 
 
 class FakeSyntheses(FakeApi):
-    def __init__(self, seeded: dict[int, str], running: set[int]) -> None:
+    def __init__(self, seeded: dict[int, str], running: dict[int, int]) -> None:
         self._next = max([*seeded, 0]) + 1
         self.syntheses: dict[int, str] = dict(seeded)
         self.bodies: dict[int, dict[str, Any]] = {}
-        self.running = set(running)
+        self.running = dict(running)
         super().__init__(self._held, self._routed)
 
     def _held(self) -> Listing:
@@ -34,7 +34,8 @@ class FakeSyntheses(FakeApi):
         return {"id": created, "label": given["label"], "status": "creating"}
 
     def _delete(self, synthesis_id: int) -> int:
-        if synthesis_id in self.running:
+        if self.running.get(synthesis_id, 0):
+            self.running[synthesis_id] -= 1
             return 409
         return 204 if self.syntheses.pop(synthesis_id, None) is not None else 404
 
@@ -54,5 +55,5 @@ class FakeSyntheses(FakeApi):
 
 @pytest.fixture
 def stub_api() -> Iterator[StubApi]:
-    with StubApi(FakeSyntheses({1: "DAF", 2: "DAF", 3: "Two-PoP"}, {2})) as api:
+    with StubApi(FakeSyntheses({1: "DAF", 2: "DAF", 3: "Two-PoP"}, {2: 1})) as api:
         yield api

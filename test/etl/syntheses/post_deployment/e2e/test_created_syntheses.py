@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from collections import Counter
 from typing import Any
 
 import pytest
@@ -38,6 +39,11 @@ def test_no_synthesis_carries_a_label_no_configuration_has(
         listing: list[dict[str, Any]]) -> None:
     labels = {configuration["label"] for configuration in CONFIGURATIONS.values()}
     assert [one for one in listing if one["label"] not in labels] == []
+
+
+def test_no_label_carries_more_than_one_synthesis(listing: list[dict[str, Any]]) -> None:
+    counted = Counter(one["label"] for one in listing)
+    assert [label for label, count in counted.items() if count > 1] == []
 
 
 @pytest.mark.parametrize("name", sorted(CONFIGURATIONS))

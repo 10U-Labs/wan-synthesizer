@@ -8,7 +8,7 @@ import pytest
 from repo_utils import REPO_ROOT
 from etl.syntheses.load_syntheses import (
     Configuration, body, configuration_named, configurations, read_configuration, region_given,
-    site_body, sites_of, sites_paths, takes_regions, touched,
+    site_body, sites_of, sites_paths, stale, takes_regions, touched,
 )
 
 ROW = {"Name": "Ashburn", "Municipality": "Ashburn", "State": "VA", "Country": "United States",
@@ -16,6 +16,8 @@ ROW = {"Name": "Ashburn", "Municipality": "Ashburn", "State": "VA", "Country": "
 DAF = read_configuration(configuration_named(REPO_ROOT, "daf"))
 REGION = {"id": 7, "name": "Provider A", "municipality": "Columbus", "state": "OH",
           "country": "United States", "latitude": 39.9612, "longitude": -82.9988}
+LISTED = [{"id": 1, "label": "A"}, {"id": 5, "label": "B"}, {"id": 3, "label": "A"},
+          {"id": 2, "label": "B"}]
 FIELDS = [
     "label", "wan_pop_count", "backbone_number_of_diverse_circuits", "homing_degree",
     "convergence_promotion", "knobs", "settings", "sites",
@@ -127,3 +129,11 @@ def test_a_configuration_is_untouched_by_a_change_elsewhere() -> None:
 
 def test_the_sites_paths_are_relative_to_the_repository() -> None:
     assert sites_paths(DAF) == [Path("data") / "tenants" / "daf.csv"]
+
+
+def test_every_synthesis_older_than_the_newest_of_its_label_is_stale() -> None:
+    assert stale(LISTED, {}) == [1, 2]
+
+
+def test_every_listed_synthesis_of_a_label_just_created_is_stale() -> None:
+    assert stale(LISTED, {"A": 7}) == [1, 2, 3]

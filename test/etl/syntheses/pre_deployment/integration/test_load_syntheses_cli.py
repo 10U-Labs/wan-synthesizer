@@ -9,7 +9,10 @@ from loader import NO_COMMIT
 from repo_utils import REPO_ROOT
 from stub_api import STALE_READS, run_against
 from throwaway_repository import commit, git, write
-from etl.syntheses.load_syntheses import configuration_named, main, read_configuration, sites_of
+from etl.syntheses.load_syntheses import (
+    STILL_RUNNING_EXIT, STILL_RUNNING_PAUSE_SECONDS, configuration_named, main,
+    read_configuration, sites_of,
+)
 
 DAF = ["--configuration", "daf"]
 AT_ONCE = ["--settle-seconds", "0"]
@@ -101,10 +104,9 @@ def test_the_synthesis_created_carries_the_forced_wan_pops(stub_api: Any, sleep:
 
 
 @pytest.mark.usefixtures("the_key")
-def test_the_earlier_finished_synthesis_of_the_label_is_deleted(
-        stub_api: Any, sleep: Any) -> None:
+def test_every_earlier_synthesis_of_the_label_is_deleted(stub_api: Any, sleep: Any) -> None:
     run_against(main, stub_api, sleep, *DAF, *AT_ONCE)
-    assert stub_api.fake.syntheses == {2: "DAF", 3: "Two-PoP", 4: "DAF"}
+    assert stub_api.fake.syntheses == {3: "Two-PoP", 4: "DAF"}
 
 
 @pytest.mark.usefixtures("the_key")
@@ -116,10 +118,24 @@ def test_the_new_synthesis_is_created_before_the_earlier_one_is_deleted(
 
 
 @pytest.mark.usefixtures("the_key")
-def test_an_earlier_synthesis_still_running_stays_and_is_no_failure(
+def test_an_earlier_synthesis_still_running_is_deleted_once_it_finishes(
         stub_api: Any, sleep: Any) -> None:
     ran = run_against(main, stub_api, sleep, *DAF, *AT_ONCE)
-    assert (ran, 2 in stub_api.fake.syntheses) == (0, True)
+    assert (ran, 2 in stub_api.fake.syntheses) == (0, False)
+
+
+@pytest.mark.usefixtures("the_key")
+def test_a_still_running_synthesis_is_waited_on_between_deletes(
+        stub_api: Any, sleep: Any, pauses: list[float]) -> None:
+    run_against(main, stub_api, sleep, *DAF, *AT_ONCE)
+    assert pauses == [STILL_RUNNING_PAUSE_SECONDS]
+
+
+@pytest.mark.usefixtures("the_key")
+def test_an_earlier_synthesis_that_never_finishes_fails_the_run(
+        stub_api: Any, sleep: Any) -> None:
+    stub_api.fake.running[2] = 1000
+    assert run_against(main, stub_api, sleep, *DAF, *AT_ONCE) == STILL_RUNNING_EXIT
 
 
 @pytest.mark.usefixtures("the_key")
@@ -132,7 +148,7 @@ def test_an_earlier_synthesis_already_gone_is_no_failure(stub_api: Any, sleep: A
 @pytest.mark.usefixtures("the_key")
 def test_every_named_configuration_is_created(stub_api: Any, sleep: Any) -> None:
     run_against(main, stub_api, sleep, *DAF, "--configuration", "two_pop", *AT_ONCE)
-    assert sorted(stub_api.fake.syntheses.values()) == ["DAF", "DAF", "Two-PoP"]
+    assert stub_api.fake.syntheses == {4: "DAF", 5: "Two-PoP"}
 
 
 @pytest.mark.usefixtures("the_key")
@@ -152,6 +168,13 @@ def test_the_null_commit_means_every_configuration(
 
 
 @pytest.mark.usefixtures("the_key")
-def test_a_run_since_head_touches_nothing(stub_api: Any, sleep: Any) -> None:
+def test_a_run_since_head_creates_nothing(stub_api: Any, sleep: Any) -> None:
     run_against(main, stub_api, sleep, "--since", "HEAD", *AT_ONCE)
-    assert stub_api.requests == []
+    assert ("POST", SYNTHESES) not in stub_api.requests
+
+
+@pytest.mark.usefixtures("the_key")
+def test_a_run_since_head_deletes_every_synthesis_older_than_its_labels_newest(
+        stub_api: Any, sleep: Any) -> None:
+    run_against(main, stub_api, sleep, "--since", "HEAD", *AT_ONCE)
+    assert stub_api.fake.syntheses == {2: "DAF", 3: "Two-PoP"}
