@@ -9,7 +9,7 @@ from repo_utils import REPO_ROOT
 
 SITE = "10ulabs.com"
 INDEX = REPO_ROOT / "src" / "www" / "spa" / "index.html"
-APP = REPO_ROOT / "src" / "www" / "spa" / "app.js"
+SERVED = ["app.js", "style.css", "vendor/ne_50m_admin_1_us_states.js"]
 SPA_PATH = "/wan-synthesizer/"
 ONE_YEAR_SECONDS = 31536000
 
@@ -28,11 +28,6 @@ def _read(path: str) -> str:
 @pytest.fixture(name="page", scope="module")
 def page_fixture() -> str:
     return _read("")
-
-
-@pytest.fixture(name="script", scope="module")
-def script_fixture() -> str:
-    return _read(APP.name)
 
 
 @pytest.fixture(name="over_http", scope="module")
@@ -76,5 +71,6 @@ def test_the_page_served_is_the_page_in_the_tree_with_its_content_security_polic
     assert page == INDEX.read_text(encoding="utf-8")
 
 
-def test_the_script_served_is_the_script_in_the_tree(script: str) -> None:
-    assert script == APP.read_text(encoding="utf-8")
+@pytest.mark.parametrize("name", SERVED)
+def test_each_file_served_is_the_file_in_the_tree(name: str) -> None:
+    assert _read(name) == (INDEX.parent / name).read_text(encoding="utf-8")

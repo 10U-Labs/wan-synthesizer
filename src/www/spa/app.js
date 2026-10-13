@@ -1,6 +1,7 @@
 "use strict";
 
 const COUNTRY_STYLE = { color: "#aab4be", weight: 0.7, fillColor: "#f4f4f1", fillOpacity: 1 };
+const STATE_STYLE = { color: "#c9d0d6", weight: 0.5, fill: false };
 const COUNTRIES_ATTRIB = "Made with Natural Earth";
 const WORLD_COPIES = [-360, 0, 360];
 
@@ -53,10 +54,16 @@ const LEGEND_ROWS = [
 
 const map = L.map("map", { minZoom: 2, maxZoom: 12 }).setView(VIEW_CENTER, 4);
 for (const shift of WORLD_COPIES) {
+  const coordsToLatLng = ([lon, lat]) => L.latLng(lat, lon + shift);
   L.geoJSON(NE_110M_ADMIN_0_COUNTRIES, {
     style: COUNTRY_STYLE,
     interactive: false,
-    coordsToLatLng: ([lon, lat]) => L.latLng(lat, lon + shift),
+    coordsToLatLng,
+  }).addTo(map);
+  L.geoJSON(NE_50M_ADMIN_1_US_STATES, {
+    style: STATE_STYLE,
+    interactive: false,
+    coordsToLatLng,
   }).addTo(map);
 }
 map.attributionControl.addAttribution(COUNTRIES_ATTRIB);
