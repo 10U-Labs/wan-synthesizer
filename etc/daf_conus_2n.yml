@@ -3,7 +3,9 @@ backbone:
   coverage_target_miles: 745
   forced:
     circuits: []
-    wan_pops: []
+    wan_pops:
+      - Ashburn, VA
+      - Salt Lake City, UT
   number_of_diverse_circuits: 2
   prohibited:
     circuits: []
