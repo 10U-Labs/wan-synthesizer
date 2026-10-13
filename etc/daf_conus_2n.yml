@@ -15,7 +15,7 @@ backbone:
     max: 2
     min: 2
 homing:
-  degree: 2
+  degree: 1
   forced: []
 inputs:
   hyperscale_cloud_service_provider_regions: false
