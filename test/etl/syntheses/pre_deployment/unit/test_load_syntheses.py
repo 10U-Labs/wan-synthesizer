@@ -7,8 +7,8 @@ import pytest
 
 from repo_utils import REPO_ROOT
 from etl.syntheses.load_syntheses import (
-    body, configuration_named, configurations, read_configuration, region_given, site_body,
-    sites_of, sites_paths, touched,
+    Configuration, body, configuration_named, configurations, read_configuration, region_given,
+    site_body, sites_of, sites_paths, takes_regions, touched,
 )
 
 ROW = {"Name": "Ashburn", "Municipality": "Ashburn", "State": "VA", "Country": "United States",
@@ -27,7 +27,7 @@ FIELDS = [
 
 def test_the_configurations_are_every_yml_under_etc() -> None:
     assert [path.stem for path in configurations(REPO_ROOT)] == [
-        "daf", "dow", "f_35", "minuteman", "two_pop"]
+        "daf", "daf_conus_2n", "dow", "f_35", "minuteman", "two_pop"]
 
 
 def test_a_configuration_is_named_by_its_stem() -> None:
@@ -90,6 +90,25 @@ def test_the_body_carries_the_sites_it_is_handed() -> None:
 def test_the_body_carries_the_regions_less_their_ids() -> None:
     assert body(DAF, [], [REGION])["hyperscale_cloud_service_provider_regions"] == [
         region_given(REGION)]
+
+
+@pytest.fixture(name="declining")
+def declining_fixture() -> Configuration:
+    return read_configuration(configuration_named(REPO_ROOT, "daf_conus_2n"))
+
+
+def test_a_configuration_silent_on_the_regions_takes_them() -> None:
+    assert takes_regions(DAF) is True
+
+
+def test_a_configuration_declining_the_regions_does_not_take_them(
+        declining: Configuration) -> None:
+    assert takes_regions(declining) is False
+
+
+def test_the_body_of_a_configuration_declining_the_regions_carries_none(
+        declining: Configuration) -> None:
+    assert body(declining, [], [REGION])["hyperscale_cloud_service_provider_regions"] == []
 
 
 def test_a_configuration_is_touched_by_a_change_to_itself() -> None:

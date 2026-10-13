@@ -15,6 +15,7 @@ from loader import (
 
 SYNTHESES = "wan-syntheses"
 REGIONS = "hyperscale-cloud-service-provider-regions"
+REGIONS_INPUT = "hyperscale_cloud_service_provider_regions"
 ETC = Path("etc")
 TENANTS = Path("data") / "tenants"
 STILL_RUNNING = 409
@@ -58,6 +59,14 @@ def region_given(region: dict[str, Any]) -> dict[str, Any]:
     return {field: value for field, value in region.items() if field != "id"}
 
 
+def takes_regions(configuration: Configuration) -> bool:
+    return bool(configuration["inputs"].get(REGIONS_INPUT, True))
+
+
+def regions_given(configuration: Configuration, regions: Listing) -> Listing:
+    return [region_given(one) for one in regions] if takes_regions(configuration) else []
+
+
 def body(configuration: Configuration, sites: Listing, regions: Listing) -> dict[str, Any]:
     backbone, homing = configuration["backbone"], configuration["homing"]
     forced, prohibited = backbone["forced"], backbone["prohibited"]
@@ -70,7 +79,7 @@ def body(configuration: Configuration, sites: Listing, regions: Listing) -> dict
         "knobs": {"backbone_coverage_target_miles": backbone["coverage_target_miles"]},
         "settings": configuration["settings"],
         "sites": sites,
-        "hyperscale_cloud_service_provider_regions": [region_given(one) for one in regions],
+        REGIONS_INPUT: regions_given(configuration, regions),
         "off_net": [],
         "forced_wan_pops": forced["wan_pops"],
         "forced_circuits": forced["circuits"],

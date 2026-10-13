@@ -87,6 +87,13 @@ def test_the_synthesis_created_carries_the_regions_the_api_serves(
 
 
 @pytest.mark.usefixtures("the_key")
+def test_the_synthesis_of_a_configuration_declining_the_regions_carries_none(
+        stub_api: Any, sleep: Any) -> None:
+    run_against(main, stub_api, sleep, "--configuration", "daf_conus_2n", *AT_ONCE)
+    assert _posted(stub_api)["hyperscale_cloud_service_provider_regions"] == []
+
+
+@pytest.mark.usefixtures("the_key")
 def test_the_synthesis_created_carries_the_forced_wan_pops(stub_api: Any, sleep: Any) -> None:
     run_against(main, stub_api, sleep, *DAF, *AT_ONCE)
     configuration = read_configuration(configuration_named(REPO_ROOT, "daf"))

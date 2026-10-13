@@ -7,7 +7,9 @@ import pytest
 
 from loader import DEFAULT_API, Api, key, sorted_without_ids
 from repo_utils import REPO_ROOT
-from etl.syntheses.load_syntheses import SYNTHESES, configurations, read_configuration, sites_of
+from etl.syntheses.load_syntheses import (
+    REGIONS, SYNTHESES, configurations, read_configuration, sites_of, takes_regions,
+)
 
 CONFIGURATIONS = {path.stem: read_configuration(path) for path in configurations(REPO_ROOT)}
 API = Api(DEFAULT_API, key(), time.sleep)
@@ -52,3 +54,10 @@ def test_the_newest_synthesis_of_each_run_was_given_its_forced_wan_pops(
     served = API.get(f"{SYNTHESES}/{newest}/forced-wan-pops")
     forced = CONFIGURATIONS[name]["backbone"]["forced"]["wan_pops"]
     assert [one["name"] for one in served] == forced
+
+
+@pytest.mark.parametrize("name", sorted(CONFIGURATIONS))
+def test_the_newest_synthesis_of_each_run_was_given_regions_only_if_it_takes_them(
+        newest: int, name: str) -> None:
+    served = API.get(f"{SYNTHESES}/{newest}/{REGIONS}")
+    assert bool(served) == takes_regions(CONFIGURATIONS[name])

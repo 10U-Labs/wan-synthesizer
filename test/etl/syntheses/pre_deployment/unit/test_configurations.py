@@ -12,6 +12,7 @@ ETC = REPO_ROOT / "etc"
 TENANTS = Path("data") / "tenants"
 CONFIGURATIONS = sorted(ETC.glob("*.yml"))
 SITES_HEADER = "Name,Municipality,State,Country,Latitude,Longitude,ExemptFromDistanceConstraint"
+INPUTS = ["hyperscale_cloud_service_provider_regions", "sites"]
 
 
 def _sites_named(configuration: Path) -> list[Path]:
@@ -21,7 +22,7 @@ def _sites_named(configuration: Path) -> list[Path]:
 
 def test_there_are_configurations_to_hold() -> None:
     assert [configuration.stem for configuration in CONFIGURATIONS] == [
-        "daf", "dow", "f_35", "minuteman", "two_pop"]
+        "daf", "daf_conus_2n", "dow", "f_35", "minuteman", "two_pop"]
 
 
 @pytest.mark.parametrize("configuration", CONFIGURATIONS, ids=lambda path: str(path.stem))
@@ -51,6 +52,23 @@ def test_every_tenants_file_is_named_by_a_configuration() -> None:
 
 
 @pytest.mark.parametrize("configuration", CONFIGURATIONS, ids=lambda path: str(path.stem))
-def test_a_configuration_takes_sites_and_no_other_input(configuration: Path) -> None:
+def test_a_configuration_takes_sites_and_no_input_but_the_regions(configuration: Path) -> None:
     loaded: dict[str, Any] = yaml.safe_load(configuration.read_text(encoding="utf-8"))
-    assert list(loaded["inputs"]) == ["sites"]
+    assert [one for one in loaded["inputs"] if one not in INPUTS] == []
+
+
+@pytest.mark.parametrize("configuration", CONFIGURATIONS, ids=lambda path: str(path.stem))
+def test_a_configuration_says_yes_or_no_to_the_regions_if_at_all(configuration: Path) -> None:
+    loaded: dict[str, Any] = yaml.safe_load(configuration.read_text(encoding="utf-8"))
+    assert isinstance(loaded["inputs"].get(INPUTS[0], True), bool)
+
+
+@pytest.fixture(name="conus_sites")
+def conus_sites_fixture() -> list[str]:
+    return (REPO_ROOT / TENANTS / "daf_conus_2n.csv").read_text(encoding="utf-8").splitlines()
+
+
+def test_the_daf_conus_sites_are_the_daf_sites_not_exempt_from_the_distance_constraint(
+        conus_sites: list[str]) -> None:
+    daf = (REPO_ROOT / TENANTS / "daf.csv").read_text(encoding="utf-8").splitlines()
+    assert conus_sites == [daf[0], *(row for row in daf[1:] if row.endswith(",No"))]
