@@ -135,7 +135,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install mypy pytest pyyaml 'python-hcl2<8' types-PyYAML
+        run: pip install mypy playwright==1.55.0 pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on tests
         run: >-
           MYPYPATH=lib/python:src
@@ -151,8 +151,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pytest
-      - name: Read the headers off the served SPA
+        run: pip install pytest playwright==1.55.0
+      - name: Install the browsers the sign-in card is opened in
+        run: python3 -m playwright install --with-deps chromium webkit
+      - name: Read the served SPA and open its sign-in card in each browser
         run: >-
           PYTHONPATH=.:lib/python
           python3 -m pytest
@@ -165,7 +167,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pylint pytest pyyaml 'python-hcl2<8' boto3
+        run: pip install pylint playwright==1.55.0 pytest pyyaml 'python-hcl2<8' boto3
       - name: Run pylint on tests
         run: >-
           PYTHONPATH=.:lib/python:src

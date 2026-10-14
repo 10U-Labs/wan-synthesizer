@@ -176,7 +176,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install mypy pytest pyyaml 'python-hcl2<8' types-PyYAML
+        run: pip install mypy playwright==1.55.0 pytest pyyaml 'python-hcl2<8' types-PyYAML
       - name: Run mypy on tests
         run: >-
           MYPYPATH=lib/python:src
@@ -248,7 +248,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install tools
-        run: pip install pylint pytest pyyaml 'python-hcl2<8' boto3
+        run: pip install pylint playwright==1.55.0 pytest pyyaml 'python-hcl2<8' boto3
       - name: Run pylint on tests
         run: >-
           PYTHONPATH=.:lib/python:src
