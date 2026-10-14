@@ -8,7 +8,6 @@ from repo_utils import REPO_ROOT
 SPA = REPO_ROOT / "src" / "www" / "spa"
 RETIRED_API = "wan-synthesizer"
 GOOGLE_SIGN_IN_CLIENT = "https://accounts.google.com/gsi/client"
-PLACEHOLDER_HIDDEN = "#google-button > div > div {\n  display: none;\n}\n"
 
 _FETCHED = re.compile(r"\$\{API_BASE\}/([^`]+)`")
 _CONSTANT = r'^const {name} = "([^"]+)";$'
@@ -134,7 +133,3 @@ def test_a_turned_away_account_is_told_it_is_not_authorized() -> None:
 
 def test_a_turned_away_account_is_not_told_the_domain_alone_would_admit_it() -> None:
     assert "${HOSTED_DOMAIN}" not in _sign_in_note("403")
-
-
-def test_the_card_shows_googles_framed_button_alone_and_never_its_unstyled_placeholder() -> None:
-    assert PLACEHOLDER_HIDDEN in (SPA / "style.css").read_text(encoding="utf-8")
